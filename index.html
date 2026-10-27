@@ -5701,6 +5701,7 @@ const App={
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
     Net.broadcastStart(this.world);
+    this.inGame=true; // 先にゲーム中にしておく（ロビー画面に戻す処理でワールドが消えないように）
     Net.broadcastLobby();
     this.beginRun(n);
   },
