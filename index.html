@@ -1172,6 +1172,7 @@ function computeStats(profile,override,who){
     if(slot==='weapon'){s.weaponType=base.wtype;s.weaponName=base.name;s.weaponRarity=item.rarity;}
     else armor.push(item);
   }
+  s.look=Object.assign({},wearing); // 見た目（部位→装備ID）。描画とオンラインの表示に使う
   // 防具スキル（ポイントの合算 → 発動判定 → 効果の適用）
   s.skillPts=armorSkillPoints(armor);
   for(const k in decoPts)s.skillPts[k]=(s.skillPts[k]||0)+decoPts[k]; // 装飾品のポイント
@@ -3038,6 +3039,25 @@ function updateWorld(w,dt,inputs){
 
 /* ===================== 6. 描画 ===================== */
 const FONT='"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif';
+/* 装備の見た目：シリーズごとの色と飾り（orn：ears=獣の耳 / horns=角 / skull=骨の兜）。blade＝武器の刃の色
+   装備IDの先頭（wolf_ なら wolf）でシリーズを判定する。cloth（布の服）や装備なしはプレイヤーの色の服になる */
+const GEAR_LOOKS={
+  leather:{main:'#8a5a30',dark:'#5a3a1a',accent:'#c89a5a'},
+  bone:{main:'#e0d8c0',dark:'#9a927a',accent:'#fff8e0',orn:'skull'},
+  iron:{main:'#8a8f9a',dark:'#4a4f5a',accent:'#c8ccd6',blade:'#e6ecf8'},
+  hunter:{main:'#8a8f9a',dark:'#4a4f5a',accent:'#c8ccd6',blade:'#e6ecf8'},
+  hard:{main:'#6a7688',dark:'#3a4250',accent:'#b8c4d8',blade:'#c8d4e8'},
+  wolf:{main:'#8a7a66',dark:'#5a4c3e',accent:'#f4f0dc',orn:'ears',blade:'#efe6cc'},
+  fang:{main:'#8a7a66',dark:'#5a4c3e',accent:'#ffd23a',orn:'ears',blade:'#ffe9a0'},
+  bwolf:{main:'#3a3346',dark:'#221d2c',accent:'#b050ff',orn:'ears',blade:'#c8b0ff'},
+  bull:{main:'#9a7a4a',dark:'#5a4428',accent:'#f0e6c8',orn:'horns',blade:'#f0e6c8'},
+  haro:{main:'#5a6a3a',dark:'#33401f',accent:'#fff0b0',orn:'ears',blade:'#e8f4b0'},
+};
+function gearLook(id){
+  if(!id)return null;
+  if(id==='fang_king')return GEAR_LOOKS.fang;
+  return GEAR_LOOKS[id.split('_')[0]]||null;
+}
 const PLAYER_COLORS=[
   {body:'#3d7bff',rim:'#a8c8ff',label:'#8fb8ff'}, // 1P：青
   {body:'#e8742c',rim:'#ffc896',label:'#ffb070'}, // 2P：橙
@@ -4056,6 +4076,7 @@ const Renderer={
     // チャージ中は武器を構えて後ろに引く。納刀中は背中に背負う
     if(p.charging&&!p.dead)swordA=p.facing+Math.PI*0.75*(p.swingDir||1);
     if(sheathed)swordA=p.facing+Math.PI*0.8;
+    const lk=(s.look||{}),wl=gearLook(lk.weapon)||GEAR_LOOKS.iron,bl=wl.blade||'#e6ecf8';
     const drawSword=()=>{
       if(sheathed)return; // 納刀中は武器を表示しない
       ctx.save();ctx.rotate(swordA);
@@ -4063,32 +4084,32 @@ const Renderer={
       if(wtype==='greatsword'){ // 幅広で長い刃
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.4,-2.5,10,5);
         ctx.fillStyle=rc;ctx.fillRect(r*0.4+9,-8,4,16);
-        ctx.fillStyle='#d8dff0';ctx.beginPath();ctx.moveTo(r*0.4+13,-6);ctx.lineTo(r+50,-5);ctx.lineTo(r+58,0);ctx.lineTo(r+50,5);ctx.lineTo(r*0.4+13,6);ctx.closePath();ctx.fill();
+        ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.4+13,-6);ctx.lineTo(r+50,-5);ctx.lineTo(r+58,0);ctx.lineTo(r+50,5);ctx.lineTo(r*0.4+13,6);ctx.closePath();ctx.fill();
         ctx.strokeStyle='#8a90a8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(r*0.4+15,0);ctx.lineTo(r+48,0);ctx.stroke();
       }else if(wtype==='tachi'){ // 細く長い、少し反った刃
         ctx.fillStyle='#3a2a4a';ctx.fillRect(r*0.4,-2,12,4);
         ctx.fillStyle=rc;ctx.beginPath();ctx.arc(r*0.4+12,0,3.5,0,TAU);ctx.fill();
-        ctx.fillStyle='#eef2ff';ctx.beginPath();ctx.moveTo(r*0.4+14,-1.8);ctx.quadraticCurveTo(r+30,-5,r+54,-4);ctx.lineTo(r+56,-2);ctx.quadraticCurveTo(r+30,1,r*0.4+14,1.8);ctx.closePath();ctx.fill();
+        ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.4+14,-1.8);ctx.quadraticCurveTo(r+30,-5,r+54,-4);ctx.lineTo(r+56,-2);ctx.quadraticCurveTo(r+30,1,r*0.4+14,1.8);ctx.closePath();ctx.fill();
       }else if(wtype==='dual'){ // 短い刃を2本（もう1本は反対側）
         const blade=()=>{ctx.fillStyle='#6a4520';ctx.fillRect(r*0.5,-1.5,6,3);ctx.fillStyle=rc;ctx.fillRect(r*0.5+5,-4,2,8);
-          ctx.fillStyle='#e6ecf8';ctx.beginPath();ctx.moveTo(r*0.5+7,-2);ctx.lineTo(r+18,-2);ctx.lineTo(r+23,0);ctx.lineTo(r+18,2);ctx.lineTo(r*0.5+7,2);ctx.closePath();ctx.fill();};
+          ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+7,-2);ctx.lineTo(r+18,-2);ctx.lineTo(r+23,0);ctx.lineTo(r+18,2);ctx.lineTo(r*0.5+7,2);ctx.closePath();ctx.fill();};
         blade();ctx.restore();ctx.save();ctx.rotate(sheathed?swordA+0.35:p.facing-(p.swing>0?swordA-p.facing:0.9));blade();
       }else if(wtype==='hammer'){ // 柄と大きな頭
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.4,-2,r+14,4);
-        ctx.fillStyle='#8a8f9a';ctx.fillRect(r+12,-10,14,20);
+        ctx.fillStyle=wl.main;ctx.fillRect(r+12,-10,14,20);
         ctx.fillStyle=rc;ctx.fillRect(r+12,-10,14,3);ctx.fillRect(r+12,7,14,3);
-        ctx.strokeStyle='#4a4f5a';ctx.lineWidth=1.5;ctx.strokeRect(r+12,-10,14,20);
+        ctx.strokeStyle=wl.dark;ctx.lineWidth=1.5;ctx.strokeRect(r+12,-10,14,20);
       }else if(wtype==='bow'){ // 弓：しなる弓と弦
-        ctx.strokeStyle='#8a6a40';ctx.lineWidth=3;ctx.beginPath();ctx.arc(r+4,0,22,-1.2,1.2);ctx.stroke();
+        ctx.strokeStyle=wl===GEAR_LOOKS.iron?'#8a6a40':wl.main;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r+4,0,22,-1.2,1.2);ctx.stroke();
         ctx.strokeStyle='#e8e0c8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(r+4+22*Math.cos(-1.2),22*Math.sin(-1.2));ctx.lineTo(r+4+22*Math.cos(1.2),22*Math.sin(1.2));ctx.stroke();
       }else if(wtype==='whip'){ // 細長い革の鞭（先端ほど細く、しなる）
         ctx.fillStyle='#4a3020';ctx.fillRect(r*0.4,-2,8,4);
-        ctx.strokeStyle='#8a6a40';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(r*0.4+8,0);ctx.quadraticCurveTo(r+40,-12,r+100,4);ctx.stroke();
+        ctx.strokeStyle=wl===GEAR_LOOKS.iron?'#8a6a40':wl.main;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(r*0.4+8,0);ctx.quadraticCurveTo(r+40,-12,r+100,4);ctx.stroke();
         ctx.strokeStyle=rc;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(r+80,-4);ctx.quadraticCurveTo(r+92,-6,r+100,4);ctx.stroke();
       }else{ // 片手剣
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.5,-2,7,4);
         ctx.fillStyle=rc;ctx.fillRect(r*0.5+6,-5,3,10);
-        ctx.fillStyle='#e6ecf8';ctx.beginPath();ctx.moveTo(r*0.5+9,-2.5);ctx.lineTo(r+24,-2.5);ctx.lineTo(r+30,0);ctx.lineTo(r+24,2.5);ctx.lineTo(r*0.5+9,2.5);ctx.closePath();ctx.fill();
+        ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+9,-2.5);ctx.lineTo(r+24,-2.5);ctx.lineTo(r+30,0);ctx.lineTo(r+24,2.5);ctx.lineTo(r*0.5+9,2.5);ctx.closePath();ctx.fill();
         // 片手剣は小さな盾も持つ
         ctx.restore();ctx.save();ctx.rotate(p.facing-1.4);ctx.fillStyle='#8a6a3a';ctx.beginPath();ctx.arc(r*0.9,0,5,0,TAU);ctx.fill();ctx.strokeStyle=rc;ctx.lineWidth=1.5;ctx.stroke();
       }
@@ -4111,12 +4132,7 @@ const Renderer={
     if(behind)drawSword();
     const step=p.moving?Math.sin(p.walk)*1.5:0;
     const pc=PLAYER_COLORS[p.slot%PLAYER_COLORS.length];
-    ctx.fillStyle=p.hurt>0?'#ff8080':pc.body;ctx.strokeStyle=pc.rim;ctx.lineWidth=2;
-    ctx.beginPath();ctx.arc(0,step,r,0,TAU);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#f0d8b8';ctx.beginPath();ctx.arc(Math.cos(p.facing)*r*0.35,Math.sin(p.facing)*r*0.35+step,r*0.5,0,TAU);ctx.fill();
-    ctx.fillStyle='#202840';
-    const px=Math.cos(p.facing+Math.PI/2),py=Math.sin(p.facing+Math.PI/2);
-    for(const sd of [-1,1]){ctx.beginPath();ctx.arc(Math.cos(p.facing)*r*0.55+px*sd*3,Math.sin(p.facing)*r*0.55+py*sd*3+step,1.6,0,TAU);ctx.fill();}
+    this.drawPlayerBody(ctx,p,r,step,pc,lk);
     if(!behind)drawSword();
     ctx.restore();
     // 納刀動作のゲージ
@@ -4134,6 +4150,66 @@ const Renderer={
     }
     // 複数人のときは頭上に 1P / 2P を表示し、倒れていれば助け起こしの進み具合を出す
     if(this.multi)this.drawPlayerLabel(ctx,p);
+  },
+  /** プレイヤーの体（装備によって見た目が変わる）。lk＝部位→装備ID */
+  drawPlayerBody(ctx,p,r,step,pc,lk){
+    const L=sl=>gearLook(lk[sl]),body=L('body'),head=L('head'),arms=L('arms'),waist=L('waist'),legs=L('legs');
+    const hurt=p.hurt>0,f=p.facing,fx=Math.cos(f),fy=Math.sin(f),px=-fy,py=fx;
+    // 脚：歩くと交互に動く靴（体の下側にのぞく）
+    const ws=p.moving?Math.sin(p.walk):0;
+    for(const sd of [-1,1]){
+      const lx=sd*r*0.42,ly=r*0.72+step*0.3+sd*ws*2.2;
+      ctx.fillStyle=legs?legs.dark:'#3a3040';ctx.beginPath();ctx.ellipse(lx,ly,r*0.3,r*0.24,0,0,TAU);ctx.fill();
+      if(legs){ctx.fillStyle=legs.main;ctx.beginPath();ctx.ellipse(lx,ly-1.5,r*0.24,r*0.16,0,0,TAU);ctx.fill();}
+    }
+    // 胴：防具の色（布の服・装備なしならプレイヤーの色）。縁取りはいつもプレイヤーの色
+    ctx.fillStyle=hurt?'#ff8080':(body?body.main:pc.body);ctx.strokeStyle=pc.rim;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,step,r,0,TAU);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.arc(0,step,r-1,0,TAU);ctx.clip();
+    if(body&&!hurt){ // 防具の胴：胸当ての模様と、誰か分かるようプレイヤー色のたすき
+      ctx.fillStyle=body.dark;ctx.beginPath();ctx.arc(0,step,r*0.62,0,TAU);ctx.fill();
+      ctx.fillStyle=body.main;ctx.beginPath();ctx.arc(0,step,r*0.48,0,TAU);ctx.fill();
+      ctx.strokeStyle=pc.body;ctx.lineWidth=3.5;ctx.beginPath();ctx.moveTo(-r,step-r*0.7);ctx.lineTo(r,step+r*0.7);ctx.stroke();
+    }
+    if(waist&&!hurt){ // 腰：ベルトと留め具
+      ctx.fillStyle=waist.dark;ctx.fillRect(-r,step+r*0.28,r*2,r*0.26);
+      ctx.fillStyle=waist.accent;ctx.fillRect(-r*0.16,step+r*0.26,r*0.32,r*0.3);
+    }
+    ctx.restore();
+    ctx.beginPath();ctx.arc(0,step,r,0,TAU);ctx.stroke();
+    // 腕：両肩の肩当て
+    if(arms)for(const sd of [-1,1]){
+      const ax=sd*r*0.92,ay=step-r*0.12;
+      ctx.fillStyle=arms.main;ctx.strokeStyle=arms.dark;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(ax,ay,r*0.36,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=arms.accent;ctx.beginPath();ctx.arc(ax,ay-r*0.08,r*0.12,0,TAU);ctx.fill();
+    }
+    // 頭（顔は向いている方へ）
+    const hx=fx*r*0.35,hy=fy*r*0.35+step,hr=r*0.5;
+    ctx.fillStyle='#f0d8b8';ctx.beginPath();ctx.arc(hx,hy,hr,0,TAU);ctx.fill();
+    ctx.fillStyle='#202840';
+    for(const sd of [-1,1]){ctx.beginPath();ctx.arc(fx*r*0.55+px*sd*3,fy*r*0.55+py*sd*3+step,1.6,0,TAU);ctx.fill();}
+    if(head){ // 兜：頭の後ろ半分を覆い、シリーズの飾りを付ける
+      ctx.fillStyle=head.main;ctx.strokeStyle=head.dark;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(hx,hy,hr+1.5,f+Math.PI*0.42,f+Math.PI*1.58);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle=head.accent;ctx.beginPath();ctx.arc(hx-fx*hr*0.55,hy-fy*hr*0.55,hr*0.22,0,TAU);ctx.fill();
+      if(head.orn==='ears'){ // 獣の耳
+        for(const sd of [-1,1]){
+          const a=f+Math.PI+sd*Math.PI*0.62,bx=hx+Math.cos(a)*hr,by=hy+Math.sin(a)*hr,o=a+sd*0.25;
+          ctx.fillStyle=head.dark;ctx.beginPath();ctx.moveTo(bx+Math.cos(a+Math.PI/2)*3.5,by+Math.sin(a+Math.PI/2)*3.5);
+          ctx.lineTo(bx+Math.cos(o)*hr*0.85,by+Math.sin(o)*hr*0.85);ctx.lineTo(bx-Math.cos(a+Math.PI/2)*3.5,by-Math.sin(a+Math.PI/2)*3.5);ctx.closePath();ctx.fill();
+        }
+      }else if(head.orn==='horns'){ // 前に反った角
+        ctx.strokeStyle=head.accent;ctx.lineWidth=3;ctx.lineCap='round';
+        for(const sd of [-1,1]){
+          const bx=hx+px*sd*hr*0.9,by=hy+py*sd*hr*0.9;
+          ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+px*sd*hr*0.9,by+py*sd*hr*0.9,bx+px*sd*hr*0.5+fx*hr*1.1,by+py*sd*hr*0.5+fy*hr*1.1);ctx.stroke();
+        }
+        ctx.lineCap='butt';
+      }else if(head.orn==='skull'){ // 骨の兜：目のくぼみ模様
+        ctx.fillStyle=head.dark;for(const sd of [-1,1]){ctx.beginPath();ctx.arc(hx-fx*hr*0.2+px*sd*hr*0.35,hy-fy*hr*0.2+py*sd*hr*0.35,1.4,0,TAU);ctx.fill();}
+      }
+    }
   },
   drawPlayerLabel(ctx,p){
     const r=p.r,pc=PLAYER_COLORS[p.slot%PLAYER_COLORS.length];
