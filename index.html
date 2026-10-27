@@ -179,6 +179,7 @@ const SLOTS=['weapon','head','body','arms','waist','legs'];
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
 const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb'];
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
+const VOL_SCALE=0.5; // 音量の全体倍率（設定画面の表示も同じ倍率で出す）
 const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚'};
 const STAT_NAMES={maxHp:'最大HP',atk:'攻撃力',def:'防御力',crit:'会心率',critDmg:'会心ダメージ',moveSpd:'移動速度',atkSpd:'攻撃速度',dodgeIframe:'回避後無敵',drainChance:'吸血確率'};
 const STAT_UNITS={crit:'%',critDmg:'%',moveSpd:'%',atkSpd:'%',dodgeIframe:'秒',drainChance:'%'};
@@ -4322,7 +4323,8 @@ const Sound={
   /** 最初の操作で音を出せるようにする（ブラウザの自動再生の決まり） */
   unlock(){this.init();if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();},
   setVolumes(bgm,sfx){this.bgmVol=bgm;this.sfxVol=sfx;this.applyVolumes();},
-  applyVolumes(){if(!this.ctx)return;const t=this.ctx.currentTime;this.music.gain.setTargetAtTime(this.bgmVol*0.9,t,0.05);this.sfx.gain.setTargetAtTime(this.sfxVol,t,0.05);},
+  /* 設定の音量はすべて半分の大きさで鳴らす（スライダーの最大が、実際の半分の音量になる） */
+  applyVolumes(){if(!this.ctx)return;const t=this.ctx.currentTime;this.music.gain.setTargetAtTime(this.bgmVol*0.9*VOL_SCALE,t,0.05);this.sfx.gain.setTargetAtTime(this.sfxVol*VOL_SCALE,t,0.05);},
   now(){return this.ctx?this.ctx.currentTime:0;},
 
   /* ---------- 音を作る部品 ---------- */
@@ -4891,7 +4893,7 @@ const UI={
   padKey(el){
     if(!el)return '';
     const d=el.dataset;
-    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||''].join('|');
+    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||''].join('|');
   },
   focusRoot(){
     if(this.modalOpen())return this.modal;
@@ -5985,12 +5987,17 @@ const App={
   onPadNav(dir){if(this.state!=='playing')UI.padNav(dir);},
   openInventory(from){this.returnState=from;this.inv.decoPick=null;if(Net.role)this.inv.who=0;this.goto('inventory');},
   goto(st){
+    const was=this.state;
     this.state=st;
     switch(st){
       case 'camp':this.world=null;this.inGame=false;UI.notes.style.top='';UI.show(this.campHTML());break;
       case 'online':UI.show(this.onlineHTML());break;
       case 'board':UI.show(this.boardHTML());break;
-      case 'smith':UI.show(this.smithHTML());break;
+      case 'smith':
+        if(was!=='smith'){this.smithCat='weapon';this.smithSub='all';} // 入るたびに武器から
+        UI.show(this.smithHTML());
+        if(was!=='smith'&&Input.uiPad)UI.restoreFocus(UI.padKey({dataset:{act:'smithCat',c:'weapon'}}));
+        break;
       case 'bestiary':UI.show(this.bestiaryHTML());break;
       case 'shop':UI.show(this.shopHTML());break;
       case 'lobby':if(!this.inGame)this.world=null;UI.notes.style.top='';UI.show(this.lobbyHTML());break;
@@ -6235,8 +6242,8 @@ const App={
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       <div class="setting" style="display:block">HP・回避などの表示の大きさ（いまは ${Math.round((s.hudScale||CONFIG.hud.scale)*100)}%）
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
-      ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
-        <div class="filters" style="margin-top:6px">${[0,0.25,0.5,0.75,1].map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100)+'%'}</button>`).join('')}</div></div>`).join('')}
+      ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100*VOL_SCALE)}%）
+        <div class="filters" style="margin-top:6px">${[0,0.25,0.5,0.75,1].map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100*VOL_SCALE)+'%'}</button>`).join('')}</div></div>`).join('')}
       <div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div></div>`;
   },
   gameoverHTML(){
