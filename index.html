@@ -188,6 +188,7 @@ const CONFIG={
   minionHp:4.5, // ボス以外の魔物の体力倍率（人数に関係なく一定）：従来の3倍 × 1.5
   bossHpByParty:{1:1,2:1.6,3:2.2,4:2.8,5:3.4}, // ボスの体力倍率（オンラインの人数ごと）
   bossBoost:{hp:1.2,atk:1.15}, // ボスの体力・攻撃力の追加倍率
+  killQuota:[1,1.3,1.6,1.9,2.2], // 討伐依頼の目標数の倍率（人数ごと）
   spawnRate:0.25, // 部屋や通路に置く魔物の数の倍率（ボス・中ボスは対象外）
   // 中ボス（ザコの大きい版）：1回の探索に count 体。報酬は bonusRolls 回多く抽選＋ midboss の表
   midBoss:{hp:6,atk:1.55,size:1.6,count:[1,2],bonusRolls:2,exclude:['mushroom','shaman','cursed_knight']},
@@ -1592,9 +1593,17 @@ function stageRoster(stage){
   for(const t of L.wander||[])if(!out.includes(t))out.push(t);
   return out;
 }
+/** 人数に応じた依頼の目標数（討伐依頼だけ人数で増える） */
+function questNeed(g,np){
+  if(g.type!=='kill')return g.count;
+  return Math.round(g.count*CONFIG.killQuota[clamp(np||1,1,5)-1]);
+}
+/** いま話題にしている人数（オンラインならロビーの人数、ひとりなら1） */
+function partySize(){return (typeof Net!=='undefined'&&Net.role)?Math.max(1,Net.lobbyList().length):1;}
 /** 依頼の目標を文章にする */
-function questGoalText(g){
-  if(g.type==='kill')return (g.target==='any'?'魔物':DATA.enemies[g.target].name)+'を'+g.count+'体討伐';
+function questGoalText(g,np){
+  np=np||partySize();
+  if(g.type==='kill')return (g.target==='any'?'魔物':DATA.enemies[g.target].name)+'を'+questNeed(g,np)+'体討伐';
   if(g.type==='chest')return '宝箱を'+g.count+'個開ける';
   return 'ボスを討伐';
 }
@@ -1628,7 +1637,7 @@ function createWorld(opts){
     // 人数が増えるほど敵のHPを増やす（2人で1.5倍）
     diff:{hp:stage.hp*(1+CONFIG.coop.hpPerExtraPlayer*(np-1)),atk:stage.atk,level:stage.id},
     flow:null,flowTimer:0,
-    quest:{title:quest.name,goal,progress:0,need:goal.type==='boss'?1:goal.count,done:false,
+    quest:{title:quest.name,goal,progress:0,need:goal.type==='boss'?1:questNeed(goal,np),done:false,
       killed:0,total:0,chests:0,chestsTotal:0,boss:goal.type==='boss'?'unseen':'none',bossType:goal.type==='boss'?(quest.boss||stage.enemySet.boss):null},
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
   if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
@@ -1662,7 +1671,7 @@ function populateLayout(w,stage,quest,L){
   // 討伐依頼は、目標数より少し多く対象が出るようにする（必ず達成できるように）
   if(goal.type==='kill'){
     const match=e=>!e.boss&&(goal.target==='any'||e.type===goal.target);
-    const want=goal.count+2,type=goal.target==='any'?S.melee:goal.target;
+    const want=questNeed(goal,w.playerCount)+2,type=goal.target==='any'?S.melee:goal.target;
     for(let guard=0;w.enemies.filter(match).length<want&&guard<60;guard++){const p=randomFloor(m,pick(rooms).rect,2);if(p)spawnEnemy(w,type,p.x,p.y);}
   }
   // 宝箱：「必ず置く」部屋から先に、残りは道や寄り道の部屋へ。出現は確率制（宝箱の依頼に必要な数だけは必ず置く）
@@ -1716,7 +1725,7 @@ function populate(w,stage,quest){
   // 討伐依頼は、目標数より少し多く対象が出るようにする（必ず達成できるように）
   if(goal.type==='kill'){
     const match=e=>!e.boss&&(goal.target==='any'||e.type===goal.target);
-    const want=goal.count+2,type=goal.target==='any'?M:goal.target;
+    const want=questNeed(goal,w.playerCount)+2,type=goal.target==='any'?M:goal.target;
     const rooms=goal.type!=='boss'?['north','south','hub','boss']:['north','south','hub'];
     for(let guard=0;w.enemies.filter(match).length<want&&guard<40;guard++){
       const p=randomFloor(m,R[pick(rooms)],2);if(p)spawnEnemy(w,type,p.x,p.y);
@@ -4214,7 +4223,7 @@ const Renderer={
     ctx.textAlign='left';ctx.fillStyle='#f3d48a';ctx.font=`bold 13px ${FONT}`;ctx.fillText(q.title,qx+12,30);
     // 目標（達成したら緑）
     ctx.font=`bold 13px ${FONT}`;ctx.fillStyle=q.done?'#5fe08a':'#ffffff';
-    ctx.fillText('目標：'+questGoalText(q.goal)+(q.goal.type==='boss'?'':`　${q.progress} / ${q.need}`)+(q.done?'　達成！':''),qx+12,52);
+    ctx.fillText('目標：'+questGoalText(q.goal,w.playerCount)+(q.goal.type==='boss'?'':`　${q.progress} / ${q.need}`)+(q.done?'　達成！':''),qx+12,52);
     ctx.fillStyle='#cfc7e6';ctx.font=`12px ${FONT}`;
     ctx.fillText(`撃破 ${q.killed} / ${q.total}　宝箱 ${q.chests} / ${q.chestsTotal}`,qx+12,72);
     if(q.boss!=='none'){
@@ -5804,7 +5813,7 @@ const App={
     this.save();
     this.goto('playing');
     Renderer.showBanner((n>1?(Net.role?n+'人で':'ふたりで'):'')+'古狼の迷宮へ　難易度★'+this.world.diff.level);
-    UI.notify('依頼開始：'+esc(this.world.quest.title)+'　目標：'+questGoalText(this.world.quest.goal),'#f3d48a',5);
+    UI.notify('依頼開始：'+esc(this.world.quest.title)+'　目標：'+questGoalText(this.world.quest.goal,this.world.playerCount),'#f3d48a',5);
   },
   /** オンライン：ホストがロビーのメンバー全員で出撃する */
   startOnline(){
@@ -5874,7 +5883,7 @@ const App={
     }
     for(const pid in this.bossRewards)if(res[pid])for(const l of this.bossRewards[pid])res[pid].rewards.push(this.grantLoot(l,pid));
     w.drops=[];this.bossRewards={};
-    const base={time:w.time,kills:w.quest.killed,total:w.quest.total,chests:w.quest.chests,chestsTotal:w.quest.chestsTotal,questName:q.name,goal:questGoalText(q.goal)};
+    const base={time:w.time,kills:w.quest.killed,total:w.quest.total,chests:w.quest.chests,chestsTotal:w.quest.chestsTotal,questName:q.name,goal:questGoalText(q.goal,w.playerCount)};
     const mineIds=Net.role?['p1']:pids;
     this.lastResult=Object.assign({},base,{
       rewards:[].concat(...mineIds.map(pid=>res[pid]?res[pid].rewards:[])),
