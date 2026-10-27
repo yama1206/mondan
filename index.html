@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>古狼の迷宮</title>
+<title>モンスターダンジョンズ</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#0b0a10;color:#e8e6f0;
@@ -138,7 +138,7 @@ body.touch-edit #touch .tb,body.touch-edit #touch .stick{pointer-events:auto;out
 <script>
 'use strict';
 /* =====================================================================
-   古狼の迷宮 — 見下ろし型ハック＆スラッシュ
+   モンスターダンジョンズ（モンダン） — 見下ろし型ハック＆スラッシュ
    構成:
      1. ユーティリティ
      2. 設定・ゲームデータ（DATA）…ここを書き換えればバランス調整できます
@@ -5812,7 +5812,7 @@ const App={
     this.refreshInfo();
     this.save();
     this.goto('playing');
-    Renderer.showBanner((n>1?(Net.role?n+'人で':'ふたりで'):'')+'古狼の迷宮へ　難易度★'+this.world.diff.level);
+    Renderer.showBanner((n>1?(Net.role?n+'人で':'ふたりで'):'')+'モンスターダンジョンズへ　難易度★'+this.world.diff.level);
     UI.notify('依頼開始：'+esc(this.world.quest.title)+'　目標：'+questGoalText(this.world.quest.goal,this.world.playerCount),'#f3d48a',5);
   },
   /** オンライン：ホストがロビーのメンバー全員で出撃する */
@@ -6324,7 +6324,7 @@ const App={
   },
   campHTML(){
     const p=this.profile;
-    return `<div class="panel camp"><h1>古狼の迷宮</h1><p class="sub">見下ろし型ハック＆スラッシュ・アクションRPG</p>
+    return `<div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
       <div class="campinfo">${this.charLine(0)}<br>${this.charLine(1)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span>（2人で共有）<br>
       解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
