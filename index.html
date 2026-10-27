@@ -5265,6 +5265,14 @@ const Net={
       return;
     }
     const m=this.members.find(x=>x.conn===conn);if(!m)return;
+    if(d.t==='resend'){ // 参加者がロビーのまま取り残されたとき：出発の合図を送り直す
+      if(App.inGame&&App.world){
+        this.sendTo(m.pid,this.startMessage(App.world,m.pid));
+        this.sendTo(m.pid,{t:'profile',profile:m.profile});
+        this.sendTo(m.pid,this.snapshot(App.world,true));
+      }
+      return;
+    }
     if(d.t==='i'){
       this.inputs[m.pid]=d;
       const e=this.edges[m.pid]||(this.edges[m.pid]=newEdges());
@@ -5399,7 +5407,11 @@ const Net={
         App.goto('lobby');
         break;
       case 'reject':this.status(d.reason,'#ff6b6b');UI.notify(esc(d.reason),'#ff6b6b',5);this.cleanup();this.busy=false;break;
-      case 'lobby':this.members=Array.isArray(d.members)?d.members:[];this.lobbyQuest=d.quest||null;if(App.state==='lobby')App.goto('lobby');break;
+      case 'lobby':this.members=Array.isArray(d.members)?d.members:[];this.lobbyQuest=d.quest||null;
+        if(App.state==='lobby'&&d.inGame){ // 出発しているのにロビーのままなら、合図を送り直してもらう（3秒に1回まで）
+          const now=Date.now();if(now-(this.resendAt||0)>3000){this.resendAt=now;this.send({t:'resend'});}
+        }
+        if(App.state==='lobby')App.goto('lobby');break;
       case 'profile':App.applyHostProfile(d.profile);break;
       case 'sel':App.inv.sel=d.uid;App.refreshPanel();if(App.state==='smith')App.askEquip(d.uid);break;
       case 'notify':UI.notify(String(d.text||''),d.color||'#888',d.dur||2.5);break;
