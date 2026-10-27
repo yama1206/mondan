@@ -342,6 +342,18 @@ const DATA={
       pieces:{head:'bwolf_helm',body:'bwolf_mail',arms:'bwolf_vambrace',waist:'bwolf_faulds',legs:'bwolf_greaves'},need:4,apply:s=>{s.atkPct+=15;s.itemDelayAdj-=0.5;}},
     bull:{name:'暴角シリーズ',bonus:'暴角の守り',desc:'受けるダメージ-8%、攻撃を受けたときの吹き飛び-50%',
       pieces:{head:'bull_helm',body:'bull_mail',arms:'bull_vambrace',waist:'bull_faulds',legs:'bull_greaves'},need:4,apply:s=>{s.dmgCut+=8;s.knockRes+=50;}},
+    gale:{name:'疾風シリーズ',bonus:'疾風の翼',desc:'移動速度+8%、回避で動く距離+15%',
+      pieces:{head:'gale_helm',body:'gale_mail',arms:'gale_vambrace',waist:'gale_faulds',legs:'gale_greaves'},need:4,apply:s=>{s.moveSpd+=8;s.dodgeDistPct+=15;}},
+    lizard:{name:'大蜥蜴シリーズ',bonus:'岩肌の生命力',desc:'最大HP+25、受けるダメージ-5%',
+      pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},need:4,apply:s=>{s.maxHp+=25;s.dmgCut+=5;}},
+    stag:{name:'大顎シリーズ',bonus:'大顎の甲殻',desc:'防御力+15、攻撃を受けたときの吹き飛び-50%',
+      pieces:{head:'stag_helm',body:'stag_mail',arms:'stag_vambrace',waist:'stag_faulds',legs:'stag_greaves'},need:4,apply:s=>{s.def+=15;s.knockRes+=50;}},
+    hydra:{name:'多頭竜シリーズ',bonus:'多頭の執念',desc:'攻撃力+8%、HPが毎秒0.5ずつ回復',
+      pieces:{head:'hydra_helm',body:'hydra_mail',arms:'hydra_vambrace',waist:'hydra_faulds',legs:'hydra_greaves'},need:4,apply:s=>{s.atkPct+=8;s.regen+=0.5;}},
+    venom:{name:'毒蟲シリーズ',bonus:'毒蟲の猛毒',desc:'会心率+10%、会心ダメージ+15%',
+      pieces:{head:'venom_helm',body:'venom_mail',arms:'venom_vambrace',waist:'venom_faulds',legs:'venom_greaves'},need:4,apply:s=>{s.crit+=10;s.critDmg+=15;}},
+    mire:{name:'沼巨人シリーズ',bonus:'沼巨人の剛体',desc:'最大HP+50、攻撃を受けたときの吹き飛び-50%',
+      pieces:{head:'mire_helm',body:'mire_mail',arms:'mire_vambrace',waist:'mire_faulds',legs:'mire_greaves'},need:4,apply:s=>{s.maxHp+=50;s.knockRes+=50;}},
     haro:{name:'覇狼シリーズ',bonus:'覇狼の威風',desc:'会心ダメージ+20%、移動速度+6%',
       pieces:{head:'haro_helm',body:'haro_mail',arms:'haro_vambrace',waist:'haro_faulds',legs:'haro_greaves'},need:4,apply:s=>{s.critDmg+=20;s.moveSpd+=6;}},
   },
@@ -397,6 +409,59 @@ const DATA={
     bull_vambrace:{name:'暴角の籠手',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{flinch_free:3,atk_up:2},slots:1},
     bull_faulds:{name:'暴角の腰当て',slot:'waist',def:6,skills:{flinch_free:2,def_up:2},slots:1},
     bull_greaves:{name:'暴角の脚当て',slot:'legs',def:7,skills:{flinch_free:2,dodge_dist:3},slots:1},
+    // ---- 疾風シリーズ（疾風怪鳥・草原）：素早さと回避 ----
+    gale_sword:{name:'疾風の剣',slot:'weapon',wtype:'sword',atk:17,crit:8,fixed:[{stat:'atkSpd',v:6}],slots:1},
+    gale_db:{name:'疾風の双剣',slot:'weapon',wtype:'dual',atk:15,crit:12,fixed:[{stat:'moveSpd',v:5}],slots:1},
+    gale_bow:{name:'疾風の弓',slot:'weapon',wtype:'bow',atk:14,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
+    gale_helm:{name:'疾風の羽冠',slot:'head',def:7,fixed:[{stat:'crit',v:2}],skills:{evade:3,move_up:2},slots:1},
+    gale_mail:{name:'疾風の羽衣',slot:'body',def:8,fixed:[{stat:'maxHp',v:10}],skills:{move_up:4,evade:2},slots:1},
+    gale_vambrace:{name:'疾風の翼手',slot:'arms',def:6,skills:{evade:3,item_speed:2},slots:1},
+    gale_faulds:{name:'疾風の尾羽',slot:'waist',def:6,skills:{evade:2,move_up:2},slots:1},
+    gale_greaves:{name:'疾風の鉤爪',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{move_up:3,dodge_dist:3},slots:1},
+    // ---- 大蜥蜴シリーズ（岩肌の大蜥蜴・草原）：体力と自動回復 ----
+    lizard_tachi:{name:'大蜥蜴の太刀',slot:'weapon',wtype:'tachi',atk:18,crit:8,fixed:[{stat:'critDmg',v:8}],slots:1},
+    lizard_whip:{name:'大蜥蜴の尾鞭',slot:'weapon',wtype:'whip',atk:17,crit:6,fixed:[{stat:'maxHp',v:15}],slots:1},
+    lizard_gs:{name:'大蜥蜴の大剣',slot:'weapon',wtype:'greatsword',atk:19,crit:3,fixed:[{stat:'def',v:3}],slots:1},
+    lizard_helm:{name:'大蜥蜴の兜',slot:'head',def:8,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:3,regen:2},slots:1},
+    lizard_mail:{name:'大蜥蜴の鱗鎧',slot:'body',def:10,fixed:[{stat:'maxHp',v:15}],skills:{hp_up:4,def_up:2},slots:1},
+    lizard_vambrace:{name:'大蜥蜴の棘肩',slot:'arms',def:7,fixed:[{stat:'atk',v:1}],skills:{atk_up:3,hp_up:1},slots:1},
+    lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{regen:4,hp_up:2},slots:1},
+    lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
+    // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
+    stag_gs:{name:'大顎の大剣',slot:'weapon',wtype:'greatsword',atk:29,crit:4,fixed:[{stat:'critDmg',v:12}],slots:2},
+    stag_hammer:{name:'大顎のハンマー',slot:'weapon',wtype:'hammer',atk:29,crit:2,fixed:[{stat:'def',v:5}],slots:2},
+    stag_db:{name:'大顎の双剣',slot:'weapon',wtype:'dual',atk:25,crit:12,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    stag_helm:{name:'大顎の兜',slot:'head',def:12,fixed:[{stat:'def',v:2}],skills:{def_up:3,flinch_free:3},slots:2},
+    stag_mail:{name:'大顎の甲殻',slot:'body',def:16,fixed:[{stat:'maxHp',v:25}],skills:{def_up:4,dmg_cut:3},slots:2},
+    stag_vambrace:{name:'大顎の肩甲',slot:'arms',def:11,fixed:[{stat:'atk',v:3}],skills:{atk_up:3,def_up:2},slots:2},
+    stag_faulds:{name:'大顎の腰甲',slot:'waist',def:11,skills:{dmg_cut:3,flinch_free:3},slots:2},
+    stag_greaves:{name:'大顎の脚甲',slot:'legs',def:12,skills:{dmg_cut:4,flinch_free:2,def_up:1},slots:2},
+    // ---- 多頭竜シリーズ（ヒュドラ・沼地）：毒耐性と攻撃 ----
+    hydra_sword:{name:'多頭竜の剣',slot:'weapon',wtype:'sword',atk:28,crit:10,fixed:[{stat:'maxHp',v:20}],slots:2},
+    hydra_whip:{name:'多頭竜の鞭',slot:'weapon',wtype:'whip',atk:27,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    hydra_bow:{name:'多頭竜の弓',slot:'weapon',wtype:'bow',atk:24,crit:8,fixed:[{stat:'critDmg',v:10}],slots:2},
+    hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,fixed:[{stat:'crit',v:3}],skills:{poison_res:3,atk_up:2},slots:2},
+    hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:17,fixed:[{stat:'maxHp',v:30}],skills:{poison_res:4,hp_up:3},slots:2},
+    hydra_vambrace:{name:'多頭竜の蛇肩',slot:'arms',def:12,fixed:[{stat:'atk',v:3}],skills:{atk_up:4,poison_res:1},slots:2},
+    hydra_faulds:{name:'多頭竜の尾',slot:'waist',def:12,skills:{regen:3,poison_res:2},slots:2},
+    hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,fixed:[{stat:'moveSpd',v:3}],skills:{atk_up:4,regen:2},slots:2},
+    // ---- 毒蟲シリーズ（毒蟲王・沼地）：会心と状態異常耐性 ----
+    venom_db:{name:'毒蟲の双剣',slot:'weapon',wtype:'dual',atk:26,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    venom_tachi:{name:'毒蟲の太刀',slot:'weapon',wtype:'tachi',atk:29,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
+    venom_bow:{name:'毒蟲の弓',slot:'weapon',wtype:'bow',atk:24,crit:10,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    venom_helm:{name:'毒蟲の触角兜',slot:'head',def:12,fixed:[{stat:'crit',v:4}],skills:{crit_up:3,status_res:2},slots:2},
+    venom_mail:{name:'毒蟲の甲殻',slot:'body',def:16,fixed:[{stat:'maxHp',v:25}],skills:{status_res:4,crit_up:3},slots:2},
+    venom_vambrace:{name:'毒蟲の脚肩',slot:'arms',def:11,fixed:[{stat:'atk',v:2}],skills:{crit_up:4,item_speed:2},slots:2},
+    venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{status_res:4,item_speed:2},slots:2},
+    venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,fixed:[{stat:'moveSpd',v:4}],skills:{item_speed:3,evade:3},slots:2},
+    // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
+    mire_hammer:{name:'沼巨人のハンマー',slot:'weapon',wtype:'hammer',atk:32,crit:0,fixed:[{stat:'maxHp',v:30}],slots:2},
+    mire_gs:{name:'沼巨人の大剣',slot:'weapon',wtype:'greatsword',atk:32,crit:3,fixed:[{stat:'def',v:5}],slots:2},
+    mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,heal_up:2},slots:2},
+    mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,fixed:[{stat:'maxHp',v:40}],skills:{hp_up:4,def_up:3},slots:2},
+    mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{hp_up:3,atk_up:2},slots:2},
+    mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{heal_up:4,hp_up:2},slots:2},
+    mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,hp_up:1},slots:2},
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
     haro_tachi:{name:'覇狼の太刀',slot:'weapon',wtype:'tachi',atk:26,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
     haro_db:{name:'覇狼の双剣',slot:'weapon',wtype:'dual',atk:23,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
@@ -1106,6 +1171,59 @@ const DATA={
     {id:'r_bwarms',out:{type:'equip',id:'bwolf_vambrace'},cost:{bwolf_fang:1,dark_bone:2,hard_iron:2},stage:5},
     {id:'r_bwlegs',out:{type:'equip',id:'bwolf_greaves'},cost:{bwolf_pelt:2,dark_bone:2},stage:5},
     {id:'r_bwwaist',out:{type:'equip',id:'bwolf_faulds'},cost:{bwolf_pelt:2,hard_iron:1,dark_bone:1},stage:5},
+    // 疾風シリーズ（疾風怪鳥）
+    {id:'r_gale_sword',out:{type:'equip',id:'gale_sword'},cost:{gale_talon:1,gale_feather:2,scrap_iron:3}},
+    {id:'r_gale_db',out:{type:'equip',id:'gale_db'},cost:{gale_talon:2,gale_feather:1,scrap_iron:2}},
+    {id:'r_gale_bow',out:{type:'equip',id:'gale_bow'},cost:{gale_feather:2,goblin_string:2,gale_talon:1}},
+    {id:'r_gale_helm',out:{type:'equip',id:'gale_helm'},cost:{gale_feather:2,gale_talon:1,goblin_hide:2}},
+    {id:'r_gale_mail',out:{type:'equip',id:'gale_mail'},cost:{gale_feather:3,beast_hide:2}},
+    {id:'r_gale_arms',out:{type:'equip',id:'gale_vambrace'},cost:{gale_feather:2,slime_gel:2}},
+    {id:'r_gale_waist',out:{type:'equip',id:'gale_faulds'},cost:{gale_feather:2,goblin_string:1,goblin_hide:1}},
+    {id:'r_gale_legs',out:{type:'equip',id:'gale_greaves'},cost:{gale_talon:1,gale_feather:1,beast_hide:2}},
+    // 大蜥蜴シリーズ（岩肌の大蜥蜴）
+    {id:'r_lizard_tachi',out:{type:'equip',id:'lizard_tachi'},cost:{lizard_spine:2,lizard_scale:1,beast_fang:2}},
+    {id:'r_lizard_whip',out:{type:'equip',id:'lizard_whip'},cost:{lizard_scale:2,lizard_spine:1,beast_hide:2}},
+    {id:'r_lizard_gs',out:{type:'equip',id:'lizard_gs'},cost:{lizard_spine:2,lizard_scale:2,scrap_iron:3}},
+    {id:'r_lizard_helm',out:{type:'equip',id:'lizard_helm'},cost:{lizard_scale:2,lizard_spine:1,beast_fang:1}},
+    {id:'r_lizard_mail',out:{type:'equip',id:'lizard_mail'},cost:{lizard_scale:3,goblin_hide:2}},
+    {id:'r_lizard_arms',out:{type:'equip',id:'lizard_vambrace'},cost:{lizard_spine:1,lizard_scale:1,beast_fang:2}},
+    {id:'r_lizard_waist',out:{type:'equip',id:'lizard_faulds'},cost:{lizard_scale:2,beast_hide:2}},
+    {id:'r_lizard_legs',out:{type:'equip',id:'lizard_greaves'},cost:{lizard_scale:2,slime_gel:2}},
+    // 大顎シリーズ（大顎クワガタ）
+    {id:'r_stag_gs',out:{type:'equip',id:'stag_gs'},cost:{stag_mandible:2,stag_shell:2,scrap_iron:3}},
+    {id:'r_stag_hammer',out:{type:'equip',id:'stag_hammer'},cost:{stag_shell:3,stag_mandible:1,wood:3}},
+    {id:'r_stag_db',out:{type:'equip',id:'stag_db'},cost:{stag_mandible:2,beast_fang:2,hard_shell:1}},
+    {id:'r_stag_helm',out:{type:'equip',id:'stag_helm'},cost:{stag_shell:2,stag_mandible:1,hard_shell:2}},
+    {id:'r_stag_mail',out:{type:'equip',id:'stag_mail'},cost:{stag_shell:3,hard_shell:2}},
+    {id:'r_stag_arms',out:{type:'equip',id:'stag_vambrace'},cost:{stag_shell:2,stag_mandible:1,beast_fang:1}},
+    {id:'r_stag_waist',out:{type:'equip',id:'stag_faulds'},cost:{stag_shell:2,hard_shell:1,wood:2}},
+    {id:'r_stag_legs',out:{type:'equip',id:'stag_greaves'},cost:{stag_shell:2,hard_shell:2,beast_hide:1}},
+    // 多頭竜シリーズ（ヒュドラ）
+    {id:'r_hydra_sword',out:{type:'equip',id:'hydra_sword'},cost:{hydra_scale:2,toxic_gland:2,croc_scale:1},stage:3},
+    {id:'r_hydra_whip',out:{type:'equip',id:'hydra_whip'},cost:{hydra_scale:2,leech_skin:2,toxic_gland:1},stage:3},
+    {id:'r_hydra_bow',out:{type:'equip',id:'hydra_bow'},cost:{hydra_scale:2,swamp_moss:2,toxic_gland:1},stage:3},
+    {id:'r_hydra_helm',out:{type:'equip',id:'hydra_helm'},cost:{hydra_scale:2,toxic_gland:1,croc_scale:1},stage:3},
+    {id:'r_hydra_mail',out:{type:'equip',id:'hydra_mail'},cost:{hydra_scale:3,croc_scale:2},stage:3},
+    {id:'r_hydra_arms',out:{type:'equip',id:'hydra_vambrace'},cost:{hydra_scale:2,leech_skin:2},stage:3},
+    {id:'r_hydra_waist',out:{type:'equip',id:'hydra_faulds'},cost:{hydra_scale:2,swamp_moss:2},stage:3},
+    {id:'r_hydra_legs',out:{type:'equip',id:'hydra_greaves'},cost:{hydra_scale:2,leech_skin:1,croc_scale:1},stage:3},
+    // 毒蟲シリーズ（毒蟲王）
+    {id:'r_venom_db',out:{type:'equip',id:'venom_db'},cost:{venom_shell:2,poison_sac:2,toxic_gland:1},stage:3},
+    {id:'r_venom_tachi',out:{type:'equip',id:'venom_tachi'},cost:{venom_shell:2,parasite_core:1,poison_sac:1},stage:3},
+    {id:'r_venom_bow',out:{type:'equip',id:'venom_bow'},cost:{venom_shell:2,parasite_core:1,leech_skin:1},stage:3},
+    {id:'r_venom_helm',out:{type:'equip',id:'venom_helm'},cost:{venom_shell:2,parasite_core:1},stage:3},
+    {id:'r_venom_mail',out:{type:'equip',id:'venom_mail'},cost:{venom_shell:3,poison_sac:2},stage:3},
+    {id:'r_venom_arms',out:{type:'equip',id:'venom_vambrace'},cost:{venom_shell:2,toxic_gland:2},stage:3},
+    {id:'r_venom_waist',out:{type:'equip',id:'venom_faulds'},cost:{venom_shell:2,poison_sac:1,parasite_core:1},stage:3},
+    {id:'r_venom_legs',out:{type:'equip',id:'venom_greaves'},cost:{venom_shell:2,leech_skin:2},stage:3},
+    // 沼巨人シリーズ（腐敗の沼巨人）
+    {id:'r_mire_hammer',out:{type:'equip',id:'mire_hammer'},cost:{mire_core:2,swamp_moss:3,croc_scale:2},stage:3},
+    {id:'r_mire_gs',out:{type:'equip',id:'mire_gs'},cost:{mire_core:2,croc_scale:2,swamp_moss:2},stage:3},
+    {id:'r_mire_helm',out:{type:'equip',id:'mire_helm'},cost:{mire_core:1,swamp_moss:2,croc_scale:1},stage:3},
+    {id:'r_mire_mail',out:{type:'equip',id:'mire_mail'},cost:{mire_core:1,swamp_moss:3,croc_scale:2},stage:3},
+    {id:'r_mire_arms',out:{type:'equip',id:'mire_vambrace'},cost:{mire_core:1,croc_scale:2,leech_skin:1},stage:3},
+    {id:'r_mire_waist',out:{type:'equip',id:'mire_faulds'},cost:{mire_core:1,swamp_moss:3},stage:3},
+    {id:'r_mire_legs',out:{type:'equip',id:'mire_greaves'},cost:{mire_core:1,swamp_moss:2,leech_skin:2},stage:3},
     // 暴角シリーズ（草原の暴角獣）
     {id:'r_bull_hammer',out:{type:'equip',id:'bull_hammer'},cost:{bull_horn:2,bull_hide:1,scrap_iron:4}},
     {id:'r_bull_gs',out:{type:'equip',id:'bull_gs'},cost:{bull_horn:2,bull_hide:2,scrap_iron:3}},
@@ -3116,6 +3234,13 @@ const GEAR_LOOKS={
   bwolf:{main:'#3a3346',dark:'#1a1622',accent:'#d8c8ff',light:'#5a5070',orn:'wolf',fur:true,eye:'#c060ff',blade:'#c8b0ff'},
   // bull：暴角獣の毛皮（兜は角の生えた牛の頭、胴は背中の盛り上がった毛、腰に房のついた尻尾、肩に角のトゲ、靴はひづめ）
   bull:{main:'#9a7a4a',dark:'#5a4428',accent:'#f0e6c8',light:'#c0a070',orn:'bull',beast:'bull',eye:'#ff5a3a',blade:'#f0e6c8'},
+  // beast：GEAR_ART の描き方を使うシリーズ
+  gale:{main:'#5a8ac0',dark:'#2a4a7a',accent:'#ffd060',light:'#a8d0f0',eye:'#ffe040',beast:'gale',blade:'#d8ecff'},
+  lizard:{main:'#7a8a4a',dark:'#3e4a22',accent:'#e8d890',light:'#a8b870',eye:'#ff9020',beast:'lizard',blade:'#e8e0b0'},
+  stag:{main:'#3a2a22',dark:'#160e0a',accent:'#c8a070',light:'#7a5a40',eye:'#ffd040',beast:'stag',blade:'#d8c0a0'},
+  hydra:{main:'#4a6a3a',dark:'#1e2e18',accent:'#e0e8a0',light:'#7a9a5a',eye:'#ffe060',beast:'hydra',blade:'#c8f0a0'},
+  venom:{main:'#5a3a6a',dark:'#2a1a34',accent:'#b8e040',light:'#8a5aa0',eye:'#ffe060',beast:'venom',blade:'#d0b0ff'},
+  mire:{main:'#5a6a4a',dark:'#262e1c',accent:'#c8b070',light:'#8a7a4a',moss:'#4a8a3a',eye:'#ffe060',beast:'mire',blade:'#c8b890'},
   haro:{main:'#5a6a3a',dark:'#2e3a1a',accent:'#fff0b0',light:'#7e9050',orn:'wolf',fur:true,eye:'#a8ff60',blade:'#e8f4b0'},
 };
 function gearLook(id){
@@ -3123,6 +3248,147 @@ function gearLook(id){
   if(id==='fang_king')return GEAR_LOOKS.fang;
   return GEAR_LOOKS[id.split('_')[0]]||null;
 }
+/* ボス装備の見た目（beast ごとの描き方）。部位：head=兜 / body=胴の模様 / waist=腰 / arm=肩（左右それぞれ） / foot=足 / tail=尻尾 / under=体の下に描くもの
+   G：描画の情報（ctx, r=体の半径, step=歩きの上下, f=向き, fx/fy=前方向, px/py=右方向, tm=時間, hx/hy/hr=頭の位置と半径） */
+const GEAR_ART={
+  gale:{ // 疾風怪鳥：くちばしと冠羽の頭、羽根の胴、翼の肩、扇の尾羽、鉤爪
+    head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
+      for(const k of [-1,0,1]){const a=f+Math.PI+k*0.38;ctx.fillStyle=k?l.light:l.dark;ctx.save();ctx.translate(hx+Math.cos(a)*hr*0.9,hy+Math.sin(a)*hr*0.9);ctx.rotate(a);ctx.beginPath();ctx.ellipse(hr*0.4,0,hr*0.75,hr*0.22,0,0,TAU);ctx.fill();ctx.restore();}
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(hx+fx*hr*0.35,hy+fy*hr*0.35,hr*0.6,0,TAU);ctx.fill();
+      ctx.fillStyle=l.accent;ctx.strokeStyle='#8a6a20';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(hx+fx*hr*0.6+px*hr*0.35,hy+fy*hr*0.6+py*hr*0.35);ctx.lineTo(hx+fx*hr*1.8,hy+fy*hr*1.8);ctx.lineTo(hx+fx*hr*0.6-px*hr*0.35,hy+fy*hr*0.6-py*hr*0.35);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.3+px*s*hr*0.6,hy+fy*hr*0.3+py*s*hr*0.6,1.7,0,TAU);ctx.fill();}
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      for(let k=0;k<3;k++)for(let j=-2;j<=2;j++){const d=r*(0.05+k*0.28),x=-fx*d+px*j*r*0.28,y=-fy*d+py*j*r*0.28+step;ctx.fillStyle=(k+j)%2?l.light:l.dark;ctx.beginPath();ctx.ellipse(x,y,r*0.2,r*0.13,f,0,TAU);ctx.fill();}
+    },
+    arm(G,l,sd,ax,ay){const {ctx,r,tm,moving}=G;const flap=Math.sin(tm*(moving?12:4))*0.12;
+      for(let i=0;i<4;i++){const a=(sd>0?0:Math.PI)+sd*((i-1.5)*0.32+flap)-Math.PI*0.08*sd;ctx.fillStyle=i%2?l.light:l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+        ctx.save();ctx.translate(ax,ay);ctx.rotate(a);ctx.beginPath();ctx.ellipse(r*0.42,0,r*0.45,r*0.12,0,0,TAU);ctx.fill();ctx.stroke();ctx.restore();}
+    },
+    tail(G,l){const {ctx,r,step,f,fx,fy,tm,moving}=G;const sw=Math.sin(tm*(moving?8:2.5))*0.12;
+      for(let i=-2;i<=2;i++){const a=f+Math.PI+i*0.28+sw;ctx.save();ctx.translate(-fx*r*0.6,-fy*r*0.6+step);ctx.rotate(a);
+        ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(r*0.55,0,r*0.6,r*0.15,0,0,TAU);ctx.fill();ctx.stroke();
+        ctx.fillStyle=l.light;ctx.beginPath();ctx.ellipse(r*0.95,0,r*0.2,r*0.1,0,0,TAU);ctx.fill();ctx.restore();}
+    },
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.strokeStyle=l.accent;ctx.lineWidth=1.6;ctx.lineCap='round';
+      for(const k of [-1,0,1]){ctx.beginPath();ctx.moveTo(lx,ly+r*0.1);ctx.lineTo(lx+k*r*0.2,ly+r*0.38);ctx.stroke();}ctx.lineCap='butt';}
+  },
+  lizard:{ // 岩肌の大蜥蜴：長い鼻づらと縦長の瞳、鱗と背中の棘、長い尻尾、棘の肩、爪の足
+    head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.accent;for(const k of [-1,0,1]){const a=f+Math.PI+k*0.5,bx=hx+Math.cos(a)*hr*0.9,by=hy+Math.sin(a)*hr*0.9;ctx.beginPath();ctx.moveTo(bx+Math.cos(a+1.6)*2.5,by+Math.sin(a+1.6)*2.5);ctx.lineTo(bx+Math.cos(a)*hr*0.6,by+Math.sin(a)*hr*0.6);ctx.lineTo(bx-Math.cos(a+1.6)*2.5,by-Math.sin(a+1.6)*2.5);ctx.closePath();ctx.fill();}
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.save();ctx.translate(hx+fx*hr*0.95,hy+fy*hr*0.95);ctx.rotate(f);ctx.beginPath();ctx.ellipse(0,0,hr*1.05,hr*0.55,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.ellipse(hr*0.1,0,hr*0.7,hr*0.25,0,0,TAU);ctx.fill();
+      ctx.fillStyle=l.dark;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hr*0.85,s*hr*0.18,hr*0.08,0,TAU);ctx.fill();}ctx.restore();
+      for(const s of [-1,1]){const ex=hx+fx*hr*0.3+px*s*hr*0.62,ey=hy+fy*hr*0.3+py*s*hr*0.62;ctx.fillStyle=l.eye;ctx.beginPath();ctx.arc(ex,ey,2,0,TAU);ctx.fill();
+        ctx.strokeStyle='#201008';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ex-fx*1.8,ey-fy*1.8);ctx.lineTo(ex+fx*1.8,ey+fy*1.8);ctx.stroke();}
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.strokeStyle=l.dark;ctx.lineWidth=1;for(let k=-2;k<=2;k++)for(let j=-2;j<=2;j++){if(Math.abs(j)+Math.abs(k)>3)continue;const x=fx*k*r*0.3+px*j*r*0.3+(k%2?px*r*0.15:0),y=fy*k*r*0.3+py*j*r*0.3+step+(k%2?py*r*0.15:0);ctx.beginPath();ctx.arc(x,y,r*0.13,f+Math.PI*0.5,f+Math.PI*1.5);ctx.stroke();}
+      ctx.fillStyle=l.accent;for(let i=0;i<4;i++){const d=r*(0.05+i*0.27),x=-fx*d,y=-fy*d+step;ctx.beginPath();ctx.moveTo(x+fx*r*0.12,y+fy*r*0.12);ctx.lineTo(x+px*r*0.1,y+py*r*0.1);ctx.lineTo(x-fx*r*0.12,y-fy*r*0.12);ctx.lineTo(x-px*r*0.1,y-py*r*0.1);ctx.closePath();ctx.fill();}
+    },
+    tail(G,l){const {ctx,r,step,f,fx,fy,px,py,tm,moving}=G;const sw=Math.sin(tm*(moving?7:2));
+      const pts=[];for(let i=0;i<=8;i++){const k=i/8,d=r*(0.7+k*1.7),side=Math.sin(k*3+tm*(moving?7:2))*r*0.35*k;pts.push({x:-fx*d+px*side,y:-fy*d+py*side+step,w:r*0.32*(1-k)+1});}
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();
+      pts.forEach((q,i)=>{const x=q.x+px*q.w,y=q.y+py*q.w;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+      for(let i=pts.length-1;i>=0;i--){const q=pts[i];ctx.lineTo(q.x-px*q.w,q.y-py*q.w);}ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.accent;for(let i=1;i<7;i+=2){const q=pts[i];ctx.beginPath();ctx.arc(q.x,q.y,q.w*0.35,0,TAU);ctx.fill();}
+    },
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      for(const k of [-0.5,0.4]){const a=(sd>0?0:Math.PI)+sd*k;ctx.beginPath();ctx.moveTo(ax+Math.cos(a+1.4)*r*0.12,ay+Math.sin(a+1.4)*r*0.12);ctx.lineTo(ax+Math.cos(a)*r*0.62,ay+Math.sin(a)*r*0.62);ctx.lineTo(ax-Math.cos(a+1.4)*r*0.12,ay-Math.sin(a+1.4)*r*0.12);ctx.closePath();ctx.fill();ctx.stroke();}
+      ctx.strokeStyle=l.dark;for(const k of [-1,1]){ctx.beginPath();ctx.arc(ax+k*r*0.12,ay,r*0.12,0,Math.PI);ctx.stroke();}
+    },
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.accent;for(const k of [-1,0,1]){const a=Math.PI/2+k*0.6;ctx.beginPath();ctx.moveTo(lx+Math.cos(a+1.5)*1.3,ly+Math.sin(a+1.5)*1.3);ctx.lineTo(lx+Math.cos(a)*r*0.42,ly+Math.sin(a)*r*0.42);ctx.lineTo(lx-Math.cos(a+1.5)*1.3,ly-Math.sin(a+1.5)*1.3);ctx.closePath();ctx.fill();}}
+  },
+  stag:{ // 大顎クワガタ：大顎の兜、つやのある羽の胴、節の腰、鉤の肩、甲殻の足
+    head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.strokeStyle=l.light;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr*0.75,f+Math.PI*0.9,f+Math.PI*1.4);ctx.stroke();
+      for(const s of [-1,1]){ // 大顎：左右から前へ伸びて内側へ曲がる
+        const bx=hx+fx*hr*0.5+px*s*hr*0.55,by=hy+fy*hr*0.5+py*s*hr*0.55;
+        const tx=hx+fx*hr*2.1+px*s*hr*0.25,ty=hy+fy*hr*2.1+py*s*hr*0.25;
+        ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+px*s*hr*0.3,by+py*s*hr*0.3);
+        ctx.quadraticCurveTo(bx+fx*hr*1.0+px*s*hr*0.8,by+fy*hr*1.0+py*s*hr*0.8,tx,ty);
+        ctx.quadraticCurveTo(bx+fx*hr*0.9+px*s*hr*0.25,by+fy*hr*0.9+py*s*hr*0.25,bx-px*s*hr*0.15,by-py*s*hr*0.15);ctx.closePath();ctx.fill();ctx.stroke();
+        const ix=hx+fx*hr*1.35+px*s*hr*0.55,iy=hy+fy*hr*1.35+py*s*hr*0.55;ctx.beginPath();ctx.moveTo(ix,iy);ctx.lineTo(ix-px*s*hr*0.35,iy-py*s*hr*0.35);ctx.lineTo(ix+fx*hr*0.2,iy+fy*hr*0.2);ctx.closePath();ctx.fill();
+      }
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.5+px*s*hr*0.75,hy+fy*hr*0.5+py*s*hr*0.75,1.5,0,TAU);ctx.fill();}
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(fx*r*0.1,fy*r*0.1+step);ctx.lineTo(-fx*r,-fy*r+step);ctx.stroke();
+      ctx.fillStyle=l.light;for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(-fx*r*0.35+px*s*r*0.4,-fy*r*0.35+py*s*r*0.4+step,r*0.4,r*0.12,f,0,TAU);ctx.fill();}
+    },
+    waist(G,l){const {ctx,r,step}=G;for(let i=0;i<3;i++){ctx.fillStyle=i%2?l.light:l.dark;ctx.fillRect(-r,step+r*(0.22+i*0.14),r*2,r*0.1);}},
+    arm(G,l,sd,ax,ay){const {ctx,r,f,fx,fy}=G;ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(ax+sd*r*0.25,ay-r*0.1);ctx.quadraticCurveTo(ax+sd*r*0.55+fx*r*0.3,ay+fy*r*0.3-r*0.2,ax+sd*r*0.35+fx*r*0.6,ay+fy*r*0.6-r*0.25);ctx.lineTo(ax+sd*r*0.15,ay+r*0.1);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle=l.light;ctx.beginPath();ctx.arc(ax,ay,r*0.24,Math.PI*1.1,Math.PI*1.6);ctx.stroke();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.strokeStyle=l.accent;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(lx-r*0.25,ly);ctx.lineTo(lx-r*0.42,ly+r*0.2);ctx.moveTo(lx+r*0.25,ly);ctx.lineTo(lx+r*0.42,ly+r*0.2);ctx.stroke();}
+  },
+  hydra:{ // 多頭竜：三つの蛇の頭のかぶり物、鱗の胴、太い蛇の尾、蛇の頭の肩当て
+    head(G,l){const {ctx,f,hx,hy,hr,tm}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      for(const k of [-1,0,1]){const a=f+k*0.8+Math.sin(tm*3+k*2)*0.12,d=hr*(k?1.45:1.7),sx=hx+Math.cos(a)*d,sy=hy+Math.sin(a)*d;
+        ctx.strokeStyle=l.main;ctx.lineWidth=hr*0.38;ctx.beginPath();ctx.moveTo(hx+Math.cos(a)*hr*0.6,hy+Math.sin(a)*hr*0.6);ctx.lineTo(sx,sy);ctx.stroke();
+        ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.save();ctx.translate(sx,sy);ctx.rotate(a);ctx.beginPath();ctx.ellipse(0,0,hr*0.5,hr*0.32,0,0,TAU);ctx.fill();ctx.stroke();
+        ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hr*0.1,s*hr*0.18,1.2,0,TAU);ctx.fill();}
+        ctx.fillStyle=l.accent;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(hr*0.35,s*hr*0.12);ctx.lineTo(hr*0.55,s*hr*0.2);ctx.lineTo(hr*0.42,s*hr*0.04);ctx.closePath();ctx.fill();}ctx.restore();}
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      for(let k=-3;k<=2;k++)for(let j=-3;j<=3;j++){const x=fx*k*r*0.26+px*(j+(k%2?0.5:0))*r*0.26,y=fy*k*r*0.26+py*(j+(k%2?0.5:0))*r*0.26+step;ctx.beginPath();ctx.arc(x,y,r*0.13,f+Math.PI*0.5,f+Math.PI*1.5);ctx.stroke();}
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.ellipse(fx*r*0.3,fy*r*0.3+step,r*0.3,r*0.5,f,0,TAU);ctx.fill();},
+    tail(G,l){const {ctx,r,step,f,fx,fy,px,py,tm,moving}=G;const sw=Math.sin(tm*(moving?6:2));
+      const bx=-fx*r*0.7,by=-fy*r*0.7+step,cx=-fx*r*1.6+px*sw*r*0.8,cy=-fy*r*1.6+py*sw*r*0.8+step,ex=-fx*r*1.5-px*sw*r*0.9+px*r*0.6,ey=-fy*r*1.5-py*sw*r*0.9+py*r*0.6+step;
+      ctx.lineCap='round';ctx.strokeStyle=l.dark;ctx.lineWidth=r*0.5;ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(cx,cy,ex,ey);ctx.stroke();
+      ctx.strokeStyle=l.main;ctx.lineWidth=r*0.36;ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(cx,cy,ex,ey);ctx.stroke();
+      ctx.strokeStyle=l.light;ctx.lineWidth=r*0.1;ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(cx,cy,ex,ey);ctx.stroke();ctx.lineCap='butt';},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;const a=sd>0?-0.3:Math.PI+0.3;ctx.save();ctx.translate(ax+sd*r*0.25,ay);ctx.rotate(a);
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(r*0.3,0,r*0.36,r*0.22,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.eye;ctx.beginPath();ctx.arc(r*0.38,-r*0.1,1.3,0,TAU);ctx.fill();
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(r*0.55,r*0.04);ctx.lineTo(r*0.6,r*0.22);ctx.lineTo(r*0.48,r*0.08);ctx.closePath();ctx.fill();ctx.restore();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.light;for(const k of [-1,1]){ctx.beginPath();ctx.arc(lx+k*r*0.12,ly-r*0.02,r*0.07,0,TAU);ctx.fill();}}
+  },
+  venom:{ // 毒蟲王：触角と複眼の兜、トゲの甲殻、毒針の尾、虫の脚の肩
+    head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr,tm}=G;
+      ctx.strokeStyle=l.dark;ctx.lineWidth=1.4;for(const s of [-1,1]){const w=Math.sin(tm*4+s)*hr*0.2;ctx.beginPath();ctx.moveTo(hx+fx*hr*0.6+px*s*hr*0.35,hy+fy*hr*0.6+py*s*hr*0.35);
+        ctx.quadraticCurveTo(hx+fx*hr*1.6+px*s*hr*0.6,hy+fy*hr*1.6+py*s*hr*0.6,hx+fx*hr*2.0+px*s*(hr*1.3+w),hy+fy*hr*2.0+py*s*(hr*1.3+w));ctx.stroke();}
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(hx-fx*hr*0.3,hy-fy*hr*0.3,hr*0.5,0,TAU);ctx.fill();
+      ctx.fillStyle=l.accent;for(const s of [-1,1]){const bx=hx+fx*hr*0.95+px*s*hr*0.3,by=hy+fy*hr*0.95+py*s*hr*0.3;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+fx*hr*0.55-px*s*hr*0.25,by+fy*hr*0.55-py*s*hr*0.25);ctx.lineTo(bx+px*s*hr*0.2,by+py*s*hr*0.2);ctx.closePath();ctx.fill();}
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.45+px*s*hr*0.55,hy+fy*hr*0.45+py*s*hr*0.55,2.3,0,TAU);ctx.fill();}
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.fillStyle=l.accent;for(const [a,b] of [[0.35,0.3],[-0.4,-0.1],[0.1,-0.5]]){ctx.beginPath();ctx.arc(fx*a*r+px*b*r,fy*a*r+py*b*r+step,r*0.1,0,TAU);ctx.fill();}
+      ctx.fillStyle=l.dark;for(const k of [-1,0,1]){const a=f+Math.PI+k*0.55,x=Math.cos(a)*r*0.55,y=Math.sin(a)*r*0.55+step;ctx.beginPath();ctx.moveTo(x+Math.cos(a+1.6)*r*0.12,y+Math.sin(a+1.6)*r*0.12);ctx.lineTo(x+Math.cos(a)*r*0.42,y+Math.sin(a)*r*0.42);ctx.lineTo(x-Math.cos(a+1.6)*r*0.12,y-Math.sin(a+1.6)*r*0.12);ctx.closePath();ctx.fill();}},
+    tail(G,l){const {ctx,r,step,f,fx,fy,px,py,tm,moving}=G;const sw=Math.sin(tm*(moving?6:2))*0.3;
+      let x=-fx*r*0.8,y=-fy*r*0.8+step,a=f+Math.PI;
+      for(let i=0;i<4;i++){a+=sw*0.5;x+=Math.cos(a)*r*0.32;y+=Math.sin(a)*r*0.32;ctx.fillStyle=i%2?l.light:l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r*(0.24-i*0.03),0,TAU);ctx.fill();ctx.stroke();}
+      a+=sw;ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(x+Math.cos(a+1.6)*r*0.12,y+Math.sin(a+1.6)*r*0.12);ctx.lineTo(x+Math.cos(a)*r*0.55,y+Math.sin(a)*r*0.55);ctx.lineTo(x-Math.cos(a+1.6)*r*0.12,y-Math.sin(a+1.6)*r*0.12);ctx.closePath();ctx.fill();},
+    arm(G,l,sd,ax,ay){const {ctx,r,tm,moving}=G;ctx.strokeStyle=l.dark;ctx.lineWidth=2;ctx.lineCap='round';
+      for(const k of [-1,1]){const w=Math.sin(tm*(moving?10:3)+k)*0.15,a=(sd>0?0:Math.PI)+sd*(k*0.45+w);ctx.beginPath();ctx.moveTo(ax,ay);const mx=ax+Math.cos(a)*r*0.45,my=ay+Math.sin(a)*r*0.45-r*0.15;ctx.lineTo(mx,my);ctx.lineTo(mx+Math.cos(a+sd*0.8)*r*0.35,my+Math.sin(a+sd*0.8)*r*0.35);ctx.stroke();}
+      ctx.lineCap='butt';ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(ax,ay-r*0.05,r*0.1,0,TAU);ctx.fill();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.dark;ctx.beginPath();ctx.moveTo(lx-r*0.2,ly+r*0.12);ctx.lineTo(lx,ly+r*0.42);ctx.lineTo(lx+r*0.2,ly+r*0.12);ctx.closePath();ctx.fill();}
+  },
+  mire:{ // 沼巨人：泥のかたまりの頭と光る目、苔と泥の胴、垂れる泥の腰、岩のような肩、大きな泥の足
+    head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;for(let i=0;i<6;i++){const a=f+i/6*TAU+0.3;ctx.beginPath();ctx.arc(hx+Math.cos(a)*hr*0.75,hy+Math.sin(a)*hr*0.75,hr*0.55,0,TAU);ctx.fill();ctx.stroke();}
+      ctx.beginPath();ctx.arc(hx,hy,hr*0.95,0,TAU);ctx.fill();
+      ctx.fillStyle=l.moss;for(const k of [-1,0,1]){ctx.beginPath();ctx.arc(hx-fx*hr*0.4+px*k*hr*0.35,hy-fy*hr*0.4+py*k*hr*0.35,hr*0.28,0,TAU);ctx.fill();}
+      ctx.fillStyle=l.eye;ctx.shadowColor=l.eye;ctx.shadowBlur=6;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.55+px*s*hr*0.42,hy+fy*hr*0.55+py*s*hr*0.42,2,0,TAU);ctx.fill();}ctx.shadowBlur=0;
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.fillStyle=l.light;for(const [a,b,s] of [[0.3,0.35,0.3],[-0.35,-0.3,0.35],[0.1,-0.55,0.22]]){ctx.beginPath();ctx.arc(fx*a*r+px*b*r,fy*a*r+py*b*r+step,r*s,0,TAU);ctx.fill();}
+      ctx.fillStyle=l.moss;for(const [a,b,s] of [[-0.5,0.35,0.22],[0.45,-0.25,0.16],[-0.2,0,0.14]]){ctx.beginPath();ctx.arc(fx*a*r+px*b*r,fy*a*r+py*b*r+step,r*s,0,TAU);ctx.fill();}},
+    waist(G,l){const {ctx,r,step,tm}=G;ctx.fillStyle=l.light;ctx.fillRect(-r,step+r*0.26,r*2,r*0.22);
+      ctx.fillStyle=l.dark;for(let i=-3;i<=3;i++){const dl=(Math.sin(tm*2+i*1.7)*0.5+0.5)*r*0.15;ctx.beginPath();ctx.ellipse(i*r*0.28,step+r*0.5+dl,r*0.06,r*0.1+dl*0.5,0,0,TAU);ctx.fill();}},
+    under(G,l){},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;
+      for(const [dx,dy,s] of [[0.15,-0.1,0.42],[0.35,0.15,0.3],[0,0.2,0.3]]){ctx.beginPath();ctx.arc(ax+sd*dx*r,ay+dy*r,r*s,0,TAU);ctx.fill();ctx.stroke();}
+      ctx.fillStyle=l.moss;ctx.beginPath();ctx.arc(ax+sd*r*0.1,ay-r*0.25,r*0.14,0,TAU);ctx.fill();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(lx,ly+r*0.05,r*0.38,r*0.28,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(lx-r*0.1,ly-r*0.05,r*0.1,0,TAU);ctx.fill();}
+  },
+};
 const PLAYER_COLORS=[
   {body:'#3d7bff',rim:'#a8c8ff',label:'#8fb8ff'}, // 1P：青
   {body:'#e8742c',rim:'#ffc896',label:'#ffb070'}, // 2P：橙
@@ -4291,6 +4557,8 @@ const Renderer={
     const L=sl=>gearLook(lk[sl]),body=L('body'),head=L('head'),arms=L('arms'),waist=L('waist'),legs=L('legs');
     const hurt=p.hurt>0,f=p.facing,fx=Math.cos(f),fy=Math.sin(f),px=-fy,py=fx;
     const tm=this.time||0;
+    const G={ctx,r,step,f,fx,fy,px,py,tm,moving:p.moving,hr:r*0.5,hx:fx*r*0.35,hy:fy*r*0.35+step},A=x=>x&&GEAR_ART[x.beast];
+    {const tg=[waist,body].find(x=>A(x)&&A(x).tail);if(tg)A(tg).tail(G,tg);}
     // 尻尾：狼の腰（無ければ胴）を着ていると、背中側にふさふさの尻尾が揺れる
     const tl=(waist&&waist.fur)?waist:((body&&body.fur)?body:null);
     const bt=(waist&&waist.beast==='bull')?waist:((body&&body.beast==='bull')?body:null);
@@ -4317,6 +4585,7 @@ const Renderer={
       const lx=sd*r*0.42,ly=r*0.72+step*0.3+sd*ws*2.2;
       ctx.fillStyle=legs?legs.dark:'#3a3040';ctx.beginPath();ctx.ellipse(lx,ly,r*0.3,r*0.24,0,0,TAU);ctx.fill();
       if(legs){ctx.fillStyle=legs.main;ctx.beginPath();ctx.ellipse(lx,ly-1.5,r*0.24,r*0.16,0,0,TAU);ctx.fill();}
+      if(A(legs)&&A(legs).foot)A(legs).foot(G,legs,lx,ly);
       if(legs&&legs.beast==='bull'){ // ひづめ：黒く割れたひづめと、足首の毛
         ctx.fillStyle='#2a2018';ctx.beginPath();ctx.ellipse(lx,ly+r*0.12,r*0.27,r*0.17,0,0,TAU);ctx.fill();
         ctx.strokeStyle=legs.light;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(lx,ly+r*0.02);ctx.lineTo(lx,ly+r*0.28);ctx.stroke();
@@ -4335,7 +4604,8 @@ const Renderer={
     ctx.beginPath();ctx.arc(0,step,r,0,TAU);ctx.fill();
     ctx.save();ctx.beginPath();ctx.arc(0,step,r-1,0,TAU);ctx.clip();
     if(body&&!hurt){ // 防具の胴：胸当ての模様と、誰か分かるようプレイヤー色のたすき
-      if(body.beast==='bull'){ // 暴角獣の胴：背中に盛り上がる濃い縮れ毛と、明るい毛皮のまだら
+      if(A(body)&&A(body).body){A(body).body(G,body);}
+      else if(body.beast==='bull'){ // 暴角獣の胴：背中に盛り上がる濃い縮れ毛と、明るい毛皮のまだら
         ctx.fillStyle=body.light;ctx.beginPath();ctx.ellipse(fx*r*0.35+px*r*0.3,fy*r*0.35+py*r*0.3+step,r*0.32,r*0.22,f,0,TAU);ctx.fill();
         ctx.beginPath();ctx.ellipse(fx*r*0.2-px*r*0.45,fy*r*0.2-py*r*0.45+step,r*0.22,r*0.16,f,0,TAU);ctx.fill();
         ctx.fillStyle=body.dark;
@@ -4349,7 +4619,8 @@ const Renderer={
       }
       ctx.strokeStyle=pc.body;ctx.lineWidth=3.5;ctx.beginPath();ctx.moveTo(-r,step-r*0.7);ctx.lineTo(r,step+r*0.7);ctx.stroke();
     }
-    if(waist&&!hurt){ // 腰：ベルトと留め具
+    if(waist&&!hurt&&A(waist)&&A(waist).waist)A(waist).waist(G,waist);
+    else if(waist&&!hurt){ // 腰：ベルトと留め具
       ctx.fillStyle=waist.dark;ctx.fillRect(-r,step+r*0.28,r*2,r*0.26);
       ctx.fillStyle=waist.accent;ctx.fillRect(-r*0.16,step+r*0.26,r*0.32,r*0.3);
     }
@@ -4360,7 +4631,8 @@ const Renderer={
       const ax=sd*r*0.92,ay=step-r*0.12;
       ctx.fillStyle=arms.main;ctx.strokeStyle=arms.dark;ctx.lineWidth=1.5;
       ctx.beginPath();ctx.arc(ax,ay,r*0.36,0,TAU);ctx.fill();ctx.stroke();
-      if(arms.beast==='bull'){ // 暴角の籠手：外側へ突き出る角のトゲ
+      if(A(arms)&&A(arms).arm){A(arms).arm(G,arms,sd,ax,ay);}
+      else if(arms.beast==='bull'){ // 暴角の籠手：外側へ突き出る角のトゲ
         const sx=sd,tx=ax+sx*r*0.62,ty=ay-r*0.42;
         ctx.fillStyle=arms.accent;ctx.strokeStyle=arms.dark;ctx.lineWidth=1;
         ctx.beginPath();ctx.moveTo(ax+sx*r*0.12,ay-r*0.22);ctx.quadraticCurveTo(ax+sx*r*0.5,ay-r*0.2,tx,ty);ctx.quadraticCurveTo(ax+sx*r*0.3,ay+r*0.02,ax+sx*r*0.2,ay+r*0.08);ctx.closePath();ctx.fill();ctx.stroke();
@@ -4376,7 +4648,8 @@ const Renderer={
     ctx.fillStyle='#f0d8b8';ctx.beginPath();ctx.arc(hx,hy,hr,0,TAU);ctx.fill();
     ctx.fillStyle='#202840';
     for(const sd of [-1,1]){ctx.beginPath();ctx.arc(fx*r*0.55+px*sd*3,fy*r*0.55+py*sd*3+step,1.6,0,TAU);ctx.fill();}
-    if(head&&head.orn==='wolf'){ // 狼の頭のかぶり物：頭全体を覆い、鼻先が前に突き出る。大きな耳・光る目・牙
+    if(A(head)&&A(head).head){A(head).head(G,head);}
+    else if(head&&head.orn==='wolf'){ // 狼の頭のかぶり物：頭全体を覆い、鼻先が前に突き出る。大きな耳・光る目・牙
       const sx=hx+fx*hr*1.5,sy=hy+fy*hr*1.5; // 鼻先
       // 耳（後ろ寄りの左右に大きく尖る）
       for(const sd of [-1,1]){
