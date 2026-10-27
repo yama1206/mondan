@@ -151,7 +151,7 @@ const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
   player:{radius:12,baseSpeed:185,baseHp:125,baseAtk:10,baseDef:2,baseCrit:5,baseCritDmg:50,
-    dodgeSpeed:520,dodgeTime:0.2,dodgeCd:0.9,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
+    dodgeSpeed:520,dodgeTime:0.2,dodgeCd:1.5,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
     startPotions:3,maxPotions:10,hitInvuln:0.35,
     itemWalk:0.35,minItemDelay:0.3,sheatheWalk:0.5}, // sheatheWalk：納刀動作中の移動速度倍率 // アイテム使用中の移動速度倍率、発動時間の下限
   enemySight:330,
@@ -406,7 +406,6 @@ const DATA={
     crit_jewel:{name:'会心珠',color:'#ffd84a',stat:'crit',base:[3,4,5,6,8],fmt:'会心率 +{v}%',maxStack:3},
     life_jewel:{name:'生命珠',color:'#4aff8a',stat:'maxHp',base:[15,20,25,35,45],fmt:'最大HP +{v}',maxStack:3},
     evade_jewel:{name:'回避珠',color:'#4ad8ff',stat:'dodgeIframe',base:[0.06,0.08,0.10,0.13,0.16],fmt:'回避後の無敵 +{v}秒',maxStack:2},
-    drain_jewel:{name:'吸血珠',color:'#c04aff',stat:'drainChance',base:[8,10,12,15,20],fmt:'攻撃命中時 {v}% でHP回復',maxStack:1},
   },
   enemies:{
     // ai：行動パターン（goblin=接近して殴る / archer=距離を取って射る / wolf=ボス）。pal：見た目の色
@@ -6349,7 +6348,7 @@ const App={
   statsBlockHTML(st){
     let h=row('最大HP',st.maxHp)+row('攻撃力',st.atk)+row('防御力',st.def)+row('会心率',st.crit+'%')+row('会心ダメージ','+'+st.critDmg+'%')
       +row('移動速度',(st.moveSpd>=0?'+':'')+st.moveSpd+'%')+row('攻撃速度',(1/st.attackInterval).toFixed(2)+'回/秒')
-      +row('回避後無敵',st.dodgeIframe.toFixed(2)+'秒')+row('吸血確率',st.drainChance+'%')+row('回避CT',st.dodgeCd.toFixed(2)+'秒')
+      +row('回避後無敵',st.dodgeIframe.toFixed(2)+'秒')+row('回避CT',st.dodgeCd.toFixed(2)+'秒')
       +row('武器種',(DATA.weaponTypes[st.weaponType]||{}).name||'')+row('威力倍率','×'+(st.power||1))
       +row('回復薬の回復量',st.potionHeal)+row('アイテム発動まで',Math.max(CONFIG.player.minItemDelay,2+st.itemDelayAdj).toFixed(1)+'秒');
     const effs=Object.keys(st.effects);
@@ -6425,7 +6424,7 @@ const App={
       ()=>this.doOp('equip',{uid}),{yes:'装備する',no:'やめる',yesClass:'primary',focusYes:true});
   },
   compareHTML(cur,nxt,changedOnly){
-    const keys=['maxHp','atk','def','crit','critDmg','moveSpd','atkSpd','dodgeIframe','drainChance'];
+    const keys=['maxHp','atk','def','crit','critDmg','moveSpd','atkSpd','dodgeIframe'];
     let h='';
     for(const k of keys){
       const a=cur[k],b=nxt[k],d=b-a;
