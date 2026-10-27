@@ -5138,8 +5138,10 @@ const WIRE_CHUNK=40000;
 let wireSeq=0;
 const wireParts=new Map();
 /** 1通のメッセージを、必要なら小分けにして送る */
+let lastSent='';
 function sendWire(conn,msg){
   const str=JSON.stringify(msg);
+  lastSent=(msg&&msg.t||'?')+' '+str.length+'字';
   if(str.length<=WIRE_CHUNK){conn.send(msg);return;}
   const id=(++wireSeq)+'_'+Date.now(),n=Math.ceil(str.length/WIRE_CHUNK);
   for(let i=0;i<n;i++)conn.send({t:'chunk',id,i,n,d:str.slice(i*WIRE_CHUNK,(i+1)*WIRE_CHUNK)});
@@ -5255,7 +5257,7 @@ const Net={
   onIncoming(conn){
     conn.on('data',d=>{const full=unwire(d);if(full)this.onHostData(conn,full);});
     conn.on('close',()=>this.dropMember(conn,'接続が閉じました'));
-    conn.on('error',e=>{console.error('参加者との接続エラー',e);this.dropMember(conn,'通信エラー'+(e&&(e.type||e.message)?'：'+(e.type||e.message):''));});
+    conn.on('error',e=>{console.error('参加者との接続エラー',e,'直前に送ったもの：',lastSent);this.dropMember(conn,'通信エラー'+(e&&(e.type||e.message)?'：'+(e.type||e.message):'')+' / 直前：'+lastSent);});
   },
   onHostData(conn,d){
     if(!d||typeof d!=='object')return;
