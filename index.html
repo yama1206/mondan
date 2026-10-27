@@ -5232,8 +5232,8 @@ const Net={
   },
   onIncoming(conn){
     conn.on('data',d=>this.onHostData(conn,d));
-    conn.on('close',()=>this.dropMember(conn));
-    conn.on('error',()=>this.dropMember(conn));
+    conn.on('close',()=>this.dropMember(conn,'接続が閉じました'));
+    conn.on('error',e=>{console.error('参加者との接続エラー',e);this.dropMember(conn,'通信エラー'+(e&&(e.type||e.message)?'：'+(e.type||e.message):''));});
   },
   onHostData(conn,d){
     if(!d||typeof d!=='object')return;
@@ -5286,13 +5286,13 @@ const Net={
       if(typeof d.pick==='number'&&d.pick>=0&&d.pick<ITEM_ORDER.length)e.pick=d.pick|0;
     }else if(d.t==='cmd')App.hostCmd(m.pid,d);
   },
-  dropMember(conn){
+  dropMember(conn,why){
     if(this.role!=='host')return;
     const m=this.members.find(x=>x.conn===conn);if(!m)return;
     this.members=this.members.filter(x=>x!==m);
     delete this.inputs[m.pid];delete this.edges[m.pid];
     if(App.world&&App.world.players[m.pid])delete App.world.players[m.pid];
-    UI.notify(`${esc(m.name)} が退出しました`,'#ff8060',3);
+    UI.notify(`${esc(m.name)} が退出しました（${esc(why||'不明')}）`,'#ff8060',6);
     App.save();this.broadcastLobby();
   },
   /** 参加者：準備OK／取り消しをホストに伝える */
