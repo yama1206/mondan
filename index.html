@@ -231,7 +231,7 @@ function fmtStat(stat,v){return (v>=0?'+':'')+fmtNum(stat,v)+(STAT_UNITS[stat]||
    ========================================================== */
 const DATA={
   rarities:[
-    // slotW: スロット数0〜3の重み。低レアほど3スロットが出やすく「低レアでも活躍」できるようにしている
+    // slotW：旧仕様の名残（今は使わない。スロット数は装備ごとの slots で決まる）
     {id:'common',name:'コモン',color:'#c8c8c8',statMult:1.00,affix:[0,1],slotW:[22,34,30,14],effectChance:0.15,dropW:50},
     {id:'uncommon',name:'アンコモン',color:'#5fd35f',statMult:1.05,affix:[1,1],slotW:[22,38,28,12],effectChance:0.22,dropW:28},
     {id:'rare',name:'レア',color:'#4aa3ff',statMult:1.10,affix:[1,2],slotW:[20,40,30,10],effectChance:0.35,dropW:14},
@@ -344,66 +344,67 @@ const DATA={
     haro:{name:'覇狼シリーズ',bonus:'覇狼の威風',desc:'会心ダメージ+20%、移動速度+6%',
       pieces:{head:'haro_helm',body:'haro_mail',arms:'haro_vambrace',waist:'haro_faulds',legs:'haro_greaves'},need:4,apply:s=>{s.critDmg+=20;s.moveSpd+=6;}},
   },
+  // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
     iron_sword:{name:'鉄の剣',slot:'weapon',wtype:'sword',atk:10,crit:5},
     hunter_sword:{name:'狩猟の剣',slot:'weapon',wtype:'sword',atk:14,crit:5},
-    wolf_sword:{name:'古狼の剣',slot:'weapon',wtype:'sword',atk:20,crit:8,fixed:[{stat:'atkSpd',v:5}]},
-    fang_king:{name:'牙王の剣',slot:'weapon',wtype:'sword',atk:27,crit:12,fixed:[{stat:'critDmg',v:10}]},
+    wolf_sword:{name:'古狼の剣',slot:'weapon',wtype:'sword',atk:20,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
+    fang_king:{name:'牙王の剣',slot:'weapon',wtype:'sword',atk:27,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
     leather_cap:{name:'革の帽子',slot:'head',def:3,skills:{evade:2,gather_up:2}},
     bone_helm:{name:'骨の兜',slot:'head',def:6,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:4,poison_res:3,minion_hunter:3}},
-    wolf_helm:{name:'古狼の頭甲',slot:'head',def:9,fixed:[{stat:'crit',v:3}],skills:{weakness:3,crit_up:2}},
+    wolf_helm:{name:'古狼の頭甲',slot:'head',def:9,fixed:[{stat:'crit',v:3}],skills:{weakness:3,crit_up:2},slots:1},
     cloth:{name:'布の服',slot:'body',def:3},
     leather_vest:{name:'革の胴着',slot:'body',def:6,skills:{evade:3,gather_up:1}},
-    wolf_mail:{name:'古狼の胴鎧',slot:'body',def:12,fixed:[{stat:'maxHp',v:20}],skills:{weakness:3,hp_up:3}},
+    wolf_mail:{name:'古狼の胴鎧',slot:'body',def:12,fixed:[{stat:'maxHp',v:20}],skills:{weakness:3,hp_up:3},slots:1},
     leather_gloves:{name:'革の小手',slot:'arms',def:3,skills:{evade:2,item_speed:2}},
-    wolf_vambrace:{name:'古狼の腕甲',slot:'arms',def:8,fixed:[{stat:'atk',v:2}],skills:{crit_up:3,weakness:2}},
+    wolf_vambrace:{name:'古狼の腕甲',slot:'arms',def:8,fixed:[{stat:'atk',v:2}],skills:{crit_up:3,weakness:2},slots:1},
     // 腰（追加した部位）
     leather_belt:{name:'革の腰当て',slot:'waist',def:3,skills:{evade:2,gather_up:2}},
-    wolf_faulds:{name:'古狼の腰甲',slot:'waist',def:8,skills:{move_up:4,crit_up:2}},
+    wolf_faulds:{name:'古狼の腰甲',slot:'waist',def:8,skills:{move_up:4,crit_up:2},slots:1},
     leather_boots:{name:'革の靴',slot:'legs',def:3,skills:{evade:1,move_up:2,gather_up:1}},
-    wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,fixed:[{stat:'moveSpd',v:4}],skills:{move_up:6,weakness:2}},
+    wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,fixed:[{stat:'moveSpd',v:4}],skills:{move_up:6,weakness:2},slots:1},
     // ステージ5：黒狼シリーズ
-    bwolf_sword:{name:'黒狼の剣',slot:'weapon',wtype:'sword',atk:34,crit:10,fixed:[{stat:'atkSpd',v:8}]},
-    bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:14,fixed:[{stat:'crit',v:5}],skills:{boss_hunter:4,crit_dmg:2}},
-    bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:35}],skills:{atk_up:4,boss_hunter:3}},
-    bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:12,fixed:[{stat:'atk',v:4}],skills:{atk_up:4,crit_dmg:3}},
-    bwolf_faulds:{name:'黒狼の腰甲',slot:'waist',def:12,skills:{dodge_dist:5,item_speed:3}},
-    bwolf_greaves:{name:'黒狼の脚甲',slot:'legs',def:13,fixed:[{stat:'moveSpd',v:6}],skills:{dodge_dist:5,boss_hunter:3,atk_up:2}},
-    hard_blade:{name:'鋼鉄の剣',slot:'weapon',wtype:'sword',atk:24,crit:6},
+    bwolf_sword:{name:'黒狼の剣',slot:'weapon',wtype:'sword',atk:34,crit:10,fixed:[{stat:'atkSpd',v:8}],slots:2},
+    bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:14,fixed:[{stat:'crit',v:5}],skills:{boss_hunter:4,crit_dmg:2},slots:2},
+    bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:35}],skills:{atk_up:4,boss_hunter:3},slots:2},
+    bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:12,fixed:[{stat:'atk',v:4}],skills:{atk_up:4,crit_dmg:3},slots:2},
+    bwolf_faulds:{name:'黒狼の腰甲',slot:'waist',def:12,skills:{dodge_dist:5,item_speed:3},slots:2},
+    bwolf_greaves:{name:'黒狼の脚甲',slot:'legs',def:13,fixed:[{stat:'moveSpd',v:6}],skills:{dodge_dist:5,boss_hunter:3,atk_up:2},slots:2},
+    hard_blade:{name:'鋼鉄の剣',slot:'weapon',wtype:'sword',atk:24,crit:6,slots:1},
     // 大剣・太刀・ハンマー（鉄→古狼→黒狼）
     iron_gs:{name:'鉄の大剣',slot:'weapon',wtype:'greatsword',atk:11,crit:2},
-    wolf_gs:{name:'古狼の大剣',slot:'weapon',wtype:'greatsword',atk:22,crit:5,fixed:[{stat:'critDmg',v:10}]},
-    bwolf_gs:{name:'黒狼の大剣',slot:'weapon',wtype:'greatsword',atk:37,crit:6,fixed:[{stat:'critDmg',v:15}]},
+    wolf_gs:{name:'古狼の大剣',slot:'weapon',wtype:'greatsword',atk:22,crit:5,fixed:[{stat:'critDmg',v:10}],slots:1},
+    bwolf_gs:{name:'黒狼の大剣',slot:'weapon',wtype:'greatsword',atk:37,crit:6,fixed:[{stat:'critDmg',v:15}],slots:2},
     iron_tachi:{name:'鉄の太刀',slot:'weapon',wtype:'tachi',atk:10,crit:6},
-    wolf_tachi:{name:'古狼の太刀',slot:'weapon',wtype:'tachi',atk:20,crit:10,fixed:[{stat:'moveSpd',v:4}]},
-    bwolf_tachi:{name:'黒狼の太刀',slot:'weapon',wtype:'tachi',atk:34,crit:12,fixed:[{stat:'crit',v:4}]},
+    wolf_tachi:{name:'古狼の太刀',slot:'weapon',wtype:'tachi',atk:20,crit:10,fixed:[{stat:'moveSpd',v:4}],slots:1},
+    bwolf_tachi:{name:'黒狼の太刀',slot:'weapon',wtype:'tachi',atk:34,crit:12,fixed:[{stat:'crit',v:4}],slots:2},
     iron_db:{name:'鉄の双剣',slot:'weapon',wtype:'dual',atk:9,crit:8},
-    wolf_db:{name:'古狼の双剣',slot:'weapon',wtype:'dual',atk:18,crit:12,fixed:[{stat:'atkSpd',v:5}]},
-    bwolf_db:{name:'黒狼の双剣',slot:'weapon',wtype:'dual',atk:31,crit:14,fixed:[{stat:'critDmg',v:10}]},
+    wolf_db:{name:'古狼の双剣',slot:'weapon',wtype:'dual',atk:18,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:1},
+    bwolf_db:{name:'黒狼の双剣',slot:'weapon',wtype:'dual',atk:31,crit:14,fixed:[{stat:'critDmg',v:10}],slots:2},
     iron_hammer:{name:'鉄のハンマー',slot:'weapon',wtype:'hammer',atk:11,crit:0},
-    wolf_hammer:{name:'古狼のハンマー',slot:'weapon',wtype:'hammer',atk:22,crit:3,fixed:[{stat:'maxHp',v:20}]},
-    bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}]},
+    wolf_hammer:{name:'古狼のハンマー',slot:'weapon',wtype:'hammer',atk:22,crit:3,fixed:[{stat:'maxHp',v:20}],slots:1},
+    bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}],slots:2},
     iron_whip:{name:'鉄の鞭',slot:'weapon',wtype:'whip',atk:9,crit:4},
     iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:8,crit:4},
-    wolf_whip:{name:'古狼の鞭',slot:'weapon',wtype:'whip',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}]},
+    wolf_whip:{name:'古狼の鞭',slot:'weapon',wtype:'whip',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
     // ステージ1：草原の暴角獣の素材（鉄と古狼の間の強さ。守りが固い）
-    bull_hammer:{name:'暴角の大槌',slot:'weapon',wtype:'hammer',atk:17,crit:0,fixed:[{stat:'def',v:3}]},
-    bull_gs:{name:'暴角の大剣',slot:'weapon',wtype:'greatsword',atk:17,crit:3,fixed:[{stat:'maxHp',v:15}]},
-    bull_bow:{name:'暴角の角弓',slot:'weapon',wtype:'bow',atk:13,crit:5,fixed:[{stat:'critDmg',v:8}]},
-    bull_helm:{name:'暴角の兜',slot:'head',def:7,fixed:[{stat:'maxHp',v:10}],skills:{flinch_free:3,def_up:2}},
-    bull_mail:{name:'暴角の胴当て',slot:'body',def:9,fixed:[{stat:'maxHp',v:15}],skills:{def_up:4,hp_up:3}},
-    bull_vambrace:{name:'暴角の籠手',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{flinch_free:3,atk_up:2}},
-    bull_faulds:{name:'暴角の腰当て',slot:'waist',def:6,skills:{flinch_free:2,def_up:2}},
-    bull_greaves:{name:'暴角の脚当て',slot:'legs',def:7,skills:{flinch_free:2,dodge_dist:3}},
+    bull_hammer:{name:'暴角の大槌',slot:'weapon',wtype:'hammer',atk:17,crit:0,fixed:[{stat:'def',v:3}],slots:1},
+    bull_gs:{name:'暴角の大剣',slot:'weapon',wtype:'greatsword',atk:17,crit:3,fixed:[{stat:'maxHp',v:15}],slots:1},
+    bull_bow:{name:'暴角の角弓',slot:'weapon',wtype:'bow',atk:13,crit:5,fixed:[{stat:'critDmg',v:8}],slots:1},
+    bull_helm:{name:'暴角の兜',slot:'head',def:7,fixed:[{stat:'maxHp',v:10}],skills:{flinch_free:3,def_up:2},slots:1},
+    bull_mail:{name:'暴角の胴当て',slot:'body',def:9,fixed:[{stat:'maxHp',v:15}],skills:{def_up:4,hp_up:3},slots:1},
+    bull_vambrace:{name:'暴角の籠手',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{flinch_free:3,atk_up:2},slots:1},
+    bull_faulds:{name:'暴角の腰当て',slot:'waist',def:6,skills:{flinch_free:2,def_up:2},slots:1},
+    bull_greaves:{name:'暴角の脚当て',slot:'legs',def:7,skills:{flinch_free:2,dodge_dist:3},slots:1},
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
-    haro_tachi:{name:'覇狼の太刀',slot:'weapon',wtype:'tachi',atk:26,crit:12,fixed:[{stat:'critDmg',v:10}]},
-    haro_db:{name:'覇狼の双剣',slot:'weapon',wtype:'dual',atk:23,crit:14,fixed:[{stat:'atkSpd',v:6}]},
-    haro_whip:{name:'覇狼の鞭',slot:'weapon',wtype:'whip',atk:24,crit:10,fixed:[{stat:'moveSpd',v:5}]},
-    haro_helm:{name:'覇狼の兜',slot:'head',def:11,fixed:[{stat:'crit',v:4}],skills:{crit_dmg:3,weakness:2}},
-    haro_mail:{name:'覇狼の鎧',slot:'body',def:14,fixed:[{stat:'maxHp',v:25}],skills:{crit_dmg:3,regen:3}},
-    haro_vambrace:{name:'覇狼の篭手',slot:'arms',def:10,fixed:[{stat:'atk',v:3}],skills:{crit_dmg:3,crit_up:2}},
-    haro_faulds:{name:'覇狼の草摺',slot:'waist',def:10,skills:{evade:3,regen:3}},
-    haro_greaves:{name:'覇狼の具足',slot:'legs',def:11,fixed:[{stat:'moveSpd',v:5}],skills:{move_up:4,evade:3,crit_dmg:1}},
+    haro_tachi:{name:'覇狼の太刀',slot:'weapon',wtype:'tachi',atk:26,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
+    haro_db:{name:'覇狼の双剣',slot:'weapon',wtype:'dual',atk:23,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    haro_whip:{name:'覇狼の鞭',slot:'weapon',wtype:'whip',atk:24,crit:10,fixed:[{stat:'moveSpd',v:5}],slots:2},
+    haro_helm:{name:'覇狼の兜',slot:'head',def:11,fixed:[{stat:'crit',v:4}],skills:{crit_dmg:3,weakness:2},slots:2},
+    haro_mail:{name:'覇狼の鎧',slot:'body',def:14,fixed:[{stat:'maxHp',v:25}],skills:{crit_dmg:3,regen:3},slots:2},
+    haro_vambrace:{name:'覇狼の篭手',slot:'arms',def:10,fixed:[{stat:'atk',v:3}],skills:{crit_dmg:3,crit_up:2},slots:2},
+    haro_faulds:{name:'覇狼の草摺',slot:'waist',def:10,skills:{evade:3,regen:3},slots:2},
+    haro_greaves:{name:'覇狼の具足',slot:'legs',def:11,fixed:[{stat:'moveSpd',v:5}],skills:{move_up:4,evade:3,crit_dmg:1},slots:2},
   },
   materials:{
     // ステージ3：腐毒の沼地
@@ -463,12 +464,31 @@ const DATA={
     dragon_bone:{name:'骨竜の竜骨',color:'#e8e2d0',desc:'冥府の骨竜の巨大な骨。稀少素材。（忘却の地下墓地）'},
     nether_core:{name:'冥府の霊核',color:'#7a50ff',desc:'骨竜を動かしていた霊核。非常に稀少。（忘却の地下墓地）'},
   },
-  // base: レアリティ別の効果量 / maxStack: 同じ装飾品を有効にできる最大数
+  /* 装飾品：防具スキルのポイントを足すためのもの。pts＝レアリティ別のポイント [コモン,アンコモン,レア,エピック,レジェンダリー]
+     武器・防具の装飾品スロットにはめると、そのスキルのポイントが装備のポイントに加算される */
+  decoPts:[1,1,2,2,3],
   decorations:{
-    atk_jewel:{name:'攻撃珠',color:'#ff5a4a',stat:'atk',base:[3,4,5,7,9],fmt:'攻撃力 +{v}',maxStack:3},
-    crit_jewel:{name:'会心珠',color:'#ffd84a',stat:'crit',base:[3,4,5,6,8],fmt:'会心率 +{v}%',maxStack:3},
-    life_jewel:{name:'生命珠',color:'#4aff8a',stat:'maxHp',base:[15,20,25,35,45],fmt:'最大HP +{v}',maxStack:3},
-    evade_jewel:{name:'回避珠',color:'#4ad8ff',stat:'dodgeIframe',base:[0.06,0.08,0.10,0.13,0.16],fmt:'回避後の無敵 +{v}秒',maxStack:2},
+    atk_jewel:{name:'攻撃珠',color:'#ff5a4a',skill:'atk_up'},
+    crit_jewel:{name:'会心珠',color:'#ffd84a',skill:'crit_up'},
+    critdmg_jewel:{name:'超心珠',color:'#ffb020',skill:'crit_dmg'},
+    weak_jewel:{name:'弱点珠',color:'#ff8a3a',skill:'weakness'},
+    boss_jewel:{name:'狩猟珠',color:'#e04a6a',skill:'boss_hunter'},
+    minion_jewel:{name:'掃討珠',color:'#c0a060',skill:'minion_hunter'},
+    def_jewel:{name:'防御珠',color:'#7a9ab8',skill:'def_up'},
+    life_jewel:{name:'生命珠',color:'#4aff8a',skill:'hp_up'},
+    guard_jewel:{name:'守護珠',color:'#5a8ae0',skill:'dmg_cut'},
+    steady_jewel:{name:'不動珠',color:'#a08a6a',skill:'flinch_free'},
+    antidote_jewel:{name:'耐毒珠',color:'#a8e040',skill:'poison_res'},
+    resist_jewel:{name:'耐性珠',color:'#b0b0e0',skill:'status_res'},
+    heal_jewel:{name:'回復珠',color:'#7fe09a',skill:'heal_up'},
+    regen_jewel:{name:'再生珠',color:'#3ac080',skill:'regen'},
+    swift_jewel:{name:'疾走珠',color:'#4ad8c0',skill:'move_up'},
+    leap_jewel:{name:'跳躍珠',color:'#60b0ff',skill:'dodge_dist'},
+    evade_jewel:{name:'回避珠',color:'#4ad8ff',skill:'evade'},
+    horn_jewel:{name:'笛吹珠',color:'#ff9a4a',skill:'item_power'},
+    quick_jewel:{name:'早業珠',color:'#ffe080',skill:'item_speed'},
+    gather_jewel:{name:'採取珠',color:'#8ac060',skill:'gather_up'},
+    lucky_jewel:{name:'幸運珠',color:'#ffd0f0',skill:'rare_up'},
   },
   enemies:{
     // ai：行動パターン（goblin=接近して殴る / archer=距離を取って射る / wolf=ボス）。pal：見た目の色
@@ -1073,15 +1093,17 @@ const Items={
       const a=DATA.affixes[pool[k]];
       it.affixes.push({id:pool[k],v:Math.max(1,Math.round(rand(a.min,a.max)*rar.statMult))});
     }
-    it.slots=new Array(weightedPick(rar.slotW.map((w,i)=>({w,v:i})))).fill(null);
+    it.slots=new Array(Items.slotCount(baseId,rarity)).fill(null);
     const effPick=()=>weightedPick(Object.keys(DATA.effects).filter(id=>!it.effects.includes(id)).map(id=>({w:DATA.effects[id].w[rarity],v:id})));
     if(RNG.next()<rar.effectChance)it.effects.push(effPick());
     if(rarity===4&&RNG.next()<0.4)it.effects.push(effPick());
     return it;
   },
   createDeco(decoId,rarity){return {kind:'deco',uid:null,decoId,rarity};},
-  decoValue(d){return DATA.decorations[d.decoId].base[d.rarity];},
-  decoText(d){const dd=DATA.decorations[d.decoId];return dd.fmt.replace('{v}',Items.decoValue(d));},
+  decoValue(d){return DATA.decoPts[d.rarity]||1;},
+  decoText(d){const dd=DATA.decorations[d.decoId],sk=DATA.armorSkills[dd.skill];return (sk?sk.name:dd.skill)+' +'+Items.decoValue(d)+'pt';},
+  /** 装備の装飾品スロット数：装備ごとの slots（序盤の装備は0）＋エピック以上で+1（最大3） */
+  slotCount(baseId,rarity){const b=DATA.equipment[baseId];const n=(b&&b.slots)||0;return Math.min(3,n+(n>0&&rarity>=3?1:0));},
   rollLoot(tableId,rareBonus){
     const t=DATA.dropTables[tableId],out=[];
     if(!t)return out;
@@ -1131,7 +1153,7 @@ function computeStats(profile,override,who){
     // 防具スキルで変わる値（スキルが無ければ効果なし）
     weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,
     dodgeDistPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
-  const decoCount={},wearing={},armor=[];
+  const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
     const item=(override&&Object.prototype.hasOwnProperty.call(override,slot))?override[slot]:Profile.getItem(profile,ch.equipped[slot]);
     if(!item)continue;
@@ -1143,10 +1165,8 @@ function computeStats(profile,override,who){
     for(const du of item.slots){
       if(!du)continue;
       const d=Profile.getDeco(profile,du);if(!d)continue;
-      const dd=DATA.decorations[d.decoId];
-      decoCount[d.decoId]=(decoCount[d.decoId]||0)+1;
-      if(decoCount[d.decoId]>dd.maxStack){if(!s.decoCapped.includes(dd.name))s.decoCapped.push(dd.name);continue;}
-      s[dd.stat]+=Items.decoValue(d);
+      const dd=DATA.decorations[d.decoId];if(!dd||!DATA.armorSkills[dd.skill])continue;
+      decoPts[dd.skill]=(decoPts[dd.skill]||0)+Items.decoValue(d);
     }
     wearing[slot]=item.baseId;
     if(slot==='weapon'){s.weaponType=base.wtype;s.weaponName=base.name;s.weaponRarity=item.rarity;}
@@ -1154,6 +1174,7 @@ function computeStats(profile,override,who){
   }
   // 防具スキル（ポイントの合算 → 発動判定 → 効果の適用）
   s.skillPts=armorSkillPoints(armor);
+  for(const k in decoPts)s.skillPts[k]=(s.skillPts[k]||0)+decoPts[k]; // 装飾品のポイント
   s.skillList=armorSkillLevels(s.skillPts);
   applyArmorSkills(s,s.skillList);
   // 防具シリーズの一式効果（スキルポイントとは別の仕組み）。tiers があれば装備数に応じて段階的に
@@ -1239,12 +1260,11 @@ const Profile={
   create(){
     const p=Profile.blank();
     for(let who=0;who<CHAR_COUNT;who++){Profile.giveStarterWeapon(p,who);Profile.giveStarterCloth(p,who);}
-    Profile.addDeco(p,Items.createDeco('atk_jewel',0));
     return p;
   },
   giveStarterWeapon(p,who){
     const sw=Items.createEquipment('iron_sword',0);
-    sw.atk=10;sw.crit=5;sw.affixes=[];sw.effects=[];sw.slots=[null];
+    sw.atk=10;sw.crit=5;sw.affixes=[];sw.effects=[];sw.slots=[];
     Profile.addItem(p,sw);charOf(p,who||0).equipped.weapon=sw.uid;
   },
   giveStarterCloth(p,who){
@@ -1261,6 +1281,12 @@ const Profile={
   addDeco(p,d){d.uid='d'+(p.nextUid++);p.decos.push(d);return d;},
   getItem(p,uid){if(!uid)return null;for(const i of p.items)if(i.uid===uid)return i;return null;},
   getDeco(p,uid){if(!uid)return null;for(const d of p.decos)if(d.uid===uid)return d;return null;},
+  /** スロット数を今のルール（装備ごとの slots）に合わせる。はみ出した装飾品は外れて手元に残る */
+  fitSlots(it,used){
+    const n=Items.slotCount(it.baseId,it.rarity),keep=it.slots.filter(u=>u).slice(0,n);
+    if(used)for(const u of it.slots)if(u&&!keep.includes(u))used.delete(u);
+    it.slots=keep.concat(new Array(n-keep.length).fill(null));
+  },
   decoOwner(p,uid){for(const i of p.items)if(i.slots.includes(uid))return i;return null;},
   isEquipped(p,uid){return Profile.equippedBy(p,uid)>=0;},
   removeItem(p,uid){
@@ -1366,6 +1392,7 @@ const Save={
         affixes:Array.isArray(x.affixes)?x.affixes.filter(a=>a&&DATA.affixes[a.id]&&typeof a.v==='number').map(a=>({id:a.id,v:a.v})):[],
         effects:Array.isArray(x.effects)?x.effects.filter(e=>DATA.effects[e]):[],
         slots:Array.isArray(x.slots)?x.slots.slice(0,3).map(u=>{if(u&&decoIds.has(u)&&!usedDecos.has(u)){usedDecos.add(u);return u;}return null;}):[]};
+      Profile.fitSlots(it,usedDecos);
       p.items.push(it);itemIds.add(it.uid);noteUid(it.uid);
     }
     p.nextUid=Math.max(d.nextUid|0,uidNums.length?Math.max(...uidNums)+1:1,1);
@@ -5519,7 +5546,7 @@ const Net={
       const base=DATA.equipment[it.baseId];
       if(base.slot==='weapon'){it.atk=Math.min(it.atk,Math.ceil(base.atk*1.1*1.25)+1);it.crit=Math.min(it.crit,base.crit+3);}
       else it.def=Math.min(it.def,Math.ceil(base.def*1.12*1.25)+1);
-      it.slots=it.slots.slice(0,3);it.effects=it.effects.slice(0,2);it.affixes=it.affixes.slice(0,3).map(a=>({id:a.id,v:Math.min(a.v,Math.ceil(DATA.affixes[a.id].max*1.25))}));
+      it.slots=it.slots.slice(0,Items.slotCount(it.baseId,it.rarity));it.effects=it.effects.slice(0,2);it.affixes=it.affixes.slice(0,3).map(a=>({id:a.id,v:Math.min(a.v,Math.ceil(DATA.affixes[a.id].max*1.25))}));
     }
     for(const k in p.materials)p.materials[k]=Math.min(p.materials[k],9999);
   },
@@ -6667,7 +6694,7 @@ const App={
     h+=decos.map(d=>{
       const dd=DATA.decorations[d.decoId],owner=Profile.decoOwner(p,d.uid);
       const where=d.uid===cur?'このスロットに装着中':(owner?'装着中：'+itemName(owner)+this.ownerSuffix(owner):'未装着');
-      return `<button class="decorow" data-act="pickDeco" data-deco="${d.uid}" ${d.uid===cur?'disabled':''}><span style="color:${rarColor(d.rarity)}">◆ ${dd.name}</span>（${DATA.rarities[d.rarity].name}）<br><small>${Items.decoText(d)}　有効上限${dd.maxStack}個　<span class="muted">${where}</span></small></button>`;
+      return `<button class="decorow" data-act="pickDeco" data-deco="${d.uid}" ${d.uid===cur?'disabled':''}><span style="color:${rarColor(d.rarity)}">◆ ${dd.name}</span>（${DATA.rarities[d.rarity].name}）<br><small>${Items.decoText(d)}　<span class="muted">${where}</span></small></button>`;
     }).join('')||'<div class="muted">装飾品を持っていません。敵や宝箱から入手できます。</div>';
     h+=`<div class="btnrow"><button data-act="cancelPick">キャンセル</button></div>`;
     return h;
@@ -6685,10 +6712,10 @@ const App={
   decosTabHTML(){
     const p=this.profile;
     const decos=[...p.decos].sort((a,b)=>a.decoId.localeCompare(b.decoId)||b.rarity-a.rarity);
-    return `<div class="col full" data-scroll="decos"><div class="small muted" style="margin-bottom:8px">装飾品は「装備」タブで装備を選び、空きスロットをクリックして装着します。同じ装飾品は「有効上限」の数まで効果が重なります。</div>
+    return `<div class="col full" data-scroll="decos"><div class="small muted" style="margin-bottom:8px">装飾品は「装備」タブで装備を選び、空きスロットをクリックして装着します。装飾品は防具スキルのポイントを足します（武器にはめてもOK）。同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動します。序盤の装備にはスロットが無く、ボス素材の装備ほど多くなります。</div>
       ${decos.map(d=>{const dd=DATA.decorations[d.decoId],o=Profile.decoOwner(p,d.uid);
         return `<div class="mat" style="margin-bottom:6px"><span class="gem" style="background:${dd.color};color:${dd.color}"></span><span style="color:${rarColor(d.rarity)}">${dd.name}（${DATA.rarities[d.rarity].name}）</span>
-        <div class="small">${Items.decoText(d)}　<span class="muted">有効上限${dd.maxStack}個　${o?'装着中：'+itemName(o)+this.ownerSuffix(o):'未装着'}</span></div></div>`;}).join('')||'<div class="muted">装飾品を持っていません。</div>'}</div>`;
+        <div class="small">${Items.decoText(d)}　<span class="muted">${o?'装着中：'+itemName(o)+this.ownerSuffix(o):'未装着'}</span></div></div>`;}).join('')||'<div class="muted">装飾品を持っていません。</div>'}</div>`;
   },
   /** 施設（鍛冶屋・ショップ）の共通の枠 */
   facilityHTML(title,sub,body){
