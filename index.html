@@ -187,9 +187,10 @@ const CONFIG={
   elite:{hp:2.2,atk:1.35,size:1.2,bonusRolls:1},
   minionHp:4.5, // ボス以外の魔物の体力倍率（人数に関係なく一定）：従来の3倍 × 1.5
   bossHpByParty:{1:1,2:1.6,3:2.2,4:2.8,5:3.4}, // ボスの体力倍率（オンラインの人数ごと）
+  bossBoost:{hp:1.2,atk:1.15}, // ボスの体力・攻撃力の追加倍率
   spawnRate:0.25, // 部屋や通路に置く魔物の数の倍率（ボス・中ボスは対象外）
   // 中ボス（ザコの大きい版）：1回の探索に count 体。報酬は bonusRolls 回多く抽選＋ midboss の表
-  midBoss:{hp:5,atk:1.4,size:1.6,count:[1,2],bonusRolls:2,exclude:['mushroom','shaman','cursed_knight']},
+  midBoss:{hp:6,atk:1.55,size:1.6,count:[1,2],bonusRolls:2,exclude:['mushroom','shaman','cursed_knight']},
   chestChance:0.1, // 宝箱の候補場所ごとの出現確率（宝箱の依頼に必要な数は必ず置く）
   pickupRadius:26,magnetRadius:80,
   difficulty:{hpPerClear:0.18,atkPerClear:0.10,maxHp:3.0,maxAtk:2.2},
@@ -1689,9 +1690,9 @@ function questProgress(w,n){
 function spawnEnemy(w,type,x,y,opt){
   opt=opt||{};
   const d=DATA.enemies[type],E=CONFIG.elite,M=CONFIG.midBoss,mid=!!opt.mid&&!d.boss,el=!!opt.elite&&!d.boss&&!mid;
-  const partyMul=d.boss?(CONFIG.bossHpByParty[Math.max(1,Math.min(5,w.playerCount||1))]||1):1;
+  const partyMul=d.boss?(CONFIG.bossHpByParty[Math.max(1,Math.min(5,w.playerCount||1))]||1)*CONFIG.bossBoost.hp:1;
   const mult=d.boss?partyMul:CONFIG.minionHp*(el?E.hp:mid?M.hp:1);
-  const hp=Math.round(d.hp*w.diff.hp*mult),atk=d.atk*w.diff.atk*(el?E.atk:mid?M.atk:1);
+  const hp=Math.round(d.hp*w.diff.hp*mult),atk=d.atk*w.diff.atk*(el?E.atk:mid?M.atk:1)*(d.boss?CONFIG.bossBoost.atk:1);
   const e={id:w.nextId++,type,x,y,r:el?Math.round(d.r*E.size):mid?Math.round(d.r*M.size):d.r,hp,maxHp:hp,atk,armor:d.def,mid,
     speed:d.speed,state:d.boss?'sleep':'idle',timer:0,cd:rand(0.3,1.2),cd2:rand(0.5,1.5),cd3:rand(1,2),stun:0,facing:rand(0,TAU),atkAngle:0,aggro:false,hurt:0,kx:0,ky:0,
     dead:false,boss:!!d.boss,phase:1,cds:{bite:0,charge:2,slam:3,sweep:1.5,roar:4,orb:2,summon:5},action:null,hitSet:null,chargeLeft:0,chargeChain:0,
@@ -2893,13 +2894,7 @@ function updateBossRoom(w){
   const ps=Object.values(w.players).filter(p=>!p.dead);
   const bx=w.map.bossX1||61;
   if(b.state==='sleep'&&ps.some(p=>p.x>(bx+2)*TILE))triggerBoss(w);
-  // 全員（倒れている仲間も含む）がボス部屋に入ったら退路を閉じる。締め出し・助け起こし不能を防ぐ
-  const all=Object.values(w.players);
-  if(b.state!=='sleep'&&!w.map.doorClosed&&ps.length&&all.every(p=>p.x>bx*TILE)){
-    for(const [x,y] of w.map.doorTiles)w.map.tiles[y*w.map.W+x]=3;
-    w.map.doorClosed=true;w.map.version++;
-    emit(w,{type:'doorClose'});
-  }
+  // ドアは閉めない：外からいつでもボス部屋に入れる（扉に重なって動けなくなる問題も起きない）
 }
 /** 同じ画面で遊ぶとき、プレイヤー同士が離れすぎないようにする。
     上限を超えた分だけ相手の方へ引き戻す（離れる成分だけを打ち消すので、横方向には動ける） */
