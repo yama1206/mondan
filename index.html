@@ -5321,8 +5321,8 @@ const Net={
   setReady(v){if(this.role!=='guest'||!this.conn)return;this.send({t:'ready',ready:!!v});},
   broadcastLobby(){
     if(this.role!=='host')return;
-    const q=questById(App.questSel);
-    this.broadcast({t:'lobby',members:this.lobbyList(),inGame:App.inGame,quest:{name:q.name,goal:questGoalText(q.goal),reward:QuestRules.rewardText(q),stage:stageById(q.stage).name}});
+    const q=App.questSel?questById(App.questSel):null;
+    this.broadcast({t:'lobby',members:this.lobbyList(),inGame:App.inGame,quest:q?{name:q.name,goal:questGoalText(q.goal),reward:QuestRules.rewardText(q),stage:stageById(q.stage).name}:null});
     if(App.state==='lobby')App.goto('lobby');
   },
   /** 参加者の入力を1ステップ分取り出す（回避などの単発入力は1回だけ使う） */
@@ -5684,6 +5684,7 @@ const App={
   startOnline(){
     if(Net.role!=='host')return;
     const ms=Net.members,n=ms.length,q=questById(this.questSel);
+    if(!this.questSel){UI.notify('先に依頼を選んでください','#ff8060',3);return;}
     const notReady=ms.filter(m=>!m.host&&!m.ready);
     if(notReady.length){UI.notify('準備OKでない人がいます：'+notReady.map(m=>m.name).join('、'),'#ff8060',4);return;}
     if(!QuestRules.available(this.profile,q)){UI.notify('その依頼はまだ受けられません','#ff8060',3);return;}
@@ -6084,7 +6085,7 @@ const App={
       case 'retreat':UI.confirm('探索を中断して拠点に戻りますか？<br><small>（入手済みのアイテムは保持されます）</small>',()=>{this.save();this.goto('camp');});break;
       case 'camp':this.save();this.goto('camp');break;
       case 'online':this.goto('online');break;
-      case 'netHost':Net.host(this.readNetName());break;
+      case 'netHost':this.questSel=null;Net.host(this.readNetName());break;
       case 'netJoin':{const c=document.getElementById('netCode');Net.join(c&&c.value,this.readNetName());break;}
       case 'netStart':this.startOnline();break;
       case 'netReady':{const me=Net.lobbyList().find(m=>m.pid===Net.myPid);Net.setReady(!(me&&me.ready));break;}
@@ -6198,7 +6199,7 @@ const App={
   lobbyQuestHTML(){
     let q;
     if(Net.role==='guest'){q=Net.lobbyQuest;if(!q)return '依頼：ホストが選んでいます…';}
-    else{const Q=questById(this.questSel);q={name:Q.name,goal:questGoalText(Q.goal),reward:QuestRules.rewardText(Q),stage:stageById(Q.stage).name};}
+    else{if(!this.questSel)return '<div class="small muted">まだ依頼が選ばれていません。「依頼を選ぶ」から選んでください</div>';const Q=questById(this.questSel);q={name:Q.name,goal:questGoalText(Q.goal),reward:QuestRules.rewardText(Q),stage:stageById(Q.stage).name};}
     return `<div class="small muted">選択中の依頼（${esc(q.stage)}）</div><b style="color:#f3d48a">${esc(q.name)}</b><br>目標：${esc(q.goal)}<br><small>報酬：${q.reward}</small>`;
   },
   /** 依頼ボード：ステージごとの依頼一覧と、選んだ依頼の詳細 */
@@ -6206,7 +6207,7 @@ const App={
     const p=this.profile,maxSt=QuestRules.stage(p),st=clamp(this.boardStage,1,maxSt),stage=stageById(st);
     const online=this.boardFrom==='lobby';
     let sel=questById(this.questSel);
-    if(sel.stage!==st||!QuestRules.available(p,sel)){sel=DATA.quests.find(q=>q.stage===st&&QuestRules.available(p,q));this.questSel=sel.id;}
+    if(sel.stage!==st||!QuestRules.available(p,sel)){sel=DATA.quests.find(q=>q.stage===st&&QuestRules.available(p,q));if(!online)this.questSel=sel.id;}
     const tabs=DATA.stages.map(s=>s.id<=maxSt?`<button class="tab ${s.id===st?'on':''}" data-act="boardStage" data-s="${s.id}">ステージ${s.id}</button>`:`<button class="tab" disabled>🔒 ステージ${s.id}</button>`).join('');
     const keys=QuestRules.keys(st),kd=QuestRules.keysDone(p,st);
     const rows=DATA.quests.filter(q=>q.stage===st).map(q=>{
