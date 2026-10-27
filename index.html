@@ -5133,8 +5133,8 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 const r1=v=>Math.round(v*10)/10,r3=v=>Math.round(v*1000)/1000;
 const slotOfPid=pid=>Math.max(0,(parseInt(String(pid).slice(1),10)||1)-1);
 
-/** 通信の大きさの上限（ブラウザによって約256KBで「message-too-big」になるため、余裕をもって小分けにする） */
-const WIRE_CHUNK=40000;
+/** 通信の大きさの上限：ブラウザによっては数万バイトでも「message-too-big」になるため、小さく分けて送る */
+const WIRE_CHUNK=4000; // 1通は約12KB（日本語でも）以下に。出発の合図(約19KB)でも弾かれたため小さめにする
 let wireSeq=0;
 const wireParts=new Map();
 /** 1通のメッセージを、必要なら小分けにして送る */
