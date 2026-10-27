@@ -444,7 +444,14 @@ const DATA={
     bull_horn:{name:'暴角獣の角',color:'#f0e6c8',desc:'草原の暴角獣の大きな角。（風渡る草原）'},
     bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
     bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
+    // ---- 風渡る草原のボス素材 ----
+    gale_feather:{name:'疾風の羽根',color:'#a8d0f0',desc:'疾風怪鳥の風を切る羽根。（風渡る草原）'},
+    gale_talon:{name:'疾風の鉤爪',color:'#ffd060',desc:'獲物をつかむ鋭い鉤爪。稀少素材。（風渡る草原）'},
+    lizard_scale:{name:'大蜥蜴の鱗',color:'#8a9a5a',desc:'岩のように硬い大蜥蜴の鱗。（風渡る草原）'},
+    lizard_spine:{name:'大蜥蜴の背棘',color:'#e8d890',desc:'大蜥蜴の背中に並ぶ棘。稀少素材。（風渡る草原）'},
     // ---- 緑風の森林で手に入る素材 ----
+    stag_mandible:{name:'大顎',color:'#c8a070',desc:'大顎クワガタの巨大なあご。稀少素材。（緑風の森林）'},
+    stag_shell:{name:'黒鋼の甲殻',color:'#5a4030',desc:'大顎クワガタの、鋼のように硬い甲殻。（緑風の森林）'},
     goblin_string:{name:'ゴブリンの弓弦',color:'#c8b070',desc:'ゴブリン弓兵の弓に張られた弦。（緑風の森林）'},
     beast_fang:{name:'獣の牙',color:'#ece4cc',desc:'森狼の鋭い牙。（緑風の森林）'},
     beast_hide:{name:'獣皮',color:'#9a7a52',desc:'森狼のしなやかな毛皮。（緑風の森林）'},
@@ -501,6 +508,23 @@ const DATA={
     // ステージ1（風渡る草原）
     meadow_bull:{name:'草原の暴角獣',ai:'bull',hp:1800,atk:23,def:6,r:33,speed:118,stunMax:110,stunTime:4,color:'#9a7a4a',drops:'meadow_bull',boss:true,
       pal:{body:'#9a7a4a',dark:'#5a4428',rage:'#b0583a',rageDark:'#6a2e1c',eye:'#fff0c0',rageEye:'#ff3a2a',horn:'#f0e6c8'}},
+    // 草原の2体目・3体目のボス（技の並びは pattern。動きは沼地のボスと同じ仕組み）
+    gale_bird:{name:'疾風怪鳥ゲイルホーク',ai:'pattern',look:'galeBird',hp:1500,atk:17,def:3,r:28,speed:168,stunMax:100,stunTime:4,color:'#5a8ac0',drops:'gale_bird',boss:true,
+      pattern:[
+        {k:'charge',wind:0.5,cd:3.6,dmg:0.9},
+        {k:'shot',wind:0.5,cd:3.0,dmg:0.6,n:5,spread:1.1,speed:390,kind:'feather'},
+        {k:'sweep',wind:0.5,cd:2.6,dmg:0.8,r:105,arc:Math.PI*0.9},
+        {k:'slam',wind:0.8,cd:6,dmg:0.8,r:140},
+      ],
+      pal:{body:'#5a8ac0',dark:'#2a4a7a',wing:'#a8d0f0',beak:'#ffd060',rage:'#c06a3a',rageDark:'#6a2a14',eye:'#ffe040',rageEye:'#ff3030'}},
+    rock_lizard:{name:'岩肌の大蜥蜴',ai:'pattern',look:'rockLizard',hp:2000,atk:22,def:6,r:31,speed:122,stunMax:110,stunTime:4,color:'#7a8a4a',drops:'rock_lizard',boss:true,
+      pattern:[
+        {k:'sweep',wind:0.7,cd:3.0,dmg:1.1,r:115,arc:Math.PI*0.7},
+        {k:'charge',wind:0.75,cd:5,dmg:1.2},
+        {k:'slam',wind:0.85,cd:4.5,dmg:1.0,r:135},
+        {k:'shot',wind:0.7,cd:4,dmg:0.9,n:3,spread:0.5,speed:300,kind:'rock'},
+      ],
+      pal:{body:'#7a8a4a',dark:'#3e4a22',spine:'#e8d890',belly:'#a8b870',rage:'#a06a3a',rageDark:'#4a2a14',eye:'#ff9020',rageEye:'#ff3020'}},
     // ステージ3：腐毒の沼地（既存の動きを流用し、見た目と能力を変えた魔物）
     poison_frog:{name:'毒沼ガエル',ai:'dasher',look:'frog',hp:58,atk:15,def:2,r:14,speed:140,color:'#5a9a3a',drops:'poison_frog',
       dash:{wind:0.5,speed:520,dist:200,cd:[2.4,3.4]},
@@ -601,6 +625,16 @@ const DATA={
       spore:{range:160,r:95,life:4.5,tick:0.5,wind:0.8,cd:[4,5.5],near:70},
       pal:{cap:'#c8507a',spot:'#f4e0c0',stem:'#e8dcc0',dark:'#6a2040'}},
     // moves：使う技（省略時は古狼と同じ bite/charge/slam）／rageChain：怒り時の連続突進の回数／rageCd：怒り時のクールタイム倍率
+    // 森林の3体目のボス：正面（大顎の側）からの攻撃は弾かれる（guard）。turn：向きを変える速さ。罠やスタン中は正面でも通る
+    stag_beetle:{name:'古森の大顎クワガタ',ai:'pattern',look:'stagBeetle',hp:2900,atk:25,def:9,r:34,speed:110,stunMax:130,stunTime:4,color:'#3a2a22',drops:'stag_beetle',boss:true,
+      guard:{arc:120*Math.PI/180,mult:0.15},turn:1.9,
+      pattern:[
+        {k:'sweep',wind:0.75,cd:3.0,dmg:1.3,r:120,arc:Math.PI*0.55},
+        {k:'charge',wind:0.7,cd:5,dmg:1.3},
+        {k:'slam',wind:0.9,cd:5,dmg:1.1,r:130},
+        {k:'swarm',wind:0.8,cd:10,n:2,kind:'beetle',max:3},
+      ],
+      pal:{body:'#3a2a22',dark:'#160e0a',shell:'#5a4030',jaw:'#7a5a3a',shine:'#c8a070',rage:'#5a2020',rageDark:'#200808',eye:'#ffd040',rageEye:'#ff3030'}},
     forest_king:{name:'古森の覇狼',ai:'wolf',hp:2600,atk:24,def:6,r:34,speed:128,stunMax:120,stunTime:4,color:'#5a6a3a',drops:'forest_king',boss:true,
       moves:['bite','sweep','charge','roar'],rageChain:2,rageCd:0.7,
       pal:{body:'#5a6a3a',dark:'#2e3a1c',rage:'#6a5a2a',rageDark:'#3a2a10',eye:'#e0ff70',rageEye:'#ff6020',moss:'#7aa040'}},
@@ -806,6 +840,25 @@ const DATA={
       {type:'deco',chance:0.85},
       {type:'deco',chance:0.45},
     ]},
+    gale_bird:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'gale_feather',chance:1.0,min:2,max:3},
+      {type:'mat',id:'gale_talon',chance:1.0,min:1,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
+    rock_lizard:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'lizard_scale',chance:1.0,min:2,max:3},
+      {type:'mat',id:'lizard_spine',chance:1.0,min:1,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
+    stag_beetle:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'stag_shell',chance:1.0,min:2,max:3},
+      {type:'mat',id:'stag_mandible',chance:1.0,min:1,max:2},
+      {type:'mat',id:'hard_shell',chance:0.8,min:1,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},
+      {type:'deco',chance:0.75},{type:'deco',chance:0.35},
+    ]},
     meadow_bull:{rarityBoost:2.0,rolls:[
       {type:'mat',id:'bull_horn',chance:1.0,min:1,max:2},
       {type:'mat',id:'bull_hide',chance:1.0,min:2,max:3},
@@ -936,6 +989,8 @@ const DATA={
     {id:'m1_goblin',stage:1,key:true,name:'草原の掃討',desc:'草原をうろつく小鬼の群れを9体退治してほしい。',goal:{type:'kill',target:'goblin',count:9},reward:{gold:90,mats:{goblin_hide:2}}},
     {id:'m1_slime',stage:1,key:true,name:'跳ねる緑の群れ',desc:'草原の浅瀬で増えすぎた緑の粘体を8体倒せ。',goal:{type:'kill',target:'slime',count:8},reward:{gold:90,mats:{slime_gel:2}}},
     {id:'m1_hunt',stage:1,name:'素材集め：草原',desc:'草原の魔物を合わせて15体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:15},reward:{gold:110,mats:{goblin_hide:1,slime_gel:1}}},
+    {id:'m1_bird',stage:1,after:'m1_boss',boss:'gale_bird',name:'【強敵】草原の疾風怪鳥',desc:'草原の空を、風をまとった巨大な鳥が飛び回っている。素早い急降下と、扇状に飛ばす羽根に気をつけろ。',goal:{type:'boss'},reward:{gold:450,mats:{gale_feather:2,reinforce_orb:2},decos:1}},
+    {id:'m1_lizard',stage:1,after:'m1_bird',boss:'rock_lizard',name:'【強敵】岩肌の大蜥蜴',desc:'草原の岩場に、岩のような鱗の大蜥蜴が棲みついた。噛みつき・尻尾の振り回し・吐き出す岩に注意。',goal:{type:'boss'},reward:{gold:550,mats:{lizard_scale:2,reinforce_orb:2},decos:1}},
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:300,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。12体退治してほしい。',goal:{type:'kill',target:'goblin',count:12},reward:{gold:120,mats:{goblin_hide:2,scrap_iron:1}}},
     {id:'s1_archer',stage:2,key:true,name:'骨の弓兵',desc:'暗がりから矢を射るスケルトンアーチャーを8体倒せ。',goal:{type:'kill',target:'archer',count:8},reward:{gold:150,mats:{old_bone:3,arrowhead:1}}},
@@ -962,6 +1017,7 @@ const DATA={
     {id:'s2_boss',stage:5,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:900,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
     {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:600,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
+    {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:700,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
     {id:'s2_dragon',stage:5,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
@@ -982,6 +1038,9 @@ const DATA={
     bloater:{stage:[3],role:'範囲攻撃型',desc:'毒袋を膨らませた魔物。着地の衝撃で周囲に毒をまき散らす。',tip:'膨らんでいる間は近づかない。'},
     swamp_croc:{stage:[3],role:'防御型',desc:'硬い鱗で正面を守る沼のワニ。正面からの攻撃はほとんど通らない。',tip:'横か後ろに回り込もう。'},
     parasite:{stage:[3],role:'追尾・移動妨害型',desc:'腐った木に取り付く寄生体。浮かびながら近づき、触れた者の足を鈍らせる。',tip:'ふわふわ追ってくる。逃げるより倒すほうが早い。'},
+    gale_bird:{stage:[1],role:'ボス',desc:'草原の空を支配する巨大な鳥。とても素早く、急降下や羽根の投げつけで攻めてくるが、一撃は軽い。',tip:'急降下のあとは少しスキがある。羽根は扇状に飛ぶので横へよけよう。'},
+    rock_lizard:{stage:[1],role:'ボス',desc:'岩のような鱗に覆われた大蜥蜴。噛みつき・尻尾の振り回し・岩の吐き出しを使い分ける。',tip:'尻尾の振り回しは足元の円。円が見えたらすぐ離れよう。'},
+    stag_beetle:{stage:[2],role:'ボス',desc:'古森に棲む巨大なクワガタ。大顎のある正面からの攻撃はほとんど弾かれてしまう。向きを変えるのは遅い。',tip:'横や後ろへ回り込んで攻めよう。罠にかかったりスタンしている間は、正面からでも攻撃が通る。'},
     hydra:{stage:[3],role:'ボス',desc:'沼の中心に棲む多頭の竜。三つの首で薙ぎ払い、毒の吐息を放つ。',tip:'首の薙ぎ払いは扇形。毒の沼には入らないこと。'},
     venomKing:{stage:[3],role:'ボス',desc:'毒蟲の王。子蟲を呼び、毒の沼を作り、重い前脚で叩きつける。',tip:'子蟲は早めに倒すと楽になる。'},
     mireGiant:{stage:[3],role:'ボス',desc:'腐敗した沼の巨人。大きな腕で叩き、泥を投げ、沼を広げる。',tip:'叩きつけの後は大きな隙がある。その隙に攻めよう。'},
@@ -2448,9 +2507,12 @@ function updateBossPattern(w,e,p,dt){
   switch(e.state){
     case 'roar':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
     case 'chase':{
-      e.facing=ang;
+      // turn がある魔物は向きをゆっくり変え、プレイヤーの方を向くまで技を出さない（横や後ろへ回り込める）
+      let facingOk=true;
+      if(def.turn){const tr=def.turn*(ph2?1.3:1)*dt;e.facing+=clamp(angDiff(ang,e.facing),-tr,tr);facingOk=Math.abs(angDiff(ang,e.facing))<0.45;}
+      else e.facing=ang;
       let pick=-1;
-      for(let i=0;i<pat.length;i++){
+      for(let i=0;i<pat.length&&facingOk;i++){
         const idx=((e.patIdx|0)+i)%pat.length,cd=e.cds['p'+idx];
         if(cd!==undefined&&cd>0)continue;
         if(!patternReady(w,e,pat[idx],d,los))continue;
@@ -3587,6 +3649,9 @@ const Renderer={
       case 'aquarios':this.drawAquarios(ctx,e,hurt,ed.pal);break;
       case 'turtle':this.drawTurtle(ctx,e,hurt,ed.pal);break;
       case 'thunderEel':this.drawThunderEel(ctx,e,hurt,ed.pal);break;
+      case 'galeBird':this.drawGaleBird(ctx,e,hurt,ed.pal);break;
+      case 'rockLizard':this.drawRockLizard(ctx,e,hurt,ed.pal);break;
+      case 'stagBeetle':this.drawStagBeetle(ctx,e,hurt,ed.pal);break;
     }
     ctx.restore();
     // 敵の体力は表示しない（モンハン式）
@@ -3678,6 +3743,73 @@ const Renderer={
     ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,r*0.9,0,TAU);ctx.fill();ctx.stroke();
     ctx.fillStyle=pal.spore;ctx.beginPath();ctx.arc(0,0,r*0.35,0,TAU);ctx.fill();
     ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(-r*0.3,-r*0.2,2,0,TAU);ctx.arc(r*0.3,-r*0.2,2,0,TAU);ctx.fill();
+  },
+  /** 疾風怪鳥：大きな翼を羽ばたかせる。急降下中は翼をたたむ */
+  drawGaleBird(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    const diving=e.state==='charge',flap=diving?0.25:0.75+Math.sin(e.anim*(ph2?16:11))*0.35;
+    ctx.save();ctx.rotate(e.facing);
+    // 尾羽
+    ctx.fillStyle=d;for(let i=-2;i<=2;i++){ctx.save();ctx.rotate(Math.PI+i*0.22);ctx.beginPath();ctx.ellipse(r*1.0,0,r*0.6,r*0.14,0,0,TAU);ctx.fill();ctx.restore();}
+    // 翼（羽根を重ねる）
+    for(const s of [-1,1]){
+      for(let i=0;i<5;i++){
+        const span=r*(1.0+i*0.32)*flap+r*0.4,a=s*(Math.PI/2+0.15-i*0.08);
+        ctx.fillStyle=i%2?pal.wing:b;ctx.strokeStyle=d;ctx.lineWidth=1.5;
+        ctx.save();ctx.rotate(a);ctx.beginPath();ctx.ellipse(span*0.55,-s*i*r*0.06,span*0.55,r*0.2,0,0,TAU);ctx.fill();ctx.stroke();ctx.restore();
+      }
+    }
+    // 胴と頭
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,0,r*0.75,r*0.48,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.wing;ctx.beginPath();ctx.ellipse(r*0.1,0,r*0.4,r*0.24,0,0,TAU);ctx.fill();
+    ctx.fillStyle=b;ctx.beginPath();ctx.arc(r*0.75,0,r*0.36,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=d;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(r*0.55,i*r*0.08);ctx.lineTo(r*0.15,i*r*0.2);ctx.lineTo(r*0.55,i*r*0.08+r*0.08);ctx.fill();} // 冠羽
+    ctx.fillStyle=pal.beak;ctx.beginPath();ctx.moveTo(r*1.0,-r*0.14);ctx.lineTo(r*1.45,0);ctx.lineTo(r*1.0,r*0.14);ctx.closePath();ctx.fill();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.85,s*r*0.17,r*0.07,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  /** 岩肌の大蜥蜴：太い胴と長い尻尾、背中に棘の列 */
+  drawRockLizard(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,w=Math.sin(e.anim*8);
+    ctx.save();ctx.rotate(e.facing);
+    // 尻尾（S字に揺れる）
+    ctx.strokeStyle=d;ctx.lineCap='round';ctx.lineWidth=r*0.42;ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.quadraticCurveTo(-r*1.3,w*r*0.5,-r*2.0,-w*r*0.3);ctx.stroke();
+    ctx.strokeStyle=b;ctx.lineWidth=r*0.3;ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.quadraticCurveTo(-r*1.3,w*r*0.5,-r*2.0,-w*r*0.3);ctx.stroke();ctx.lineCap='butt';
+    // 脚
+    ctx.fillStyle=d;for(const [x,s,k] of [[r*0.45,-1,1],[r*0.45,1,-1],[-r*0.45,-1,-1],[-r*0.45,1,1]]){const st=w*k*r*0.12;ctx.beginPath();ctx.ellipse(x+st,s*r*0.72,r*0.2,r*0.14,0,0,TAU);ctx.fill();
+      ctx.strokeStyle=pal.spine;ctx.lineWidth=1.5;for(const c of [-0.3,0,0.3]){ctx.beginPath();ctx.moveTo(x+st,s*r*0.8);ctx.lineTo(x+st+Math.cos(s*Math.PI/2+c)*r*0.22,s*r*0.8+Math.sin(s*Math.PI/2+c)*r*0.22);ctx.stroke();}}
+    // 胴
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.58,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.belly;for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(-r*0.6+i*r*0.24,(i%2?1:-1)*r*0.28,r*0.1,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.spine;for(let i=0;i<6;i++){const x=-r*0.75+i*r*0.28;ctx.beginPath();ctx.moveTo(x-r*0.1,0);ctx.lineTo(x+r*0.04,-r*0.16);ctx.lineTo(x+r*0.12,0);ctx.lineTo(x+r*0.04,r*0.16);ctx.closePath();ctx.fill();}
+    // 頭
+    const open=e.state==='windup'&&e.action==='sweep'?0.3:0.05;
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.moveTo(r*0.75,-r*0.32);ctx.quadraticCurveTo(r*1.6,-r*0.3-open*r,r*1.7,0);ctx.quadraticCurveTo(r*1.6,r*0.3+open*r,r*0.75,r*0.32);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(r*1.05,s*r*0.22,r*0.08,r*0.04,0,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  /** 大顎クワガタ：つやのある甲殻と、前に突き出た大きな大顎（正面の攻撃を弾く） */
+  drawStagBeetle(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    const pinch=e.state==='windup'&&e.action==='sweep'?0.35:Math.sin(e.anim*3)*0.06;
+    ctx.save();ctx.rotate(e.facing);
+    // 脚（6本）
+    ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(let i=0;i<3;i++)for(const s of [-1,1]){const x=-r*0.45+i*r*0.42,ph=Math.sin(e.anim*7+i*2+s)*r*0.12;ctx.beginPath();ctx.moveTo(x,s*r*0.45);ctx.lineTo(x+ph,s*r*0.85);ctx.lineTo(x+ph+r*0.12*(i-1),s*r*1.05);ctx.stroke();}
+    // 甲殻（左右の羽の境目とつや）
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(-r*0.2,0,r*0.9,r*0.68,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(r*0.3,0);ctx.lineTo(-r*1.05,0);ctx.stroke();
+    ctx.globalAlpha*=0.5;ctx.fillStyle=pal.shine;for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(-r*0.35,s*r*0.32,r*0.4,r*0.1,0,0,TAU);ctx.fill();}ctx.globalAlpha/=0.5;
+    // 頭と大顎
+    ctx.fillStyle=pal.shell;ctx.beginPath();ctx.ellipse(r*0.6,0,r*0.38,r*0.45,0,0,TAU);ctx.fill();ctx.stroke();
+    for(const s of [-1,1]){
+      ctx.save();ctx.translate(r*0.85,s*r*0.25);ctx.rotate(s*(0.35+pinch));
+      ctx.fillStyle=pal.jaw;ctx.beginPath();ctx.moveTo(0,-s*r*0.1);ctx.quadraticCurveTo(r*0.6,-s*r*0.2,r*1.0,s*r*0.12);ctx.lineTo(r*0.85,s*r*0.16);ctx.quadraticCurveTo(r*0.5,-s*r*0.02,0,s*r*0.1);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle=pal.shine;ctx.beginPath();ctx.moveTo(r*0.45,-s*r*0.04);ctx.lineTo(r*0.52,s*r*0.08);ctx.lineTo(r*0.6,-s*r*0.02);ctx.closePath();ctx.fill(); // 内歯
+      ctx.restore();
+    }
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.75,s*r*0.32,r*0.07,0,TAU);ctx.fill();}
+    ctx.restore();
   },
   drawHydra(ctx,e,hurt,pal){
     const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
@@ -4340,6 +4472,14 @@ const Renderer={
       ctx.fillStyle='rgba(150,120,255,.35)';ctx.beginPath();ctx.ellipse(-10,0,14,6,0,0,TAU);ctx.fill();
       ctx.fillStyle='#d8c8ff';ctx.beginPath();ctx.arc(0,0,pr.r,0,TAU);ctx.fill();
       ctx.fillStyle='#8a60ff';ctx.beginPath();ctx.arc(0,0,pr.r*0.55,0,TAU);ctx.fill();
+    }else if(pr.kind==='feather'){ // 疾風怪鳥の羽根
+      ctx.fillStyle='#a8d0f0';ctx.beginPath();ctx.ellipse(-2,0,10,3.2,0,0,TAU);ctx.fill();
+      ctx.strokeStyle='#2a4a7a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(8,0);ctx.stroke();
+    }else if(pr.kind==='rock'){ // 大蜥蜴の吐き出す岩
+      ctx.rotate(-pr.angle+pr.life*8);
+      ctx.fillStyle='#8a8070';ctx.strokeStyle='#4a4238';ctx.lineWidth=1.5;ctx.beginPath();
+      for(let i=0;i<7;i++){const a=i/7*TAU,rr=pr.r*(i%2?0.85:1.15);i?ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}
+      ctx.closePath();ctx.fill();ctx.stroke();
     }else if(pr.kind==='wave'){
       const a=clamp(pr.life/0.6,0,1);
       ctx.globalAlpha=0.4+0.6*a;ctx.shadowColor='#7fe0ff';ctx.shadowBlur=14;
@@ -4528,7 +4668,7 @@ const Portraits={
     try{
       const d=DATA.enemies[id],c=document.createElement('canvas');c.width=c.height=size;
       const ctx=c.getContext('2d'),look=d.look||d.ai;
-      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel')?d.r*4.2:look==='knight'?d.r*5:d.r*3.2);
+      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='rockLizard'||look==='stagBeetle')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
       const sc=size/span;
       ctx.translate(size/2-(look==='dragon'?d.r*0.45*sc:look==='knight'?d.r*0.8*sc:look==='wolf'?d.r*0.15*sc:0),size/2+(look==='ghost'?4*sc:0));ctx.scale(sc,sc);
       const e={id:1,type:id,x:0,y:0,r:d.r,facing:look==='dragon'||look==='wolf'||look==='knight'?0:0.6,state:'chase',anim:1,hurt:0,phase:1,timer:0,z:0,boss:!!d.boss,aimTime:d.aimTime||0.8,atkAngle:0};
