@@ -1493,7 +1493,7 @@ function buildStageMap(L){
   let floor=reachableCount(map,sx,sy);
   const tryPlace=(cells,v)=>{
     const inCells=(x,y)=>cells.some(q=>q[0]===x&&q[1]===y);
-    for(const [x,y] of cells)for(let ddy=-1;ddy<=1;ddy++)for(let ddx=-1;ddx<=1;ddx++){
+    for(const [x,y] of cells)for(let ddy=-2;ddy<=2;ddy++)for(let ddx=-2;ddx<=2;ddx++){
       const xx=x+ddx,yy=y+ddy;if(!inCells(xx,yy)&&isWall(map,xx,yy))return false;if(isWall(map,x,y))return false;}
     for(const [x,y] of cells)map.tiles[y*W+x]=v;
     const n=reachableCount(map,sx,sy);
@@ -5188,7 +5188,7 @@ const Net={
   broadcast(msg){for(const m of this.members)if(!m.host)this.sendTo(m.pid,msg);},
   member(pid){return this.members.find(x=>x.pid===pid)||null;},
   lobbyList(){
-    if(this.role==='host')return this.members.map(m=>{const st=computeStats(m.profile,null,0);return {pid:m.pid,name:m.name,host:!!m.host,atk:st.atk,def:st.def,weapon:st.weaponName};});
+    if(this.role==='host')return this.members.map(m=>{const st=computeStats(m.profile,null,0);return {pid:m.pid,name:m.name,host:!!m.host,ready:!!m.host||!!m.ready,atk:st.atk,def:st.def,weapon:st.weaponName};});
     return this.members;
   },
   cleanup(){
@@ -5265,6 +5265,7 @@ const Net={
       return;
     }
     const m=this.members.find(x=>x.conn===conn);if(!m)return;
+    if(d.t==='ready'){m.ready=!!d.ready;this.broadcastLobby();return;}
     if(d.t==='resend'){ // 参加者がロビーのまま取り残されたとき：出発の合図を送り直す
       if(App.inGame&&App.world){
         this.sendTo(m.pid,this.startMessage(App.world,m.pid));
@@ -5291,6 +5292,8 @@ const Net={
     UI.notify(`${esc(m.name)} が退出しました`,'#ff8060',3);
     App.save();this.broadcastLobby();
   },
+  /** 参加者：準備OK／取り消しをホストに伝える */
+  setReady(v){if(this.role!=='guest'||!this.conn)return;this.send({t:'ready',ready:!!v});},
   broadcastLobby(){
     if(this.role!=='host')return;
     const q=questById(App.questSel);
@@ -5656,6 +5659,8 @@ const App={
   startOnline(){
     if(Net.role!=='host')return;
     const ms=Net.members,n=ms.length,q=questById(this.questSel);
+    const notReady=ms.filter(m=>!m.host&&!m.ready);
+    if(notReady.length){UI.notify('準備OKでない人がいます：'+notReady.map(m=>m.name).join('、'),'#ff8060',4);return;}
     if(!QuestRules.available(this.profile,q)){UI.notify('その依頼はまだ受けられません','#ff8060',3);return;}
     Input.setupPlayers(1);
     this.world=createWorld({quest:q,players:n,leash:0});
@@ -5665,6 +5670,7 @@ const App={
       const pl=addPlayer(this.world,m.pid,computeStats(pr,null,0),pr.bag);
       pl.slot=slotOfPid(m.pid);
     });
+    ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
     Net.broadcastStart(this.world);
     Net.broadcastLobby();
@@ -6056,6 +6062,7 @@ const App={
       case 'netHost':Net.host(this.readNetName());break;
       case 'netJoin':{const c=document.getElementById('netCode');Net.join(c&&c.value,this.readNetName());break;}
       case 'netStart':this.startOnline();break;
+      case 'netReady':{const me=Net.lobbyList().find(m=>m.pid===Net.myPid);Net.setReady(!(me&&me.ready));break;}
       case 'toLobby':
         if(Net.role==='host'){
           if(this.inGame)UI.confirm('探索を中断して、全員でロビーに戻りますか？',()=>this.hostToLobby());else this.hostToLobby();
@@ -6217,14 +6224,16 @@ const App={
   },
   lobbyHTML(){
     const host=Net.role==='host',list=Net.lobbyList();
+    const waiting=list.filter(m=>!m.host&&!m.ready).length;
+    const me=list.find(m=>m.pid===Net.myPid),myReady=!!(me&&me.ready);
     const rows=list.map(m=>{const pc=PLAYER_COLORS[slotOfPid(m.pid)];
-      return `<div><span style="color:${pc.label}">●</span> ${esc(m.name)}　<small class="muted">${esc(m.weapon||'')}　攻撃${m.atk|0} 防御${m.def|0}</small>${m.host?'　<span class="tag">ホスト</span>':''}${m.pid===Net.myPid?'　<span class="tag" style="background:#2d8a5a">あなた</span>':''}</div>`;}).join('');
+      return `<div><span style="color:${pc.label}">●</span> ${esc(m.name)}　<small class="muted">${esc(m.weapon||'')}　攻撃${m.atk|0} 防御${m.def|0}</small>${m.host?'　<span class="tag">ホスト</span>':(m.ready?'　<span style="color:#7fe0a0">✓準備OK</span>':'　<span class="muted">準備中</span>')}${m.pid===Net.myPid?'　<span class="tag" style="background:#2d8a5a">あなた</span>':''}</div>`;}).join('');
     return `<div class="panel camp"><h2>オンライン協力：ロビー</h2>
       <div class="campinfo">部屋コード<br><span class="roomcode">${esc(Net.code)}</span><br>
       <small>${host?'参加する人に、このコードを伝えてください（最大'+NET.MAX+'人）':'ホストが出発するのを待っています…'}</small></div>
       <div class="reward-list"><div class="col-t">メンバー（${list.length}/${NET.MAX}）</div>${rows}</div>
       <div class="campinfo" style="margin-top:8px">${this.lobbyQuestHTML()}</div>
-      <div class="menu-col">${host?`<button data-act="board">依頼を選ぶ</button><button class="primary" data-act="netStart">${list.length>1?'この依頼でみんなで出発':'ひとりで出発（参加を待たずに）'}</button>`:''}
+      <div class="menu-col">${host?`<button data-act="board">依頼を選ぶ</button><button class="primary" data-act="netStart">${waiting?'準備中の人がいます（'+waiting+'人）':(list.length>1?'この依頼でみんなで出発':'ひとりで出発（参加を待たずに）')}</button>`:`<button class="primary" data-act="netReady">${myReady?'準備OKを取り消す':'準備OK'}</button>`}
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
       <button data-act="inventory">装備・インベントリ（I）</button>
