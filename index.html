@@ -960,14 +960,14 @@ const DATA={
     {id:'r_bwlegs',out:{type:'equip',id:'bwolf_greaves'},cost:{bwolf_pelt:2,dark_bone:2},stage:5},
     {id:'r_bwwaist',out:{type:'equip',id:'bwolf_faulds'},cost:{bwolf_pelt:2,hard_iron:1,dark_bone:1},stage:5},
     {id:'r_deco',out:{type:'deco'},cost:{wolf_claw:1,old_bone:3,arrowhead:2}},
-    {id:'r_potion',out:{type:'item',id:'potion',n:2},cost:{goblin_hide:1,old_bone:1}},
-    {id:'r_heal_all',out:{type:'item',id:'heal_all',n:1},cost:{goblin_hide:3,old_bone:3}},
-    {id:'r_atk_horn',out:{type:'item',id:'atk_horn',n:1},cost:{wolf_fang:1,old_bone:2,arrowhead:2}},
-    {id:'r_def_horn',out:{type:'item',id:'def_horn',n:1},cost:{wolf_pelt:1,scrap_iron:3,goblin_hide:2}},
-    {id:'r_flash',out:{type:'item',id:'flash',n:1},cost:{old_bone:1,arrowhead:1,goblin_hide:1}},
-    {id:'r_pit',out:{type:'item',id:'pit_trap',n:1},cost:{goblin_hide:2,scrap_iron:2,old_bone:2}},
-    {id:'r_shock',out:{type:'item',id:'shock_trap',n:1},cost:{arrowhead:2,scrap_iron:3,wolf_claw:1}},
-    {id:'r_bomb',out:{type:'item',id:'bomb',n:1},cost:{scrap_iron:2,goblin_hide:2,old_bone:1}},
+    {id:'r_potion',out:{type:'item',id:'potion',n:2},cost:{herb:2}},
+    {id:'r_heal_all',out:{type:'item',id:'heal_all',n:1},cost:{herb:3,forest_mushroom:2}},
+    {id:'r_atk_horn',out:{type:'item',id:'atk_horn',n:1},cost:{poison_spore:2,herb:1}},
+    {id:'r_def_horn',out:{type:'item',id:'def_horn',n:1},cost:{wood:3,herb:1}},
+    {id:'r_flash',out:{type:'item',id:'flash',n:1},cost:{forest_mushroom:1,herb:1}},
+    {id:'r_pit',out:{type:'item',id:'pit_trap',n:1},cost:{wood:2,herb:1}},
+    {id:'r_shock',out:{type:'item',id:'shock_trap',n:1},cost:{poison_spore:2,forest_mushroom:1}},
+    {id:'r_bomb',out:{type:'item',id:'bomb',n:1},cost:{wood:3,poison_spore:1}},
   ],
 };
 
@@ -1144,7 +1144,7 @@ function charOf(profile,who){return who===1?profile.p2:profile;}
 const CHAR_COUNT=2;
 const Profile={
   blank(){
-    return {materials:{},items:[],decos:[],equipped:emptyEquip(),
+    return {materials:{},matSeen:{},items:[],decos:[],equipped:emptyEquip(),
       p2:{equipped:emptyEquip()},
       bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,bgmVol:0.7,sfxVol:0.8},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
@@ -1265,6 +1265,7 @@ const Save={
     if(d.bestiary&&typeof d.bestiary==='object')for(const k in d.bestiary){const n=d.bestiary[k]|0;if(DATA.enemies[k]&&n>0)p.bestiary[k]=Math.min(n,9999999);}
     if(d.stats&&typeof d.stats==='object')for(const k in p.stats)p.stats[k]=Math.max(0,d.stats[k]|0);
     if(d.materials&&typeof d.materials==='object')for(const k in d.materials){const n=d.materials[k]|0;if(DATA.materials[k]&&n>0)p.materials[k]=n;}
+    if(d.matSeen&&typeof d.matSeen==='object'){p.matSeen=p.matSeen||{};for(const k in d.matSeen)if(DATA.materials[k])p.matSeen[k]=1;}
     const decoIds=new Set(),uidNums=[];
     const noteUid=u=>{const n=parseInt(String(u).slice(1),10);if(!isNaN(n))uidNums.push(n);};
     if(Array.isArray(d.decos))for(const x of d.decos){
@@ -5073,7 +5074,7 @@ const Ops={
     p.gold-=s.price*n;
     let extra='';
     if(s.type==='item')p.bag[s.item]=(p.bag[s.item]||0)+n;
-    else if(s.type==='mat')p.materials[s.mat]=(p.materials[s.mat]||0)+n;
+    else if(s.type==='mat'){p.materials[s.mat]=(p.materials[s.mat]||0)+n;(p.matSeen=p.matSeen||{})[s.mat]=1;}
     else if(s.type==='deco'){
       const got=[];
       for(let i=0;i<n;i++){const d=Profile.addDeco(p,Items.createDeco(pick(Object.keys(DATA.decorations)),Items.rollRarity(1.2+0.3*QuestRules.stage(p))));got.push(lootLabel({type:'deco',item:d}));}
@@ -5891,7 +5892,7 @@ const App={
   grantLoot(loot,pid){
     pid=pid||'p1';
     const p=this.profileFor(pid)||this.profile;
-    if(loot.type==='mat')p.materials[loot.id]=(p.materials[loot.id]||0)+loot.n;
+    if(loot.type==='mat'){p.materials[loot.id]=(p.materials[loot.id]||0)+loot.n;(p.matSeen=p.matSeen||{})[loot.id]=1;}
     else if(loot.type==='equip')Profile.addItem(p,loot.item);
     else if(loot.type==='deco')Profile.addDeco(p,loot.item);
     else if(loot.type==='gold')p.gold=(p.gold||0)+loot.n;
@@ -6605,7 +6606,8 @@ const App={
   },
   recipeListHTML(filter){
     const p=this.profile;
-    return `<div class="col full" data-scroll="craft"><div class="recipes">${DATA.recipes.filter(r=>(!r.stage||QuestRules.stage(p)>=r.stage)&&filter(r)).map(r=>{
+    const known=r=>Object.keys(r.cost).every(k=>(p.materials[k]||0)>0||(p.matSeen&&p.matSeen[k]));
+    return `<div class="col full" data-scroll="craft"><div class="recipes">${DATA.recipes.filter(r=>(!r.stage||QuestRules.stage(p)>=r.stage)&&known(r)&&filter(r)).map(r=>{
       let name,info='';
       if(r.out.type==='equip'){
         const b=DATA.equipment[r.out.id];name=b.name;
