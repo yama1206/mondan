@@ -275,6 +275,9 @@ const DATA={
     hammer:{name:'ハンマー',knockback:true,range:62,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
+    whip:{name:'鞭',range:118,arc:34*Math.PI/180,interval:0.42,active:0.12,power:0.85,move:1.08,swing:0.22,sheathe:0.5,
+      tip:{min:0.55,max:1.65}, // 先端に近いほど威力が上がる（min＝根元／max＝先端の倍率）
+      marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'細長く伸びる。先端に近いほど威力が上がる'},
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -341,6 +344,8 @@ const DATA={
     iron_hammer:{name:'鉄のハンマー',slot:'weapon',wtype:'hammer',atk:11,crit:0},
     wolf_hammer:{name:'古狼のハンマー',slot:'weapon',wtype:'hammer',atk:22,crit:3,fixed:[{stat:'maxHp',v:20}]},
     bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}]},
+    iron_whip:{name:'鉄の鞭',slot:'weapon',wtype:'whip',atk:9,crit:4},
+    wolf_whip:{name:'古狼の鞭',slot:'weapon',wtype:'whip',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}]},
   },
   materials:{
     // ステージ3：腐毒の沼地
@@ -921,8 +926,8 @@ const DATA={
     bone_dragon:{stage:[5],role:'ボス',desc:'地下墓地に封印されていた巨大な骨の竜。霊魂弾・薙ぎ払い・咆哮に加え、骸骨兵を呼び出す。',tip:'霊魂弾は追いかけてくるが、回避で抜けられる。呼ばれた骸骨兵は竜を倒すと崩れる。'},
   },
   equipPools:{
-    basic:['iron_sword','hunter_sword','leather_cap','leather_vest','leather_gloves','leather_boots','bone_helm','leather_belt'],
-    wolf:['wolf_sword','wolf_helm','wolf_mail','wolf_vambrace','wolf_greaves'],
+    basic:['iron_sword','hunter_sword','leather_cap','leather_vest','leather_gloves','leather_boots','bone_helm','leather_belt','iron_whip'],
+    wolf:['wolf_sword','wolf_helm','wolf_mail','wolf_vambrace','wolf_greaves','wolf_whip'],
   },
   recipes:[
     {id:'r_hunter',out:{type:'equip',id:'hunter_sword'},cost:{scrap_iron:4,old_bone:2}},
@@ -946,6 +951,7 @@ const DATA={
     {id:'r_wolf_db',out:{type:'equip',id:'wolf_db'},cost:{wolf_claw:2,wolf_fang:1,scrap_iron:3}},
     {id:'r_bwolf_db',out:{type:'equip',id:'bwolf_db'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:5},
     {id:'r_iron_hammer',out:{type:'equip',id:'iron_hammer'},cost:{scrap_iron:6,old_bone:2}},
+    {id:'r_iron_whip',out:{type:'equip',id:'iron_whip'},cost:{scrap_iron:3,arrowhead:1}},
     {id:'r_wolf_gs',out:{type:'equip',id:'wolf_gs'},cost:{wolf_fang:2,wolf_pelt:2,scrap_iron:4}},
     {id:'r_wolf_tachi',out:{type:'equip',id:'wolf_tachi'},cost:{wolf_fang:2,wolf_claw:1,arrowhead:2}},
     {id:'r_wolf_hammer',out:{type:'equip',id:'wolf_hammer'},cost:{wolf_claw:2,wolf_pelt:1,scrap_iron:5}},
@@ -1091,7 +1097,7 @@ function computeStats(profile,override,who){
   s.sheathSpeed=P.baseSpeed*(1+s.moveSpd/100)*DATA.weaponTypes.sword.move; // 納刀中は片手剣と同じ速さ
   s.sheatheTime=wt.sheathe||0.5;
   s.attackInterval=wt.interval/(1+s.atkSpd/100);
-  s.range=wt.range;s.arc=wt.arc;s.activeTime=wt.active;s.power=wt.power;s.swingTime=wt.swing||0.22;
+  s.range=wt.range;s.arc=wt.arc;s.activeTime=wt.active;s.power=wt.power;s.swingTime=wt.swing||0.22;s.tip=wt.tip||null;
   s.dodgeCd=P.dodgeCd*(s.effects.gale?0.7:1)*s.dodgeCdMult;
   s.skill=wt.skill||null;
   s.skillCd=s.skill?DATA.skills[s.skill].cd*(s.effects.skillcd?0.75:1):0;
@@ -2079,7 +2085,7 @@ function playerAttack(w,p,opt){
   p.swingTotal=Math.min(s.swingTime,s.attackInterval*0.9);p.swing=p.swingTotal;
   p.swingAngle=p.facing;p.swingDir=-p.swingDir;p.combo++;p.lastLevel=opt.level||0;
   const third=!!s.effects.combo&&p.combo%3===0;
-  w.attacks.push({id:w.nextId++,pid:p.id,angle:p.facing,range:s.range,arc:s.arc,life:s.activeTime,hit:new Set(),
+  w.attacks.push({id:w.nextId++,pid:p.id,angle:p.facing,range:s.range,arc:s.arc,life:s.activeTime,hit:new Set(),tip:s.tip,
     mult:(opt.mult||1)*(third?1.6:1),stunMult:opt.stunMult||1});
   emit(w,{type:'swing',pid:p.id,combo:third,level:opt.level||0,x:p.x,y:p.y,w:s.weaponType});
 }
@@ -2105,7 +2111,9 @@ function updateAttacks(w,dt){
       if(Math.abs(angDiff(Math.atan2(dy,dx),a.angle))>a.arc/2+tol)continue;
       if(!lineOfSight(w.map,p.x,p.y,e.x,e.y))continue; // 壁越しには当たらない
       a.hit.add(e.id);
-      damageEnemy(w,p,e,a.mult,{stunMult:a.stunMult});
+      let mult=a.mult;
+      if(a.tip){const f=clamp(Math.max(0,d-e.r)/a.range,0,1);mult*=a.tip.min+(a.tip.max-a.tip.min)*f;} // 鞭：先端ほど強い
+      damageEnemy(w,p,e,mult,{stunMult:a.stunMult});
       const fw=DATA.weaponTypes[p.stats.weaponType];
       if(fw&&fw.flow&&!a.flowed){a.flowed=true;const before=p.flow;p.flow=Math.min(fw.flow.max,p.flow+1);p.flowT=fw.flow.keep;
         if(p.flow===fw.flow.max&&before<fw.flow.max)emit(w,{type:'flowMax',pid:p.id,x:p.x,y:p.y-24});}
@@ -3925,6 +3933,10 @@ const Renderer={
         ctx.fillStyle='#8a8f9a';ctx.fillRect(r+12,-10,14,20);
         ctx.fillStyle=rc;ctx.fillRect(r+12,-10,14,3);ctx.fillRect(r+12,7,14,3);
         ctx.strokeStyle='#4a4f5a';ctx.lineWidth=1.5;ctx.strokeRect(r+12,-10,14,20);
+      }else if(wtype==='whip'){ // 細長い革の鞭（先端ほど細く、しなる）
+        ctx.fillStyle='#4a3020';ctx.fillRect(r*0.4,-2,8,4);
+        ctx.strokeStyle='#8a6a40';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(r*0.4+8,0);ctx.quadraticCurveTo(r+40,-12,r+100,4);ctx.stroke();
+        ctx.strokeStyle=rc;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(r+80,-4);ctx.quadraticCurveTo(r+92,-6,r+100,4);ctx.stroke();
       }else{ // 片手剣
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.5,-2,7,4);
         ctx.fillStyle=rc;ctx.fillRect(r*0.5+6,-5,3,10);
