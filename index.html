@@ -360,7 +360,7 @@ const DATA={
   // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
     iron_sword:{name:'鉄の剣',slot:'weapon',wtype:'sword',atk:10,crit:5},
-    hunter_sword:{name:'狩猟の剣',slot:'weapon',wtype:'sword',atk:14,crit:5},
+    hunter_sword:{name:'狩猟の弓',slot:'weapon',wtype:'bow',atk:11,crit:6,fixed:[{stat:'critDmg',v:5}]}, // IDは昔の名残（セーブデータを壊さないため hunter_sword のまま）
     wolf_sword:{name:'古狼の剣',slot:'weapon',wtype:'sword',atk:20,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
     fang_king:{name:'牙王の剣',slot:'weapon',wtype:'sword',atk:27,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
     leather_cap:{name:'革の帽子',slot:'head',def:3,skills:{evade:2,gather_up:2}},
@@ -409,7 +409,7 @@ const DATA={
     beast_belt:{name:'獣皮の腰巻き',slot:'waist',def:4,skills:{move_up:2,evade:2}},
     beast_boots:{name:'獣皮の靴',slot:'legs',def:5,skills:{move_up:3,evade:1}},
     // 草原：ゴブリンシリーズ（ゴブリン・ゴブリン弓兵・スライム）
-    goblin_blade:{name:'ゴブリンの鉈',slot:'weapon',wtype:'sword',atk:13,crit:4,fixed:[{stat:'atk',v:1}]},
+    goblin_bow:{name:'ゴブリンの弓',slot:'weapon',wtype:'bow',atk:11,crit:5,fixed:[{stat:'atkSpd',v:4}]},
     goblin_cap:{name:'ゴブリンの耳当て帽',slot:'head',def:5,skills:{gather_up:3,minion_hunter:2}},
     goblin_vest:{name:'ゴブリンの継ぎ当て服',slot:'body',def:6,skills:{minion_hunter:3,gather_up:2}},
     goblin_gloves:{name:'ゴブリンの小手',slot:'arms',def:4,skills:{minion_hunter:2,item_speed:2}},
@@ -1175,7 +1175,7 @@ const DATA={
     wolf:['wolf_sword','wolf_helm','wolf_mail','wolf_vambrace','wolf_greaves','wolf_whip'],
   },
   recipes:[
-    {id:'r_hunter',out:{type:'equip',id:'hunter_sword'},cost:{scrap_iron:4,old_bone:2}},
+    {id:'r_hunter',out:{type:'equip',id:'hunter_sword'},cost:{scrap_iron:2,old_bone:2,goblin_string:1}},
     {id:'r_cap',out:{type:'equip',id:'leather_cap'},cost:{goblin_hide:2,old_bone:1}},
     {id:'r_vest',out:{type:'equip',id:'leather_vest'},cost:{goblin_hide:4}},
     {id:'r_gloves',out:{type:'equip',id:'leather_gloves'},cost:{goblin_hide:2,scrap_iron:1}},
@@ -1221,7 +1221,7 @@ const DATA={
     {id:'r_beast_belt',out:{type:'equip',id:'beast_belt'},cost:{beast_hide:2,goblin_hide:1}},
     {id:'r_beast_boots',out:{type:'equip',id:'beast_boots'},cost:{beast_hide:2,slime_gel:1}},
     // ゴブリンシリーズ
-    {id:'r_goblin_blade',out:{type:'equip',id:'goblin_blade'},cost:{scrap_iron:3,goblin_hide:2}},
+    {id:'r_goblin_bow',out:{type:'equip',id:'goblin_bow'},cost:{goblin_string:2,goblin_hide:1,scrap_iron:1}},
     {id:'r_goblin_cap',out:{type:'equip',id:'goblin_cap'},cost:{goblin_hide:2,goblin_string:1}},
     {id:'r_goblin_vest',out:{type:'equip',id:'goblin_vest'},cost:{goblin_hide:3,goblin_string:1}},
     {id:'r_goblin_gloves',out:{type:'equip',id:'goblin_gloves'},cost:{goblin_hide:2,scrap_iron:1}},
