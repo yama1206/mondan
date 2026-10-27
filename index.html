@@ -2891,6 +2891,7 @@ const PLAYER_COLORS=[
   {body:'#e8742c',rim:'#ffc896',label:'#ffb070'}, // 2P：橙
   {body:'#3fae5a',rim:'#a8f0b8',label:'#7fe09a'}, // 3P：緑
   {body:'#a058d8',rim:'#e0b8ff',label:'#c898ff'}, // 4P：紫
+  {body:'#2ab8b0',rim:'#a8f4f0',label:'#7fe8e0'}, // 5P：青緑
 ];
 /** プレイヤーの表示名（オンラインでは名前、同じ画面なら 1P/2P） */
 function playerName(p){return (p.info&&p.info.name)||((p.slot+1)+'P');}
@@ -5123,7 +5124,7 @@ const Ops={
    ・接続の仲介には PeerJS（無料の仲介サーバー）を使い、接続後はPC同士が直接通信する（WebRTC）。
    オンライン機能を使うときだけライブラリを読み込むので、ひとり用はオフラインでも遊べる。 */
 const NET={
-  VERSION:2,PREFIX:'kourou-dungeon-',MAX:4,SNAP_HZ:20,INPUT_HZ:30,
+  VERSION:2,PREFIX:'kourou-dungeon-',MAX:5,SNAP_HZ:20,INPUT_HZ:30,
   LIBS:['https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js'],
 };
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -5254,7 +5255,7 @@ const Net={
         if(App.world&&App.world.players[m.pid])setPlayerStats(App.world,m.pid,computeStats(profile,null,0));
       }else{
         if(this.members.length>=NET.MAX){reject('部屋が満員です（最大'+NET.MAX+'人）');return;}
-        const pid=['p2','p3','p4'].find(p=>!this.members.some(x=>x.pid===p));
+        const pid=['p2','p3','p4','p5'].find(p=>!this.members.some(x=>x.pid===p));
         m={pid,name,guestId:gid,host:false,conn,profile};
         this.members.push(m);
       }
