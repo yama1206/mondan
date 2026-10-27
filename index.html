@@ -4660,10 +4660,11 @@ const Input={
     else if(k==='cycle')E.cycle=1;else if(k==='sheathe')E.sheathe=true;
   },
   initTouch(){
-    this.isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
     this.touchRoot=document.getElementById('touch');
-    if(!this.isTouch||!this.touchRoot)return;
-    document.body.classList.add('touch');
+    if(!this.touchRoot)return;
+    // 実際に画面をタッチしたときだけ、スマホ向けの操作を出す（タッチ対応のPCでは、マウスで遊ぶ限り出さない）
+    const enable=()=>{if(this.isTouch)return;this.isTouch=true;document.body.classList.add('touch');this.syncTouchUi(App.state==='playing');};
+    window.addEventListener('touchstart',enable,{passive:true,capture:true});
     const root=this.touchRoot,stick=root.querySelector('.stick'),knob=root.querySelector('.knob');
     let sid=null;
     const moveStick=e=>{
@@ -4692,7 +4693,7 @@ const Input={
     });
   },
   /** プレイ中だけ画面のボタンを表示する */
-  syncTouchUi(playing){if(this.touchRoot)this.touchRoot.classList.toggle('on',!!playing);},
+  syncTouchUi(playing){if(this.touchRoot)this.touchRoot.classList.toggle('on',!!playing&&this.isTouch);},
   consumeEdges(){this.edges.p1=newEdges();this.edges.p2=newEdges();},
   onMouse(){
     if(this.isTouch)return; // 画面をタッチしたときのマウス扱いは無視する
