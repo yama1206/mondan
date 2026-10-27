@@ -178,7 +178,7 @@ const CONFIG={
 
 const SLOTS=['weapon','head','body','arms','waist','legs'];
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
-const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb'];
+const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
 const VOL_SCALE=0.5; // 音量の全体倍率（設定画面の表示も同じ倍率で出す）
 const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚'};
@@ -278,6 +278,9 @@ const DATA={
     whip:{name:'鞭',range:118,arc:34*Math.PI/180,interval:0.42,active:0.12,power:0.85,move:1.08,swing:0.22,sheathe:0.5,
       tip:{min:0.55,max:1.65}, // 先端に近いほど威力が上がる（min＝根元／max＝先端の倍率）
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'細長く伸びる。先端に近いほど威力が上がる'},
+    bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,
+      bow:{speed:620,life:0.5}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる
+      marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'矢は無限。瓶で矢に毒・麻痺・睡眠を付けられる'},
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -296,6 +299,10 @@ const DATA={
     pit_trap:{name:'落とし穴',short:'落とし穴',delay:2.0,max:1,color:'#b08a5a',effect:{type:'place',kind:'pit',arm:1.0,r:26,boss:6,minion:4},desc:'足元に設置。踏んだ敵を足止めする（ボス6秒・雑魚4秒）'},
     shock_trap:{name:'シビレ罠',short:'シビレ罠',delay:2.0,max:1,color:'#ffe040',effect:{type:'place',kind:'shock',arm:1.0,r:26,area:70,boss:4,minion:5},desc:'足元に設置。踏むと周りの敵をまとめてしびれさせる（ボス4秒・雑魚5秒）'},
     bomb:{name:'大タル爆弾',short:'大タル爆弾',delay:1.5,max:2,color:'#ff5a3a',effect:{type:'place',kind:'bomb',fuse:3.0,r:14,area:110,dmg:150},desc:'足元に設置。3秒後に爆発して周りの敵に大ダメージ（味方は吹き飛ぶだけ）'},
+    // 状態異常の瓶：使うと、次の矢3本に状態異常を付ける（矢が当たると効果）
+    poison_bottle:{name:'毒の瓶',short:'毒瓶',delay:1.0,max:5,color:'#a8e040',effect:{type:'coat',status:'poison',shots:3},desc:'次の矢3本に毒を付ける（当たった敵の体力が少しずつ減る）'},
+    para_bottle:{name:'麻痺の瓶',short:'麻痺瓶',delay:1.0,max:5,color:'#ffe040',effect:{type:'coat',status:'paralysis',shots:3},desc:'次の矢3本に麻痺を付ける（当たった敵は動けなくなる。ボスは短い）'},
+    sleep_bottle:{name:'睡眠の瓶',short:'睡眠瓶',delay:1.0,max:5,color:'#b898ff',effect:{type:'coat',status:'sleep',shots:3},desc:'次の矢3本に睡眠を付ける（眠った敵は攻撃されるまで動かない。ボスには効かない）'},
   },
   /* 防具シリーズ：頭・胴・腕・脚をそろえると一式効果が発動 */
   armorSets:{
@@ -345,6 +352,7 @@ const DATA={
     wolf_hammer:{name:'古狼のハンマー',slot:'weapon',wtype:'hammer',atk:22,crit:3,fixed:[{stat:'maxHp',v:20}]},
     bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}]},
     iron_whip:{name:'鉄の鞭',slot:'weapon',wtype:'whip',atk:9,crit:4},
+    iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:8,crit:4},
     wolf_whip:{name:'古狼の鞭',slot:'weapon',wtype:'whip',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}]},
   },
   materials:{
@@ -926,7 +934,7 @@ const DATA={
     bone_dragon:{stage:[5],role:'ボス',desc:'地下墓地に封印されていた巨大な骨の竜。霊魂弾・薙ぎ払い・咆哮に加え、骸骨兵を呼び出す。',tip:'霊魂弾は追いかけてくるが、回避で抜けられる。呼ばれた骸骨兵は竜を倒すと崩れる。'},
   },
   equipPools:{
-    basic:['iron_sword','hunter_sword','leather_cap','leather_vest','leather_gloves','leather_boots','bone_helm','leather_belt','iron_whip'],
+    basic:['iron_sword','hunter_sword','leather_cap','leather_vest','leather_gloves','leather_boots','bone_helm','leather_belt','iron_whip','iron_bow'],
     wolf:['wolf_sword','wolf_helm','wolf_mail','wolf_vambrace','wolf_greaves','wolf_whip'],
   },
   recipes:[
@@ -951,6 +959,10 @@ const DATA={
     {id:'r_wolf_db',out:{type:'equip',id:'wolf_db'},cost:{wolf_claw:2,wolf_fang:1,scrap_iron:3}},
     {id:'r_bwolf_db',out:{type:'equip',id:'bwolf_db'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:5},
     {id:'r_iron_hammer',out:{type:'equip',id:'iron_hammer'},cost:{scrap_iron:6,old_bone:2}},
+    {id:'r_poison_bottle',out:{type:'item',id:'poison_bottle',n:2},cost:{poison_spore:2,forest_mushroom:1}},
+    {id:'r_para_bottle',out:{type:'item',id:'para_bottle',n:2},cost:{poison_spore:1,herb:2}},
+    {id:'r_sleep_bottle',out:{type:'item',id:'sleep_bottle',n:2},cost:{herb:3,forest_mushroom:1}},
+    {id:'r_iron_bow',out:{type:'equip',id:'iron_bow'},cost:{scrap_iron:3,old_bone:2}},
     {id:'r_iron_whip',out:{type:'equip',id:'iron_whip'},cost:{scrap_iron:3,arrowhead:1}},
     {id:'r_wolf_gs',out:{type:'equip',id:'wolf_gs'},cost:{wolf_fang:2,wolf_pelt:2,scrap_iron:4}},
     {id:'r_wolf_tachi',out:{type:'equip',id:'wolf_tachi'},cost:{wolf_fang:2,wolf_claw:1,arrowhead:2}},
@@ -1701,7 +1713,7 @@ function addPlayer(w,id,stats,bag){
     facing:0,atkTimer:0,swing:0,swingTotal:0.2,swingAngle:0,swingDir:1,combo:0,dodgeCd:0,dodgeTime:0,dodgeDir:{x:1,y:0},
     dodgeInv:0,hitInv:0,skillCd:0,bag:Object.assign(emptyBag(),bag||{}),sel:0,potionCd:0,hurt:0,buffs:{},kx:0,ky:0,dead:false,walk:0,moving:false,lastEvade:-9,
     using:null,charging:false,charge:0,buffT:0,dodgeStart:-9,perfectThisDodge:false,drawn:false,sheathing:null,flow:0,flowT:0,
-    slowT:0,slowMult:1,poisoned:0};
+    slowT:0,slowMult:1,poisoned:0,coat:null};
   w.players[id]=p;return p;
 }
 /** 装備変更時にステータスを差し替える（HP割合ではなく減少量を維持） */
@@ -1849,6 +1861,7 @@ function damageEnemy(w,p,e,mult,src){
   if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2){dmg*=ed.guard.mult;guarded=true;}
   dmg=Math.max(1,Math.round(dmg-e.armor*0.5));
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
+  if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
   if(!e.boss&&!ed.heavy&&!e.mid){
     e.stun=0.15;
     // ノックバックは武器ごと（大剣・ハンマーだけ）。片手剣・太刀・双剣は吹き飛ばさない
@@ -1875,6 +1888,14 @@ function damageEnemy(w,p,e,mult,src){
   }
   if(e.boss&&e.state==='sleep')triggerBoss(w);
   if(e.hp<=0)killEnemy(w,e);
+}
+/** 矢の状態異常を付ける（ボスは効きにくい） */
+function applyStatus(w,e,status){
+  if(e.dead)return;
+  const boss=!!e.boss;
+  if(status==='poison'){e.poisonT=boss?4:6;e.poisonTick=1;e.poisonDmg=Math.max(4,Math.round(e.maxHp*(boss?0.012:0.03)));emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'毒',color:'#a8e040'});}
+  else if(status==='paralysis'){e.trapT=boss?2.2:4;e.trapKind='para';emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'麻痺',color:'#ffe040'});}
+  else if(status==='sleep'){if(boss)return;e.sleepT=7;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'睡眠',color:'#b898ff'});}
 }
 function killEnemy(w,e){
   e.dead=true;e.hp=0;
@@ -2006,6 +2027,9 @@ function applyItem(w,p,id){
       const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1));
       q.hp=Math.min(q.stats.maxHp,q.hp+hl);
       emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
+    }else if(ef.type==='coat'){
+      q.coat={status:ef.status,shots:ef.shots};
+      emit(w,{type:'info',pid:q.id,text:`${c.short}を装填（矢${ef.shots}本）`});
     }else if(ef.type==='buff'){
       q.buffs[ef.stat]={pct:ef.pct,t:ef.time*ip,total:ef.time*ip};
       emit(w,{type:'buff',pid:q.id,x:q.x,y:q.y-24,stat:ef.stat,pct:ef.pct,color:c.color});
@@ -2079,11 +2103,21 @@ function chargeLevel(c,t){
   let lv=0;for(let i=0;i<c.levels.length;i++)if(t>=c.levels[i])lv=i+1;
   return lv;
 }
+/** 弓：矢を1本撃つ（瓶を装填していれば、その状態異常を付ける） */
+function fireArrow(w,p){
+  const s=p.stats,bw=DATA.weaponTypes[s.weaponType].bow,a=p.facing;
+  const coat=p.coat&&p.coat.shots>0?p.coat:null;
+  w.projectiles.push({id:w.nextId++,kind:'playerArrow',owner:'player',pid:p.id,x:p.x+Math.cos(a)*16,y:p.y+Math.sin(a)*16,
+    vx:Math.cos(a)*bw.speed,vy:Math.sin(a)*bw.speed,angle:a,r:7,life:bw.life,hit:new Set(),status:coat?coat.status:null});
+  if(coat){coat.shots--;if(coat.shots<=0){p.coat=null;emit(w,{type:'info',pid:p.id,text:'瓶の中身がなくなった'});}}
+  emit(w,{type:'swing',pid:p.id,combo:false,level:0,x:p.x,y:p.y,w:s.weaponType});
+}
 function playerAttack(w,p,opt){
   const s=p.stats;
   p.atkTimer=s.attackInterval;
   p.swingTotal=Math.min(s.swingTime,s.attackInterval*0.9);p.swing=p.swingTotal;
   p.swingAngle=p.facing;p.swingDir=-p.swingDir;p.combo++;p.lastLevel=opt.level||0;
+  if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].bow){fireArrow(w,p);return;}
   const third=!!s.effects.combo&&p.combo%3===0;
   w.attacks.push({id:w.nextId++,pid:p.id,angle:p.facing,range:s.range,arc:s.arc,life:s.activeTime,hit:new Set(),tip:s.tip,
     mult:(opt.mult||1)*(third?1.6:1),stunMult:opt.stunMult||1});
@@ -2132,6 +2166,11 @@ function updateEnemy(w,e,dt){
   // ボスが弱ってきたら知らせる（体力は見えないので、これが目安）
   if(e.boss&&!e.weakNoticed&&e.hp<=e.maxHp*0.2){e.weakNoticed=true;emit(w,{type:'bossWeak',x:e.x,y:e.y,name:DATA.enemies[e.type].name});}
   // 罠にかかっている間は動けない
+  if(e.poisonT>0){ // 毒：1秒ごとに体力が減る（眠っていても進む）
+    e.poisonT-=dt;e.poisonTick-=dt;
+    if(e.poisonTick<=0){e.poisonTick=1;e.hp-=e.poisonDmg;e.hurt=0.1;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'-'+e.poisonDmg,color:'#a8e040'});if(e.hp<=0){killEnemy(w,e);return;}}
+  }
+  if(e.sleepT>0){e.sleepT-=dt;return;} // 睡眠：攻撃されるまで動かない
   if(e.trapT>0){e.trapT-=dt;if(e.trapT<=0){e.trapKind=null;emit(w,{type:'trapEnd',x:e.x,y:e.y});}return;}
   // 目がくらんでいる間は、うろうろするだけ
   if(e.blindT>0){
@@ -2733,6 +2772,12 @@ function updateProjectiles(w,dt){
         const p=w.players[id];if(p.dead)continue;
         if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05)){alive=false;break;}
       }
+    }else if(alive&&pr.kind==='playerArrow'){
+      const p=w.players[pr.pid];
+      if(p)for(const e of w.enemies){
+        if(e.dead||pr.hit.has(e.id))continue;
+        if(Math.hypot(e.x-pr.x,e.y-pr.y)<e.r+pr.r){pr.hit.add(e.id);damageEnemy(w,p,e,1,{arrow:true});if(pr.status)applyStatus(w,e,pr.status);alive=false;break;}
+      }
     }else if(alive&&pr.kind==='wave'){
       const p=w.players[pr.pid];
       if(p)for(const e of w.enemies){
@@ -3034,6 +3079,7 @@ const Renderer={
       case 'revived':this.floater(ev.x,ev.y-20,'よみがえった!','#d080ff',16,1.2);this.ring(ev.x,ev.y,6,50,'#c070ff',0.6,4);this.burst(ev.x,ev.y,'#d8c8ff',16,140);break;
       case 'interrupt':this.floater(ev.x,ev.y,'詠唱中断!','#ffe060',15,1.0);break;
       case 'summon':this.ring(ev.x,ev.y,6,40,'#c070ff',0.5,4);this.burst(ev.x,ev.y,'#e8e0d0',14,140);break;
+      case 'status':this.floater(ev.x,ev.y,ev.text,ev.color,14,0.9);break;
       case 'gather':this.floater(ev.x,ev.y-18,'採取!','#9fe07a',14,0.9);this.burst(ev.x,ev.y,'#9fe07a',12,120);break;
       case 'heal':this.floater(ev.x,ev.y,'+'+ev.amount,'#5fe08a',16);if(!ev.drain)this.ring(ev.x,ev.y+20,8,40,'#5fe08a',0.5);break;
       case 'kill':this.burst(ev.x,ev.y,ev.color,ev.boss?60:16,ev.boss?320:180,ev.boss?5:3);if(ev.boss){this.addShake(16);this.ring(ev.x,ev.y,10,260,'#ffd23a',1.2,6);}break;
@@ -3368,6 +3414,8 @@ const Renderer={
       if(e.trapKind==='pit'){ctx.fillStyle='rgba(26,18,10,.85)';ctx.beginPath();ctx.ellipse(0,e.r*0.4,e.r*1.3,e.r*0.8,0,0,TAU);ctx.fill();ctx.translate(rand(-1.5,1.5),0);}
       else{ctx.strokeStyle='#ffe040';ctx.lineWidth=2;for(let i=0;i<3;i++){const a=rand(0,TAU),r0=e.r*0.5,r1=e.r*1.3;ctx.beginPath();ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);ctx.lineTo(Math.cos(a+0.3)*r1*0.8,Math.sin(a+0.3)*r1*0.8);ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);ctx.stroke();}ctx.translate(rand(-1,1),rand(-1,1));}
     }
+    {const st=[];if(e.poisonT>0)st.push(['毒','#a8e040']);if(e.sleepT>0)st.push(['眠','#b898ff']);if(e.trapKind==='para'&&e.trapT>0)st.push(['麻','#ffe040']);
+      st.forEach(([t,c],i)=>{ctx.fillStyle=c;ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,-e.r-10+i*14,-e.r-14);});}
     if(e.blindT>0){ctx.fillStyle='#fff6a0';ctx.font=`bold 14px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('？',Math.sin(this.time*5)*6,-e.r-14);}
     if(e.state==='stunned'){ // スタン中：頭上を星が回る
       for(let i=0;i<3;i++){const a=this.time*4+i*TAU/3;ctx.fillStyle='#ffe060';ctx.font=`bold 14px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('★',Math.cos(a)*e.r*0.8,-e.r-12+Math.sin(a)*5);}
@@ -3933,6 +3981,9 @@ const Renderer={
         ctx.fillStyle='#8a8f9a';ctx.fillRect(r+12,-10,14,20);
         ctx.fillStyle=rc;ctx.fillRect(r+12,-10,14,3);ctx.fillRect(r+12,7,14,3);
         ctx.strokeStyle='#4a4f5a';ctx.lineWidth=1.5;ctx.strokeRect(r+12,-10,14,20);
+      }else if(wtype==='bow'){ // 弓：しなる弓と弦
+        ctx.strokeStyle='#8a6a40';ctx.lineWidth=3;ctx.beginPath();ctx.arc(r+4,0,22,-1.2,1.2);ctx.stroke();
+        ctx.strokeStyle='#e8e0c8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(r+4+22*Math.cos(-1.2),22*Math.sin(-1.2));ctx.lineTo(r+4+22*Math.cos(1.2),22*Math.sin(1.2));ctx.stroke();
       }else if(wtype==='whip'){ // 細長い革の鞭（先端ほど細く、しなる）
         ctx.fillStyle='#4a3020';ctx.fillRect(r*0.4,-2,8,4);
         ctx.strokeStyle='#8a6a40';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(r*0.4+8,0);ctx.quadraticCurveTo(r+40,-12,r+100,4);ctx.stroke();
@@ -4005,10 +4056,10 @@ const Renderer={
   },
   drawProjectile(ctx,pr){
     ctx.save();ctx.translate(pr.x,pr.y);ctx.rotate(pr.angle);
-    if(pr.kind==='arrow'){
+    if(pr.kind==='arrow'||pr.kind==='playerArrow'){
       ctx.strokeStyle='#d8d0b8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(4,0);ctx.stroke();
       ctx.fillStyle='#e8e8f0';ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(2,-4);ctx.lineTo(2,4);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#c04040';ctx.fillRect(-14,-3,4,6);
+      ctx.fillStyle=pr.status?({poison:'#a8e040',paralysis:'#ffe040',sleep:'#b898ff'})[pr.status]:'#c04040';ctx.fillRect(-14,-3,4,6);
     }else if(pr.kind==='soul'){
       ctx.shadowColor='#a070ff';ctx.shadowBlur=16;
       ctx.fillStyle='rgba(150,120,255,.35)';ctx.beginPath();ctx.ellipse(-10,0,14,6,0,0,TAU);ctx.fill();
