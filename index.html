@@ -97,6 +97,30 @@ body.pad #game{cursor:none}
 #touch .sheathe{right:18px;bottom:214px;width:58px;height:58px;font-size:11px}
 #touch .menu{right:12px;top:12px;width:70px;height:36px;border-radius:10px;font-size:12px}
 body.touch #game{cursor:default}
+#touch{opacity:var(--to,0.85)}
+#touchEditBar{display:none;position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:80;align-items:center;gap:12px;background:rgba(20,16,30,.94);border:1px solid #6a5a90;border-radius:10px;padding:8px 12px;font-size:13px;color:#f3e6c0}
+body.touch-edit #touchEditBar{display:flex}
+body.touch-edit #overlay,body.touch-edit #modal{display:none!important}
+body.touch-edit #touch{display:block!important;z-index:70;pointer-events:auto;opacity:1}
+body.touch-edit #touch .tb,body.touch-edit #touch .stick{pointer-events:auto;outline:2px dashed #ffd23a;outline-offset:2px}
+/* 縦向き（スマホ・タブレット）は横向きをお願いする。操作ボタンは横向きの画面に合わせて配置 */
+#rotate{display:none;position:fixed;inset:0;z-index:50;background:#0b0a10;color:#f3e6c0;align-items:center;justify-content:center;text-align:center;padding:24px}
+#rotate .rot-icon{font-size:52px;display:inline-block;transform:rotate(-90deg);margin-bottom:18px}
+#rotate p{font-size:17px;line-height:1.7}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}#touch{display:none!important}}
+@media (orientation:landscape) and (pointer:coarse){
+  #touch{--u:calc(clamp(50px,15vh,78px) * var(--ts,1));--r:max(12px,env(safe-area-inset-right,0px));--b:max(12px,env(safe-area-inset-bottom,0px));--l:max(12px,env(safe-area-inset-left,0px))}
+  #touch .stick{left:var(--l);bottom:var(--b);width:calc(var(--u)*2.2);height:calc(var(--u)*2.2)}
+  #touch .knob{width:calc(var(--u)*0.9);height:calc(var(--u)*0.9);margin:calc(var(--u)*-0.45) 0 0 calc(var(--u)*-0.45)}
+  #touch .tb{width:var(--u);height:var(--u);font-size:clamp(10px,2.4vh,13px)}
+  #touch .atk{width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);right:var(--r);bottom:var(--b);font-size:clamp(12px,3vh,16px)}
+  #touch .dodge{right:calc(var(--r) + var(--u)*1.7);bottom:var(--b)}
+  #touch .heal{right:calc(var(--r) + var(--u)*1.7);bottom:calc(var(--b) + var(--u)*1.1)}
+  #touch .skill{right:var(--r);bottom:calc(var(--b) + var(--u)*1.7)}
+  #touch .cycle{right:calc(var(--r) + var(--u)*1.7);bottom:calc(var(--b) + var(--u)*2.2);width:calc(var(--u)*0.85);height:calc(var(--u)*0.85)}
+  #touch .sheathe{right:var(--r);bottom:calc(var(--b) + var(--u)*2.9);width:calc(var(--u)*0.85);height:calc(var(--u)*0.85)}
+  #touch .menu{right:max(8px,env(safe-area-inset-right,0px));top:8px;width:64px;height:32px;border-radius:10px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -106,6 +130,8 @@ body.touch #game{cursor:default}
 <div class="tb skill" data-tk="skill">スキル</div><div class="tb heal" data-tk="heal">回復</div>
 <div class="tb cycle" data-tk="cycle">持ち物</div><div class="tb sheathe" data-tk="sheathe">納刀</div>
 <div class="tb menu" data-tk="menu">メニュー</div></div>
+<div id="rotate"><div><div class="rot-icon">📱</div><p>横向きにしてプレイしてください</p><p class="small">スマホを横にすると、ゲームが始まります</p></div></div>
+<div id="touchEditBar"><span>ボタンをドラッグして好きな位置に置いてください</span><button data-act="touchEditDone">完了</button></div>
 <div id="notify"></div>
 <div id="overlay" class="hidden"></div>
 <div id="modal" class="hidden"></div>
@@ -1163,7 +1189,7 @@ const Profile={
   blank(){
     return {materials:{},matSeen:{},items:[],decos:[],equipped:emptyEquip(),
       p2:{equipped:emptyEquip()},
-      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,bgmVol:0.7,sfxVol:0.8},
+      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
       bestiary:{}}; // モンスター図鑑：魔物ごとの討伐数（1以上で登録済み）
@@ -1275,7 +1301,7 @@ const Save={
     if(d.settings&&typeof d.settings==='object')for(const k in p.settings){
       if(typeof p.settings[k]==='boolean'&&typeof d.settings[k]==='boolean')p.settings[k]=d.settings[k];
       else if(typeof p.settings[k]==='number'&&typeof d.settings[k]==='number'&&isFinite(d.settings[k])){
-        const rg=k==='hudScale'?[CONFIG.hud.min,CONFIG.hud.max]:[0,1]; // 音量は 0〜1
+        const rg=k==='hudScale'?[CONFIG.hud.min,CONFIG.hud.max]:k==='touchSize'?[0.6,1.5]:[0,1]; // 音量は 0〜1
         p.settings[k]=clamp(d.settings[k],rg[0],rg[1]);
       }
     }
@@ -4728,8 +4754,34 @@ const Input={
   initTouch(){
     this.touchRoot=document.getElementById('touch');
     if(!this.touchRoot)return;
+    this.applyTouchLayout();
+    // 配置の編集中：ボタンをドラッグして動かす（操作はしない）
+    const root0=this.touchRoot;let drag=null;
+    root0.addEventListener('pointerdown',e=>{
+      if(!document.body.classList.contains('touch-edit'))return;
+      const el=e.target.closest('.tb,.stick');if(!el)return;
+      e.preventDefault();e.stopPropagation();
+      const r=el.getBoundingClientRect();
+      drag={el,key:el.classList.contains('stick')?'stick':el.dataset.tk,dx:e.clientX-r.left,dy:e.clientY-r.top,w:r.width,h:r.height,id:e.pointerId};
+      try{el.setPointerCapture(e.pointerId);}catch(err){}
+    },true);
+    root0.addEventListener('pointermove',e=>{
+      if(!drag||e.pointerId!==drag.id)return;
+      const left=clamp(e.clientX-drag.dx,0,innerWidth-drag.w),top=clamp(e.clientY-drag.dy,0,innerHeight-drag.h);
+      if(drag.key==='stick'){drag.el.style.left=left+'px';drag.el.style.bottom=(innerHeight-top-drag.h)+'px';}
+      else{drag.el.style.right=(innerWidth-left-drag.w)+'px';drag.el.style.bottom=(innerHeight-top-drag.h)+'px';}
+    });
+    const endDrag=e=>{
+      if(!drag||e.pointerId!==drag.id)return;
+      const pos=this.touchPos();
+      if(drag.key==='stick')pos.stick={l:parseFloat(drag.el.style.left),b:parseFloat(drag.el.style.bottom)};
+      else pos[drag.key]={r:parseFloat(drag.el.style.right),b:parseFloat(drag.el.style.bottom)};
+      this.saveTouchPos(pos);drag=null;
+    };
+    root0.addEventListener('pointerup',endDrag);root0.addEventListener('pointercancel',endDrag);
     // 実際に画面をタッチしたときだけ、スマホ向けの操作を出す（タッチ対応のPCでは、マウスで遊ぶ限り出さない）
-    const enable=()=>{if(this.isTouch)return;this.isTouch=true;document.body.classList.add('touch');this.syncTouchUi(App.state==='playing');};
+    const enable=()=>{if(this.isTouch)return;this.isTouch=true;document.body.classList.add('touch');this.syncTouchUi(App.state==='playing');
+      try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}};
     window.addEventListener('touchstart',enable,{passive:true,capture:true});
     const root=this.touchRoot,stick=root.querySelector('.stick'),knob=root.querySelector('.knob');
     let sid=null;
@@ -4760,6 +4812,20 @@ const Input={
   },
   /** プレイ中だけ画面のボタンを表示する */
   syncTouchUi(playing){if(this.touchRoot)this.touchRoot.classList.toggle('on',!!playing&&this.isTouch);},
+  /** ボタンの位置（端末ごとに保存）。ボタン名 → {r,b}（スティックは {l,b}） */
+  touchPos(){try{return JSON.parse(localStorage.getItem('kourou_touch_pos')||'{}')||{};}catch(e){return {};}},
+  saveTouchPos(pos){try{localStorage.setItem('kourou_touch_pos',JSON.stringify(pos));}catch(e){}},
+  /** 設定の大きさ・透過度と、保存された位置をボタンに反映する */
+  applyTouchLayout(){
+    const root=this.touchRoot;if(!root)return;
+    const s=(App.profile&&App.profile.settings)||{};
+    root.style.setProperty('--ts',String(s.touchSize||1));
+    root.style.setProperty('--to',String(s.touchAlpha!=null?s.touchAlpha:0.85));
+    const pos=this.touchPos();
+    root.querySelectorAll('.tb').forEach(el=>{const q=pos[el.dataset.tk];el.style.right=q?q.r+'px':'';el.style.bottom=q?q.b+'px':'';});
+    const st=root.querySelector('.stick');
+    if(st){if(pos.stick){st.style.left=pos.stick.l+'px';st.style.bottom=pos.stick.b+'px';}else{st.style.left='';st.style.bottom='';}}
+  },
   consumeEdges(){this.edges.p1=newEdges();this.edges.p2=newEdges();},
   onMouse(){
     if(this.isTouch)return; // 画面をタッチしたときのマウス扱いは無視する
@@ -6187,6 +6253,11 @@ const App={
       case 'vol':
         if(ds.key==='bgmVol'||ds.key==='sfxVol'){this.settings()[ds.key]=clamp(Number(ds.id),0,1);this.save();Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);Sound.ui('click');}
         this.goto('settings');UI.restoreFocus('vol||||'+ds.id+'|'+ds.key+'||');break;
+      case 'touchSize':this.settings().touchSize=clamp(Number(ds.id)||1,0.6,1.5);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus('touchSize||||'+ds.id+'|||');break;
+      case 'touchAlpha':this.settings().touchAlpha=clamp(Number(ds.id)||0.85,0.2,1);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus('touchAlpha||||'+ds.id+'|||');break;
+      case 'touchEdit':document.body.classList.add('touch-edit');Input.applyTouchLayout();break;
+      case 'touchEditDone':document.body.classList.remove('touch-edit');this.goto('settings');break;
+      case 'touchReset':try{localStorage.removeItem('kourou_touch_pos');}catch(e){}Input.applyTouchLayout();this.goto('settings');break;
       case 'hudScale':
         this.settings().hudScale=clamp(Number(ds.id)||CONFIG.hud.scale,CONFIG.hud.min,CONFIG.hud.max);this.save();
         if(this.inGame&&this.world)this.placeNotes(Object.keys(this.world.players).length);
@@ -6354,6 +6425,12 @@ const App={
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      <div class="setting" style="display:block">スマホのボタンの大きさ（いまは ${Math.round((s.touchSize||1)*100)}%）
+        <div class="filters" style="margin-top:6px">${[0.7,0.85,1,1.2,1.4].map(v=>`<button class="${Math.abs((s.touchSize||1)-v)<0.001?'on':''}" data-act="touchSize" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
+      <div class="setting" style="display:block">スマホのボタンの透過度（いまは ${Math.round((s.touchAlpha??0.85)*100)}%）
+        <div class="filters" style="margin-top:6px">${[0.3,0.5,0.7,0.85,1].map(v=>`<button class="${Math.abs((s.touchAlpha??0.85)-v)<0.001?'on':''}" data-act="touchAlpha" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
+      <div class="setting" style="display:block">スマホのボタンの位置
+        <div class="filters" style="margin-top:6px"><button data-act="touchEdit">位置を変える</button><button data-act="touchReset">初期の位置に戻す</button></div></div>
       <div class="setting" style="display:block">HP・回避などの表示の大きさ（いまは ${Math.round((s.hudScale||CONFIG.hud.scale)*100)}%）
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100*VOL_SCALE)}%）
