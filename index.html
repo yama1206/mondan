@@ -82,10 +82,30 @@ button.danger:hover{background:#6e2a3a}
 .padfocus:disabled{outline-color:#a99a6a!important;box-shadow:none}
 body.pad #game{cursor:none}
 @media (max-width:900px){.inv-body{flex-direction:column}.col-left,.col-right{width:auto}.inv-panel{height:94vh}}
+/* スマホ・タブレット用の操作ボタン（プレイ中だけ表示） */
+#touch{position:fixed;inset:0;display:none;pointer-events:none;z-index:6;-webkit-user-select:none;user-select:none}
+#touch.on{display:block}
+#touch .stick{position:absolute;left:14px;bottom:14px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,235,180,.3);pointer-events:auto;touch-action:none}
+#touch .knob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:rgba(255,220,140,.35);border:2px solid rgba(255,220,140,.7)}
+#touch .tb{position:absolute;width:68px;height:68px;border-radius:50%;background:rgba(20,16,30,.6);border:2px solid rgba(255,230,160,.45);color:#f3e6c0;font:bold 12px/1.1 sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;pointer-events:auto;touch-action:none}
+#touch .tb.on{background:rgba(255,190,80,.5)}
+#touch .atk{right:18px;bottom:22px;width:92px;height:92px;font-size:16px;background:rgba(150,40,30,.55)}
+#touch .dodge{right:128px;bottom:24px}
+#touch .skill{right:18px;bottom:128px}
+#touch .heal{right:128px;bottom:110px}
+#touch .cycle{right:98px;bottom:206px;width:58px;height:58px;font-size:11px}
+#touch .sheathe{right:18px;bottom:214px;width:58px;height:58px;font-size:11px}
+#touch .menu{right:12px;top:12px;width:70px;height:36px;border-radius:10px;font-size:12px}
+body.touch #game{cursor:default}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
+<div id="touch"><div class="stick"><div class="knob"></div></div>
+<div class="tb atk" data-tk="attack">攻撃</div><div class="tb dodge" data-tk="dodge">回避</div>
+<div class="tb skill" data-tk="skill">スキル</div><div class="tb heal" data-tk="heal">回復</div>
+<div class="tb cycle" data-tk="cycle">持ち物</div><div class="tb sheathe" data-tk="sheathe">納刀</div>
+<div class="tb menu" data-tk="menu">メニュー</div></div>
 <div id="notify"></div>
 <div id="overlay" class="hidden"></div>
 <div id="modal" class="hidden"></div>
@@ -165,6 +185,20 @@ const STAT_UNITS={crit:'%',critDmg:'%',moveSpd:'%',atkSpd:'%',dodgeIframe:'秒',
 function fmtNum(stat,v){return stat==='dodgeIframe'?v.toFixed(2):String(Math.round(v*10)/10);}
 function fmtStat(stat,v){return (v>=0?'+':'')+fmtNum(stat,v)+(STAT_UNITS[stat]||'');}
 
+/* ==========================================================
+   【ステージ・魔物の追加手順】
+   1. 魔物を増やす：DATA.enemies に定義 → ai は ENEMY_AI に登録した関数名、drops は dropTables のキー、
+      DATA.bestiary に図鑑（stage＝出現するステージ番号の配列、role、desc、tip）を追加。
+      ボスなら boss:true。新しい動きは updateXxx を作って ENEMY_AI に登録し、描画は Renderer に drawXxx と drawEnemy の case を追加。
+   2. 素材・落とし物：DATA.materials に素材、DATA.dropTables に { rolls:[{type:'mat',id,chance,min,max}, {type:'deco',chance}] } を追加。
+   3. 地図：DATA.layouts に部屋構成（main / side / boss / wander）を追加。spawn は [魔物, 最少, 最多] の配列。
+   4. ステージ：DATA.stages の末尾に { id:次の番号, name, desc, enemySet:{melee,ranged,boss}, layout, chest, bgm } を追加。
+      desc には魔物名を書かない（ネタバレ防止）。
+   5. 依頼：DATA.quests に { id, stage:ステージ番号, key, name, desc, goal, reward } を追加。ステージ内の最初の依頼はボス依頼（urgent:true, unlocks:次のステージ番号）。
+   6. 鍛冶屋：DATA.recipes に { id, out, cost, stage }。stage が3以上の装備は製作費が +100G。
+   7. 確認：validateData() が参照ミスを一覧にします（ブラウザでは起動時にコンソールへ表示）。
+      ステージを増やしたときは Save.VERSION を上げ、Save.migrate に移行処理を追加してください。
+   ========================================================== */
 const DATA={
   rarities:[
     // slotW: スロット数0〜3の重み。低レアほど3スロットが出やすく「低レアでも活躍」できるようにしている
@@ -227,8 +261,8 @@ const DATA={
   weaponTypes:{
     sword:{name:'片手剣',range:66,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
       marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い'},
-    greatsword:{name:'大剣',range:92,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.95,move:0.82,swing:0.3,sheathe:1.1,
-      charge:{levels:[0.55,1.1,1.65],mult:[1.35,1.9,2.8],over:2.4,overLevel:2,move:0.22},
+    greatsword:{name:'大剣',knockback:true,range:92,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
+      charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],over:2.4,overLevel:2,move:0.22},
       marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎると2段階の威力）'},
     tachi:{name:'太刀',range:82,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
@@ -236,7 +270,7 @@ const DATA={
     dual:{name:'双剣',range:58,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.5,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
-    hammer:{name:'ハンマー',range:62,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
+    hammer:{name:'ハンマー',knockback:true,range:62,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
   },
@@ -284,7 +318,7 @@ const DATA={
     wolf_faulds:{name:'古狼の腰甲',slot:'waist',def:8,skills:{move_up:4,crit_up:2}},
     leather_boots:{name:'革の靴',slot:'legs',def:3,skills:{evade:1,move_up:2,gather_up:1}},
     wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,fixed:[{stat:'moveSpd',v:4}],skills:{move_up:6,weakness:2}},
-    // ステージ2：黒狼シリーズ
+    // ステージ5：黒狼シリーズ
     bwolf_sword:{name:'黒狼の剣',slot:'weapon',wtype:'sword',atk:34,crit:10,fixed:[{stat:'atkSpd',v:8}]},
     bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:14,fixed:[{stat:'crit',v:5}],skills:{boss_hunter:4,crit_dmg:2}},
     bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:35}],skills:{atk_up:4,boss_hunter:3}},
@@ -307,6 +341,26 @@ const DATA={
     bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}]},
   },
   materials:{
+    // ステージ3：腐毒の沼地
+    toxic_gland:{name:'毒腺',color:'#a0e040',desc:'毒蛙や花食いが持つ毒の袋。（腐毒の沼地）'},
+    leech_skin:{name:'ヒルの皮',color:'#8a3a3a',desc:'ぬるりと光る厚い皮。（腐毒の沼地）'},
+    swamp_moss:{name:'沼苔',color:'#4a8a5a',desc:'沼の底に生える柔らかい苔。（腐毒の沼地）'},
+    poison_sac:{name:'毒袋',color:'#c0d050',desc:'膨張体が抱え込んだ毒の袋。（腐毒の沼地）'},
+    croc_scale:{name:'沼鰐の鱗',color:'#6a8a5a',desc:'硬い鱗。防具の素材にも向く。（腐毒の沼地）'},
+    parasite_core:{name:'寄生核',color:'#b080e0',desc:'寄生体の中心にある核。（腐毒の沼地）'},
+    hydra_scale:{name:'多頭竜の鱗',color:'#5a8a4a',desc:'ヒュドラの首を覆う鱗。稀少素材。（腐毒の沼地）'},
+    venom_shell:{name:'毒蟲の甲殻',color:'#8a5ac0',desc:'毒蟲王の硬い甲殻。稀少素材。（腐毒の沼地）'},
+    mire_core:{name:'沼巨人の泥核',color:'#8a7a4a',desc:'沼巨人の体の芯になる泥の塊。非常に稀少。（腐毒の沼地）'},
+    // ステージ4：蒼流の水辺
+    water_scale:{name:'水棲の鱗',color:'#7ad8c0',desc:'水棲トカゲの青い鱗。（蒼流の水辺）'},
+    jelly_gel:{name:'泡沫の膠',color:'#c8e8ff',desc:'クラゲが抱える透明な膠。（蒼流の水辺）'},
+    piranha_tooth:{name:'川牙',color:'#f0e0d0',desc:'ピラニアの鋭い歯。（蒼流の水辺）'},
+    crab_shell:{name:'甲殻片',color:'#c08050',desc:'滝守の甲殻獣の硬い殻。（蒼流の水辺）'},
+    eel_sac:{name:'雷袋',color:'#ffe858',desc:'雷電ウナギが蓄える電気の袋。（蒼流の水辺）'},
+    spirit_essence:{name:'水霊の核',color:'#70c0e8',desc:'水霊の中心にある澄んだ核。（蒼流の水辺）'},
+    aqua_fin:{name:'蒼海の鰭',color:'#60c0f0',desc:'アクアリオスの大きな鰭。稀少素材。（蒼流の水辺）'},
+    shell_heart:{name:'大亀の甲羅片',color:'#7aa070',desc:'水瀑の大亀の甲羅のかけら。稀少素材。（蒼流の水辺）'},
+    thunder_core:{name:'雷鳴の核',color:'#ffe040',desc:'大鰻が雷を溜める核。非常に稀少。（蒼流の水辺）'},
     goblin_hide:{name:'ゴブリンの皮',color:'#8fb04a',desc:'ゴブリンからよく取れる丈夫な皮。'},
     scrap_iron:{name:'粗い鉄片',color:'#a8aeb8',desc:'ゴブリンなどから。武器の補強に。'},
     old_bone:{name:'古びた骨',color:'#e8e0c8',desc:'スケルトンの骨。兜や薬の材料。'},
@@ -315,11 +369,14 @@ const DATA={
     wolf_fang:{name:'古狼の牙',color:'#f4f0dc',desc:'鋭く巨大な牙。'},
     wolf_claw:{name:'古狼の爪',color:'#c8b8a0',desc:'岩をも裂く爪。'},
     wolf_heart:{name:'古狼の心臓',color:'#e02848',desc:'今なお脈打つ心臓。稀少素材。'},
-    hard_iron:{name:'硬い鉄塊',color:'#7f8da0',desc:'ホブゴブリンが持つ重い鉄。（ステージ2）'},
-    dark_bone:{name:'黒ずんだ骨',color:'#8a8aa8',desc:'スケルトンスナイパーの骨。（ステージ2）'},
-    bwolf_pelt:{name:'黒狼の毛皮',color:'#4a4060',desc:'闇のように黒い毛皮。（ステージ2）'},
-    bwolf_fang:{name:'黒狼の牙',color:'#d8c8ff',desc:'紫に光る牙。（ステージ2）'},
-    bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ2）'},
+    hard_iron:{name:'硬い鉄塊',color:'#7f8da0',desc:'ホブゴブリンが持つ重い鉄。（ステージ5）'},
+    dark_bone:{name:'黒ずんだ骨',color:'#8a8aa8',desc:'スケルトンスナイパーの骨。（ステージ5）'},
+    bwolf_pelt:{name:'黒狼の毛皮',color:'#4a4060',desc:'闇のように黒い毛皮。（ステージ5）'},
+    bwolf_fang:{name:'黒狼の牙',color:'#d8c8ff',desc:'紫に光る牙。（ステージ5）'},
+    reinforce_orb:{name:'強化玉',color:'#ffb040',desc:'ボス・宝箱・依頼から手に入る。防具の強化に使う。'},
+    bull_horn:{name:'暴角獣の角',color:'#f0e6c8',desc:'草原の暴角獣の大きな角。（風渡る草原）'},
+    bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
+    bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
     // ---- 緑風の森林で手に入る素材 ----
     goblin_string:{name:'ゴブリンの弓弦',color:'#c8b070',desc:'ゴブリン弓兵の弓に張られた弦。（緑風の森林）'},
     beast_fang:{name:'獣の牙',color:'#ece4cc',desc:'森狼の鋭い牙。（緑風の森林）'},
@@ -356,7 +413,89 @@ const DATA={
     // stunMax：ハンマーで頭を叩いたときのスタン値の上限（無い敵はスタンしない）。stunTime：スタンの秒数
     wolf:{name:'古狼',ai:'wolf',hp:1600,atk:22,def:5,r:30,speed:120,stunMax:100,stunTime:4,color:'#7c6c5c',drops:'wolf',boss:true,
       pal:{body:'#7c6c5c',dark:'#4c4038',rage:'#8a5848',rageDark:'#5a3028',eye:'#ffd060',rageEye:'#ff2a2a'}},
-    // ステージ2
+    // ステージ1（風渡る草原）
+    meadow_bull:{name:'草原の暴角獣',ai:'bull',hp:1800,atk:23,def:6,r:33,speed:118,stunMax:110,stunTime:4,color:'#9a7a4a',drops:'meadow_bull',boss:true,
+      pal:{body:'#9a7a4a',dark:'#5a4428',rage:'#b0583a',rageDark:'#6a2e1c',eye:'#fff0c0',rageEye:'#ff3a2a',horn:'#f0e6c8'}},
+    // ステージ3：腐毒の沼地（既存の動きを流用し、見た目と能力を変えた魔物）
+    poison_frog:{name:'毒沼ガエル',ai:'dasher',look:'frog',hp:58,atk:15,def:2,r:14,speed:140,color:'#5a9a3a',drops:'poison_frog',
+      dash:{wind:0.5,speed:520,dist:200,cd:[2.4,3.4]},
+      pal:{body:'#5a9a3a',dark:'#243d14',spot:'#d8e860',eye:'#ffe060'}},
+    leech:{name:'血吸いヒル',ai:'goblin',look:'leech',hp:50,atk:14,def:0,r:12,speed:105,color:'#7a2a2a',drops:'leech',
+      pal:{body:'#7a2a2a',dark:'#3a1010',ring:'#c05050',eye:'#ffffff'}},
+    carnivore_plant:{name:'花食いの食虫花',ai:'spore',look:'plant',hp:90,atk:14,def:3,r:14,speed:25,color:'#4a8a3a',drops:'carnivore_plant',
+      spore:{range:170,r:100,life:5,tick:0.5,wind:0.9,cd:[3.5,5],near:80},
+      pal:{leaf:'#3a7a2a',dark:'#1a3a10',mouth:'#c04060',tooth:'#f0f0d0'}},
+    bloater:{name:'腐沼の膨張体',ai:'slime',look:'bloat',hp:110,atk:16,def:2,r:18,speed:110,color:'#8a9a50',drops:'bloater',
+      pal:{body:'#8a9a50',dark:'#4a5a28',spot:'#c8d070',eye:'#302010'}},
+    swamp_croc:{name:'沼喰いワニ',ai:'beetle',look:'croc',hp:120,atk:18,def:8,r:17,speed:80,color:'#4a6a3a',drops:'swamp_croc',guard:{arc:140*Math.PI/180,mult:0.3},turn:2.0,heavy:true,
+      pal:{body:'#4a6a3a',dark:'#1e2e18',plate:'#7a9a5a',eye:'#ffe060',teeth:'#f0f0d8'}},
+    parasite:{name:'腐菌の寄生体',ai:'ghost',look:'parasite',hp:70,atk:16,def:0,r:13,speed:115,color:'#8a5aa0',drops:'parasite',slow:{time:2,mult:0.7},
+      pal:{body:'#8a5aa0',dark:'#3a2050',spore:'#d0a0ff',eye:'#ffffff'}},
+    /* ボス：pattern に技を順に並べる（技：sweep=扇形 / slam=円 / charge=突進 / shot=飛び道具 / pool=毒の沼 / swarm=子蟲召喚）
+       wind：予備動作の秒数／cd：次に使えるまでの秒数／dmg：攻撃力への倍率／r・arc：範囲 */
+    hydra:{name:'腐沼の多頭竜ヒュドラ',ai:'pattern',look:'hydra',hp:3000,atk:26,def:6,r:34,speed:110,stunMax:120,stunTime:4,color:'#4a6a3a',drops:'hydra',boss:true,
+      pattern:[
+        {k:'sweep',wind:0.8,cd:3.0,dmg:1.1,r:130,arc:Math.PI*0.9},
+        {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:3,spread:0.5,speed:300,kind:'soul'},
+        {k:'charge',wind:0.8,cd:5,dmg:1.3},
+        {k:'pool',wind:1.0,cd:6.5,dmg:0.9,r:95,life:6},
+      ],
+      pal:{body:'#4a6a3a',dark:'#1e2e18',rage:'#6a4a20',rageDark:'#3a2010',eye:'#ffe060',rageEye:'#ff4020'}},
+    venomKing:{name:'沼地の毒蟲王',ai:'pattern',look:'venomKing',hp:3200,atk:28,def:9,r:36,speed:100,stunMax:140,stunTime:4,color:'#5a3a6a',drops:'venom_king',boss:true,
+      pattern:[
+        {k:'swarm',wind:0.7,cd:8,n:2,kind:'leech',max:4},
+        {k:'pool',wind:0.9,cd:4.5,dmg:0.9,r:85,life:6},
+        {k:'slam',wind:0.9,cd:4.2,dmg:1.2,r:120},
+        {k:'charge',wind:0.7,cd:5.5,dmg:1.3},
+      ],
+      pal:{body:'#5a3a6a',dark:'#2a1a34',shell:'#8a5aa0',rage:'#7a3a4a',rageDark:'#3a1a24',eye:'#ffe060',rageEye:'#ff4040'}},
+    mireGiant:{name:'腐敗の沼巨人',ai:'pattern',look:'mireGiant',hp:3800,atk:30,def:10,r:42,speed:80,stunMax:150,stunTime:4,color:'#5a6a4a',drops:'mire_giant',boss:true,
+      pattern:[
+        {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150},
+        {k:'sweep',wind:0.9,cd:3.5,dmg:1.2,r:150,arc:Math.PI*0.8},
+        {k:'shot',wind:0.8,cd:4.5,dmg:1.0,n:1,speed:260,kind:'soul'},
+        {k:'pool',wind:1.2,cd:6,dmg:1.0,r:110,life:7},
+      ],
+      pal:{body:'#5a6a4a',dark:'#262e1c',mud:'#7a6a3a',rage:'#7a5a3a',rageDark:'#3a2a1a',eye:'#ffe060',rageEye:'#ff6020'}},
+    // ステージ4：蒼流の水辺（既存の動きを流用し、見た目と能力を変えた魔物）
+    water_lizard:{name:'水棲トカゲ',ai:'dasher',look:'lizard',hp:80,atk:17,def:3,r:14,speed:130,color:'#3a8a7a',drops:'water_lizard',
+      dash:{wind:0.5,speed:500,dist:220,cd:[2.6,3.6]},pal:{body:'#3a8a7a',dark:'#1a4a40',stripe:'#a0e0d0',eye:'#ffe060'}},
+    jellyfish:{name:'泡沫クラゲ',ai:'ghost',look:'jelly',hp:64,atk:15,def:0,r:15,speed:90,color:'#a0c8ff',drops:'jellyfish',slow:{time:2.5,mult:0.6},
+      pal:{body:'#c8e0ff',dark:'#5a80b0',eye:'#2a4a80'}},
+    piranha:{name:'川牙ピラニア',ai:'goblin',look:'piranha',hp:60,atk:18,def:1,r:11,speed:150,color:'#c05a4a',drops:'piranha',
+      pal:{body:'#c05a4a',dark:'#5a1e18',belly:'#f0c0a0',eye:'#ffffff',teeth:'#ffffff'}},
+    crab:{name:'滝守の甲殻獣',ai:'beetle',look:'crab',hp:130,atk:19,def:9,r:17,speed:72,color:'#c06a3a',drops:'crab',guard:{arc:140*Math.PI/180,mult:0.3},turn:2.0,heavy:true,
+      pal:{body:'#c06a3a',dark:'#5a2a10',shell:'#e09060',eye:'#ffe060'}},
+    eel:{name:'雷電ウナギ',ai:'dasher',look:'eel',hp:95,atk:20,def:2,r:13,speed:135,color:'#4a5ac0',drops:'eel',dash:{wind:0.6,speed:600,dist:240,cd:[2.8,3.8]},
+      pal:{body:'#4a5ac0',dark:'#1a2060',spark:'#ffe858',eye:'#ffffff'}},
+    water_spirit:{name:'水霊',ai:'archer',look:'spirit',hp:70,atk:16,def:1,r:13,speed:70,color:'#70c0e8',drops:'water_spirit',aimTime:0.9,arrowSpeed:330,
+      pal:{body:'#70c0e8',dark:'#2a5a80',eye:'#ffffff'}},
+    /* 水辺のボス（技は pattern に並べる。技の種類は沼地と同じ） */
+    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,
+      pattern:[
+        {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:Math.PI*0.8},
+        {k:'shot',wind:0.6,cd:3.4,dmg:0.9,n:5,spread:0.9,speed:300,kind:'soul'},
+        {k:'charge',wind:0.8,cd:5,dmg:1.3},
+        {k:'swarm',wind:0.7,cd:9,n:2,kind:'piranha',max:4},
+      ],
+      pal:{body:'#2a6aa0',dark:'#10284a',fin:'#60c0f0',rage:'#5a3a8a',rageDark:'#2a1a4a',eye:'#e0f8ff',rageEye:'#ff5080'}},
+    turtle:{name:'水瀑の大亀',ai:'pattern',look:'turtle',hp:4000,atk:30,def:14,r:40,speed:76,stunMax:150,stunTime:4,color:'#4a7a5a',drops:'turtle',boss:true,
+      pattern:[
+        {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150},
+        {k:'shot',wind:0.8,cd:4.2,dmg:1.0,n:3,spread:0.6,speed:250,kind:'soul'},
+        {k:'sweep',wind:0.9,cd:3.6,dmg:1.2,r:140,arc:Math.PI*0.8},
+        {k:'swarm',wind:0.8,cd:8,n:2,kind:'crab',max:3},
+      ],
+      pal:{body:'#4a7a5a',dark:'#1e3a2a',shell:'#7aa070',rage:'#5a5a8a',rageDark:'#2a2a4a',eye:'#e0ffe0',rageEye:'#ff6040'}},
+    thunderEel:{name:'雷鳴の大鰻',ai:'pattern',look:'thunderEel',hp:3600,atk:33,def:6,r:36,speed:120,stunMax:140,stunTime:4,color:'#3a4ab0',drops:'thunder_eel',boss:true,
+      pattern:[
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.4},
+        {k:'slam',wind:1.0,cd:4.8,dmg:1.2,r:130},
+        {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:2,spread:0.4,speed:340,kind:'soul'},
+        {k:'swarm',wind:0.8,cd:9,n:2,kind:'eel',max:4},
+      ],
+      pal:{body:'#3a4ab0',dark:'#1a2060',spark:'#ffe858',rage:'#6a3ab0',rageDark:'#2a1460',eye:'#ffffff',rageEye:'#ff40ff'}},
+    // ステージ5
     hobgoblin:{name:'ホブゴブリン',ai:'goblin',hp:80,atk:15,def:5,r:15,speed:100,color:'#4a7a3a',drops:'hobgoblin',pal:{body:'#4a7a3a',dark:'#1e3a12',ear:'#3a6a28',eye:'#ff9040'}},
     sniper:{name:'スケルトンスナイパー',ai:'archer',hp:55,atk:17,def:2,r:12,speed:85,color:'#a9b3cf',drops:'sniper',arrowSpeed:460,aimTime:0.7,pal:{body:'#a9b3cf',dark:'#4a5270'}},
     black_wolf:{name:'黒き古狼',ai:'wolf',hp:3400,atk:32,def:9,r:33,speed:135,stunMax:140,stunTime:4,color:'#3a3346',drops:'black_wolf',boss:true,
@@ -399,50 +538,116 @@ const DATA={
   // chance=0〜1 で確率を調整。rarityBoost が大きいほど高レアの装飾品が出やすい。
   // 装備品は報酬に含めず、素材からの製作でだけ手に入る。回復薬も製作かショップで用意する。
   dropTables:{
+    water_lizard:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'water_scale',chance:0.7,min:1,max:2},{type:'mat',id:'jelly_gel',chance:0.3,min:1,max:1},{type:'deco',chance:0.03}]},
+    jellyfish:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'jelly_gel',chance:0.7,min:1,max:1},{type:'mat',id:'water_scale',chance:0.3,min:1,max:1},{type:'deco',chance:0.03}]},
+    piranha:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'piranha_tooth',chance:0.7,min:1,max:2},{type:'mat',id:'jelly_gel',chance:0.3,min:1,max:1},{type:'deco',chance:0.03}]},
+    crab:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'crab_shell',chance:0.7,min:1,max:2},{type:'mat',id:'piranha_tooth',chance:0.3,min:1,max:1},{type:'deco',chance:0.03}]},
+    eel:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'eel_sac',chance:0.7,min:1,max:1},{type:'mat',id:'water_scale',chance:0.3,min:1,max:1},{type:'deco',chance:0.03}]},
+    water_spirit:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'spirit_essence',chance:0.5,min:1,max:1},{type:'mat',id:'jelly_gel',chance:0.4,min:1,max:1},{type:'deco',chance:0.03}]},
+    aquarios:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'aqua_fin',chance:1.0,min:2,max:3},{type:'mat',id:'water_scale',chance:1.0,min:2,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},{type:'deco',chance:0.7},{type:'deco',chance:0.3}]},
+    turtle:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'shell_heart',chance:1.0,min:2,max:3},{type:'mat',id:'crab_shell',chance:1.0,min:2,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},{type:'deco',chance:0.7},{type:'deco',chance:0.3}]},
+    thunder_eel:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'thunder_core',chance:1.0,min:1,max:2},{type:'mat',id:'eel_sac',chance:1.0,min:2,max:3},
+      {type:'mat',id:'reinforce_orb',chance:0.8,min:1,max:1},{type:'deco',chance:0.7},{type:'deco',chance:0.3}]},
+    poison_frog:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'toxic_gland',chance:0.7,min:1,max:1},
+      {type:'mat',id:'swamp_moss',chance:0.4,min:1,max:1},
+      {type:'deco',chance:0.03},
+    ]},
+    leech:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'leech_skin',chance:0.7,min:1,max:2},
+      {type:'mat',id:'swamp_moss',chance:0.3,min:1,max:1},
+      {type:'deco',chance:0.03},
+    ]},
+    carnivore_plant:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'swamp_moss',chance:0.7,min:1,max:2},
+      {type:'mat',id:'toxic_gland',chance:0.4,min:1,max:1},
+      {type:'deco',chance:0.03},
+    ]},
+    bloater:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'poison_sac',chance:0.7,min:1,max:1},
+      {type:'mat',id:'swamp_moss',chance:0.3,min:1,max:1},
+      {type:'deco',chance:0.03},
+    ]},
+    swamp_croc:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'croc_scale',chance:0.7,min:1,max:2},
+      {type:'mat',id:'swamp_moss',chance:0.3,min:1,max:1},
+      {type:'deco',chance:0.03},
+    ]},
+    parasite:{rarityBoost:1.0,rolls:[
+      {type:'mat',id:'parasite_core',chance:0.5,min:1,max:1},
+      {type:'mat',id:'toxic_gland',chance:0.4,min:1,max:1},
+      {type:'deco',chance:0.03},
+    ]},
+    hydra:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'hydra_scale',chance:1.0,min:2,max:3},
+      {type:'mat',id:'toxic_gland',chance:1.0,min:2,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
+    venom_king:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'venom_shell',chance:1.0,min:2,max:3},
+      {type:'mat',id:'toxic_gland',chance:1.0,min:2,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
+    mire_giant:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'mire_core',chance:1.0,min:1,max:2},
+      {type:'mat',id:'swamp_moss',chance:1.0,min:2,max:3},
+      {type:'mat',id:'reinforce_orb',chance:0.8,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
     goblin:{rarityBoost:1.0,one:0.6,rolls:[
       {type:'mat',id:'goblin_hide',chance:0.75,min:1,max:2},
       {type:'mat',id:'scrap_iron',chance:0.40,min:1,max:1},
       {type:'deco',chance:0.035},
-      {type:'gold',chance:1.0,min:4,max:8},
     ]},
     archer:{rarityBoost:1.1,one:0.6,rolls:[
       {type:'mat',id:'old_bone',chance:0.75,min:1,max:2},
       {type:'mat',id:'arrowhead',chance:0.45,min:1,max:1},
       {type:'mat',id:'scrap_iron',chance:0.20,min:1,max:1},
       {type:'deco',chance:0.045},
-      {type:'gold',chance:1.0,min:5,max:10},
     ]},
     wolf:{rarityBoost:1.6,rolls:[
       {type:'mat',id:'wolf_pelt',chance:1.0,min:2,max:4},
       {type:'mat',id:'wolf_fang',chance:1.0,min:1,max:2},
       {type:'mat',id:'wolf_claw',chance:0.9,min:1,max:2},
       {type:'mat',id:'wolf_heart',chance:0.25,min:1,max:1},
+      {type:'mat',id:'reinforce_orb',chance:0.5,min:1,max:1},
       {type:'deco',chance:0.6},
       {type:'deco',chance:0.25},
-      {type:'gold',chance:1.0,min:80,max:120},
     ]},
     hobgoblin:{rarityBoost:1.3,one:0.65,rolls:[
       {type:'mat',id:'hard_iron',chance:0.7,min:1,max:2},
       {type:'mat',id:'goblin_hide',chance:0.5,min:1,max:2},
       {type:'deco',chance:0.05},
-      {type:'gold',chance:1.0,min:10,max:18},
     ]},
     sniper:{rarityBoost:1.3,one:0.65,rolls:[
       {type:'mat',id:'dark_bone',chance:0.7,min:1,max:2},
       {type:'mat',id:'arrowhead',chance:0.5,min:1,max:2},
       {type:'deco',chance:0.06},
-      {type:'gold',chance:1.0,min:12,max:20},
     ]},
     black_wolf:{rarityBoost:2.2,rolls:[
       {type:'mat',id:'bwolf_pelt',chance:1.0,min:2,max:4},
       {type:'mat',id:'bwolf_fang',chance:1.0,min:1,max:2},
       {type:'mat',id:'bwolf_core',chance:0.3,min:1,max:1},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
       {type:'deco',chance:0.8},
       {type:'deco',chance:0.4},
-      {type:'gold',chance:1.0,min:200,max:300},
     ]},
     chest2:{rarityBoost:1.6,rolls:[
       {type:'deco',chance:0.4},
+      {type:'mat',id:'reinforce_orb',chance:0.4,min:1,max:1},
       {type:'gold',chance:1.0,min:40,max:70},
     ]},
     // ---- 追加：緑風の森林 ----
@@ -450,38 +655,33 @@ const DATA={
       {type:'mat',id:'goblin_string',chance:0.7,min:1,max:1},
       {type:'mat',id:'goblin_hide',chance:0.4,min:1,max:1},
       {type:'deco',chance:0.035},
-      {type:'gold',chance:1.0,min:4,max:9},
     ]},
     forest_wolf:{rarityBoost:1.1,one:0.6,rolls:[
       {type:'mat',id:'beast_hide',chance:0.75,min:1,max:2},
       {type:'mat',id:'beast_fang',chance:0.6,min:1,max:1},
       {type:'deco',chance:0.04},
-      {type:'gold',chance:1.0,min:6,max:10},
     ]},
     slime:{rarityBoost:1.0,one:0.55,rolls:[
       {type:'mat',id:'slime_gel',chance:0.8,min:1,max:2},
       {type:'deco',chance:0.035},
-      {type:'gold',chance:1.0,min:4,max:8},
     ]},
     beetle:{rarityBoost:1.2,one:0.65,rolls:[
       {type:'mat',id:'hard_shell',chance:0.75,min:1,max:2},
       {type:'deco',chance:0.05},
-      {type:'gold',chance:1.0,min:8,max:12},
     ]},
     mushroom:{rarityBoost:1.1,one:0.6,rolls:[
       {type:'mat',id:'poison_spore',chance:0.75,min:1,max:2},
       {type:'mat',id:'forest_mushroom',chance:0.3,min:1,max:1},
       {type:'deco',chance:0.04},
-      {type:'gold',chance:1.0,min:5,max:9},
     ]},
     forest_king:{rarityBoost:1.9,rolls:[
       {type:'mat',id:'haro_fang',chance:1.0,min:1,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
       {type:'mat',id:'oldwood_pelt',chance:1.0,min:2,max:3},
       {type:'mat',id:'wood',chance:0.8,min:1,max:3},
       {type:'mat',id:'herb',chance:0.8,min:1,max:3},
       {type:'deco',chance:0.7},
       {type:'deco',chance:0.3},
-      {type:'gold',chance:1.0,min:140,max:200},
     ]},
     // 採取ポイント（古木の採取場）
     gather_wood:{rarityBoost:1.0,rolls:[{type:'mat',id:'wood',chance:1.0,min:1,max:2},{type:'mat',id:'herb',chance:0.2,min:1,max:1}]},
@@ -492,44 +692,47 @@ const DATA={
       {type:'mat',id:'old_bone',chance:0.75,min:1,max:2},
       {type:'mat',id:'scrap_iron',chance:0.2,min:1,max:1},
       {type:'deco',chance:0.04},
-      {type:'gold',chance:1.0,min:8,max:14},
     ]},
     wisp:{rarityBoost:1.3,one:0.6,rolls:[
       {type:'mat',id:'soul_shard',chance:0.7,min:1,max:2},
       {type:'deco',chance:0.05},
-      {type:'gold',chance:1.0,min:10,max:16},
     ]},
     zombie:{rarityBoost:1.3,one:0.65,rolls:[
       {type:'mat',id:'rotten_cloth',chance:0.75,min:1,max:2},
       {type:'mat',id:'old_bone',chance:0.3,min:1,max:1},
       {type:'deco',chance:0.05},
-      {type:'gold',chance:1.0,min:12,max:18},
     ]},
     cursed_knight:{rarityBoost:1.5,one:0.8,rolls:[
       {type:'mat',id:'cursed_iron',chance:0.85,min:1,max:2},
       {type:'mat',id:'hard_iron',chance:0.4,min:1,max:1},
       {type:'deco',chance:0.1},
-      {type:'gold',chance:1.0,min:25,max:40},
     ]},
     shaman:{rarityBoost:1.4,one:0.7,rolls:[
       {type:'mat',id:'curse_powder',chance:0.75,min:1,max:2},
       {type:'mat',id:'seal_shard',chance:0.45,min:1,max:1},
       {type:'deco',chance:0.08},
-      {type:'gold',chance:1.0,min:15,max:24},
     ]},
     bone_dragon:{rarityBoost:2.4,rolls:[
       {type:'mat',id:'dragon_bone',chance:1.0,min:2,max:3},
       {type:'mat',id:'nether_core',chance:0.35,min:1,max:1},
+      {type:'mat',id:'reinforce_orb',chance:0.8,min:1,max:2},
       {type:'mat',id:'soul_shard',chance:0.8,min:1,max:3},
       {type:'mat',id:'cursed_iron',chance:0.6,min:1,max:2},
       {type:'deco',chance:0.85},
       {type:'deco',chance:0.45},
-      {type:'gold',chance:1.0,min:320,max:450},
+    ]},
+    meadow_bull:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'bull_horn',chance:1.0,min:1,max:2},
+      {type:'mat',id:'bull_hide',chance:1.0,min:2,max:3},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},
+      {type:'deco',chance:0.3},
     ]},
     // 中ボスを倒したときの追加報酬
-    midboss:{rarityBoost:1.6,rolls:[{type:'deco',chance:0.5},{type:'gold',chance:1.0,min:30,max:60}]},
+    midboss:{rarityBoost:1.6,rolls:[{type:'deco',chance:0.5}]},
     chest:{rarityBoost:1.25,rolls:[
       {type:'deco',chance:0.3},
+      {type:'mat',id:'reinforce_orb',chance:0.3,min:1,max:1},
       {type:'gold',chance:1.0,min:20,max:40},
     ]},
   },
@@ -548,21 +751,41 @@ const DATA={
     {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:12,type:'mat',mat:'goblin_hide'},
     {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:12,type:'mat',mat:'old_bone'},
     {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:20,type:'mat',mat:'arrowhead'},
-    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ2の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:2},
+    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:5},
     {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:250,type:'deco'},
   ],
   /* ステージ：各依頼で使うダンジョンの敵・難易度。enemySet の melee / ranged / boss が配置される */
   stages:[
     // layout：マップの部屋構成（DATA.layouts）。無い場合は従来の固定マップ（buildDungeon）を使う
-    {id:1,name:'緑風の森林',desc:'風が木々を揺らす深い森。ゴブリンや獣が潜み、最奥の「古森の広場」には古狼が棲みつく。',
+    {id:1,name:'風渡る草原',desc:'開けた草原と、風に揺れる丈の長い草むら。獣たちの縄張りが点在する、冒険の始まりの地。最奥の「暴角の広場」には、角を持つ巨獣が待ち構えている。',
+      enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'meadow_bull'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'forest'},
+    {id:2,name:'緑風の森林',desc:'風が木々を揺らす深い森。さまざまな魔物が潜み、最奥の「古森の広場」には森の主が棲みつく。',
       enemySet:{melee:'goblin',ranged:'archer',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
-    {id:2,name:'忘却の地下墓地',desc:'忘れ去られた墓所と地下遺跡。骸骨や亡霊がさまよい、最奥の「冥府の祭壇」には黒き古狼が棲みついている。',
+    {id:3,name:'腐毒の沼地',desc:'毒の霧がたちこめる沼地。足元の泥と、ぬめる水辺に気をつけて。最奥の「沼の中心」には、恐ろしい主が棲みついている。',
+      enemySet:{melee:'leech',ranged:'carnivore_plant',boss:'hydra'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'swamp',bgm:'forest'},
+    {id:4,name:'蒼流の水辺',desc:'澄んだ川と、落ちる滝の音が響く水辺。水の底から雷の気配が漂う。最奥の「滝つぼ」には、水底を統べる主が潜んでいる。',
+      enemySet:{melee:'piranha',ranged:'water_spirit',boss:'aquarios'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'river',bgm:'forest'},
+    {id:5,name:'忘却の地下墓地',desc:'忘れ去られた墓所と地下遺跡。不気味な気配が満ちており、最奥の「冥府の祭壇」には恐ろしい主が棲みついている。',
       enemySet:{melee:'hobgoblin',ranged:'sniper',boss:'black_wolf'},hp:1.0,atk:1.0,chest:'chest2',layout:'crypt',bgm:'crypt'},
   ],
   /* マップの部屋構成。毎回 main から数部屋・side から寄り道の部屋を選び、つなぎ方も変える。
      spawn：[魔物, 最少, 最多]／elite：強化された魔物の数／gather：採取ポイントの数 [最少,最多]／chest：必ず置く宝箱の数
      obstacle：障害物の種類（trees=木、rocks=岩、pillars=柱、tombs=墓石）／wander：通路をうろつく魔物 */
   layouts:{
+    meadow:{theme:'forest',obstacle:'rocks',wander:['goblin','forest_wolf','slime'],
+      start:{id:'entrance',name:'草原の入口'},
+      boss:{id:'arena',name:'暴角の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['forest_wolf',1,1]]},
+      main:[
+        {id:'grass',name:'丈の長い草原',spawn:[['goblin',3,4],['slime',0,1]]},
+        {id:'hill',name:'小高い丘',spawn:[['goblin_archer',2,2],['goblin',1,1]]},
+        {id:'herd',name:'獣の縄張り',spawn:[['forest_wolf',2,3]]},
+        {id:'stream',name:'浅瀬の川辺',spawn:[['slime',1,2],['goblin',1,2]]},
+        {id:'outpost',name:'はぐれ者の野営地',spawn:[['goblin',2,3],['goblin_archer',1,2]]},
+      ],
+      side:[
+        {id:'hollow',name:'草むらの窪地',spawn:[['slime',0,1]],gather:[3,4]},
+        {id:'lair',name:'狼の巣穴',spawn:[['forest_wolf',1,1],['goblin',0,1]],elite:1,chest:1},
+      ]},
     forest:{theme:'forest',obstacle:'trees',wander:['goblin','forest_wolf','slime'],
       start:{id:'entrance',name:'森林の入口'},
       boss:{id:'arena',name:'古森の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['forest_wolf',1,1]]},
@@ -576,6 +799,34 @@ const DATA={
       side:[
         {id:'grove',name:'古木の採取場',spawn:[['mushroom',0,1]],gather:[3,4]},
         {id:'nest',name:'強敵の巣',spawn:[['forest_wolf',1,1],['beetle',1,1],['slime',0,1]],elite:2,chest:1},
+      ]},
+    swamp:{theme:'cave',obstacle:'pillars',wander:['poison_frog','leech'],
+      start:{id:'shore',name:'沼のほとり'},
+      boss:{id:'arena',name:'沼の中心',spawn:[['leech',1,2],['carnivore_plant',1,1]]},
+      main:[
+        {id:'reeds',name:'葦原',spawn:[['poison_frog',2,3],['leech',1,2]]},
+        {id:'pond',name:'濁った池',spawn:[['leech',2,3],['bloater',0,1]]},
+        {id:'nest',name:'花食いの群生地',spawn:[['carnivore_plant',2,3]]},
+        {id:'bog',name:'底なしの泥地',spawn:[['swamp_croc',1,2],['bloater',1,2]]},
+        {id:'rot',name:'腐った倒木',spawn:[['parasite',2,3],['poison_frog',1,1]]},
+      ],
+      side:[
+        {id:'hollow2',name:'沈んだ窪地',spawn:[['leech',0,1]],gather:[3,4]},
+        {id:'lair2',name:'毒蟲の寝床',spawn:[['parasite',1,1],['swamp_croc',0,1]],elite:1,chest:1},
+      ]},
+    river:{theme:'cave',obstacle:'rocks',wander:['water_lizard','piranha'],
+      start:{id:'bank',name:'川岸'},
+      boss:{id:'arena',name:'滝つぼ',spawn:[['piranha',2,3],['water_spirit',1,1]]},
+      main:[
+        {id:'shallows',name:'浅瀬',spawn:[['water_lizard',2,3],['piranha',1,2]]},
+        {id:'rocks2',name:'岩場の渡り',spawn:[['crab',1,2],['water_spirit',1,2]]},
+        {id:'falls',name:'滝の裏',spawn:[['eel',1,2],['jellyfish',1,2]]},
+        {id:'whirl',name:'渦の淵',spawn:[['jellyfish',2,3],['eel',1,1]]},
+        {id:'shrine',name:'水没した祠',spawn:[['water_spirit',2,3],['crab',0,1]]},
+      ],
+      side:[
+        {id:'pool2',name:'澄んだ淵',spawn:[['piranha',0,1]],gather:[3,4]},
+        {id:'nest2',name:'雷魚の巣',spawn:[['eel',1,1],['jellyfish',0,1]],elite:1,chest:1},
       ]},
     crypt:{theme:'crypt',obstacle:'tombs',wander:['skeleton','wisp'],
       start:{id:'entrance',name:'墓所の入口'},
@@ -597,39 +848,76 @@ const DATA={
      key：キー依頼。同じステージのキー依頼をすべて達成すると urgent（緊急依頼）が出現する
      unlocks：クリアすると解放されるステージ */
   quests:[
-    {id:'s1_goblin',stage:1,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。8体退治してほしい。',goal:{type:'kill',target:'goblin',count:8},reward:{gold:120,mats:{goblin_hide:2,scrap_iron:1}}},
-    {id:'s1_archer',stage:1,key:true,name:'骨の弓兵',desc:'暗がりから矢を射るスケルトンアーチャーを5体倒せ。',goal:{type:'kill',target:'archer',count:5},reward:{gold:150,mats:{old_bone:3,arrowhead:1}}},
-    {id:'s1_chest',stage:1,key:true,name:'森の宝探し',desc:'森に眠る宝箱を3つ見つけて開けてほしい。',goal:{type:'chest',count:3},reward:{gold:100,mats:{scrap_iron:3},decos:1}},
-    {id:'s1_hunt',stage:1,name:'素材集め：森林',desc:'ゴブリンとスケルトンを合わせて12体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:12},reward:{gold:160,mats:{goblin_hide:2,old_bone:2}}},
-    {id:'s1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:400,mats:{wolf_fang:1},decos:1}},
-    {id:'s2_hob',stage:2,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを8体倒せ。',goal:{type:'kill',target:'hobgoblin',count:8},reward:{gold:300,mats:{hard_iron:3}}},
-    {id:'s2_sniper',stage:2,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを5体倒せ。',goal:{type:'kill',target:'sniper',count:5},reward:{gold:320,mats:{dark_bone:3}}},
-    {id:'s2_chest',stage:2,key:true,name:'墓地の秘宝',desc:'墓地に眠る宝箱を3つ開けろ。',goal:{type:'chest',count:3},reward:{gold:260,mats:{hard_iron:2},decos:1}},
-    {id:'s2_boss',stage:2,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:900,mats:{bwolf_core:1},decos:2}},
+    {id:'m1_goblin',stage:1,key:true,name:'草原の掃討',desc:'草原をうろつく小鬼の群れを6体退治してほしい。',goal:{type:'kill',target:'goblin',count:6},reward:{gold:90,mats:{goblin_hide:2}}},
+    {id:'m1_slime',stage:1,key:true,name:'跳ねる緑の群れ',desc:'草原の浅瀬で増えすぎた緑の粘体を5体倒せ。',goal:{type:'kill',target:'slime',count:5},reward:{gold:90,mats:{slime_gel:2}}},
+    {id:'m1_hunt',stage:1,name:'素材集め：草原',desc:'草原の魔物を合わせて10体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:10},reward:{gold:110,mats:{goblin_hide:1,slime_gel:1}}},
+    {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:300,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
+    {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。8体退治してほしい。',goal:{type:'kill',target:'goblin',count:8},reward:{gold:120,mats:{goblin_hide:2,scrap_iron:1}}},
+    {id:'s1_archer',stage:2,key:true,name:'骨の弓兵',desc:'暗がりから矢を射るスケルトンアーチャーを5体倒せ。',goal:{type:'kill',target:'archer',count:5},reward:{gold:150,mats:{old_bone:3,arrowhead:1}}},
+    {id:'s1_chest',stage:2,key:true,name:'森の宝探し',desc:'森に眠る宝箱を3つ見つけて開けてほしい。',goal:{type:'chest',count:3},reward:{gold:100,mats:{scrap_iron:3,reinforce_orb:1},decos:1}},
+    {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'ゴブリンとスケルトンを合わせて12体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:12},reward:{gold:160,mats:{goblin_hide:2,old_bone:2}}},
+    {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:400,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
+    {id:'sw_frog',stage:3,key:true,name:'毒沼の討伐',desc:'沼地に潜む毒の蛙を8体倒せ。',goal:{type:'kill',target:'poison_frog',count:8},reward:{gold:180,mats:{toxic_gland:2}}},
+    {id:'sw_plant',stage:3,key:true,name:'花食いの刈り取り',desc:'沼地に根を張る食虫の花を5体刈り取れ。',goal:{type:'kill',target:'carnivore_plant',count:5},reward:{gold:180,mats:{swamp_moss:2}}},
+    {id:'sw_chest',stage:3,key:true,name:'沼底の宝探し',desc:'沼地に沈んだ宝箱を3つ開けてほしい。',goal:{type:'chest',count:3},reward:{gold:200,mats:{swamp_moss:2,reinforce_orb:1},decos:1}},
+    {id:'sw_hunt',stage:3,name:'素材集め：沼地',desc:'沼地の魔物を合わせて12体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:12},reward:{gold:200,mats:{leech_skin:1,croc_scale:1}}},
+    {id:'sw_boss',stage:3,urgent:true,unlocks:4,name:'【緊急】多頭竜の沼',desc:'沼の中心に潜む多頭竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:400,mats:{hydra_scale:2,toxic_gland:2,reinforce_orb:2},decos:1}},
+    {id:'sw_king',stage:3,after:'sw_boss',boss:'venomKing',name:'【強敵】毒蟲王の巣',desc:'沼の奥の巣に、毒蟲の王が待ち構えている。',goal:{type:'boss'},reward:{gold:500,mats:{venom_shell:2,toxic_gland:2,reinforce_orb:2},decos:1}},
+    {id:'sw_giant',stage:3,after:'sw_king',boss:'mireGiant',name:'【強敵】腐敗の沼巨人',desc:'沼の底から、腐敗した巨人が這い上がってきた。',goal:{type:'boss'},reward:{gold:600,mats:{mire_core:2,swamp_moss:3,reinforce_orb:3},decos:1}},
+    {id:'aq_lizard',stage:4,key:true,name:'水辺のトカゲ狩り',desc:'川辺を走る水棲トカゲを8体倒せ。',goal:{type:'kill',target:'water_lizard',count:8},reward:{gold:260,mats:{water_scale:2}}},
+    {id:'aq_jelly',stage:4,key:true,name:'漂う泡の掃除',desc:'水辺に漂う泡沫クラゲを6体倒せ。',goal:{type:'kill',target:'jellyfish',count:6},reward:{gold:260,mats:{jelly_gel:2}}},
+    {id:'aq_chest',stage:4,key:true,name:'水底の宝箱',desc:'水辺の宝箱を3つ開けてほしい。',goal:{type:'chest',count:3},reward:{gold:300,mats:{piranha_tooth:2,reinforce_orb:1},decos:1}},
+    {id:'aq_hunt',stage:4,name:'素材集め：水辺',desc:'水辺の魔物を合わせて12体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:12},reward:{gold:280,mats:{crab_shell:1,eel_sac:1}}},
+    {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:500,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
+    {id:'aq_turtle',stage:4,after:'aq_boss',boss:'turtle',name:'【強敵】滝を背負う大亀',desc:'滝の裏から、水を背負った大きな亀が現れた。',goal:{type:'boss'},reward:{gold:600,mats:{shell_heart:2,crab_shell:2,reinforce_orb:2},decos:1}},
+    {id:'aq_eel',stage:4,after:'aq_turtle',boss:'thunderEel',name:'【強敵】雷鳴の大鰻',desc:'渦の淵で雷が鳴っている。雷を纏う大鰻が目を覚ました。',goal:{type:'boss'},reward:{gold:700,mats:{thunder_core:2,eel_sac:3,reinforce_orb:3},decos:1}},
+    {id:'s2_hob',stage:5,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを8体倒せ。',goal:{type:'kill',target:'hobgoblin',count:8},reward:{gold:300,mats:{hard_iron:3}}},
+    {id:'s2_sniper',stage:5,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを5体倒せ。',goal:{type:'kill',target:'sniper',count:5},reward:{gold:320,mats:{dark_bone:3}}},
+    {id:'s2_chest',stage:5,key:true,name:'墓地の秘宝',desc:'墓地に眠る宝箱を3つ開けろ。',goal:{type:'chest',count:3},reward:{gold:260,mats:{hard_iron:2,reinforce_orb:1},decos:1}},
+    {id:'s2_boss',stage:5,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:900,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
-    {id:'s1_haro',stage:1,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:600,mats:{wood:3,herb:3},decos:1}},
-    {id:'s2_dragon',stage:2,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3},decos:2}},
+    {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:600,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
+    {id:'s2_dragon',stage:5,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
   bestiary:{
-    goblin:{stage:[1],role:'近接攻撃型',desc:'森に住みつく小鬼。群れで近づき、こん棒で殴りかかってくる。この地では剣を持つ「ゴブリン剣士」と呼ばれることも。',tip:'振りかぶる動作（赤い扇形）が見えたら横へ。体力は低いので素早く倒そう。'},
-    archer:{stage:[1,2],role:'遠距離攻撃型',desc:'骨の弓兵（骸骨弓兵）。距離を取り、狙いを定めて矢を放つ。',tip:'狙いの線が赤く固まった直後に矢が来る。柱や木を盾にしながら近づこう。'},
-    goblin_archer:{stage:[1],role:'遠距離攻撃型',desc:'見張り台や野営地に陣取るゴブリンの射手。ほかの魔物と組むと厄介。',tip:'近接の魔物を引きつけつつ、先に弓兵を倒すと楽になる。'},
-    forest_wolf:{stage:[1],role:'高速近接型',desc:'森を駆ける狼。獲物を追いかけ、少し離れた場所から一直線に突進してくる。',tip:'突進は直線だけ。地面の帯が見えたら横へ回避して、止まったところを攻撃。'},
-    slime:{stage:[1],role:'低速・範囲攻撃型',desc:'跳ねながら近づいてくるスライム。近くでは大きく跳び、着地点の周りを押しつぶす。',tip:'着地点に赤い円が出る。円の外へ出てから反撃しよう。'},
-    beetle:{stage:[1],role:'防御型',desc:'硬い甲殻に覆われた大きな甲虫。正面からの攻撃はほとんど弾いてしまう。',tip:'向きを変えるのが遅い。横や背後に回り込んで攻撃しよう。'},
-    mushroom:{stage:[1],role:'範囲妨害型',desc:'近づいた者に毒胞子を浴びせるキノコ。胞子の雲の中にいると少しずつ体力が減る。',tip:'緑の円が出たら離れる。雲が消えてから近づき、一気に倒そう。'},
-    forest_king:{stage:[1],role:'ボス',desc:'森林を支配する巨大な狼。突進・前方の薙ぎ払い・周囲への咆哮を使い分ける。',tip:'怒ると突進が何度も続く。帯の向きをよく見て横へ。咆哮は円の外へ。'},
-    wolf:{stage:[1],role:'ボス',desc:'森の最奥に棲みつく古い狼。噛みつき・突進・地面への叩きつけで襲いかかる。',tip:'叩きつけの円は大きい。弱ると怒り、叩きつけの周りにも衝撃が走る。'},
-    hobgoblin:{stage:[2],role:'近接攻撃型',desc:'ゴブリンより大柄で打たれ強い。墓所の回廊や詰所に現れる。',tip:'一撃が重い。振りかぶりを見てから回避しよう。'},
-    sniper:{stage:[2],role:'遠距離攻撃型',desc:'遠くから素早い矢を放つスケルトン。',tip:'矢が速いので、狙いが固まる前に射線から外れよう。'},
-    skeleton:{stage:[2],role:'近接攻撃型',desc:'剣を手にした骸骨の兵士。複数で現れ、動ける場所を狭めてくる。',tip:'囲まれないよう、通路に引き込んで1体ずつ相手にしよう。'},
-    wisp:{stage:[2],role:'追尾・移動妨害型',desc:'墓地をさまよう霊。ふわふわと追いかけてきて、触れた者の動きを鈍らせる。',tip:'鈍足中は回避が遅れがち。ほかの魔物と一緒のときは先に倒そう。'},
-    zombie:{stage:[2],role:'高耐久型',desc:'墓所を守り続けるゾンビ。動きは遅いが打たれ強く、攻撃してものけぞらない。',tip:'狭い通路をふさがれると厄介。広い場所で戦うか、罠や爆弾を使おう。'},
-    cursed_knight:{stage:[2],role:'強敵・重攻撃型',desc:'呪いに囚われた騎士。大剣で広い範囲を薙ぎ払い、鋭い突きも放つ。',tip:'攻撃の後に大きな隙がある。範囲の外へ逃げて、振り終わりを狙おう。'},
-    shaman:{stage:[2],role:'支援型',desc:'周りの魔物を呪術で強化し、倒れた魔物をよみがえらせる。',tip:'詠唱中に攻撃を当てると中断できる。最優先で倒そう。'},
-    black_wolf:{stage:[2],role:'ボス',desc:'古狼の群れを率いた黒い狼。古狼より速く、力も強い。',tip:'動きは古狼と同じ。罠や閃光玉でスキを作ろう。'},
-    bone_dragon:{stage:[2],role:'ボス',desc:'地下墓地に封印されていた巨大な骨の竜。霊魂弾・薙ぎ払い・咆哮に加え、骸骨兵を呼び出す。',tip:'霊魂弾は追いかけてくるが、回避で抜けられる。呼ばれた骸骨兵は竜を倒すと崩れる。'},
+    goblin:{stage:[1,2],role:'近接攻撃型',desc:'森に住みつく小鬼。群れで近づき、こん棒で殴りかかってくる。この地では剣を持つ「ゴブリン剣士」と呼ばれることも。',tip:'振りかぶる動作（赤い扇形）が見えたら横へ。体力は低いので素早く倒そう。'},
+    archer:{stage:[2,5],role:'遠距離攻撃型',desc:'骨の弓兵（骸骨弓兵）。距離を取り、狙いを定めて矢を放つ。',tip:'狙いの線が赤く固まった直後に矢が来る。柱や木を盾にしながら近づこう。'},
+    goblin_archer:{stage:[1,2],role:'遠距離攻撃型',desc:'見張り台や野営地に陣取るゴブリンの射手。ほかの魔物と組むと厄介。',tip:'近接の魔物を引きつけつつ、先に弓兵を倒すと楽になる。'},
+    forest_wolf:{stage:[1,2],role:'高速近接型',desc:'森を駆ける狼。獲物を追いかけ、少し離れた場所から一直線に突進してくる。',tip:'突進は直線だけ。地面の帯が見えたら横へ回避して、止まったところを攻撃。'},
+    slime:{stage:[1,2],role:'低速・範囲攻撃型',desc:'跳ねながら近づいてくるスライム。近くでは大きく跳び、着地点の周りを押しつぶす。',tip:'着地点に赤い円が出る。円の外へ出てから反撃しよう。'},
+    beetle:{stage:[2],role:'防御型',desc:'硬い甲殻に覆われた大きな甲虫。正面からの攻撃はほとんど弾いてしまう。',tip:'向きを変えるのが遅い。横や背後に回り込んで攻撃しよう。'},
+    mushroom:{stage:[2],role:'範囲妨害型',desc:'近づいた者に毒胞子を浴びせるキノコ。胞子の雲の中にいると少しずつ体力が減る。',tip:'緑の円が出たら離れる。雲が消えてから近づき、一気に倒そう。'},
+    forest_king:{stage:[2],role:'ボス',desc:'森林を支配する巨大な狼。突進・前方の薙ぎ払い・周囲への咆哮を使い分ける。',tip:'怒ると突進が何度も続く。帯の向きをよく見て横へ。咆哮は円の外へ。'},
+    meadow_bull:{stage:[1],role:'ボス',desc:'草原の主。角で突き、薙ぎ払い、足で大地を踏み鳴らす。',tip:'突進は直線。突進の後は大きな隙がある。踏みつけの円の外へ逃げよう。'},
+    wolf:{stage:[2],role:'ボス',desc:'森の最奥に棲みつく古い狼。噛みつき・突進・地面への叩きつけで襲いかかる。',tip:'叩きつけの円は大きい。弱ると怒り、叩きつけの周りにも衝撃が走る。'},
+    poison_frog:{stage:[3],role:'跳躍攻撃型',desc:'沼の毒を含んだ蛙。大きく跳ねて飛びかかってくる。',tip:'跳ねる直前に体が沈むので、その瞬間に横へ避けよう。'},
+    leech:{stage:[3],role:'近接吸血型',desc:'泥の中から這い出す吸血ヒル。ぬめりを残しながら追いかけてくる。',tip:'囲まれると逃げにくい。数を減らしてから戦おう。'},
+    carnivore_plant:{stage:[3],role:'範囲妨害型',desc:'地面に根を張る食虫の花。近づくと毒の霧を吐く。',tip:'霧の範囲は広い。遠くから倒すのがおすすめ。'},
+    bloater:{stage:[3],role:'範囲攻撃型',desc:'毒袋を膨らませた魔物。着地の衝撃で周囲に毒をまき散らす。',tip:'膨らんでいる間は近づかない。'},
+    swamp_croc:{stage:[3],role:'防御型',desc:'硬い鱗で正面を守る沼のワニ。正面からの攻撃はほとんど通らない。',tip:'横か後ろに回り込もう。'},
+    parasite:{stage:[3],role:'追尾・移動妨害型',desc:'腐った木に取り付く寄生体。浮かびながら近づき、触れた者の足を鈍らせる。',tip:'ふわふわ追ってくる。逃げるより倒すほうが早い。'},
+    hydra:{stage:[3],role:'ボス',desc:'沼の中心に棲む多頭の竜。三つの首で薙ぎ払い、毒の吐息を放つ。',tip:'首の薙ぎ払いは扇形。毒の沼には入らないこと。'},
+    venomKing:{stage:[3],role:'ボス',desc:'毒蟲の王。子蟲を呼び、毒の沼を作り、重い前脚で叩きつける。',tip:'子蟲は早めに倒すと楽になる。'},
+    mireGiant:{stage:[3],role:'ボス',desc:'腐敗した沼の巨人。大きな腕で叩き、泥を投げ、沼を広げる。',tip:'叩きつけの後は大きな隙がある。その隙に攻めよう。'},
+    water_lizard:{stage:[4],role:'跳躍攻撃型',desc:'川辺を素早く走る水棲トカゲ。水に入ると急に加速して飛びかかる。',tip:'直線で突っ込んでくる。横に避けて背後を取ろう。'},
+    jellyfish:{stage:[4],role:'低速・妨害型',desc:'ふわふわ漂う泡沫クラゲ。触れると体がにぶくなる。',tip:'触れなければ怖くない。ゆっくり近づいて倒そう。'},
+    piranha:{stage:[4],role:'高速近接型',desc:'群れで襲いかかる川牙ピラニア。動きが速く、歯が鋭い。',tip:'数で囲まれないよう、岩を背にすると安全。'},
+    crab:{stage:[4],role:'防御型',desc:'滝の裏で守りを固める甲殻獣。正面からの攻撃はほとんど弾く。',tip:'横や後ろから攻めるか、重い攻撃で殻を割ろう。'},
+    eel:{stage:[4],role:'高速突進型',desc:'雷を蓄えたウナギ。水から飛び出すように突進し、近くで電撃を走らせる。',tip:'突進の直線から外れること。'},
+    water_spirit:{stage:[4],role:'遠距離攻撃型',desc:'水の中に漂う精霊。水の矢を放ち、距離を保とうとする。',tip:'矢は遅めなので、狙いを外して近づこう。'},
+    aquarios:{stage:[4],role:'ボス',desc:'滝つぼに棲む蒼い海竜。尾の薙ぎ払い、水の弾、突進、ピラニアの召喚を使う。',tip:'突進は直線。水の弾は扇状に広がるので、間をすり抜けよう。'},
+    turtle:{stage:[4],role:'ボス',desc:'滝の水を背負う大きな亀。重い叩きつけ、水の弾、尾の薙ぎ払い、滝守の甲殻獣を呼ぶ。',tip:'叩きつけの後に大きな隙がある。'},
+    thunderEel:{stage:[4],role:'ボス',desc:'雷を纏う大きなウナギ。素早い突進と雷の叩きつけ、雷電ウナギを呼ぶ。',tip:'突進の前に体が光る。光ったら直線から離れよう。'},
+    hobgoblin:{stage:[5],role:'近接攻撃型',desc:'ゴブリンより大柄で打たれ強い。墓所の回廊や詰所に現れる。',tip:'一撃が重い。振りかぶりを見てから回避しよう。'},
+    sniper:{stage:[5],role:'遠距離攻撃型',desc:'遠くから素早い矢を放つスケルトン。',tip:'矢が速いので、狙いが固まる前に射線から外れよう。'},
+    skeleton:{stage:[5],role:'近接攻撃型',desc:'剣を手にした骸骨の兵士。複数で現れ、動ける場所を狭めてくる。',tip:'囲まれないよう、通路に引き込んで1体ずつ相手にしよう。'},
+    wisp:{stage:[5],role:'追尾・移動妨害型',desc:'墓地をさまよう霊。ふわふわと追いかけてきて、触れた者の動きを鈍らせる。',tip:'鈍足中は回避が遅れがち。ほかの魔物と一緒のときは先に倒そう。'},
+    zombie:{stage:[5],role:'高耐久型',desc:'墓所を守り続けるゾンビ。動きは遅いが打たれ強く、攻撃してものけぞらない。',tip:'狭い通路をふさがれると厄介。広い場所で戦うか、罠や爆弾を使おう。'},
+    cursed_knight:{stage:[5],role:'強敵・重攻撃型',desc:'呪いに囚われた騎士。大剣で広い範囲を薙ぎ払い、鋭い突きも放つ。',tip:'攻撃の後に大きな隙がある。範囲の外へ逃げて、振り終わりを狙おう。'},
+    shaman:{stage:[5],role:'支援型',desc:'周りの魔物を呪術で強化し、倒れた魔物をよみがえらせる。',tip:'詠唱中に攻撃を当てると中断できる。最優先で倒そう。'},
+    black_wolf:{stage:[5],role:'ボス',desc:'古狼の群れを率いた黒い狼。古狼より速く、力も強い。',tip:'動きは古狼と同じ。罠や閃光玉でスキを作ろう。'},
+    bone_dragon:{stage:[5],role:'ボス',desc:'地下墓地に封印されていた巨大な骨の竜。霊魂弾・薙ぎ払い・咆哮に加え、骸骨兵を呼び出す。',tip:'霊魂弾は追いかけてくるが、回避で抜けられる。呼ばれた骸骨兵は竜を倒すと崩れる。'},
   },
   equipPools:{
     basic:['iron_sword','hunter_sword','leather_cap','leather_vest','leather_gloves','leather_boots','bone_helm','leather_belt'],
@@ -650,25 +938,25 @@ const DATA={
     {id:'r_wolflegs',out:{type:'equip',id:'wolf_greaves'},cost:{wolf_pelt:2,wolf_claw:1,goblin_hide:3}},
     {id:'r_wolfwaist',out:{type:'equip',id:'wolf_faulds'},cost:{wolf_pelt:2,wolf_claw:1,old_bone:2}},
     {id:'r_fangking',out:{type:'equip',id:'fang_king'},cost:{wolf_heart:1,wolf_fang:3,wolf_claw:2},minRarity:2},
-    {id:'r_hardblade',out:{type:'equip',id:'hard_blade'},cost:{hard_iron:4,scrap_iron:4},stage:2},
+    {id:'r_hardblade',out:{type:'equip',id:'hard_blade'},cost:{hard_iron:4,scrap_iron:4},stage:5},
     {id:'r_iron_gs',out:{type:'equip',id:'iron_gs'},cost:{scrap_iron:5,goblin_hide:2,old_bone:2}},
     {id:'r_iron_tachi',out:{type:'equip',id:'iron_tachi'},cost:{scrap_iron:4,arrowhead:2}},
     {id:'r_iron_db',out:{type:'equip',id:'iron_db'},cost:{scrap_iron:4,goblin_hide:1,arrowhead:1}},
     {id:'r_wolf_db',out:{type:'equip',id:'wolf_db'},cost:{wolf_claw:2,wolf_fang:1,scrap_iron:3}},
-    {id:'r_bwolf_db',out:{type:'equip',id:'bwolf_db'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:2},
+    {id:'r_bwolf_db',out:{type:'equip',id:'bwolf_db'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:5},
     {id:'r_iron_hammer',out:{type:'equip',id:'iron_hammer'},cost:{scrap_iron:6,old_bone:2}},
     {id:'r_wolf_gs',out:{type:'equip',id:'wolf_gs'},cost:{wolf_fang:2,wolf_pelt:2,scrap_iron:4}},
     {id:'r_wolf_tachi',out:{type:'equip',id:'wolf_tachi'},cost:{wolf_fang:2,wolf_claw:1,arrowhead:2}},
     {id:'r_wolf_hammer',out:{type:'equip',id:'wolf_hammer'},cost:{wolf_claw:2,wolf_pelt:1,scrap_iron:5}},
-    {id:'r_bwolf_gs',out:{type:'equip',id:'bwolf_gs'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:4},stage:2},
-    {id:'r_bwolf_tachi',out:{type:'equip',id:'bwolf_tachi'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:2},
-    {id:'r_bwolf_hammer',out:{type:'equip',id:'bwolf_hammer'},cost:{bwolf_pelt:2,hard_iron:5},stage:2},
-    {id:'r_bwsword',out:{type:'equip',id:'bwolf_sword'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:3},stage:2},
-    {id:'r_bwhelm',out:{type:'equip',id:'bwolf_helm'},cost:{bwolf_pelt:2,dark_bone:3},stage:2},
-    {id:'r_bwmail',out:{type:'equip',id:'bwolf_mail'},cost:{bwolf_pelt:3,hard_iron:2},stage:2},
-    {id:'r_bwarms',out:{type:'equip',id:'bwolf_vambrace'},cost:{bwolf_fang:1,dark_bone:2,hard_iron:2},stage:2},
-    {id:'r_bwlegs',out:{type:'equip',id:'bwolf_greaves'},cost:{bwolf_pelt:2,dark_bone:2},stage:2},
-    {id:'r_bwwaist',out:{type:'equip',id:'bwolf_faulds'},cost:{bwolf_pelt:2,hard_iron:1,dark_bone:1},stage:2},
+    {id:'r_bwolf_gs',out:{type:'equip',id:'bwolf_gs'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:4},stage:5},
+    {id:'r_bwolf_tachi',out:{type:'equip',id:'bwolf_tachi'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:5},
+    {id:'r_bwolf_hammer',out:{type:'equip',id:'bwolf_hammer'},cost:{bwolf_pelt:2,hard_iron:5},stage:5},
+    {id:'r_bwsword',out:{type:'equip',id:'bwolf_sword'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:3},stage:5},
+    {id:'r_bwhelm',out:{type:'equip',id:'bwolf_helm'},cost:{bwolf_pelt:2,dark_bone:3},stage:5},
+    {id:'r_bwmail',out:{type:'equip',id:'bwolf_mail'},cost:{bwolf_pelt:3,hard_iron:2},stage:5},
+    {id:'r_bwarms',out:{type:'equip',id:'bwolf_vambrace'},cost:{bwolf_fang:1,dark_bone:2,hard_iron:2},stage:5},
+    {id:'r_bwlegs',out:{type:'equip',id:'bwolf_greaves'},cost:{bwolf_pelt:2,dark_bone:2},stage:5},
+    {id:'r_bwwaist',out:{type:'equip',id:'bwolf_faulds'},cost:{bwolf_pelt:2,hard_iron:1,dark_bone:1},stage:5},
     {id:'r_deco',out:{type:'deco'},cost:{wolf_claw:1,old_bone:3,arrowhead:2}},
     {id:'r_potion',out:{type:'item',id:'potion',n:2},cost:{goblin_hide:1,old_bone:1}},
     {id:'r_heal_all',out:{type:'item',id:'heal_all',n:1},cost:{goblin_hide:3,old_bone:3}},
@@ -908,7 +1196,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:7,
+  KEY:'kourou_dungeon_save',VERSION:10,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -947,6 +1235,9 @@ const Save={
       4:d=>{d.progress={stage:1,done:{}};d.gold=d.gold||0;return d;}, // 4 → 5：依頼の進行とゴールド
       5:d=>{delete d.guests;return d;}, // 5 → 6：オンラインは持ち寄り式に（ホストに預けていた参加者データは不要）
       6:d=>{d.bag={potion:d.potions|0};delete d.potions;return d;}, // 6 → 7：持ち物を複数種類に
+      7:d=>{if(d.progress)d.progress.stage=(d.progress.stage|0)+1;return d;}, // 7 → 8：ステージ1に草原を追加（森林は2、墓地は3）
+      8:d=>{if(d.progress&&(d.progress.stage|0)>=3)d.progress.stage+=1;return d;}, // 8 → 9：沼地を3番に追加（墓地は4番へ）
+      9:d=>{if(d.progress&&(d.progress.stage|0)>=4)d.progress.stage+=1;return d;}, // 9 → 10：水辺を4番に追加（墓地は5番へ）
     };
     while(v<this.VERSION){if(migrations[v])data=migrations[v](data);v++;}
     return data;
@@ -983,7 +1274,7 @@ const Save={
       if(!x||!DATA.equipment[x.baseId]||typeof x.uid!=='string'||itemIds.has(x.uid))continue;
       const base=DATA.equipment[x.baseId];
       const it={kind:'equip',uid:x.uid,baseId:x.baseId,slot:base.slot,rarity:clamp(x.rarity|0,0,4),
-        atk:Math.max(0,Number(x.atk)||0),def:Math.max(0,Number(x.def)||0),crit:Math.max(0,Number(x.crit)||0),
+        atk:Math.max(0,Number(x.atk)||0),def:Math.max(0,Number(x.def)||0),crit:Math.max(0,Number(x.crit)||0),reinforce:clamp(x.reinforce|0,0,5),
         affixes:Array.isArray(x.affixes)?x.affixes.filter(a=>a&&DATA.affixes[a.id]&&typeof a.v==='number').map(a=>({id:a.id,v:a.v})):[],
         effects:Array.isArray(x.effects)?x.effects.filter(e=>DATA.effects[e]):[],
         slots:Array.isArray(x.slots)?x.slots.slice(0,3).map(u=>{if(u&&decoIds.has(u)&&!usedDecos.has(u)){usedDecos.add(u);return u;}return null;}):[]};
@@ -1549,7 +1840,11 @@ function damageEnemy(w,p,e,mult,src){
   if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2){dmg*=ed.guard.mult;guarded=true;}
   dmg=Math.max(1,Math.round(dmg-e.armor*0.5));
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
-  if(!e.boss&&!ed.heavy&&!e.mid){const a=Math.atan2(e.y-p.y,e.x-p.x),k=src.skill?260:170;e.kx=Math.cos(a)*k;e.ky=Math.sin(a)*k;e.stun=0.15;}
+  if(!e.boss&&!ed.heavy&&!e.mid){
+    e.stun=0.15;
+    // ノックバックは武器ごと（大剣・ハンマーだけ）。片手剣・太刀・双剣は吹き飛ばさない
+    if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].knockback){const a=Math.atan2(e.y-p.y,e.x-p.x),k=src.skill?260:170;e.kx=Math.cos(a)*k;e.ky=Math.sin(a)*k;}
+  }
   // ハンマー：ボスの頭（向いている方向の前側）に当たるとスタン値がたまる
   const wt=DATA.weaponTypes[s.weaponType];let head=false;
   if(wt&&wt.stun&&e.stunMax>0&&!e.dead&&e.state!=='stunned'&&e.state!=='sleep'){
@@ -1838,7 +2133,7 @@ function updateEnemy(w,e,dt){
     return;
   }
   const p=nearestPlayer(w,e);if(!p)return;
-  if(e.boss){(DATA.enemies[e.type].ai==='dragon'?updateDragon:updateWolf)(w,e,p,dt);return;}
+  if(e.boss){ENEMY_AI[DATA.enemies[e.type].ai](w,e,p,dt);return;}
   const d=Math.hypot(p.x-e.x,p.y-e.y);
   if(!e.aggro){
     if(d<CONFIG.enemySight&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){e.aggro=true;alertNearby(w,e);}
@@ -1965,6 +2260,152 @@ function updateWolf(w,e,p,dt){
         if(blocked)emit(w,{type:'bump',x:e.x,y:e.y});
         if(ph2&&e.chargeChain>0){e.chargeChain--;startCharge(w,e,ang,0.45,true);}
         else{e.state='recover';e.timer=blocked?1.0:0.6;e.cds.charge=(ph2?3.6:5.5)*rc;}
+      }
+      break;
+    }
+    case 'recover':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
+  }
+}
+/** 技の並べ方で動くボス（沼地のボス）。使える技から順番に選ぶ。体力が半分で怒る */
+function patternReady(w,e,mv,d,los){
+  switch(mv.k){
+    case 'sweep':return d<mv.r*0.9+e.r;
+    case 'slam':return d<mv.r*0.8;
+    case 'charge':return d>140&&d<480&&los;
+    case 'shot':return los&&d>90&&d<650;
+    case 'pool':return d<520;
+    case 'swarm':return w.enemies.filter(x=>!x.dead&&x.type===mv.kind).length<(mv.max||4);
+  }
+  return false;
+}
+function updateBossPattern(w,e,p,dt){
+  const def=DATA.enemies[e.type],ph2=e.phase===2,rc=ph2?0.7:1,pat=def.pattern||[];
+  for(const k in e.cds)e.cds[k]-=dt;
+  if(e.state==='sleep')return;
+  if(e.state==='stunned'){e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
+  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
+    e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;
+    w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
+    emit(w,{type:'enrage',x:e.x,y:e.y,name:def.name});
+    return;
+  }
+  const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),los=lineOfSight(w.map,e.x,e.y,p.x,p.y);
+  switch(e.state){
+    case 'roar':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
+    case 'chase':{
+      e.facing=ang;
+      let pick=-1;
+      for(let i=0;i<pat.length;i++){
+        const idx=((e.patIdx|0)+i)%pat.length,cd=e.cds['p'+idx];
+        if(cd!==undefined&&cd>0)continue;
+        if(!patternReady(w,e,pat[idx],d,los))continue;
+        pick=idx;break;
+      }
+      if(pick>=0){
+        const mv=pat[pick],wind=mv.wind*(ph2?0.8:1);
+        e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc;e.curMv=mv;e.atkAngle=ang;
+        if(mv.k==='charge')startCharge(w,e,ang,wind,false);
+        else{
+          e.state='windup';e.action=mv.k;e.timer=wind;
+          if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
+          else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
+          else if(mv.k==='pool'){ // 狙った場所に毒の沼：予告のあと、その場に残る
+            addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
+            w.hazards.push({id:w.nextId++,kind:'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind});
+          }
+        }
+      }else{
+        if(d>170)steerTo(w,e,p,e.speed,dt);
+        else if(d<120)moveEntity(w.map,e,-Math.cos(ang)*e.speed*dt*0.6,-Math.sin(ang)*e.speed*dt*0.6);
+      }
+      break;
+    }
+    case 'windup':{
+      e.timer-=dt;if(e.timer>0)break;
+      const mv=e.curMv||{};
+      if(e.action==='sweep'||e.action==='pool'){e.state='recover';e.timer=0.5;break;}
+      if(e.action==='slam'){e.state='recover';e.timer=0.7;emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});break;}
+      if(e.action==='shot'){
+        const n=mv.n||1,sp=mv.speed||300;
+        for(let i=0;i<n;i++){
+          const a=e.atkAngle+(n===1?0:(i-(n-1)/2)*(mv.spread||0.4)/(n-1));
+          w.projectiles.push({id:w.nextId++,kind:mv.kind||'soul',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),
+            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a});
+        }
+        emit(w,{type:'shoot',x:e.x,y:e.y});
+        e.state='recover';e.timer=0.6;break;
+      }
+      if(e.action==='swarm'){
+        for(let i=0;i<(mv.n||2);i++){const a=rand(0,TAU);spawnEnemy(w,mv.kind,e.x+Math.cos(a)*(e.r+40),e.y+Math.sin(a)*(e.r+40),{});}
+        emit(w,{type:'roarWave',x:e.x,y:e.y,r:90});
+        e.state='recover';e.timer=0.8;break;
+      }
+      if(e.action==='charge'){e.state='charge';e.chargeLeft=440;e.hitSet=new Set();break;}
+      e.state='recover';e.timer=0.5;break;
+    }
+    case 'charge':{
+      const sp=(ph2?760:660)*dt,dmg=e.atk*((e.curMv&&e.curMv.dmg)||1.3);
+      const blocked=moveEntity(w.map,e,Math.cos(e.atkAngle)*sp,Math.sin(e.atkAngle)*sp);
+      e.chargeLeft-=sp;
+      for(const id in w.players){const q=w.players[id];if(q.dead||e.hitSet.has(q.id))continue;
+        if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,dmg,e.x,e.y);}}
+      if(blocked||e.chargeLeft<=0){
+        if(blocked)emit(w,{type:'bump',x:e.x,y:e.y});
+        e.state='recover';e.timer=blocked?1.1:0.6;
+      }
+      break;
+    }
+    case 'recover':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
+  }
+}
+/** 草原の暴角獣：角なぎ・突進・踏みつけ。体力が半分を切ると怒り、突進の間隔が短くなる */
+function updateBull(w,e,p,dt){
+  const ph2=e.phase===2,def=DATA.enemies[e.type],rc=ph2?0.7:1;
+  if(e.cds.stomp===undefined)e.cds.stomp=2; // 踏みつけは初回の出し方を遅らせる
+  for(const k in e.cds)e.cds[k]-=dt;
+  if(e.state==='sleep')return;
+  if(e.state==='stunned'){e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
+  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
+    e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;
+    w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
+    emit(w,{type:'enrage',x:e.x,y:e.y,name:def.name});
+    return;
+  }
+  const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx);
+  switch(e.state){
+    case 'roar':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
+    case 'chase':{
+      e.facing=ang;
+      const reach=e.r+p.r+40;
+      if(d<reach+26&&e.cds.sweep<=0){ // 角なぎ：前方の扇形
+        e.state='windup';e.action='sweep';e.timer=ph2?0.5:0.7;e.atkAngle=ang;
+        addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+96,arc:Math.PI*0.9,total:e.timer,dmg:e.atk*1.1,owner:e.id});
+      }else if(d>140&&d<480&&e.cds.charge<=0&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){ // 突進
+        startCharge(w,e,ang,ph2?0.55:0.8,false);
+      }else if(d<220&&e.cds.stomp<=0){ // 踏みつけ：足元の円
+        e.state='windup';e.action='stomp';e.timer=ph2?0.7:0.95;
+        addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:120,total:e.timer,dmg:e.atk*1.2,owner:e.id});
+      }else if(d>170)steerTo(w,e,p,e.speed,dt); // 近づきすぎず、突進の間合いを保つ
+      else if(d<130)moveEntity(w.map,e,-Math.cos(ang)*e.speed*dt*0.6,-Math.sin(ang)*e.speed*dt*0.6);
+      break;
+    }
+    case 'windup':
+      e.timer-=dt;
+      if(e.timer<=0){
+        if(e.action==='charge'){e.state='charge';e.chargeLeft=440;e.hitSet=new Set();}
+        else if(e.action==='stomp'){e.state='recover';e.timer=0.6;e.cds.stomp=(ph2?3.5:5)*rc;emit(w,{type:'roarWave',x:e.x,y:e.y,r:120});}
+        else{e.state='recover';e.timer=0.55;e.cds.sweep=(ph2?2.4:3.4)*rc;moveEntity(w.map,e,Math.cos(e.atkAngle)*12,Math.sin(e.atkAngle)*12);}
+      }
+      break;
+    case 'charge':{
+      const sp=(ph2?760:660)*dt;
+      const blocked=moveEntity(w.map,e,Math.cos(e.atkAngle)*sp,Math.sin(e.atkAngle)*sp);
+      e.chargeLeft-=sp;
+      for(const id in w.players){const q=w.players[id];if(q.dead||e.hitSet.has(q.id))continue;
+        if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,e.atk*1.4,e.x,e.y);}}
+      if(blocked||e.chargeLeft<=0){
+        if(blocked)emit(w,{type:'bump',x:e.x,y:e.y});
+        e.state='recover';e.timer=blocked?1.1:0.6;e.cds.charge=(ph2?3.4:5.2)*rc;
       }
       break;
     }
@@ -2240,7 +2681,7 @@ function updateDragon(w,e,p,dt){
 }
 /** 行動パターン（DATA.enemies の ai）と処理の対応 */
 const ENEMY_AI={goblin:updateGoblin,archer:updateArcher,dasher:updateDasher,slime:updateSlime,beetle:updateBeetle,
-  spore:updateSpore,ghost:updateGhost,knight:updateKnight,shaman:updateShaman};
+  spore:updateSpore,ghost:updateGhost,knight:updateKnight,shaman:updateShaman,bull:updateBull,wolf:updateWolf,dragon:updateDragon,pattern:updateBossPattern};
 function separateBodies(w){
   const es=w.enemies;
   for(let i=0;i<es.length;i++){
@@ -2351,6 +2792,7 @@ function updateGathers(w){
 function updateHazards(w,dt){
   if(!w.hazards||!w.hazards.length)return;
   for(const hz of w.hazards){
+    if(hz.delay>0){hz.delay-=dt;continue;}
     hz.t+=dt;hz.acc+=dt;
     const inside=Object.values(w.players).filter(p=>!p.dead&&Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r+p.r*0.5);
     for(const p of inside)p.poisoned=0.3;
@@ -2768,7 +3210,7 @@ const Renderer={
     const fog=!!app.settings().vision;
     if(fog)this.updateVision(w);else this.vis=null;
     const seen=(x,y,r)=>!fog||this.isVisible(w,x,y,r);
-    for(const z of (w.hazards||[]))if(seen(z.x,z.y,z.r))this.drawHazard(ctx,z);
+    for(const z of (w.hazards||[]))if(!(z.delay>0)&&seen(z.x,z.y,z.r))this.drawHazard(ctx,z);
     for(const t of w.telegraphs)this.drawTelegraph(ctx,t);
     for(const o of (w.placed||[]))if(seen(o.x,o.y,20))this.drawPlaced(ctx,o);
     for(const gt of (w.gathers||[]))if(!fog||this.isExplored(w,gt.x,gt.y))this.drawGather(ctx,gt);
@@ -2937,6 +3379,7 @@ const Renderer={
       case 'goblin':this.drawGoblin(ctx,e,hurt,ed.pal);break;
       case 'archer':case 'garcher':this.drawArcher(ctx,e,hurt,ed.pal,ed.aimTime||0.8);break;
       case 'wolf':this.drawWolf(ctx,e,hurt,ed.pal);break;
+      case 'bull':this.drawBull(ctx,e,hurt,ed.pal);break;
       case 'skeleton':this.drawSkeleton(ctx,e,hurt,ed.pal);break;
       case 'zombie':this.drawZombie(ctx,e,hurt,ed.pal);break;
       case 'slime':this.drawSlime(ctx,e,hurt,ed.pal);break;
@@ -2946,6 +3389,24 @@ const Renderer={
       case 'knight':this.drawKnight(ctx,e,hurt,ed.pal);break;
       case 'shaman':this.drawShaman(ctx,e,hurt,ed.pal);break;
       case 'dragon':this.drawDragon(ctx,e,hurt,ed.pal);break;
+      case 'frog':this.drawFrog(ctx,e,hurt,ed.pal);break;
+      case 'leech':this.drawLeech(ctx,e,hurt,ed.pal);break;
+      case 'plant':this.drawPlant(ctx,e,hurt,ed.pal);break;
+      case 'bloat':this.drawBloat(ctx,e,hurt,ed.pal);break;
+      case 'croc':this.drawCroc(ctx,e,hurt,ed.pal);break;
+      case 'parasite':this.drawParasite(ctx,e,hurt,ed.pal);break;
+      case 'hydra':this.drawHydra(ctx,e,hurt,ed.pal);break;
+      case 'venomKing':this.drawVenomKing(ctx,e,hurt,ed.pal);break;
+      case 'mireGiant':this.drawMireGiant(ctx,e,hurt,ed.pal);break;
+      case 'lizard':this.drawLizard(ctx,e,hurt,ed.pal);break;
+      case 'jelly':this.drawJelly(ctx,e,hurt,ed.pal);break;
+      case 'piranha':this.drawPiranha(ctx,e,hurt,ed.pal);break;
+      case 'crab':this.drawCrab(ctx,e,hurt,ed.pal);break;
+      case 'eel':this.drawEel(ctx,e,hurt,ed.pal);break;
+      case 'spirit':this.drawSpirit(ctx,e,hurt,ed.pal);break;
+      case 'aquarios':this.drawAquarios(ctx,e,hurt,ed.pal);break;
+      case 'turtle':this.drawTurtle(ctx,e,hurt,ed.pal);break;
+      case 'thunderEel':this.drawThunderEel(ctx,e,hurt,ed.pal);break;
     }
     ctx.restore();
     // 敵の体力は表示しない（モンハン式）
@@ -2987,6 +3448,204 @@ const Renderer={
     const pull=e.state==='aim'?clamp(1-e.timer/aimTime,0,1)*8:0;
     ctx.strokeStyle='#e8e0c8';ctx.lineWidth=1;ctx.beginPath();
     ctx.moveTo(r*0.6+Math.cos(-1.1)*r,Math.sin(-1.1)*r);ctx.lineTo(r*0.9-pull,0);ctx.lineTo(r*0.6+Math.cos(1.1)*r,Math.sin(1.1)*r);ctx.stroke();
+  },
+  drawFrog(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,j=e.state==='windup'?-r*0.25:Math.sin(e.anim*6)*r*0.05;
+    ctx.fillStyle=d;ctx.beginPath();ctx.ellipse(-r*0.75,r*0.55,r*0.5,r*0.22,-0.4,0,TAU);ctx.ellipse(r*0.75,r*0.55,r*0.5,r*0.22,0.4,0,TAU);ctx.fill();
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,j,r*1.05,r*0.72,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.spot;for(const [x,y] of [[-r*0.4,-r*0.1],[r*0.35,0],[0,r*0.4]]){ctx.beginPath();ctx.arc(x,y+j,r*0.13,0,TAU);ctx.fill();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.arc(-r*0.45,-r*0.6+j,r*0.34,0,TAU);ctx.arc(r*0.45,-r*0.6+j,r*0.34,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(-r*0.45,-r*0.66+j,r*0.14,0,TAU);ctx.arc(r*0.45,-r*0.66+j,r*0.14,0,TAU);ctx.fill();
+  },
+  drawLeech(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.strokeStyle=d;ctx.lineWidth=2;ctx.fillStyle=b;
+    for(let i=4;i>=0;i--){const x=-r*0.9+i*r*0.45,y=Math.sin(e.anim*8+i)*r*0.2;ctx.beginPath();ctx.arc(x,y,r*(0.55-i*0.04),0,TAU);ctx.fill();ctx.stroke();}
+    ctx.fillStyle=pal.ring;ctx.beginPath();ctx.arc(r*0.9,0,r*0.5,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(r*0.9,0,r*0.2,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawPlant(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.leaf,d=pal.dark;
+    ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,r*0.4);ctx.quadraticCurveTo(r*0.3,r*1.2,0,r*1.8);ctx.stroke();
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;
+    for(let i=0;i<6;i++){const a=-Math.PI/2+i*TAU/6+Math.sin(e.anim*4)*0.15;ctx.beginPath();ctx.moveTo(0,-r*0.2);ctx.lineTo(Math.cos(a-0.35)*r*1.1,-r*0.2+Math.sin(a-0.35)*r*1.1);ctx.lineTo(Math.cos(a)*r*1.5,-r*0.2+Math.sin(a)*r*1.5);ctx.lineTo(Math.cos(a+0.35)*r*1.1,-r*0.2+Math.sin(a+0.35)*r*1.1);ctx.closePath();ctx.fill();ctx.stroke();}
+    ctx.fillStyle=pal.mouth;ctx.beginPath();ctx.arc(0,-r*0.2,r*0.55,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.tooth;for(let i=0;i<5;i++){const a=i*TAU/5;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.5,-r*0.2+Math.sin(a)*r*0.5,r*0.1,0,TAU);ctx.fill();}
+  },
+  drawBloat(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,s=1+Math.sin(e.anim*5)*0.04;
+    ctx.fillStyle=d;for(const x of [-r*0.5,r*0.5]){ctx.beginPath();ctx.ellipse(x,r*0.9,r*0.22,r*0.14,0,0,TAU);ctx.fill();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,0,r*1.05*s,r*0.95/s,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.spot;for(const [x,y] of [[-r*0.4,-r*0.3],[r*0.3,-r*0.5],[r*0.2,r*0.3],[-r*0.2,r*0.4]]){ctx.beginPath();ctx.arc(x,y,r*0.13,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(-r*0.3,-r*0.1,r*0.12,0,TAU);ctx.arc(r*0.3,-r*0.1,r*0.12,0,TAU);ctx.fill();
+  },
+  drawCroc(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(-r*0.3,0,r*1.2,r*0.62,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-r*1.2,0);ctx.lineTo(-r*2.1,-r*0.15);ctx.lineTo(-r*1.9,r*0.3);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(r*0.6,-r*0.4);ctx.lineTo(r*1.7,-r*0.2);ctx.lineTo(r*1.7,r*0.2);ctx.lineTo(r*0.6,r*0.4);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.teeth;for(const x of [r*0.9,r*1.3]){ctx.beginPath();ctx.moveTo(x,r*0.22);ctx.lineTo(x+r*0.1,r*0.42);ctx.lineTo(x+r*0.2,r*0.22);ctx.fill();}
+    ctx.fillStyle=pal.plate;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(-r*0.9+i*r*0.5,-r*0.5,r*0.14,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(r*0.5,-r*0.4,r*0.13,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawParasite(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.strokeStyle=pal.spore;ctx.lineWidth=2;
+    for(let i=0;i<5;i++){const a=i*TAU/5+e.anim*0.5;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.6,Math.sin(a)*r*0.6);ctx.quadraticCurveTo(Math.cos(a+0.4)*r*1.5,Math.sin(a+0.4)*r*1.5+Math.sin(e.anim*6+i)*3,Math.cos(a)*r*1.8,Math.sin(a)*r*1.8);ctx.stroke();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,r*0.9,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.spore;ctx.beginPath();ctx.arc(0,0,r*0.35,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(-r*0.3,-r*0.2,2,0,TAU);ctx.arc(r*0.3,-r*0.2,2,0,TAU);ctx.fill();
+  },
+  drawHydra(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=d;ctx.beginPath();ctx.ellipse(-r*1.1,0,r*0.4,r*0.22,0,0,TAU);ctx.fill();
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(-r*0.2,0,r*0.95,r*0.75,0,0,TAU);ctx.fill();ctx.stroke();
+    for(let i=0;i<3;i++){
+      const sway=Math.sin(e.anim*3+i*2)*r*0.2,y=(i-1)*r*0.65,hx=r*(1.25+(i===1?0.2:0)),hy=y*1.2+sway;
+      ctx.strokeStyle=b;ctx.lineWidth=r*0.3;ctx.beginPath();ctx.moveTo(r*0.4,y*0.5);ctx.quadraticCurveTo(r*0.9,y*0.5+sway*2,hx,hy);ctx.stroke();
+      ctx.strokeStyle=d;ctx.lineWidth=2;ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(hx,hy,r*0.4,r*0.3,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(hx+r*0.1,hy-r*0.08,r*0.09,0,TAU);ctx.fill();
+    }
+    ctx.restore();
+  },
+  drawVenomKing(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(let i=0;i<3;i++)for(const s of [-1,1]){const lx=-r*0.2+i*r*0.45,ph=Math.sin(e.anim*6+i*1.7+s)*r*0.12;ctx.beginPath();ctx.moveTo(lx,s*r*0.4);ctx.lineTo(lx+ph,s*r*0.8);ctx.stroke();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.shell||d;ctx.beginPath();ctx.ellipse(-r*0.25,0,r*0.6,r*0.45,0,0,TAU);ctx.fill();
+    ctx.fillStyle=d;for(const x of [-r*0.6,-r*0.1,r*0.4]){ctx.beginPath();ctx.moveTo(x-r*0.1,-r*0.6);ctx.lineTo(x,-r*1.05);ctx.lineTo(x+r*0.1,-r*0.6);ctx.fill();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(r*0.6,-r*0.35);ctx.lineTo(r*1.45,-r*0.5);ctx.lineTo(r*1.45,r*0.5);ctx.lineTo(r*0.6,r*0.35);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*1.0,-r*0.2,r*0.1,0,TAU);ctx.arc(r*1.0,r*0.2,r*0.1,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawMireGiant(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,s=Math.sin(e.anim*2)*r*0.04;
+    ctx.save();ctx.rotate(e.facing);ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const sg of [-1,1]){ctx.beginPath();ctx.ellipse(r*0.5,sg*r*0.9,r*0.6,r*0.26,-0.2*sg,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.beginPath();ctx.ellipse(-r*0.1,s,r*1.0,r*0.9,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.mud;for(const [x,y] of [[-r*0.5,-r*0.5],[r*0.2,r*0.5],[-r*0.1,-r*0.2]]){ctx.beginPath();ctx.arc(x,y,r*0.14,0,TAU);ctx.fill();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(r*0.7,0,r*0.42,r*0.4,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.85,-r*0.15,r*0.08,0,TAU);ctx.arc(r*0.85,r*0.15,r*0.08,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawLizard(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.strokeStyle=d;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.quadraticCurveTo(-r*1.6,Math.sin(e.anim*5)*r*0.3,-r*2.0,r*0.1);ctx.stroke();
+    ctx.fillStyle=b;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*1.1,r*0.55,0,0,TAU);ctx.fill();ctx.stroke();
+    for(const [x,y] of [[-r*0.5,r*0.5],[r*0.5,r*0.5],[-r*0.5,-r*0.5],[r*0.5,-r*0.5]]){ctx.beginPath();ctx.moveTo(x,y*0.6);ctx.lineTo(x+r*0.1,y*1.3);ctx.stroke();}
+    ctx.beginPath();ctx.ellipse(r*1.2,0,r*0.45,r*0.38,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(r*1.3,-r*0.15,r*0.1,0,TAU);ctx.fill();
+    ctx.strokeStyle=pal.stripe;ctx.lineWidth=2;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-r*0.4+i*r*0.4,-r*0.5);ctx.lineTo(-r*0.4+i*r*0.4,r*0.5);ctx.stroke();}
+    ctx.restore();
+  },
+  drawJelly(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,t=e.anim;
+    ctx.save();ctx.globalAlpha=0.85;ctx.strokeStyle=d;ctx.lineWidth=1.5;
+    for(let i=0;i<5;i++){const x=-r*0.8+i*r*0.4;ctx.beginPath();ctx.moveTo(x,r*0.2);ctx.quadraticCurveTo(x+Math.sin(t*3+i)*5,r*1.0,x+Math.sin(t*2+i)*4,r*1.8);ctx.stroke();}
+    ctx.fillStyle=b;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,r,Math.PI,0);ctx.lineTo(r,r*0.3);ctx.quadraticCurveTo(0,r*0.6,-r,r*0.3);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(-r*0.35,-r*0.2,r*0.14,0,TAU);ctx.arc(r*0.35,-r*0.2,r*0.14,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawPiranha(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=d;ctx.beginPath();ctx.moveTo(-r*0.8,0);ctx.lineTo(-r*1.7,-r*0.6);ctx.lineTo(-r*1.7,r*0.6);ctx.closePath();ctx.fill();
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*1.1,r*0.6,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.belly;ctx.beginPath();ctx.ellipse(0,r*0.25,r*0.8,r*0.25,0,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.teeth;for(const y of [-r*0.2,r*0.2]){ctx.beginPath();ctx.moveTo(r*0.9,y);ctx.lineTo(r*1.25,y*1.5);ctx.lineTo(r*1.1,y*0.5);ctx.fill();}
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(r*0.5,-r*0.2,r*0.14,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawCrab(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.strokeStyle=d;ctx.lineWidth=2;
+    for(const s of [-1,1])for(let i=0;i<3;i++){const y=s*(r*0.3+i*r*0.22);ctx.beginPath();ctx.moveTo(-r*0.3,y);ctx.lineTo(-r*0.9+i*r*0.1,y*1.6+Math.sin(e.anim*6+i)*2);ctx.stroke();}
+    for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.5,s*r*0.4);ctx.lineTo(r*1.1,s*r*0.9);ctx.stroke();
+      ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(r*1.3,s*r*0.95,r*0.42,r*0.28,s*0.3,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.shell||d;ctx.beginPath();ctx.ellipse(-r*0.2,0,r*0.5,r*0.38,0,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.5,s*r*0.4,r*0.13,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawEel(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);
+    for(let i=5;i>=0;i--){const x=-r*0.4-i*r*0.55,y=Math.sin(e.anim*7+i*0.8)*r*0.25,rad=r*(0.7-i*0.07);
+      ctx.fillStyle=d;ctx.beginPath();ctx.moveTo(x,y-rad*0.6);ctx.lineTo(x-r*0.2,y-rad*1.5);ctx.lineTo(x+r*0.2,y-rad*0.6);ctx.fill();
+      ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,rad,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.ellipse(r*0.7,0,r*0.55,r*0.42,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(r*0.85,-r*0.15,r*0.1,0,TAU);ctx.fill();
+    if(Math.sin(e.anim*13+e.id)>0.4){ctx.strokeStyle=pal.spark;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r*1.1,-r*0.3);ctx.lineTo(r*1.4,-r*0.6);ctx.lineTo(r*1.25,-r*0.1);ctx.lineTo(r*1.6,-r*0.5);ctx.stroke();}
+    ctx.restore();
+  },
+  drawSpirit(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,t=e.anim;
+    ctx.save();ctx.globalAlpha=0.85;ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,0,r,Math.PI,0);
+    for(let i=0;i<4;i++){const x=r-i*r*0.5;ctx.quadraticCurveTo(x-r*0.25,r*1.2+Math.sin(t*4+i)*3,x-r*0.5,r*0.6);}
+    ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(-r*0.35,-r*0.1,r*0.14,0,TAU);ctx.arc(r*0.35,-r*0.1,r*0.14,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawAquarios(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.lineWidth=3;
+    ctx.fillStyle=pal.fin;ctx.strokeStyle=d;ctx.beginPath();ctx.moveTo(-r*0.5,-r*0.5);ctx.lineTo(-r*1.6,-r*1.1);ctx.lineTo(-r*1.2,-r*0.2);ctx.closePath();ctx.fill();ctx.stroke();
+    for(let i=4;i>=0;i--){const x=-r*0.4-i*r*0.35,y=Math.sin(e.anim*2+i*0.7)*r*0.15,rad=r*(0.8-i*0.06);
+      ctx.fillStyle=b;ctx.beginPath();ctx.arc(x,y,rad,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(r*0.8,0,r*0.7,r*0.55,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.fin;ctx.beginPath();ctx.moveTo(r*0.5,r*0.4);ctx.lineTo(r*0.9,r*1.0);ctx.lineTo(r*1.2,r*0.4);ctx.closePath();ctx.fill();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*1.0,-r*0.2,r*0.1,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawTurtle(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const [x,y] of [[-r*0.6,r*0.8],[-r*0.6,-r*0.8],[r*0.5,r*0.8],[r*0.5,-r*0.8]]){ctx.beginPath();ctx.ellipse(x,y,r*0.32,r*0.22,0,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.beginPath();ctx.ellipse(r*1.1,0,r*0.42,r*0.3,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*1.2,-r*0.1,r*0.08,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.shell||d;ctx.strokeStyle=d;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.8,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=d;for(const [x,y] of [[-r*0.4,0],[r*0.2,-r*0.35],[r*0.2,r*0.35],[-r*0.1,0]]){ctx.beginPath();ctx.arc(x,y,r*0.12,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawThunderEel(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.lineWidth=2;
+    for(let i=7;i>=0;i--){const x=-r*1.6+i*r*0.25,y=Math.sin(e.anim*5+i*0.6)*r*0.3,rad=r*(0.55+0.05*(7-i)*0.5);
+      ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.arc(x,y,rad*0.8,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.ellipse(r*0.85,0,r*0.6,r*0.45,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*1.0,-r*0.15,r*0.1,0,TAU);ctx.fill();
+    ctx.strokeStyle=pal.spark;ctx.lineWidth=2;
+    for(let k=0;k<3;k++){const x=-r*(0.5+k*0.6);ctx.beginPath();ctx.moveTo(x,-r*0.9);ctx.lineTo(x+r*0.15,-r*0.5);ctx.lineTo(x-r*0.05,-r*0.45);ctx.lineTo(x+r*0.1,-r*0.05);ctx.stroke();}
+    ctx.restore();
+  },
+  drawBull(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2;
+    if(e.state==='windup'){ctx.translate(rand(-1.5,1.5),rand(-1.5,1.5));}
+    if(e.state==='charge'){
+      ctx.save();ctx.rotate(e.facing);ctx.globalAlpha=0.22;ctx.fillStyle=ph2?'#ff6050':'#d8b880';
+      for(let i=1;i<=3;i++){ctx.beginPath();ctx.ellipse(-i*20,0,r*1.1,r*0.8,0,0,TAU);ctx.fill();}
+      ctx.restore();
+    }
+    ctx.rotate(e.facing);
+    const body=hurt?'#ffffff':(ph2?pal.rage:pal.body),dark=ph2?pal.rageDark:pal.dark;
+    ctx.fillStyle=dark;ctx.beginPath();ctx.ellipse(-r*1.25,0,r*0.35,r*0.12,0,0,TAU);ctx.fill(); // 尾
+    ctx.fillStyle=dark;for(const [fx,fy] of [[-r*0.6,-r*0.6],[-r*0.6,r*0.6],[r*0.35,-r*0.6],[r*0.35,r*0.6]]){ctx.beginPath();ctx.ellipse(fx,fy,r*0.22,r*0.16,0,0,TAU);ctx.fill();} // 足
+    ctx.fillStyle=body;ctx.strokeStyle=dark;ctx.lineWidth=3;
+    ctx.beginPath();ctx.ellipse(-r*0.1,0,r*1.05,r*0.9,0,0,TAU);ctx.fill();ctx.stroke(); // 胴
+    ctx.strokeStyle=dark;ctx.lineWidth=2;for(let i=-3;i<=1;i++){ctx.beginPath();ctx.moveTo(-r*0.5+i*r*0.3,-r*0.7);ctx.lineTo(-r*0.4+i*r*0.3,-r*0.4);ctx.stroke();} // 背の毛
+    ctx.fillStyle=body;ctx.strokeStyle=dark;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.ellipse(r*0.85,0,r*0.5,r*0.5,0,0,TAU);ctx.fill();ctx.stroke(); // 頭
+    ctx.fillStyle=pal.horn||'#f0e6c8';ctx.strokeStyle=dark;ctx.lineWidth=2; // 角
+    for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.9,sg*r*0.3);ctx.quadraticCurveTo(r*1.45,sg*r*0.9,r*1.7,sg*r*0.35);ctx.quadraticCurveTo(r*1.35,sg*r*0.7,r*1.05,sg*r*0.15);ctx.closePath();ctx.fill();ctx.stroke();}
+    ctx.fillStyle=dark;ctx.beginPath();ctx.ellipse(r*1.3,0,r*0.2,r*0.16,0,0,TAU);ctx.fill(); // 鼻
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.95,-r*0.2,3,0,TAU);ctx.arc(r*0.95,r*0.2,3,0,TAU);ctx.fill(); // 目
   },
   drawWolf(ctx,e,hurt,pal){
     const r=e.r,ph2=e.phase===2;
@@ -3527,7 +4186,7 @@ const Portraits={
     try{
       const d=DATA.enemies[id],c=document.createElement('canvas');c.width=c.height=size;
       const ctx=c.getContext('2d'),look=d.look||d.ai;
-      const span=look==='dragon'?d.r*5.6:(look==='wolf'?d.r*4.2:look==='knight'?d.r*5:d.r*3.2);
+      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel')?d.r*4.2:look==='knight'?d.r*5:d.r*3.2);
       const sc=size/span;
       ctx.translate(size/2-(look==='dragon'?d.r*0.45*sc:look==='knight'?d.r*0.8*sc:look==='wolf'?d.r*0.15*sc:0),size/2+(look==='ghost'?4*sc:0));ctx.scale(sc,sc);
       const e={id:1,type:id,x:0,y:0,r:d.r,facing:look==='dragon'||look==='wolf'||look==='knight'?0:0.6,state:'chase',anim:1,hurt:0,phase:1,timer:0,z:0,boss:!!d.boss,aimTime:d.aimTime||0.8,atkAngle:0};
@@ -3978,7 +4637,7 @@ const Input={
     });
     window.addEventListener('keyup',e=>{this.keys[e.code]=false;});
     window.addEventListener('mousemove',e=>{this.mouse.x=e.clientX;this.mouse.y=e.clientY;this.onMouse();});
-    cv.addEventListener('mousedown',e=>{if(e.button===0){this.mouse.down=true;this.mouse.x=e.clientX;this.mouse.y=e.clientY;this.onMouse();}});
+    cv.addEventListener('mousedown',e=>{if(e.button===0&&!this.isTouch){this.mouse.down=true;this.mouse.x=e.clientX;this.mouse.y=e.clientY;this.onMouse();}});
     window.addEventListener('mouseup',e=>{if(e.button===0)this.mouse.down=false;});
     cv.addEventListener('contextmenu',e=>e.preventDefault());
     // マウスホイールで持ち物を切り替え
@@ -3987,9 +4646,54 @@ const Input={
     window.addEventListener('gamepadconnected',e=>this.onConnect(e.gamepad));
     window.addEventListener('gamepaddisconnected',e=>this.onDisconnect(e.gamepad));
   },
-  reset(){this.keys=Object.create(null);this.mouse.down=false;this.consumeEdges();},
+  reset(){this.keys=Object.create(null);this.mouse.down=false;this.touch.mx=0;this.touch.my=0;this.touch.attack=false;this.consumeEdges();},
+  /* ---------- スマホ・タブレット（画面の左にスティック、右にボタン） ---------- */
+  touch:{mx:0,my:0,attack:false},
+  isTouch:false,touchRoot:null,
+  /** 画面の操作は、このPCで操作する人（オンラインの参加者なら自分）に送る */
+  touchPid(){return (typeof Net!=='undefined'&&Net.role==='guest')?Net.myPid:'p1';},
+  touchEdge(k){
+    const pid=this.touchPid(),E=this.edges[pid]||(this.edges[pid]=newEdges());
+    if(k==='dodge')E.dodge=true;else if(k==='skill')E.skill=true;else if(k==='heal')E.heal=true;
+    else if(k==='cycle')E.cycle=1;else if(k==='sheathe')E.sheathe=true;
+  },
+  initTouch(){
+    this.isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+    this.touchRoot=document.getElementById('touch');
+    if(!this.isTouch||!this.touchRoot)return;
+    document.body.classList.add('touch');
+    const root=this.touchRoot,stick=root.querySelector('.stick'),knob=root.querySelector('.knob');
+    let sid=null;
+    const moveStick=e=>{
+      const r=stick.getBoundingClientRect(),R=r.width/2-14;
+      let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+      const m=Math.hypot(dx,dy);if(m>R){dx*=R/m;dy*=R/m;}
+      knob.style.transform=`translate(${dx}px,${dy}px)`;
+      const n=Math.hypot(dx,dy)/R;
+      this.touch.mx=n<0.15?0:dx/R;this.touch.my=n<0.15?0:dy/R;
+    };
+    stick.addEventListener('pointerdown',e=>{e.preventDefault();sid=e.pointerId;stick.setPointerCapture(sid);this.aimMode[this.touchPid()]='pad';moveStick(e);});
+    stick.addEventListener('pointermove',e=>{if(e.pointerId===sid)moveStick(e);});
+    const stickEnd=e=>{if(e.pointerId!==sid)return;sid=null;knob.style.transform='';this.touch.mx=0;this.touch.my=0;};
+    stick.addEventListener('pointerup',stickEnd);stick.addEventListener('pointercancel',stickEnd);
+    root.querySelectorAll('.tb').forEach(b=>{
+      const k=b.dataset.tk;
+      b.addEventListener('pointerdown',e=>{
+        e.preventDefault();b.classList.add('on');
+        if(k==='menu'){App.onKey('Escape');return;}
+        this.aimMode[this.touchPid()]='pad';
+        if(k==='attack'){this.touch.attack=true;b.setPointerCapture(e.pointerId);}
+        else this.touchEdge(k);
+      });
+      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;};
+      b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
+    });
+  },
+  /** プレイ中だけ画面のボタンを表示する */
+  syncTouchUi(playing){if(this.touchRoot)this.touchRoot.classList.toggle('on',!!playing);},
   consumeEdges(){this.edges.p1=newEdges();this.edges.p2=newEdges();},
   onMouse(){
+    if(this.isTouch)return; // 画面をタッチしたときのマウス扱いは無視する
     this.setUiPad(false);
     this.aimMode.p1='mouse'; // マウスは常に1P
   },
@@ -4142,6 +4846,7 @@ const Input={
       attack=attack||S.attack;
       if(S.aim!==null&&S.aimT>aimT){aim=S.aim;aimT=S.aimT;}
     }
+    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;}
     const E=this.edges[pid]||newEdges();
     const inp={mx,my,attack,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
     if(p){
@@ -4274,6 +4979,54 @@ function sellPrice(it){
   const base=DATA.equipment[it.baseId],power=base.atk||base.def*2||10;
   return Math.round((8+power*2)*(1+it.rarity*0.6)+it.slots.length*10);
 }
+const REINFORCE_MAX=5,REINFORCE_GOLD=40; // 防具の強化：最大段階と、1段階ごとのお金（×段階数）
+/** データの参照ミスを見つける（魔物・素材・地図・依頼・レシピ・ショップの名前が実在するか） */
+function validateData(){
+  const E=DATA.enemies,M=DATA.materials,T=DATA.dropTables,L=DATA.layouts,S=DATA.stages,Q=DATA.quests,errs=[];
+  const bad=(c,msg)=>{if(!c)errs.push(msg);};
+  const eqOk=id=>!!DATA.equipment[id];
+  S.forEach((s,i)=>{
+    bad(s.id===i+1,`ステージ「${s.name}」：id は ${i+1} にしてください`);
+    for(const k of ['melee','ranged','boss'])bad(E[(s.enemySet||{})[k]],`ステージ「${s.name}」：enemySet.${k} の魔物がありません`);
+    bad(L[s.layout],`ステージ「${s.name}」：layout「${s.layout}」がありません`);
+    bad(T[s.chest],`ステージ「${s.name}」：chest の表「${s.chest}」がありません`);
+    bad(BGM_DATA[s.bgm],`ステージ「${s.name}」：bgm「${s.bgm}」がありません`);
+  });
+  for(const id in E){const e=E[id];
+    bad(ENEMY_AI[e.ai],`魔物「${id}」：ai「${e.ai}」がありません`);
+    bad(T[e.drops],`魔物「${id}」：drops「${e.drops}」の落とし物表がありません`);
+    bad(DATA.bestiary[id],`魔物「${id}」：図鑑（bestiary）がありません`);
+  }
+  for(const id in T)for(const r of (T[id].rolls||[]))
+    if(r.type==='mat')bad(M[r.id],`落とし物表「${id}」：素材「${r.id}」がありません`);
+  for(const id in L){const l=L[id];
+    const spawns=[...(l.wander||[]).map(x=>[x]),...(l.main||[]).flatMap(r=>r.spawn||[]),...(l.side||[]).flatMap(r=>r.spawn||[]),...((l.boss||{}).spawn||[])];
+    for(const sp of spawns)bad(E[sp[0]],`地図「${id}」：魔物「${sp[0]}」がありません`);
+  }
+  for(const q of Q){
+    bad(S.some(s=>s.id===q.stage),`依頼「${q.name}」：stage ${q.stage} がありません`);
+    if(q.goal&&q.goal.type==='kill')bad(q.goal.target==='any'||E[q.goal.target],`依頼「${q.name}」：討伐対象「${q.goal.target}」がありません`);
+    if(q.boss)bad(E[q.boss],`依頼「${q.name}」：ボス「${q.boss}」がありません`);
+    if(q.after)bad(Q.some(x=>x.id===q.after),`依頼「${q.name}」：前提の依頼「${q.after}」がありません`);
+    for(const m in ((q.reward||{}).mats||{}))bad(M[m],`依頼「${q.name}」：報酬の素材「${m}」がありません`);
+  }
+  for(const r of DATA.recipes){
+    if(r.out.type==='equip')bad(eqOk(r.out.id),`レシピ「${r.id}」：装備「${r.out.id}」がありません`);
+    for(const m in r.cost)bad(M[m],`レシピ「${r.id}」：素材「${m}」がありません`);
+    bad(!r.stage||S.some(s=>s.id===r.stage),`レシピ「${r.id}」：stage ${r.stage} がありません`);
+  }
+  for(const it of DATA.shop)if(it.type==='mat')bad(M[it.mat],`ショップ「${it.id}」：素材「${it.mat}」がありません`);
+  for(const k in DATA.armorSets)for(const sl in DATA.armorSets[k].pieces)bad(eqOk(DATA.armorSets[k].pieces[sl]),`防具一式「${k}」：装備「${DATA.armorSets[k].pieces[sl]}」がありません`);
+  return errs;
+}
+if(typeof window!=='undefined'&&window.addEventListener)window.addEventListener('load',()=>{const e=validateData();if(e.length)console.warn('データ確認:\n'+e.join('\n'));});
+/** 装備・装飾品の製作にかかるお金（素材の数で決まる。recipe に gold があればその値） */
+function craftGold(r){
+  if(r.gold!=null)return r.gold;
+  if(r.out.type==='item')return 0;
+  const mats=Object.values(r.cost).reduce((a,n)=>a+n,0);
+  return 40+mats*15+(r.out.type==='deco'?30:0)+(r.stage>=3?100:0);
+}
 const Ops={
   equip(p,who,a){
     const it=Profile.getItem(p,a.uid);if(!it)return {};
@@ -4326,8 +5079,9 @@ const Ops={
     const r=DATA.recipes.find(x=>x.id===a.id);if(!r)return {};
     if(r.stage&&QuestRules.stage(p)<r.stage)return {msg:'まだ製作できません',color:'#888'};
     if(!Profile.hasMats(p,r.cost))return {msg:'素材が足りません',color:'#ff8060'};
+    const gold=craftGold(r);if((p.gold||0)<gold)return {msg:'お金が足りません（'+gold+'G 必要）',color:'#ff8060'};
     if(r.out.type==='item'){const c=DATA.consumables[r.out.id];if((p.bag[r.out.id]||0)>=c.max)return {msg:c.name+'は上限まで持っています',color:'#888'};}
-    Profile.spendMats(p,r.cost);
+    Profile.spendMats(p,r.cost);p.gold-=gold;
     let label,sel=null;
     if(r.out.type==='equip'){
       const it=Items.createEquipment(r.out.id,Items.rollRarity(1.3,r.minRarity||0));
@@ -4341,6 +5095,19 @@ const Ops={
       label={text:c.name+' ×'+r.out.n,color:c.color};
     }
     return {changed:true,sel,msg:`製作完了：<span style="color:${label.color}">${label.text}</span>`,color:label.color};
+  },
+  /** 防具を強化：強化玉とお金を使って防御力を +1（最大 REINFORCE_MAX 段階） */
+  reinforce(p,who,a){
+    const it=p.items.find(x=>x.uid===a.uid);
+    if(!it||it.kind!=='equip'||it.slot==='weapon')return {msg:'強化できない防具です',color:'#888'};
+    const lv=it.reinforce||0;
+    if(lv>=REINFORCE_MAX)return {msg:'これ以上強化できません',color:'#888'};
+    const orbs=lv+1,gold=REINFORCE_GOLD*(lv+1);
+    if((p.materials.reinforce_orb||0)<orbs)return {msg:'強化玉が足りません（'+orbs+'個必要）',color:'#ff8060'};
+    if((p.gold||0)<gold)return {msg:'お金が足りません（'+gold+'G 必要）',color:'#ff8060'};
+    Profile.spendMats(p,{reinforce_orb:orbs});p.gold-=gold;
+    it.reinforce=lv+1;it.def+=1;
+    return {changed:true,msg:`${DATA.equipment[it.baseId].name} を強化！ 防御力 +1（${lv+1}/${REINFORCE_MAX}）`,color:'#ffd23a'};
   },
 };
 
@@ -4579,7 +5346,7 @@ const Net={
         elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
-      hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,t:r3(z.t),life:z.life})),
+      hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
       gathers:(w.gathers||[]).map(g=>({id:g.id,x:g.x,y:g.y,kind:g.kind,used:g.used})),
       drops:w.drops.map(d=>({id:d.id,x:r1(d.x),y:r1(d.y),loot:this.liteLoot(d.loot)})),
       chests:w.chests.map(c=>({id:c.id,x:c.x,y:c.y,opened:c.opened})),
@@ -4633,7 +5400,7 @@ const Net={
       case 'profile':App.applyHostProfile(d.profile);break;
       case 'sel':App.inv.sel=d.uid;App.refreshPanel();if(App.state==='smith')App.askEquip(d.uid);break;
       case 'notify':UI.notify(String(d.text||''),d.color||'#888',d.dur||2.5);break;
-      case 'start':App.guestStart(d);break;
+      case 'start':try{App.guestStart(d);}catch(e){console.error('出発の反映に失敗',e);UI.notify('出発の反映に失敗しました（'+e.message+'）。ホストと同じHTMLか確認してください','#ff6060',6);}break;
       case 's':if(App.world&&App.world.mirror)this.applySnap(App.world,d);break;
       case 'end':App.guestEnd(d);break;
       case 'closed':this.onHostLost('ホストが部屋を閉じました');break;
@@ -4719,7 +5486,7 @@ const App={
     UI.init();
     const r=Save.load();this.profile=r.profile;
     Net.init();
-    Renderer.init($('#game'));Input.init($('#game'));
+    Renderer.init($('#game'));Input.init($('#game'));Input.initTouch();
     Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);
     for(const ev of ['keydown','pointerdown','touchstart'])window.addEventListener(ev,()=>Sound.unlock(),{passive:true});
     this.goto('camp');
@@ -4765,6 +5532,7 @@ const App={
   },
   /** BGMの切り替え（ステージ→ボス→怒り）と、聞こえる位置・チャージ音 */
   updateSound(){
+    Input.syncTouchUi(this.state==='playing');
     if(!Sound.ready)return;
     const w=this.world,R=Renderer,sc=R.viewScale||1;
     Sound.lx=R.cam.x+R.w/2/sc;Sound.ly=R.cam.y+R.h/2/sc;
@@ -4882,9 +5650,10 @@ const App={
       const pl=addPlayer(this.world,m.pid,computeStats(pr,null,0),pr.bag);
       pl.slot=slotOfPid(m.pid);
     });
-    this.beginRun(n);
+    // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
     Net.broadcastStart(this.world);
     Net.broadcastLobby();
+    this.beginRun(n);
   },
   /** ゲーム中に参加した人をホストの近くに出現させる */
   addLateJoiner(m){
@@ -5251,7 +6020,9 @@ const App={
       case 'bestSel':this.bestSel=ds.id;this.goto('bestiary');break;
       case 'bestStage':this.bestStage=Number(ds.s)||1;this.bestSel=null;this.goto('bestiary');break;
       case 'bestiaryBack':this.goto(this.bestiaryFrom||'camp');break;
-      case 'smithFilter':this.smithFilter=ds.f;this.goto('smith');break;
+      case 'smithCat':this.smithCat=ds.c;this.smithSub='all';this.goto('smith');break;
+      case 'smithSub':this.smithSub=ds.s;this.goto('smith');break;
+      case 'reinforce':this.doOp('reinforce',{uid:ds.uid});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
       case 'retry':if(Net.role==='host')this.startOnline();else this.startSortie(this.lastPlayers||1);break;
       case 'who':this.inv.who=Number(ds.who)||0;this.inv.decoPick=null;this.renderInventory();break;
@@ -5409,7 +6180,7 @@ const App={
         ${sec('目標',`<div class="eff"><b>${questGoalText(sel.goal)}</b></div>`)}
         ${sec('報酬',`<div class="eff">${QuestRules.rewardText(sel)}</div><div class="small muted">ほかに、倒した魔物や開けた宝箱からも素材・ゴールドが手に入ります</div>`)}
         ${sel.unlocks?sec('クリアすると',`<div class="eff" style="color:#7fe09a">ステージ${sel.unlocks}「${esc(stageById(sel.unlocks).name)}」が解放</div>`):''}
-        ${sec('出現する魔物',stageRoster(stage).concat(sel.goal.type==='boss'?[sel.boss||stage.enemySet.boss]:[]).map(t=>DATA.enemies[t].name).join('、'))}
+        ${sec('出現する魔物（図鑑で討伐したものだけ表示）',stageRoster(stage).concat(sel.goal.type==='boss'?[sel.boss||stage.enemySet.boss]:[]).map(t=>(this.profile.bestiary||{})[t]>0?DATA.enemies[t].name:'？？？').join('、'))}
         <div class="small muted">持ち物：${bagText(p)}（出発前にショップで用意できます）</div>
         <div class="btnrow">${btns}</div></div></div></div>`;
   },
@@ -5688,21 +6459,40 @@ const App={
   },
   /** 鍛冶屋：素材から装備・装飾品を作る */
   smithHTML(){
-    const f=this.smithFilter||'all';
-    const kinds=[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name]),['armor','防具'],['deco','装飾品']];
+    const cat=this.smithCat||'weapon',sub=this.smithSub||'all';
+    const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬']];
+    const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
+      :cat==='armor'?[['all','すべて'],...Object.keys(SLOT_NAMES).filter(k=>k!=='weapon').map(k=>[k,SLOT_NAMES[k]])]:[];
     const match=r=>{
-      if(r.out.type==='item')return false;
-      if(f==='all')return true;
-      if(f==='deco')return r.out.type==='deco';
+      if(cat==='item')return r.out.type==='item';
+      if(cat==='deco')return r.out.type==='deco';
       if(r.out.type!=='equip')return false;
       const b=DATA.equipment[r.out.id];
-      return f==='armor'?b.slot!=='weapon':b.wtype===f;
+      if(cat==='weapon')return b.slot==='weapon'&&(sub==='all'||b.wtype===sub);
+      return b.slot!=='weapon'&&(sub==='all'||b.slot===sub);
     };
-    const tabs=`<div class="filters" style="margin-bottom:8px">${kinds.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="smithFilter" data-f="${k}">${n}</button>`).join('')}</div>`;
-    const wtInfo=DATA.weaponTypes[f]?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${DATA.weaponTypes[f].name}：移動${DATA.weaponTypes[f].marks.move} 振り${DATA.weaponTypes[f].marks.speed} 威力${DATA.weaponTypes[f].marks.power} リーチ${DATA.weaponTypes[f].marks.reach}　納刀${DATA.weaponTypes[f].sheathe}秒　${DATA.weaponTypes[f].feature}</div>`:'';
-    const setInfo=f==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).every(pc=>DATA.recipes.some(r=>r.out.id===pc&&(!r.stage||QuestRules.stage(this.profile)>=r.stage)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')}</div>`:'';
+    const catTabs=`<div class="tabs" style="margin-bottom:6px">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="smithCat" data-c="${k}">${n}</button>`).join('')}</div>`;
+    const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
+    const wt=DATA.weaponTypes[sub];
+    const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
+    const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).every(pc=>DATA.recipes.some(r=>r.out.id===pc&&(!r.stage||QuestRules.stage(this.profile)>=r.stage)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')}</div>`:'';
+    const reinf=cat==='armor'?this.reinforceHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
-      `<div class="col full" data-scroll="smith">${tabs}${wtInfo}${setInfo}${this.recipeListHTML(match).replace('class="col full" data-scroll="craft"','')}</div>`);
+      `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${reinf}${this.recipeListHTML(match).replace('class="col full" data-scroll="craft"','')}</div>`);
+  },
+  /** 防具の強化：持っている防具ごとに、強化段階と必要な強化玉・お金、強化ボタン */
+  reinforceHTML(){
+    const p=this.profile,orbs=p.materials.reinforce_orb||0,gold0=p.gold||0;
+    const list=p.items.filter(it=>it.kind==='equip'&&it.slot!=='weapon');
+    const rows=list.length?list.map(it=>{
+      const lv=it.reinforce||0,b=DATA.equipment[it.baseId],full=lv>=REINFORCE_MAX;
+      const need=lv+1,gold=REINFORCE_GOLD*(lv+1),can=!full&&orbs>=need&&gold0>=gold;
+      return `<div class="recipe"><div class="rn">${esc(b.name)}　<span style="color:#ffd23a">強化 ${lv}/${REINFORCE_MAX}</span></div>
+        <div class="muted">${SLOT_NAMES[it.slot]}　防御力 ${it.def}</div>
+        ${full?'':`<div class="cost"><span class="${orbs>=need?'ok':'ng'}">強化玉 ${orbs}/${need}</span><span class="${gold0>=gold?'ok':'ng'}">${gold}G（所持 ${gold0}G）</span></div>`}
+        <div class="btnrow"><button class="${can?'primary':''}" data-act="reinforce" data-uid="${it.uid}" ${can?'':'disabled'}>${full?'強化済み':'強化する（防御 +1）'}</button></div></div>`;
+    }).join(''):'<div class="muted">防具を持っていません。</div>';
+    return `<div class="col full" style="margin-bottom:10px"><div class="col-t">防具の強化</div><div class="small muted" style="margin-bottom:6px">強化玉（ボス・宝箱・依頼で入手）：所持 ${orbs}個。強化するたびに防御力が +1 され、最大 ${REINFORCE_MAX} 段階までです。</div><div class="recipes">${rows}</div></div>`;
   },
   /** モンスター図鑑：倒した魔物が登録される。ステージごとに一覧、選ぶと姿・特徴・攻略のヒント・素材 */
   bestiaryHTML(){
@@ -5767,9 +6557,10 @@ const App={
         if(r.minRarity)info+=`<br><span style="color:${rarColor(r.minRarity)}">${DATA.rarities[r.minRarity].name}以上確定</span>`;
       }else if(r.out.type==='deco'){name='ランダム装飾品';info='5種類のいずれか（レアリティもランダム）';}
       else{const c=DATA.consumables[r.out.id];name=c.name+' ×'+r.out.n+'（調合）';info=c.desc+'。所持 '+(p.bag[r.out.id]||0)+' / '+c.max+'個';}
-      const can=Profile.hasMats(p,r.cost)&&!(r.out.type==='item'&&(p.bag[r.out.id]||0)>=DATA.consumables[r.out.id].max);
+      const gold=craftGold(r),can=Profile.hasMats(p,r.cost)&&(p.gold||0)>=gold&&!(r.out.type==='item'&&(p.bag[r.out.id]||0)>=DATA.consumables[r.out.id].max);
       const cost=Object.keys(r.cost).map(k=>{const have=p.materials[k]||0;return `<span class="${have>=r.cost[k]?'ok':'ng'}">${DATA.materials[k].name} ${have}/${r.cost[k]}</span>`;}).join('');
-      return `<div class="recipe"><div class="rn">${name}</div><div class="muted">${info}</div><div class="cost">${cost}</div>
+      const goldTxt=gold?`<span class="${(p.gold||0)>=gold?'ok':'ng'}">${gold}G</span>`:'';
+      return `<div class="recipe"><div class="rn">${name}</div><div class="muted">${info}</div><div class="cost">${cost}${goldTxt}</div>
         <div class="btnrow"><button class="${can?'primary':''}" data-act="craft" data-id="${r.id}" ${can?'':'disabled'}>${r.out.type==='item'?'調合する':'製作する'}</button></div></div>`;
     }).join('')}</div></div>`;
   },
