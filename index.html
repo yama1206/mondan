@@ -6717,7 +6717,7 @@ const App={
     const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
     const wt=DATA.weaponTypes[sub];
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
-    const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).every(pc=>DATA.recipes.some(r=>r.out.id===pc&&(!r.stage||QuestRules.stage(this.profile)>=r.stage)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')}</div>`:'';
+    const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).some(pc=>DATA.recipes.some(r=>r.out.id===pc&&this.recipeKnown(r)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')||'（ボスの素材を手に入れると、そのシリーズの防具と一式効果がここに並びます）'}</div>`:'';
     const reinf=cat==='armor'?this.reinforceHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
       `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${reinf}${this.recipeListHTML(match).replace('class="col full" data-scroll="craft"','')}</div>`);
@@ -6787,9 +6787,14 @@ const App={
     return this.facilityHTML('🛒 ショップ','ゴールドは敵を倒したり宝箱を開けたりすると手に入ります。いらない装備は装備画面で選んで売却できます。',
       this.shopTabHTML());
   },
+  /** レシピが鍛冶屋に並ぶか：ステージに届いていて、必要な素材をすべて一度は手に入れたことがある（ボス装備はボス素材を入手してから） */
+  recipeKnown(r){
+    const p=this.profile;
+    return (!r.stage||QuestRules.stage(p)>=r.stage)&&Object.keys(r.cost).every(k=>(p.materials[k]||0)>0||(p.matSeen&&p.matSeen[k]));
+  },
   recipeListHTML(filter){
     const p=this.profile;
-    const known=r=>Object.keys(r.cost).every(k=>(p.materials[k]||0)>0||(p.matSeen&&p.matSeen[k]));
+    const known=r=>this.recipeKnown(r);
     return `<div class="col full" data-scroll="craft"><div class="recipes">${DATA.recipes.filter(r=>(!r.stage||QuestRules.stage(p)>=r.stage)&&known(r)&&filter(r)).map(r=>{
       let name,info='';
       if(r.out.type==='equip'){
