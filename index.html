@@ -5133,6 +5133,28 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 const r1=v=>Math.round(v*10)/10,r3=v=>Math.round(v*1000)/1000;
 const slotOfPid=pid=>Math.max(0,(parseInt(String(pid).slice(1),10)||1)-1);
 
+/** 通信の大きさの上限（ブラウザによって約256KBで「message-too-big」になるため、余裕をもって小分けにする） */
+const WIRE_CHUNK=40000;
+let wireSeq=0;
+const wireParts=new Map();
+/** 1通のメッセージを、必要なら小分けにして送る */
+function sendWire(conn,msg){
+  const str=JSON.stringify(msg);
+  if(str.length<=WIRE_CHUNK){conn.send(msg);return;}
+  const id=(++wireSeq)+'_'+Date.now(),n=Math.ceil(str.length/WIRE_CHUNK);
+  for(let i=0;i<n;i++)conn.send({t:'chunk',id,i,n,d:str.slice(i*WIRE_CHUNK,(i+1)*WIRE_CHUNK)});
+}
+/** 受け取ったものを元の1通に戻す（まだ途中なら null） */
+function unwire(d){
+  if(!d||d.t!=='chunk')return d;
+  let e=wireParts.get(d.id);
+  if(!e){e={n:d.n,got:0,parts:[]};wireParts.set(d.id,e);}
+  if(e.parts[d.i]===undefined){e.parts[d.i]=d.d;e.got++;}
+  if(e.got<e.n)return null;
+  wireParts.delete(d.id);
+  try{return JSON.parse(e.parts.join(''));}catch(err){console.warn('通信の組み立てに失敗',err);return null;}
+}
+
 const Net={
   role:null,          // null | 'host' | 'guest'
   peer:null,code:'',myPid:'p1',
@@ -5186,8 +5208,8 @@ const Net={
     else UI.notify(text,'#ff6b6b',5);
   },
   isOpen(c){return c&&c.open!==false;},
-  send(msg){if(this.conn&&this.isOpen(this.conn)){try{this.conn.send(msg);}catch(e){console.warn('送信失敗',e);}}},
-  sendTo(pid,msg){const m=this.members.find(x=>x.pid===pid);if(m&&m.conn&&this.isOpen(m.conn)){try{m.conn.send(msg);}catch(e){console.warn('送信失敗',e);}}},
+  send(msg){if(this.conn&&this.isOpen(this.conn)){try{sendWire(this.conn,msg);}catch(e){console.warn('送信失敗',e);}}},
+  sendTo(pid,msg){const m=this.members.find(x=>x.pid===pid);if(m&&m.conn&&this.isOpen(m.conn)){try{sendWire(m.conn,msg);}catch(e){console.warn('送信失敗',e);}}},
   broadcast(msg){for(const m of this.members)if(!m.host)this.sendTo(m.pid,msg);},
   member(pid){return this.members.find(x=>x.pid===pid)||null;},
   lobbyList(){
@@ -5231,7 +5253,7 @@ const Net={
     open(0);
   },
   onIncoming(conn){
-    conn.on('data',d=>this.onHostData(conn,d));
+    conn.on('data',d=>{const full=unwire(d);if(full)this.onHostData(conn,full);});
     conn.on('close',()=>this.dropMember(conn,'接続が閉じました'));
     conn.on('error',e=>{console.error('参加者との接続エラー',e);this.dropMember(conn,'通信エラー'+(e&&(e.type||e.message)?'：'+(e.type||e.message):''));});
   },
@@ -5261,7 +5283,7 @@ const Net={
         m={pid,name,guestId:gid,host:false,conn,profile};
         this.members.push(m);
       }
-      conn.send({t:'welcome',pid:m.pid,code:this.code,profile:m.profile});
+      sendWire(conn,{t:'welcome',pid:m.pid,code:this.code,profile:m.profile});
       UI.notify(`${esc(name)} が参加しました`,'#7fe0ff',3);
       this.broadcastLobby();
       if(App.inGame&&App.world)App.addLateJoiner(m);
@@ -5395,8 +5417,8 @@ const Net={
     peer.on('open',()=>{
       const conn=peer.connect(NET.PREFIX+code,{reliable:true,serialization:'json'});
       this.conn=conn;
-      conn.on('open',()=>conn.send({t:'hello',v:NET.VERSION,guestId:this.guestId,name,saveVersion:Save.VERSION,profile:App.profile}));
-      conn.on('data',d=>this.onGuestData(d));
+      conn.on('open',()=>sendWire(conn,{t:'hello',v:NET.VERSION,guestId:this.guestId,name,saveVersion:Save.VERSION,profile:App.profile}));
+      conn.on('data',d=>{const full=unwire(d);if(full)this.onGuestData(full);});
       conn.on('close',()=>this.onHostLost());
       conn.on('error',()=>this.onHostLost());
     });
