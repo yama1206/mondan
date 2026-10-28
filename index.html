@@ -180,7 +180,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.14',date:'2026/10/28'};
+const GAME_VERSION={no:'0.15',date:'2026/10/28'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -685,7 +685,7 @@ const DATA={
     bwolf_pelt:{name:'黒狼の毛皮',color:'#4a4060',desc:'闇のように黒い毛皮。（ステージ5）'},
     bwolf_fang:{name:'黒狼の牙',color:'#d8c8ff',desc:'紫に光る牙。（ステージ5）'},
     reinforce_orb:{name:'強化玉',color:'#ffb040',desc:'ボス・宝箱・依頼から手に入る。防具の強化に使う。'},
-    enchant_orb:{name:'付与の玉',color:'#c890ff',desc:'鍛冶屋で武器・防具に効果を1つ付ける（付く効果は抽選）。'},
+    enchant_orb:{name:'付与の玉',color:'#c890ff',desc:'鍛冶屋で武器・防具に効果を1つ付ける（付く効果は抽選）。ステージ5以降のボス・宝箱・依頼から手に入る。'},
     bull_horn:{name:'暴角獣の角',color:'#f0e6c8',desc:'草原の暴角獣の大きな角。（風渡る草原）'},
     bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
     bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
@@ -1375,7 +1375,6 @@ const DATA={
     {id:'m_scrap',name:'粗い鉄片',desc:'武器の補強に使う基本素材',price:15,type:'mat',mat:'scrap_iron'},
     {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:12,type:'mat',mat:'goblin_hide'},
     {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:12,type:'mat',mat:'old_bone'},
-    {id:'m_enchant',name:'付与の玉',desc:'武器・防具に効果を1つ付ける（鍛冶屋）',price:200,type:'mat',mat:'enchant_orb'},
     {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:20,type:'mat',mat:'arrowhead'},
     {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:8},
     {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:250,type:'deco'},
@@ -1967,7 +1966,7 @@ const Items={
       if(ch>0&&RNG.next()<ch*(1+(rareBonus||0)/100))out.push({type:'equip',item:Items.createLetter(Items.rollLetterTier(Math.pow(t.rarityBoost||1,0.6),DATA.letterCap(Items.lootStage||1)))});
     }
     if(t.one){ // 素材は1つだけ（落ちないこともある）
-      const mats=t.rolls.filter(r=>r.type==='mat');
+      const mats=t.rolls.filter(r=>r.type==='mat'&&(!r.stage||(Items.lootStage||1)>=r.stage));
       if(mats.length&&RNG.next()<Math.min(1,t.one*(1+(rareBonus||0)/100))){
         const r=weightedPick(mats.map(m=>({w:m.chance,v:m})));out.push({type:'mat',id:r.id,n:1});
       }
@@ -1975,6 +1974,7 @@ const Items={
     for(const r of t.rolls){
       if(t.one&&r.type==='mat')continue;
       const ch=r.chance<1&&rareBonus?Math.min(1,r.chance*(1+rareBonus/100)):r.chance; // レア素材率アップ（防具スキル）
+      if(r.stage&&(Items.lootStage||1)<r.stage)continue; // ステージ条件（付与の玉は5以降）
       if(RNG.next()>=ch)continue;
       if(r.type==='mat')out.push({type:'mat',id:r.id,n:randInt(r.min||1,r.max||1)});
       else if(r.type==='equip')out.push({type:'equip',item:Items.createEquipment(pick(DATA.equipPools[r.pool]),Items.rollRarity(t.rarityBoost))});
@@ -7644,6 +7644,10 @@ function craftGold(r){
   const mats=Object.values(r.cost).reduce((a,n)=>a+n,0);
   return 40+mats*15+(r.out.type==='deco'?30:0)+(r.stage>=3?100:0);
 }
+// 付与の玉：ステージ5以降のボス・宝箱・依頼報酬から手に入る（ステージ条件は rollLoot の stage で判定）
+for(const e of Object.values(DATA.enemies))if(e.boss&&e.drops&&DATA.dropTables[e.drops])DATA.dropTables[e.drops].rolls.push({type:'mat',id:'enchant_orb',chance:0.35,min:1,max:1,stage:5});
+for(const k of ['chest','chest2'])DATA.dropTables[k].rolls.push({type:'mat',id:'enchant_orb',chance:0.3,min:1,max:1,stage:5});
+for(const q of DATA.quests)if(q.stage>=5&&q.reward&&q.reward.mats)q.reward.mats.enchant_orb=1;
 /** 素材の売値：ボス素材ほど高い（ボス素材だけ30G、両方15G、雑魚素材6G、ほかは5G）。強化玉は売れない */
 const MAT_TIER=(()=>{const boss=new Set(),mob=new Set();
   for(const k in DATA.dropTables){const isB=!!(DATA.enemies[k]&&DATA.enemies[k].boss);
