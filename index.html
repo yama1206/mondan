@@ -297,25 +297,25 @@ const DATA={
     skillcd:{name:'技巧',desc:'スキルのクールタイム -25%',w:[5,7,9,10,10]},
   },
   /* 武器種。sheathe=納刀にかかる秒数（納刀中はどの武器も片手剣と同じ速さで移動できる）
-     power=威力倍率 move=抜刀中の移動速度倍率 interval=振りの間隔(秒) range/arc=リーチと攻撃範囲 swing=振りの演出時間
+     power=威力倍率 move=抜刀中の移動速度倍率 interval=振りの間隔(秒) range=見た目の刃の先端までの距離（weaponGeom と一致）/arc=攻撃の扇の角度 swing=振りの演出時間
      itemDelay：アイテム発動時間の増減(秒) charge：長押しチャージ perfect：ギリギリ回避の強化 stun：頭を叩いたときのスタン値
      skill：Qキーのスキル（今は無し。DATA.skills のIDを入れると使える） */
   weaponTypes:{
-    sword:{name:'片手剣',range:46,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
+    sword:{name:'片手剣',range:42,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
       marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い'},
-    greatsword:{name:'大剣',knockback:true,range:64,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
+    greatsword:{name:'大剣',knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
       charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
       marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）'},
-    tachi:{name:'太刀',range:57,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
+    tachi:{name:'太刀',range:68,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
-    dual:{name:'双剣',range:41,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.5,move:1.0,swing:0.15,sheathe:0.4,
+    dual:{name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.5,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
-    hammer:{name:'ハンマー',knockback:true,range:43,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
+    hammer:{name:'ハンマー',knockback:true,range:38,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
-    whip:{name:'鞭',range:83,arc:34*Math.PI/180,interval:0.42,active:0.12,power:0.85,move:1.08,swing:0.22,sheathe:0.5,
+    whip:{name:'鞭',range:112,arc:34*Math.PI/180,interval:0.42,active:0.12,power:0.85,move:1.08,swing:0.22,sheathe:0.5,
       tip:{min:0.55,max:1.65}, // 先端に近いほど威力が上がる（min＝根元／max＝先端の倍率）
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'細長く伸びる。先端に近いほど威力が上がる'},
     bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,
@@ -7570,7 +7570,27 @@ function craftGold(r){
   const mats=Object.values(r.cost).reduce((a,n)=>a+n,0);
   return 40+mats*15+(r.out.type==='deco'?30:0)+(r.stage>=3?100:0);
 }
+/** 素材の売値：ボス素材ほど高い（ボス素材だけ30G、両方15G、雑魚素材6G、ほかは5G）。強化玉は売れない */
+const MAT_TIER=(()=>{const boss=new Set(),mob=new Set();
+  for(const k in DATA.dropTables){const isB=!!(DATA.enemies[k]&&DATA.enemies[k].boss);
+    for(const r of (DATA.dropTables[k].rolls||[]))if(r.type==='mat')(isB?boss:mob).add(r.id);}
+  return {boss,mob};})();
+function matSellPrice(id){
+  if(id==='reinforce_orb')return 0;
+  if(MAT_TIER.boss.has(id))return MAT_TIER.mob.has(id)?15:30;
+  if(MAT_TIER.mob.has(id))return 6;
+  return 5;
+}
 const Ops={
+  /** 素材を売る（n個。all で持っている分すべて） */
+  sellMat(p,who,a){
+    const id=a.id,price=matSellPrice(id),have=p.materials[id]||0;
+    if(!price||!have)return {msg:'売れません',color:'#888'};
+    const n=a.n==='all'?have:clamp(Number(a.n)||1,1,have);
+    p.materials[id]-=n;if(p.materials[id]<=0)delete p.materials[id];
+    p.gold=(p.gold||0)+price*n;
+    return {msg:`${DATA.materials[id].name}を${n}個売って${price*n}G`,color:'#ffd23a'};
+  },
   equip(p,who,a){
     const it=Profile.getItem(p,a.uid);if(!it)return {};
     const owner=Profile.equippedBy(p,a.uid);
@@ -8475,7 +8495,7 @@ const App={
   /** 参加者から届いた装備・製作の操作を、その人のデータに対して実行する */
   hostCmd(pid,d){
     const m=Net.member(pid);
-    const allowed=['equip','unequip','sell','deco','craft','buy'];
+    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat'];
     if(!m||!allowed.includes(d.act))return;
     const args=(d.args&&typeof d.args==='object')?d.args:{};
     let r={};
@@ -8674,6 +8694,8 @@ const App={
       case 'equip':this.doOp('equip',{uid:ds.uid});break;
       case 'unequip':this.doOp('unequip',{uid:ds.uid});break;
       case 'sell':this.sell(ds.uid);break;
+      case 'sellMat':this.doOp('sellMat',{id:ds.id,n:Number(ds.n)||1});break;
+      case 'sellMatAll':{const n=(this.profile.materials[ds.id]||0);UI.confirm(`${DATA.materials[ds.id].name}を${n}個 まとめて売りますか？（${matSellPrice(ds.id)*n}G）`,()=>this.doOp('sellMat',{id:ds.id,n:'all'}));break;}
       case 'decoSlot':this.inv.decoPick={uid:ds.uid,idx:Number(ds.idx)};this.renderInventory();break;
       case 'pickDeco':{
         const pk=this.inv.decoPick;this.inv.decoPick=null;
@@ -8911,6 +8933,11 @@ const App={
         return `<div class="recipe"><div class="rn">${s.name}　<span style="color:#ffd23a">${s.price}G</span></div><div class="muted">${s.desc}</div>
           ${s.type==='item'?`<div>所持 ${p.bag[s.item]||0} / ${DATA.consumables[s.item].max}　発動まで${DATA.consumables[s.item].delay}秒</div>`:s.type==='mat'?`<div>所持 ${p.materials[s.mat]||0}</div>`:''}
           <div class="btnrow">${s.type==='deco'?btn(1):s.type==='mat'?btn(1)+btn(5):btn(1)+btn(3)}</div></div>`;}).join('')}</div>
+      <div class="col-t" style="margin-top:14px">素材を売る（ボス素材ほど高く売れます）</div>
+      <div class="recipes">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
+        const n=p.materials[id];
+        return `<div class="recipe"><div class="rn">${DATA.materials[id].name}　<span style="color:#ffd23a">${matSellPrice(id)}G</span>　<small class="muted">所持 ${n}</small></div>
+          <div class="btnrow"><button data-act="sellMat" data-id="${id}" data-n="1">1個売る</button><button data-act="sellMatAll" data-id="${id}">全部売る（${matSellPrice(id)*n}G）</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
       <div class="col-t" style="margin-top:14px">調合（素材から作る）</div>
       ${this.recipeListHTML(r=>r.out.type==='item').replace('class="col full" data-scroll="craft"','')}
       <div class="small muted" style="margin-top:10px">ステージが進むと品揃えが増えます。</div></div>`;
