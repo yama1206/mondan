@@ -353,10 +353,6 @@ const DATA={
       pieces:{head:'gale_helm',body:'gale_mail',arms:'gale_vambrace',waist:'gale_faulds',legs:'gale_greaves'},need:4,apply:s=>{s.moveSpd+=8;s.dodgeDistPct+=15;}},
     lizard:{name:'大蜥蜴シリーズ',bonus:'岩肌の生命力',desc:'最大HP+25、受けるダメージ-5%',
       pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},need:4,apply:s=>{s.maxHp+=25;s.dmgCut+=5;}},
-    bat:{name:'洞窟コウモリシリーズ',bonus:'俊翼の加護',desc:'移動速度+3%',
-      pieces:{head:'bat_helm',body:'bat_mail',arms:'bat_vambrace',waist:'bat_faulds',legs:'bat_greaves'},need:4,apply:s=>{s.moveSpd+=3;}},
-    spider:{name:'鍾乳蜘蛛シリーズ',bonus:'糸絡みの守り',desc:'状態異常への耐性+15',
-      pieces:{head:'spider_helm',body:'spider_mail',arms:'spider_vambrace',waist:'spider_faulds',legs:'spider_greaves'},need:4,apply:s=>{s.statusRes+=15;}},
     mole:{name:'土竜シリーズ',bonus:'土竜の地ならし',desc:'防御力+10、攻撃を受けたときの吹き飛び-50%',
       pieces:{head:'mole_helm',body:'mole_mail',arms:'mole_vambrace',waist:'mole_faulds',legs:'mole_greaves'},need:4,apply:s=>{s.def+=10;s.knockRes+=50;}},
     centi:{name:'百足シリーズ',bonus:'晶炎の守り',desc:'炎属性の耐性+30、会心率+5%',
@@ -495,7 +491,7 @@ const DATA={
     lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{rescue:3,regen:4,hp_up:2},slots:1},
     lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
-    // 洞窟の雑魚防具（コウモリ・蜘蛛）：ボス防具より弱め（1スロット・スキルpt少なめ・セット効果も小さめ）
+    // 洞窟の雑魚防具（コウモリ・蜘蛛）：ボス防具より弱め（1スロット・スキルpt少なめ）。雑魚防具は1式効果なし
     bat_helm:{name:'コウモリの頭巾',slot:'head',def:6,fixed:[{stat:'moveSpd',v:2}],skills:{dodge_dist:2},slots:1},
     bat_mail:{name:'翼膜の胴着',slot:'body',def:9,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:2},slots:1},
     bat_vambrace:{name:'翼膜の篭手',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{atk_up:2},slots:1},
