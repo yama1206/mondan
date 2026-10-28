@@ -308,7 +308,7 @@ const DATA={
       tip:{min:0.55,max:1.65}, // 先端に近いほど威力が上がる（min＝根元／max＝先端の倍率）
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'細長く伸びる。先端に近いほど威力が上がる'},
     bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,
-      bow:{speed:620,life:0.5}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる
+      bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'矢は無限。瓶で矢に毒・麻痺・睡眠を付けられる'},
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
@@ -604,6 +604,30 @@ const DATA={
     quick_jewel:{name:'早業珠',color:'#ffe080',skill:'item_speed'},
     gather_jewel:{name:'採取珠',color:'#8ac060',skill:'gather_up'},
     lucky_jewel:{name:'幸運珠',color:'#ffd0f0',skill:'rare_up'},
+  },
+  /* ボスの当たり判定（部位）。x・y・r はボスの半径に対する割合で、x＋が向いている方向（前）、y＋が右。
+     mult：その部位へのダメージ倍率／weak：弱点（弓の矢は weakMult 倍の大ダメージ、防具スキル「弱点特効」が効く）
+     head：頭（ハンマーのスタン値がたまる）／guard：正面の硬い部位（guard を持つボスで、この部位に当たると弾かれる）
+     1回の攻撃で当たるのは1か所だけ：近接は振った側から一番近い部位、矢は最初に触れた部位 */
+  bossParts:{
+    wolf:[{id:'head',name:'頭',x:1.05,y:0,r:0.43,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.72,mult:1},{id:'tail',name:'尻尾',x:-1.2,y:0,r:0.36,mult:0.9}],
+    forest_king:'wolf',black_wolf:'wolf',
+    meadow_bull:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9}],
+    gale_bird:[{id:'head',name:'頭',x:0.8,y:0,r:0.36,mult:1.4,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.6,mult:1},
+      {id:'wingL',name:'翼',x:0.05,y:-1.25,r:0.55,mult:0.8},{id:'wingR',name:'翼',x:0.05,y:1.25,r:0.55,mult:0.8},{id:'tail',name:'尾羽',x:-1.0,y:0,r:0.35,mult:0.9}],
+    rock_lizard:[{id:'head',name:'頭',x:1.3,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.8,mult:0.9},{id:'tail',name:'尻尾',x:-1.4,y:0,r:0.38,mult:1},{id:'tail2',name:'尻尾',x:-1.95,y:0,r:0.3,mult:1}],
+    stag_beetle:[{id:'jaw',name:'大顎',x:1.45,y:0,r:0.55,mult:1,guard:true},{id:'head',name:'頭',x:0.6,y:0,r:0.38,mult:1,head:true},
+      {id:'body',name:'背中',x:-0.2,y:0,r:0.72,mult:1},{id:'belly',name:'腹',x:-0.95,y:0,r:0.42,mult:1.35,weak:true}],
+    hydra:[{id:'headL',name:'頭',x:1.25,y:-0.78,r:0.4,mult:1.3,weak:true,head:true},{id:'headC',name:'頭',x:1.45,y:0,r:0.4,mult:1.3,weak:true,head:true},
+      {id:'headR',name:'頭',x:1.25,y:0.78,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.2,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.1,y:0,r:0.32,mult:0.9}],
+    venomKing:[{id:'head',name:'頭',x:1.1,y:0,r:0.45,mult:1.35,weak:true,head:true},{id:'body',name:'甲殻',x:-0.05,y:0,r:0.85,mult:0.85}],
+    mireGiant:[{id:'head',name:'頭',x:0.8,y:0,r:0.36,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},
+      {id:'armL',name:'腕',x:0.35,y:-1.0,r:0.42,mult:0.85},{id:'armR',name:'腕',x:0.35,y:1.0,r:0.42,mult:0.85}],
+    aquarios:[{id:'head',name:'頭',x:1.05,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.75,mult:1},{id:'tail',name:'尾びれ',x:-1.1,y:0,r:0.4,mult:0.9}],
+    turtle:[{id:'head',name:'頭',x:1.15,y:0,r:0.36,mult:1.5,weak:true,head:true},{id:'shell',name:'甲羅',x:-0.05,y:0,r:0.95,mult:0.65}],
+    thunderEel:[{id:'head',name:'頭',x:1.0,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.6,mult:1},{id:'tail',name:'尻尾',x:-1.25,y:0,r:0.45,mult:0.9}],
+    bone_dragon:[{id:'head',name:'頭',x:1.4,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.5,y:0,r:0.42,mult:0.9},
+      {id:'wingL',name:'翼',x:0,y:-1.4,r:0.5,mult:0.8},{id:'wingR',name:'翼',x:0,y:1.4,r:0.5,mult:0.8}],
   },
   enemies:{
     // ai：行動パターン（goblin=接近して殴る / archer=距離を取って射る / wolf=ボス）。pal：見た目の色
@@ -2208,22 +2232,56 @@ function slowPlayer(w,p,sl){
   if(!(p.slowT>0))emit(w,{type:'slowed',pid:p.id,x:p.x,y:p.y-26});
   p.slowT=Math.max(p.slowT||0,time);p.slowMult=sl.mult;
 }
+/** ボスの部位（当たり判定）をワールド座標で返す。部位の無い敵は体そのものを1つの部位として返す */
+function bossPartsOf(e){
+  let def=e.boss&&!e.mid?DATA.bossParts[e.type]:null;
+  if(typeof def==='string')def=DATA.bossParts[def];
+  if(!def)return [{part:null,x:e.x,y:e.y,r:e.r}];
+  const c=Math.cos(e.facing||0),s=Math.sin(e.facing||0);
+  return def.map(pt=>({part:pt,x:e.x+(pt.x*c-pt.y*s)*e.r,y:e.y+(pt.x*s+pt.y*c)*e.r,r:pt.r*e.r}));
+}
+/** 近接攻撃が当たる部位：扇形に入っている部位のうち、振った人から一番近いもの（無ければ null） */
+function meleePart(e,p,a){
+  let best=null,bd=1e9;
+  for(const q of bossPartsOf(e)){
+    const dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy);
+    if(d>a.range+q.r)continue;
+    const tol=d>0?Math.asin(Math.min(1,q.r/d)):Math.PI;
+    if(Math.abs(angDiff(Math.atan2(dy,dx),a.angle))>a.arc/2+tol)continue;
+    const sd=d-q.r;if(sd<bd){bd=sd;best=q;}
+  }
+  return best;
+}
+/** 矢などの丸い当たり判定が触れた部位（複数なら、来た方向から一番近いもの） */
+function projPart(e,x,y,r,px,py){
+  let best=null,bd=1e9;
+  for(const q of bossPartsOf(e)){
+    if(Math.hypot(q.x-x,q.y-y)>=q.r+r)continue;
+    const d=Math.hypot(q.x-px,q.y-py)-q.r;if(d<bd){bd=d;best=q;}
+  }
+  return best;
+}
 function damageEnemy(w,p,e,mult,src){
   if(e.dead)return;
+  const hp_=src.hit||null,part=hp_&&hp_.part; // 当たった部位
   const s=p.stats;let atk=s.atk*(s.power||1);
   if(s.effects.desperate&&p.hp<=s.maxHp*0.3)atk*=1.35;
   if(p.buffT>0)atk*=1+(s.perfectAtk||0);
   if(p.buffs.atk&&p.buffs.atk.t>0)atk*=1+p.buffs.atk.pct/100;
   {const fw=DATA.weaponTypes[s.weaponType];if(fw&&fw.flow&&p.flow>0)atk*=1+p.flow*fw.flow.pct/100;}
   let dmg=atk*mult*rand(0.92,1.08);
-  const weakHit=e.boss&&s.weakCrit>0&&Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=DATA.weaponTypes.hammer.stun.headArc/2;
+  const frontal=Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=DATA.weaponTypes.hammer.stun.headArc/2;
+  const weakPart=!!(part&&part.weak);
+  // 部位の倍率。弓の矢がボスの弱点に当たったときは大ダメージ
+  if(part){const bw=(DATA.weaponTypes[s.weaponType]||{}).bow;dmg*=(weakPart&&src.arrow&&bw&&bw.weakMult)?bw.weakMult:(part.mult||1);}
+  const weakHit=e.boss&&s.weakCrit>0&&(part?weakPart:frontal);
   const crit=RNG.next()*100<s.crit+(weakHit?s.weakCrit:0);
   if(crit)dmg*=1+s.critDmg/100;
   if(e.boss&&s.effects.hunter)dmg*=1.15;
   dmg*=1+(e.boss?s.bossDmgPct:s.minionDmgPct)/100;
   // 正面からの攻撃に強い魔物（森甲虫）：側面・背後からなら通常どおり
   const ed=DATA.enemies[e.type];let guarded=false;
-  if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2){dmg*=ed.guard.mult;guarded=true;}
+  if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&(part?!!part.guard:Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2)){dmg*=ed.guard.mult;guarded=true;}
   dmg=Math.max(1,Math.round(dmg-e.armor*0.5));
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
@@ -2235,7 +2293,7 @@ function damageEnemy(w,p,e,mult,src){
   // ハンマー：ボスの頭（向いている方向の前側）に当たるとスタン値がたまる
   const wt=DATA.weaponTypes[s.weaponType];let head=false;
   if(wt&&wt.stun&&e.stunMax>0&&!e.dead&&e.state!=='stunned'&&e.state!=='sleep'){
-    head=Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=wt.stun.headArc/2;
+    head=part?!!part.head:frontal;
     if(head){
       e.stunPts+=wt.stun.base*(src.stunMult||1);
       if(e.stunPts>=e.stunMax){
@@ -2246,7 +2304,7 @@ function damageEnemy(w,p,e,mult,src){
       }
     }
   }
-  emit(w,{type:'damage',target:'enemy',x:e.x,y:e.y-e.r,amount:dmg,crit,skill:!!src.skill,head,guard:guarded});
+  emit(w,{type:'damage',target:'enemy',x:hp_&&part?hp_.x:e.x,y:hp_&&part?hp_.y-hp_.r:e.y-e.r,amount:dmg,crit,skill:!!src.skill,head,guard:guarded,weak:weakPart&&!guarded,arrowWeak:weakPart&&!!src.arrow});
   if(s.drainChance>0&&RNG.next()*100<s.drainChance&&p.hp<s.maxHp){
     const h=Math.max(2,Math.round(s.maxHp*0.03));p.hp=Math.min(s.maxHp,p.hp+h);
     emit(w,{type:'heal',x:p.x,y:p.y-20,amount:h,drain:true});
@@ -2504,15 +2562,13 @@ function updateAttacks(w,dt){
     if(!p||p.dead){a.life=0;continue;}
     for(const e of w.enemies){
       if(e.dead||a.hit.has(e.id))continue; // 同じ攻撃判定で同じ敵に多段ヒットしない
-      const dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy);
-      if(d>a.range+e.r)continue;
-      const tol=d>0?Math.asin(Math.min(1,e.r/d)):Math.PI;
-      if(Math.abs(angDiff(Math.atan2(dy,dx),a.angle))>a.arc/2+tol)continue;
-      if(!lineOfSight(w.map,p.x,p.y,e.x,e.y))continue; // 壁越しには当たらない
+      const hit=meleePart(e,p,a);if(!hit)continue; // ボスは部位ごとの当たり判定（1回の攻撃で当たるのは1か所）
+      const d=Math.hypot(hit.x-p.x,hit.y-p.y);
+      if(!lineOfSight(w.map,p.x,p.y,hit.x,hit.y)&&!lineOfSight(w.map,p.x,p.y,e.x,e.y))continue; // 壁越しには当たらない
       a.hit.add(e.id);
       let mult=a.mult;
-      if(a.tip){const f=clamp(Math.max(0,d-e.r)/a.range,0,1);mult*=a.tip.min+(a.tip.max-a.tip.min)*f;} // 鞭：先端ほど強い
-      damageEnemy(w,p,e,mult,{stunMult:a.stunMult});
+      if(a.tip){const f=clamp(Math.max(0,d-hit.r)/a.range,0,1);mult*=a.tip.min+(a.tip.max-a.tip.min)*f;} // 鞭：先端ほど強い
+      damageEnemy(w,p,e,mult,{stunMult:a.stunMult,hit});
       const fw=DATA.weaponTypes[p.stats.weaponType];
       if(fw&&fw.flow&&!a.flowed){a.flowed=true;const before=p.flow;p.flow=Math.min(fw.flow.max,p.flow+1);p.flowT=fw.flow.keep;
         if(p.flow===fw.flow.max&&before<fw.flow.max)emit(w,{type:'flowMax',pid:p.id,x:p.x,y:p.y-24});}
@@ -3144,13 +3200,13 @@ function updateProjectiles(w,dt){
       const p=w.players[pr.pid];
       if(p)for(const e of w.enemies){
         if(e.dead||pr.hit.has(e.id))continue;
-        if(Math.hypot(e.x-pr.x,e.y-pr.y)<e.r+pr.r){pr.hit.add(e.id);damageEnemy(w,p,e,1,{arrow:true});if(pr.status)applyStatus(w,e,pr.status);alive=false;break;}
+        const hit=projPart(e,pr.x,pr.y,pr.r,pr.x-pr.vx*dt,pr.y-pr.vy*dt);if(hit){pr.hit.add(e.id);damageEnemy(w,p,e,1,{arrow:true,hit});if(pr.status)applyStatus(w,e,pr.status);alive=false;break;}
       }
     }else if(alive&&pr.kind==='wave'){
       const p=w.players[pr.pid];
       if(p)for(const e of w.enemies){
         if(e.dead||pr.hit.has(e.id))continue;
-        if(Math.hypot(e.x-pr.x,e.y-pr.y)<e.r+pr.r){pr.hit.add(e.id);damageEnemy(w,p,e,pr.mult,{skill:true});}
+        const hit=projPart(e,pr.x,pr.y,pr.r,pr.x-pr.vx*dt,pr.y-pr.vy*dt);if(hit){pr.hit.add(e.id);damageEnemy(w,p,e,pr.mult,{skill:true,hit});}
       }
     }
     if(alive)keep.push(pr);
@@ -3793,7 +3849,7 @@ const Renderer={
       case 'damage':
         if(settings.damageNumbers){
           const col=ev.dot?'#a8e060':ev.target==='player'?'#ff5050':(ev.guard?'#9aa0a8':(ev.crit?'#ffd23a':(ev.skill?'#7fe0ff':'#ffffff')));
-          this.floater(ev.x+rand(-8,8),ev.y,(ev.guard?'弾かれた ':'')+(ev.crit?'会心! ':'')+ev.amount,col,ev.dot?13:ev.crit?22:(ev.target==='player'?18:15));
+          this.floater(ev.x+rand(-8,8),ev.y,(ev.guard?'弾かれた ':'')+(ev.weak?'弱点! ':'')+(ev.crit?'会心! ':'')+ev.amount,col,ev.dot?13:ev.crit?22:(ev.target==='player'?18:15));
         }
         if(!ev.dot)this.burst(ev.x,ev.y+10,ev.guard?'#c8d0d8':ev.crit?'#ffd23a':(ev.target==='player'?'#ff6060':'#ffffff'),ev.crit?12:5,ev.crit?220:140);
         if(ev.head)this.burst(ev.x,ev.y,'#ffe060',4,90,3);
@@ -7662,6 +7718,9 @@ const App={
       for(const r of ((DATA.dropTables[E.drops]||{}).rolls||[]))if(r.type==='mat'&&!mats.includes(r.id))mats.push(r.id);
       const hasDeco=((DATA.dropTables[E.drops]||{}).rolls||[]).some(r=>r.type==='deco');
       const feats=[];
+      {let bp=DATA.bossParts[sel];if(typeof bp==='string')bp=DATA.bossParts[bp];
+        if(bp){const wk=[...new Set(bp.filter(x=>x.weak).map(x=>x.name))];if(wk.length)feats.push('弱点：'+wk.join('・')+'（弓の矢は弱点に当たると大ダメージ）');
+          const hd=[...new Set(bp.filter(x=>(x.mult||1)<0.9||x.guard).map(x=>x.name))];if(hd.length)feats.push('硬い部位：'+hd.join('・'));}}
       if(E.guard)feats.push('正面からの攻撃を弾く');
       if(E.heavy)feats.push('攻撃でのけぞらない');
       if(E.slow)feats.push('攻撃が当たると鈍足');
