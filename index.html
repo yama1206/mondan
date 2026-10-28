@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.21',date:'2026/10/29'};
+const GAME_VERSION={no:'0.22',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -309,18 +309,18 @@ const DATA={
      itemDelay：アイテム発動時間の増減(秒) charge：長押しチャージ perfect：ギリギリ回避の強化 stun：頭を叩いたときのスタン値
      skill：Qキーのスキル（今は無し。DATA.skills のIDを入れると使える） */
   weaponTypes:{
-    sword:{name:'片手剣',range:29,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
+    sword:{name:'片手剣',range:40,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
       marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い'},
     greatsword:{name:'大剣',knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
       charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
       marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）'},
-    tachi:{name:'太刀',range:68,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
+    tachi:{name:'太刀',range:62,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
-    dual:{name:'双剣',range:26,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
+    dual:{name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
-    hammer:{name:'ハンマー',knockback:true,range:38,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
+    hammer:{name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
     lance:{name:'ランス',range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
@@ -328,7 +328,7 @@ const DATA={
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。構えている間は向いている方向の攻撃を90%カット（突いている間は盾が効かない）。納刀に1.1秒'},
     bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
-      charge:{levels:[0.35,0.8,1.3],mult:[1.5,2.5,3.6],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
+      charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
       marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで3段階チャージして射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
