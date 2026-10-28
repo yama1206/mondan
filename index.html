@@ -262,8 +262,8 @@ const DATA={
     hp_up:{name:'体力アップ',cat:'防御',max:3,vals:[20,40,60],fmt:'最大HP +{v}',apply:(s,v)=>{s.maxHp+=v;}},
     dmg_cut:{name:'ダメージ軽減',cat:'防御',max:2,vals:[8,15],fmt:'受けるダメージ -{v}%',apply:(s,v)=>{s.dmgCut+=v;}},
     flinch_free:{name:'ひるみ軽減',cat:'防御',max:2,vals:[50,100],fmt:'攻撃を受けたときの吹き飛び -{v}%',apply:(s,v)=>{s.knockRes+=v;}},
-    poison_res:{name:'毒耐性',cat:'耐性',max:2,vals:[50,100],fmt:'毒の雲から受けるダメージ -{v}%',apply:(s,v)=>{s.poisonRes+=v;}},
-    status_res:{name:'状態異常耐性',cat:'耐性',max:2,vals:[50,100],fmt:'鈍足の時間 -{v}%',apply:(s,v)=>{s.statusRes+=v;}},
+    poison_res:{name:'毒耐性',cat:'耐性',max:2,vals:[50,100],fmt:'毒の雲・毒から受けるダメージ -{v}%',apply:(s,v)=>{s.poisonRes+=v;}},
+    status_res:{name:'状態異常耐性',cat:'耐性',max:2,vals:[50,100],fmt:'状態異常（鈍足・毒・麻痺・呪い）の時間 -{v}%',apply:(s,v)=>{s.statusRes+=v;}},
     heal_up:{name:'回復量アップ',cat:'回復',max:2,vals:[20,40],fmt:'回復アイテムの回復量 +{v}%',apply:(s,v)=>{s.healPct+=v;}},
     regen:{name:'自動回復',cat:'回復',max:2,vals:[0.5,1],fmt:'HPが毎秒 {v} ずつ回復',apply:(s,v)=>{s.regen+=v;}},
     move_up:{name:'移動速度アップ',cat:'移動・回避',max:2,vals:[8,15],fmt:'移動速度 +{v}%',apply:(s,v)=>{s.moveSpd+=v;}},
@@ -319,8 +319,8 @@ const DATA={
   // effect.type：heal（ratio＝最大HPに対する回復割合、radius があれば範囲内の味方全員）
   //             buff（stat＝atk/def、pct＝%、time＝秒、radius＝範囲）
   consumables:{
-    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復'},
-    heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#7fe09a',effect:{type:'heal',ratio:0.3,radius:220},desc:'周囲の味方全員のHPを最大HPの30%回復'},
+    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（毒・呪いも治る）'},
+    heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#7fe09a',effect:{type:'heal',ratio:0.3,radius:220},desc:'周囲の味方全員のHPを最大HPの30%回復（毒・呪いも治る）'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
     // 狩りの道具（effect.type：flash＝閃光 / place＝足元に設置）
@@ -604,6 +604,23 @@ const DATA={
     quick_jewel:{name:'早業珠',color:'#ffe080',skill:'item_speed'},
     gather_jewel:{name:'採取珠',color:'#8ac060',skill:'gather_up'},
     lucky_jewel:{name:'幸運珠',color:'#ffd0f0',skill:'rare_up'},
+  },
+  /* プレイヤーにかかる状態異常。time：秒（防具スキル「状態異常耐性」で短くなる）
+     poison：毒（tick 秒ごとに最大HPの pct ずつ減る。毒ではHP1より下がらない。「毒耐性」で減る量が下がる）
+     paralysis：麻痺（その場で動けない。治ったあと immune 秒はもう一度かからない）
+     curse：呪い（受けるダメージ +dmgUp%）。回復薬・癒しの香で毒と呪いは治る */
+  playerStatus:{
+    poison:{name:'毒',color:'#a8e060',time:8,tick:1,pct:0.025},
+    paralysis:{name:'麻痺',color:'#ffe040',time:1.6,immune:5},
+    curse:{name:'呪い',color:'#c070ff',time:10,dmgUp:25},
+  },
+  // 魔物ごとの「攻撃が当たったときに状態異常にする」設定（chance：かかる確率）
+  enemyStatus:{
+    mushroom:{k:'poison',chance:0.35},
+    poison_frog:{k:'poison',chance:0.4},bloater:{k:'poison',chance:0.5},parasite:{k:'poison',chance:0.3},
+    hydra:{k:'poison',chance:0.35},venomKing:{k:'poison',chance:0.45},mireGiant:{k:'poison',chance:0.2},
+    jellyfish:{k:'paralysis',chance:0.25},eel:{k:'paralysis',chance:0.3},thunderEel:{k:'paralysis',chance:0.35},
+    zombie:{k:'poison',chance:0.25},cursed_knight:{k:'curse',chance:0.3},shaman:{k:'curse',chance:0.45},bone_dragon:{k:'curse',chance:0.35},
   },
   /* ボスの当たり判定（部位）。x・y・r はボスの半径に対する割合で、x＋が向いている方向（前）、y＋が右。
      mult：その部位へのダメージ倍率／weak：弱点（弓の矢は weakMult 倍の大ダメージ、防具スキル「弱点特効」が効く）
@@ -1748,6 +1765,13 @@ function cornerNudge(map,e,sx,sy){
   }
   return false;
 }
+/** 視界をさえぎるのは壁（1）と閉じた扉（3）だけ。木・岩・柱・墓石・木箱の向こうは見える（描画の視野用） */
+function blocksSight(map,tx,ty){if(tx<0||ty<0||tx>=map.W||ty>=map.H)return true;const v=map.tiles[ty*map.W+tx];return v===1||v===3;}
+function sightLine(map,x0,y0,x1,y1){
+  const dx=x1-x0,dy=y1-y0,n=Math.ceil(Math.hypot(dx,dy)/8);
+  for(let i=1;i<n;i++){const t=i/n;if(blocksSight(map,Math.floor((x0+dx*t)/TILE),Math.floor((y0+dy*t)/TILE)))return false;}
+  return true;
+}
 function lineOfSight(map,x0,y0,x1,y1){
   const dx=x1-x0,dy=y1-y0,n=Math.ceil(Math.hypot(dx,dy)/8);
   for(let i=1;i<n;i++){const t=i/n;if(isWall(map,Math.floor((x0+dx*t)/TILE),Math.floor((y0+dy*t)/TILE)))return false;}
@@ -2102,7 +2126,7 @@ function addPlayer(w,id,stats,bag){
     facing:0,atkTimer:0,swing:0,swingTotal:0.2,swingAngle:0,swingDir:1,combo:0,dodgeCd:0,dodgeTime:0,dodgeDir:{x:1,y:0},
     dodgeInv:0,hitInv:0,skillCd:0,bag:Object.assign(emptyBag(),bag||{}),sel:0,potionCd:0,hurt:0,buffs:{},kx:0,ky:0,dead:false,walk:0,moving:false,lastEvade:-9,
     using:null,charging:false,charge:0,buffT:0,dodgeStart:-9,perfectThisDodge:false,drawn:false,sheathing:null,flow:0,flowT:0,
-    slowT:0,slowMult:1,poisoned:0,coat:null};
+    slowT:0,slowMult:1,poisoned:0,coat:null,poisonT:0,poisonTick:0,paraT:0,paraImmune:0,curseT:0};
   w.players[id]=p;return p;
 }
 /** 装備変更時にステータスを差し替える（HP割合ではなく減少量を維持） */
@@ -2183,7 +2207,7 @@ function inTelegraph(t,x,y,r){
 }
 
 /* ---------- 被ダメージ・与ダメージ ---------- */
-function hitPlayer(w,p,raw,sx,sy){
+function hitPlayer(w,p,raw,sx,sy,src){
   if(p.dead)return false;
   if(p.dodgeInv>0){
     // 太刀：回避の出始めで攻撃をかわすと「見切り」成功（攻撃力アップ）
@@ -2199,6 +2223,7 @@ function hitPlayer(w,p,raw,sx,sy){
   if(p.stats.effects.guard)dmg*=0.88;
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
+  if(p.curseT>0)dmg*=1+DATA.playerStatus.curse.dmgUp/100; // 呪い：受けるダメージが増える
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
   p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
@@ -2210,9 +2235,19 @@ function hitPlayer(w,p,raw,sx,sy){
   }
   p.charging=false;p.charge=0;
   if(p.hp<=0)downPlayer(w,p);
+  else{const sp=DATA.enemyStatus[src||w._atk];if(sp&&RNG.next()<sp.chance)inflictPlayer(w,p,sp.k);} // 攻撃した魔物の状態異常
   return true;
 }
-function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.kx=p.ky=0;p.slowT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
+/** プレイヤーを状態異常にする（状態異常耐性で時間が短くなる） */
+function inflictPlayer(w,p,k){
+  const d=DATA.playerStatus[k];if(!d||p.dead)return;
+  const time=d.time*(1-clamp(p.stats.statusRes||0,0,100)/100);if(time<=0.05)return;
+  if(k==='poison'){if(!(p.poisonT>0))p.poisonTick=d.tick;p.poisonT=Math.max(p.poisonT||0,time);}
+  else if(k==='paralysis'){if(p.paraT>0||p.paraImmune>0)return;p.paraT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
+  else if(k==='curse')p.curseT=Math.max(p.curseT||0,time);
+  emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-30,text:d.name+'!',color:d.color});
+}
+function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
 /** 毒の雲などの継続ダメージ：のけぞらず、無敵時間も発生しない（回避中は受けない） */
 function dotPlayer(w,p,raw){
   if(p.dead||p.dodgeInv>0)return;
@@ -2354,6 +2389,13 @@ function updatePlayer(w,p,inp,dt){
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;
   if(p.slowT>0)p.slowT-=dt;if(p.poisoned>0)p.poisoned-=dt;
+  if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;
+  if(p.poisonT>0){ // 毒：一定時間ごとに減る（HP1より下がらない）
+    const d=DATA.playerStatus.poison;p.poisonT-=dt;p.poisonTick-=dt;
+    if(p.poisonTick<=0){p.poisonTick+=d.tick;
+      const dmg=Math.min(p.hp-1,Math.max(1,Math.round(s.maxHp*d.pct*(1-clamp(s.poisonRes||0,0,100)/100))));
+      if(dmg>0){p.hp-=dmg;emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,dot:true});}}
+  }
   // 自動回復（防具スキル）：3秒ごとにまとめて回復
   if(s.regen>0){p.regenT=(p.regenT||0)+dt;if(p.regenT>=3){p.regenT-=3;if(p.hp<s.maxHp){const hl=Math.min(s.maxHp-p.hp,Math.round(s.regen*3));p.hp+=hl;emit(w,{type:'heal',x:p.x,y:p.y-20,amount:hl,drain:true});}}}
   for(const k in p.buffs){p.buffs[k].t-=dt;if(p.buffs[k].t<=0)delete p.buffs[k];}
@@ -2364,6 +2406,11 @@ function updatePlayer(w,p,inp,dt){
   if(typeof inp.pick==='number'&&inp.pick>=0&&inp.pick<ITEM_ORDER.length)p.sel=inp.pick;
   else if(inp.cycle)p.sel=(p.sel+(inp.cycle<0?ITEM_ORDER.length-1:1))%ITEM_ORDER.length;
   if(p.kx||p.ky){moveEntity(w.map,p,p.kx*dt,p.ky*dt);p.kx*=0.82;p.ky*=0.82;if(Math.abs(p.kx)+Math.abs(p.ky)<5)p.kx=p.ky=0;}
+  if(p.paraT>0){ // 麻痺：その場で動けない（向きも変えられない）
+    p.paraT-=dt;p.moving=false;p.charging=false;p.charge=0;
+    if(p.paraT<=0)p.paraImmune=DATA.playerStatus.paralysis.immune;
+    return;
+  }
   if(typeof inp.aim==='number')p.facing=inp.aim;
   if(p.dodgeTime>0){
     p.dodgeTime-=dt;
@@ -2432,7 +2479,7 @@ function updatePlayer(w,p,inp,dt){
   if(inp.heal&&!p.charging){
     const id=ITEM_ORDER[p.sel],c=DATA.consumables[id];
     if((p.bag[id]||0)<=0)emit(w,{type:'info',pid:p.id,text:c.name+'を持っていません'});
-    else if(c.effect.type==='heal'&&!c.effect.radius&&p.hp>=s.maxHp)emit(w,{type:'info',pid:p.id,text:'体力は満タンです'});
+    else if(c.effect.type==='heal'&&!c.effect.radius&&p.hp>=s.maxHp&&!(p.poisonT>0)&&!(p.curseT>0))emit(w,{type:'info',pid:p.id,text:'体力は満タンです'});
     else if(p.potionCd<=0){
       p.using={item:id,t:0,total:Math.max(P.minItemDelay,c.delay+s.itemDelayAdj)};
       emit(w,{type:'itemStart',pid:p.id,x:p.x,y:p.y,item:id});
@@ -2450,6 +2497,7 @@ function applyItem(w,p,id){
       const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1));
       q.hp=Math.min(q.stats.maxHp,q.hp+hl);
       emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
+      if(q.poisonT>0||q.curseT>0){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
     }else if(ef.type==='coat'){
       q.coat={status:ef.status,shots:ef.shots};
       emit(w,{type:'info',pid:q.id,text:`${c.short}を装填（矢${ef.shots}本）`});
@@ -3194,7 +3242,7 @@ function updateProjectiles(w,dt){
     if(alive&&pr.owner==='enemy'){
       for(const id in w.players){
         const p=w.players[id];if(p.dead)continue;
-        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05)){alive=false;break;}
+        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src)){alive=false;break;}
       }
     }else if(alive&&pr.kind==='playerArrow'){
       const p=w.players[pr.pid];
@@ -3219,7 +3267,7 @@ function updateTelegraphs(w,dt){
     t.t+=dt;
     if(t.t>=t.total){
       if(t.dmg>0){
-        for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y)&&t.slow)slowPlayer(w,p,t.slow);}
+        for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y,(w.enemies.find(e=>e.id===t.owner)||{}).type)&&t.slow)slowPlayer(w,p,t.slow);}
         emit(w,{type:'tgResolve',shape:t.shape,x:t.x,y:t.y,r:t.r,angle:t.angle,arc:t.arc,small:!!t.small});
       }
     }else keep.push(t);
@@ -3338,7 +3386,9 @@ function updateWorld(w,dt,inputs){
   enforceLeash(w,before);
   updateRevive(w,dt);
   updateBossRoom(w);
-  for(const e of w.enemies)if(!e.dead)updateEnemy(w,e,dt);
+  // w._atk：今動いている魔物の種類（攻撃が当たったときの状態異常に使う）。新しく撃った飛び道具にも覚えさせる
+  for(const e of w.enemies)if(!e.dead){w._atk=e.type;const n0=w.projectiles.length;updateEnemy(w,e,dt);for(let i=n0;i<w.projectiles.length;i++)if(w.projectiles[i].owner==='enemy'&&!w.projectiles[i].src)w.projectiles[i].src=e.type;}
+  w._atk=null;
   separateBodies(w);
   updateAttacks(w,dt);
   updateProjectiles(w,dt);
@@ -3772,7 +3822,7 @@ const Renderer={
         const tx=Math.floor((x+c*d)/TILE),ty=Math.floor((y+s*d)/TILE);
         if(tx<0||ty<0||tx>=map.W||ty>=map.H){hit=true;break;}
         ex[ty*map.W+tx]=1;
-        if(map.tiles[ty*map.W+tx]!==0){hit=true;break;}
+        if(blocksSight(map,tx,ty)){hit=true;break;} // 障害物は透けて見え、壁で止まる
       }
       const dd=hit?Math.min(R,d+10):R; // 壁の表面まで照らす
       pts.push(x+c*dd,y+s*dd);
@@ -3791,10 +3841,10 @@ const Renderer={
     for(const v of this.vis){
       const dx=x-v.x,dy=y-v.y,d=Math.hypot(dx,dy);
       if(d>R+r)continue;
-      if(lineOfSight(w.map,v.x,v.y,x,y))return true;
+      if(sightLine(w.map,v.x,v.y,x,y))return true;
       if(r>8&&d>0){
         const nx=-dy/d*r*0.8,ny=dx/d*r*0.8;
-        if(lineOfSight(w.map,v.x,v.y,x+nx,y+ny)||lineOfSight(w.map,v.x,v.y,x-nx,y-ny))return true;
+        if(sightLine(w.map,v.x,v.y,x+nx,y+ny)||sightLine(w.map,v.x,v.y,x-nx,y-ny))return true;
       }
     }
     return false;
@@ -4775,11 +4825,15 @@ const Renderer={
     for(let i=0;i<9;i++){const an=i*0.7+z.id,rr=z.r*(0.2+((i*37)%70)/100),yy=-((this.time*20+i*13)%30);ctx.beginPath();ctx.arc(z.x+Math.cos(an)*rr,z.y+Math.sin(an)*rr*0.7+yy,2+(i%3),0,TAU);ctx.fill();}
     ctx.restore();
   },
-  /** プレイヤーの状態異常の印（鈍足・毒） */
+  /** プレイヤーの状態異常の印（鈍足・毒・麻痺・呪い） */
   drawStatus(ctx,p){
     if(p.dead)return;
     if(p.slowT>0){ctx.save();ctx.strokeStyle='rgba(150,210,255,.75)';ctx.lineWidth=2;for(let i=0;i<3;i++){const a=this.time*2+i*2.1;ctx.beginPath();ctx.arc(p.x,p.y+4,p.r+4,a,a+0.8);ctx.stroke();}ctx.restore();}
-    if(p.poisoned>0){ctx.save();ctx.fillStyle='rgba(160,230,80,.8)';for(let i=0;i<3;i++){const t=(this.time*1.5+i/3)%1;ctx.globalAlpha=1-t;ctx.beginPath();ctx.arc(p.x+(i-1)*7,p.y-p.r-4-t*14,2.5,0,TAU);ctx.fill();}ctx.restore();}
+    if(p.paraT>0){ctx.save();ctx.strokeStyle='#ffe040';ctx.lineWidth=2;for(let i=0;i<3;i++){const a=this.time*9+i*2.1,x0=p.x+Math.cos(a)*(p.r+2),y0=p.y+Math.sin(a)*(p.r+2);
+      ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0+Math.cos(a+1)*6,y0+Math.sin(a+1)*6);ctx.lineTo(x0+Math.cos(a-0.5)*10,y0+Math.sin(a-0.5)*10);ctx.stroke();}ctx.restore();}
+    if(p.curseT>0){ctx.save();ctx.globalAlpha=0.55+0.25*Math.sin(this.time*5);ctx.strokeStyle='#c070ff';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(p.x,p.y,p.r+7,-this.time*2,-this.time*2+TAU);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#c070ff';for(let i=0;i<2;i++){const tt=(this.time*0.8+i/2)%1;ctx.globalAlpha=0.8*(1-tt);ctx.beginPath();ctx.arc(p.x+(i?6:-6),p.y-p.r-2-tt*16,3,0,TAU);ctx.fill();}ctx.restore();}
+    if(p.poisoned>0||p.poisonT>0){ctx.save();ctx.fillStyle='rgba(160,230,80,.8)';for(let i=0;i<3;i++){const t=(this.time*1.5+i/3)%1;ctx.globalAlpha=1-t;ctx.beginPath();ctx.arc(p.x+(i-1)*7,p.y-p.r-4-t*14,2.5,0,TAU);ctx.fill();}ctx.restore();}
   },
   drawPlayer(ctx,p){
     const r=p.r,s=p.stats;
@@ -5124,7 +5178,7 @@ const Renderer={
     ctx.fillText(`移動 ${s.moveSpd>=0?'+':''}${s.moveSpd}%　回避後無敵 ${s.dodgeIframe.toFixed(2)}秒${s.drainChance?'　吸血 '+s.drainChance+'%':''}`,x+10,y+64);
     ctx.fillStyle='#8a82a2';ctx.font=`11px ${FONT}`;ctx.fillText(DATA.weaponTypes[s.weaponType].name+'：',x+10,y+84);
     ctx.fillStyle=rarColor(s.weaponRarity);ctx.font=`bold 13px ${FONT}`;ctx.fillText(s.weaponName,x+56,y+84);
-    const st=[];if(p.slowT>0)st.push(['鈍足','#9ad8ff']);if(p.poisoned>0)st.push(['毒','#a8e060']);
+    const st=[];if(p.slowT>0)st.push(['鈍足','#9ad8ff']);if(p.poisoned>0||p.poisonT>0)st.push(['毒','#a8e060']);if(p.paraT>0)st.push(['麻痺','#ffe040']);if(p.curseT>0)st.push(['呪い','#c070ff']);
     if(st.length){ctx.textAlign='right';ctx.font=`bold 12px ${FONT}`;let xx=x+300;for(const [t,c] of st.reverse()){ctx.fillStyle=c;ctx.fillText(t,xx,y+84);xx-=ctx.measureText(t).width+8;}ctx.textAlign='left';}
   },
   /** 回避・スキル・回復のクールタイム表示（1人分） */
@@ -6151,6 +6205,7 @@ function validateData(){
     for(const m in r.cost)bad(M[m],`レシピ「${r.id}」：素材「${m}」がありません`);
     bad(!r.stage||S.some(s=>s.id===r.stage),`レシピ「${r.id}」：stage ${r.stage} がありません`);
   }
+  for(const k in DATA.enemyStatus){bad(E[k],`状態異常：魔物「${k}」がありません`);bad(DATA.playerStatus[DATA.enemyStatus[k].k],`状態異常：「${DATA.enemyStatus[k].k}」がありません`);}
   for(const it of DATA.shop)if(it.type==='mat')bad(M[it.mat],`ショップ「${it.id}」：素材「${it.mat}」がありません`);
   for(const k in DATA.armorSets)for(const sl in DATA.armorSets[k].pieces)bad(eqOk(DATA.armorSets[k].pieces[sl]),`防具一式「${k}」：装備「${DATA.armorSets[k].pieces[sl]}」がありません`);
   return errs;
@@ -6509,7 +6564,7 @@ const Net={
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
-        sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),
+        sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),curseT:r3(p.curseT||0),
         dodgeCd:r3(p.dodgeCd),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
@@ -7721,6 +7776,7 @@ const App={
       {let bp=DATA.bossParts[sel];if(typeof bp==='string')bp=DATA.bossParts[bp];
         if(bp){const wk=[...new Set(bp.filter(x=>x.weak).map(x=>x.name))];if(wk.length)feats.push('弱点：'+wk.join('・')+'（弓の矢は弱点に当たると大ダメージ）');
           const hd=[...new Set(bp.filter(x=>(x.mult||1)<0.9||x.guard).map(x=>x.name))];if(hd.length)feats.push('硬い部位：'+hd.join('・'));}}
+      {const es=DATA.enemyStatus[sel];if(es)feats.push('攻撃が当たると、ときどき'+DATA.playerStatus[es.k].name+(es.k==='poison'?'（少しずつHPが減る）':es.k==='paralysis'?'（しばらく動けない）':'（受けるダメージが増える）'));}
       if(E.guard)feats.push('正面からの攻撃を弾く');
       if(E.heavy)feats.push('攻撃でのけぞらない');
       if(E.slow)feats.push('攻撃が当たると鈍足');
