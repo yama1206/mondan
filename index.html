@@ -9097,7 +9097,7 @@ const App={
   /** 鍛冶屋：素材から装備・装飾品を作る */
   smithHTML(){
     const cat=this.smithCat||'weapon';
-    const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬']];
+    const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬'],['reinforce','強化']];
     // 防具は「シリーズ」ごとに見る（シリーズに属さない防具は「その他」）
     const seriesOf=id=>Object.keys(DATA.armorSets).find(k=>Object.values(DATA.armorSets[k].pieces).includes(id));
     const SLOT_ORDER_ARMOR=()=>Object.keys(SLOT_NAMES).filter(k=>k!=='weapon'&&k!=='charm');
@@ -9112,6 +9112,7 @@ const App={
     let sub=this.smithSub||'all';
     if(cat==='armor'&&!subs.some(([k])=>k===sub))sub=subs[0][0];
     const match=r=>{
+      if(cat==='reinforce')return false; // 強化の画面にはレシピを出さない
       if(cat==='item')return r.out.type==='item';
       if(cat==='deco')return r.out.type==='deco';
       if(r.out.type!=='equip')return false;
@@ -9127,7 +9128,7 @@ const App={
     const wt=DATA.weaponTypes[sub];
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
     const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).some(pc=>DATA.recipes.some(r=>r.out.id===pc&&this.recipeKnown(r)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')||'（ボスの素材を手に入れると、そのシリーズの防具と一式効果がここに並びます）'}</div>`:'';
-    const reinf=cat==='armor'?this.reinforceHTML():'';
+    const reinf=cat==='reinforce'?this.reinforceHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
       `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${reinf}${this.recipeListHTML(match).replace('class="col full" data-scroll="craft"','')}</div>`);
   },
