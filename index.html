@@ -353,6 +353,18 @@ const DATA={
       pieces:{head:'gale_helm',body:'gale_mail',arms:'gale_vambrace',waist:'gale_faulds',legs:'gale_greaves'},need:4,apply:s=>{s.moveSpd+=8;s.dodgeDistPct+=15;}},
     lizard:{name:'大蜥蜴シリーズ',bonus:'岩肌の生命力',desc:'最大HP+25、受けるダメージ-5%',
       pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},need:4,apply:s=>{s.maxHp+=25;s.dmgCut+=5;}},
+    lava:{name:'溶岩の巨人シリーズ',bonus:'溶岩の鎧',desc:'防御力+12、攻撃を受けたときの吹き飛び-50%',
+      pieces:{head:'lava_helm',body:'lava_mail',arms:'lava_vambrace',waist:'lava_faulds',legs:'lava_greaves'},need:4,apply:s=>{s.def+=12;s.knockRes+=50;}},
+    dragon:{name:'炎獄竜シリーズ',bonus:'炎獄の加護',desc:'炎属性の耐性+30、攻撃力+8%',
+      pieces:{head:'dragon_helm',body:'dragon_mail',arms:'dragon_vambrace',waist:'dragon_faulds',legs:'dragon_greaves'},need:4,apply:s=>{s.elemRes.fire+=30;s.atkPct+=8;}},
+    felg:{name:'熔鉄の魔獣シリーズ',bonus:'熔鉄の突進',desc:'移動速度+6%、最大HP+30',
+      pieces:{head:'felg_helm',body:'felg_mail',arms:'felg_vambrace',waist:'felg_faulds',legs:'felg_greaves'},need:4,apply:s=>{s.moveSpd+=6;s.maxHp+=30;}},
+    deer:{name:'氷冠の大鹿シリーズ',bonus:'氷冠の守り',desc:'氷属性の耐性+30、防御力+6',
+      pieces:{head:'deer_helm',body:'deer_mail',arms:'deer_vambrace',waist:'deer_faulds',legs:'deer_greaves'},need:4,apply:s=>{s.elemRes.ice+=30;s.def+=6;}},
+    wyv:{name:'永冬竜シリーズ',bonus:'永冬の加護',desc:'状態異常への耐性+25、最大HP+40',
+      pieces:{head:'wyv_helm',body:'wyv_mail',arms:'wyv_vambrace',waist:'wyv_faulds',legs:'wyv_greaves'},need:4,apply:s=>{s.statusRes+=25;s.maxHp+=40;}},
+    ape:{name:'氷嶺の剛猿シリーズ',bonus:'剛猿の剛力',desc:'攻撃力+12%、防御力+6',
+      pieces:{head:'ape_helm',body:'ape_mail',arms:'ape_vambrace',waist:'ape_faulds',legs:'ape_greaves'},need:4,apply:s=>{s.atkPct+=12;s.def+=6;}},
     mole:{name:'土竜シリーズ',bonus:'土竜の地ならし',desc:'防御力+10、攻撃を受けたときの吹き飛び-50%',
       pieces:{head:'mole_helm',body:'mole_mail',arms:'mole_vambrace',waist:'mole_faulds',legs:'mole_greaves'},need:4,apply:s=>{s.def+=10;s.knockRes+=50;}},
     centi:{name:'百足シリーズ',bonus:'晶炎の守り',desc:'炎属性の耐性+30、会心率+5%',
@@ -491,6 +503,37 @@ const DATA={
     lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{rescue:3,regen:4,hp_up:2},slots:1},
     lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
+    // 火山・氷雪のボス防具（各ボス1式・5部位）
+    lava_helm:{name:'溶岩の兜',slot:'head',def:13,skills:{def_up:3,flinch_free:2},slots:2},
+    lava_mail:{name:'溶岩の胴鎧',slot:'body',def:18,skills:{def_up:4,hp_up:3},slots:2},
+    lava_vambrace:{name:'溶岩の籠手',slot:'arms',def:12,skills:{atk_up:3,flinch_free:2},slots:2},
+    lava_faulds:{name:'溶岩の腰当て',slot:'waist',def:12,skills:{dmg_cut:3,def_up:2},slots:2},
+    lava_greaves:{name:'溶岩の脚甲',slot:'legs',def:13,skills:{def_up:3,hp_up:2},slots:2},
+    dragon_helm:{name:'炎獄の兜',slot:'head',def:13,skills:{atk_up:3,crit_up:2},slots:2},
+    dragon_mail:{name:'炎獄の鎧',slot:'body',def:18,skills:{def_up:3,dmg_cut:3},slots:2},
+    dragon_vambrace:{name:'炎獄の腕鎧',slot:'arms',def:12,skills:{atk_up:4,crit_dmg:2},slots:2},
+    dragon_faulds:{name:'炎獄の腰鎧',slot:'waist',def:12,skills:{dmg_cut:3,heal_up:2},slots:2},
+    dragon_greaves:{name:'炎獄の脚鎧',slot:'legs',def:13,skills:{move_up:3,dodge_dist:3},slots:2},
+    felg_helm:{name:'熔鉄の角兜',slot:'head',def:13,skills:{move_up:3,crit_up:2},slots:2},
+    felg_mail:{name:'熔鉄の鎧',slot:'body',def:18,skills:{hp_up:4,def_up:2},slots:2},
+    felg_vambrace:{name:'熔鉄の腕甲',slot:'arms',def:12,skills:{atk_up:3,crit_dmg:2},slots:2},
+    felg_faulds:{name:'熔鉄の腰甲',slot:'waist',def:12,skills:{dodge_dist:3,evade:2},slots:2},
+    felg_greaves:{name:'熔鉄の脚甲',slot:'legs',def:13,skills:{move_up:4,flinch_free:2},slots:2},
+    deer_helm:{name:'氷冠の角兜',slot:'head',def:13,skills:{def_up:3,rescue:2},slots:2},
+    deer_mail:{name:'氷冠の毛皮胴',slot:'body',def:18,skills:{hp_up:4,heal_up:2},slots:2},
+    deer_vambrace:{name:'氷冠の腕甲',slot:'arms',def:12,skills:{atk_up:3,flinch_free:2},slots:2},
+    deer_faulds:{name:'氷冠の腰布',slot:'waist',def:12,skills:{heal_up:3,dmg_cut:2},slots:2},
+    deer_greaves:{name:'氷冠の脚甲',slot:'legs',def:13,skills:{move_up:3,def_up:2},slots:2},
+    wyv_helm:{name:'永冬の竜兜',slot:'head',def:13,skills:{def_up:3,weakness:2},slots:2},
+    wyv_mail:{name:'永冬の竜鱗鎧',slot:'body',def:18,skills:{hp_up:4,def_up:3},slots:2},
+    wyv_vambrace:{name:'永冬の腕鱗',slot:'arms',def:12,skills:{atk_up:3,crit_up:2},slots:2},
+    wyv_faulds:{name:'永冬の腰鱗',slot:'waist',def:12,skills:{dmg_cut:3,heal_up:2},slots:2},
+    wyv_greaves:{name:'永冬の脚鱗',slot:'legs',def:13,skills:{dodge_dist:3,evade:2},slots:2},
+    ape_helm:{name:'剛猿の面',slot:'head',def:13,skills:{def_up:3,boss_hunter:2},slots:2},
+    ape_mail:{name:'剛猿の胴',slot:'body',def:18,skills:{hp_up:3,def_up:3},slots:2},
+    ape_vambrace:{name:'剛猿の腕',slot:'arms',def:12,skills:{atk_up:4,crit_dmg:2},slots:2},
+    ape_faulds:{name:'剛猿の腰',slot:'waist',def:12,skills:{dmg_cut:3,flinch_free:2},slots:2},
+    ape_greaves:{name:'剛猿の脚',slot:'legs',def:13,skills:{move_up:2,def_up:2,hp_up:1},slots:2},
     // 氷雪地帯の雑魚防具（キツネ・フクロウ）：1スロット・スキルpt少なめ。1式効果なし
     fox_helm:{name:'雪狐の耳帽子',slot:'head',def:6,fixed:[{stat:'moveSpd',v:2}],skills:{evade:2},slots:1},
     fox_mail:{name:'雪狐のふわ胴着',slot:'body',def:9,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:2},slots:1},
@@ -624,6 +667,41 @@ const DATA={
     // ---- 緑風の森林で手に入る素材 ----
     rabbit_fur:{name:'白うさぎの毛皮',color:'#f4eee8',desc:'ふかふかで温かい白い毛皮。（緑風の森林）'},
     rabbit_tuft:{name:'うさぎの綿毛',color:'#fff8f0',desc:'ふわふわの綿毛。軽くて、ふれるととても心地よい。稀少素材。（緑風の森林）'},
+    // ---- 灼熱の火山の素材 ----
+    flame_wing:{name:'炎翼竜の翼膜',color:'#ff9050',desc:'炎翼竜の熱を帯びた翼膜。（灼熱の火山）'},
+    flame_fang:{name:'炎竜の牙',color:'#fff0c0',desc:'炎翼竜の鋭い牙。（灼熱の火山）'},
+    blast_shell:{name:'爆炎甲虫の外殻',color:'#8a2a1a',desc:'爆炎の甲虫の赤黒い外殻。（灼熱の火山）'},
+    blast_sac:{name:'爆熱袋',color:'#ff6030',desc:'爆炎の甲虫の体内にある爆熱の袋。（灼熱の火山）'},
+    molten_armor:{name:'熔鉄獣の装甲',color:'#e89040',desc:'溶鉄の魔獣の溶けた鉄のような装甲。（灼熱の火山）'},
+    molten_horn:{name:'熔鉄の角',color:'#ffb050',desc:'溶鉄の魔獣の角。（灼熱の火山）'},
+    crater_shell:{name:'火口蠍の甲殻',color:'#c8703a',desc:'火口の大蠍の熱に耐える甲殻。（灼熱の火山）'},
+    hot_stinger:{name:'灼熱の尾針',color:'#ffd080',desc:'火口の大蠍の尾の針。（灼熱の火山）'},
+    hell_fang:{name:'炎獄竜の牙',color:'#ffe0a0',desc:'炎獄竜ヴォルカノスの牙。（灼熱の火山）'},
+    black_scale:{name:'炎獄竜の黒鱗',color:'#3a1a10',desc:'炎獄竜の黒く焼けた鱗。（灼熱の火山）'},
+    lava_dragon_core:{name:'溶岩の竜核',color:'#ff7a30',desc:'炎獄竜の心臓に宿る溶岩の核。非常に稀少。（灼熱の火山）'},
+    rock_core:{name:'グラドスの岩核',color:'#a06a40',desc:'溶岩の巨人の体の中心にある岩の核。（灼熱の火山）'},
+    red_arm:{name:'巨人の赤熱腕',color:'#ff6a20',desc:'溶岩の巨人の赤く燃える腕。（灼熱の火山）'},
+    hard_rock:{name:'溶岩巨人の堅岩',color:'#7a4a2a',desc:'溶岩の巨人を覆う、とても硬い岩。（灼熱の火山）'},
+    felg_horn:{name:'フェルグナスの熔鉄角',color:'#ffa040',desc:'熔鉄の魔獣フェルグナスの角。（灼熱の火山）'},
+    heat_crystal:{name:'熱核の結晶',color:'#ffd080',desc:'熔鉄の魔獣の体内で熱を溜める結晶。非常に稀少。（灼熱の火山）'},
+    // ---- 氷雪地帯の素材（雑魚・ボス）----
+    ice_shell:{name:'氷晶甲殻',color:'#c8f0ff',desc:'氷晶甲虫の硬い氷の外殻。（氷雪地帯）'},
+    frozen_crystal:{name:'凍結結晶',color:'#9ae8ff',desc:'氷晶甲虫が体に蓄える凍った結晶。（氷雪地帯）'},
+    seal_fang:{name:'凍牙の牙',color:'#f8f8f0',desc:'凍牙アザラシの鋭い牙。（氷雪地帯）'},
+    snow_hide:{name:'雪獣の厚皮',color:'#e8f4f8',desc:'凍牙アザラシの厚い皮。（氷雪地帯）'},
+    ice_sickle:{name:'氷刃の鎌',color:'#e8fbff',desc:'氷刃カマキリの凍てつく鎌。（氷雪地帯）'},
+    frost_shell:{name:'凍虫の外殻',color:'#70c8d8',desc:'氷刃カマキリの薄く硬い外殻。（氷雪地帯）'},
+    snow_monkey_fur:{name:'雪猿の毛皮',color:'#c8c0b0',desc:'雪山の小猿の毛皮。（氷雪地帯）'},
+    monkey_claw:{name:'小猿の鋭爪',color:'#f0e0c8',desc:'雪山の小猿の鋭い爪。（氷雪地帯）'},
+    ice_antler:{name:'氷冠の大角',color:'#e8f8ff',desc:'氷冠の大鹿の大きな氷の角。（氷雪地帯）'},
+    silver_pelt:{name:'白銀の毛皮',color:'#dfeaf4',desc:'氷冠の大鹿の白く光る毛皮。（氷雪地帯）'},
+    frozen_heart:{name:'凍てつく心核',color:'#c8f0ff',desc:'氷冠の大鹿の心臓の核。非常に稀少。（氷雪地帯）'},
+    frost_fang:{name:'永冬竜の牙',color:'#e8f8ff',desc:'永冬竜フロストレインの牙。（氷雪地帯）'},
+    frost_scale:{name:'氷雪竜の鱗',color:'#c8f0ff',desc:'永冬竜の凍りついた鱗。（氷雪地帯）'},
+    eternal_core:{name:'永久凍核',color:'#9ae8ff',desc:'永冬竜の体内で何年も溶けない凍核。非常に稀少。（氷雪地帯）'},
+    ice_arm:{name:'氷嶺猿の剛腕',color:'#a8e8ff',desc:'氷嶺の剛猿の太い腕。（氷雪地帯）'},
+    white_pelt:{name:'白毛の豪皮',color:'#ffffff',desc:'氷嶺の剛猿の分厚い白い毛皮。（氷雪地帯）'},
+    mountain_core:{name:'凍山の獣核',color:'#c8f0ff',desc:'氷嶺の剛猿の胸にある獣の核。非常に稀少。（氷雪地帯）'},
     // ---- 氷雪地帯の雑魚素材（雪影ギツネ・吹雪フクロウ）----
     fox_pelt:{name:'雪影ギツネの毛皮',color:'#f6f0ea',desc:'雪影ギツネのふわふわの毛皮。（氷雪地帯）'},
     fox_fang:{name:'氷狐の牙',color:'#e8f4ff',desc:'雪影ギツネの小さな氷の牙。（氷雪地帯）'},
@@ -736,6 +814,8 @@ const DATA={
     poison_frog:{atk:'water',weak:['thunder']},leech:{weak:['fire','thunder']},carnivore_plant:{weak:['fire'],strong:['water']},
     bloater:{weak:['fire']},swamp_croc:{atk:'water',weak:['thunder'],strong:['fire']},parasite:{weak:['fire','dragon']},
     mole:{weak:['fire']},centipede:{atk:'fire',weak:['ice','water']},grados:{weak:['fire','water','thunder','ice','dragon']},
+    lava_giant:{weak:['water','ice']},volcano_dragon:{atk:'fire',weak:['ice','water']},felgnas:{weak:['water','ice']},
+    ice_deer:{weak:['fire']},frost_wyvern:{atk:'ice',weak:['fire']},ice_ape:{weak:['fire']},
     hydra:{weak:['thunder','fire']},venomKing:{weak:['fire'],strong:['ice']},mireGiant:{weak:['fire','thunder']},
     water_lizard:{atk:'water',weak:['thunder']},jellyfish:{atk:'thunder',weak:['fire']},piranha:{atk:'water',weak:['thunder']},
     crab:{atk:'water',weak:['thunder'],strong:['fire']},eel:{atk:'thunder',weak:['ice'],strong:['water']},water_spirit:{atk:'water',weak:['thunder','dragon']},
@@ -968,6 +1048,55 @@ const DATA={
     grados:{name:'地底王グラドス',ai:'pattern',look:'golem',hp:4200,atk:34,def:16,r:42,speed:62,stunMax:170,stunTime:4,color:'#6a6a7a',drops:'grados',boss:true,physRes:0.4,
       pattern:[{k:'slam',wind:1.2,cd:6,dmg:1.5,r:150},{k:'sweep',wind:0.9,cd:4,dmg:1.3,r:130,arc:Math.PI*0.9}],
       pal:{body:'#6a6a7a',dark:'#2a2a36',ore:'#9ae8ff',core:'#c8f0ff',rage:'#7a5a8a',rageDark:'#3a2a4a',eye:'#9ae8ff',rageEye:'#ff8040'}},
+    // ===== 灼熱の火山（ステージ6）雑魚 =====
+    fire_wyvern:{name:'炎翼竜',ai:'wyvern',look:'fireWyvern',hp:90,atk:14,def:2,r:18,speed:120,color:'#e0502a',drops:'fire_wyvern',
+      breath:{wind:0.9,n:5,spread:1.3,speed:260,dmg:0.8,cd:[3,4.5]},glide:{wind:0.6,speed:540,dist:260,cd:[3.5,5]},
+      pal:{body:'#e0502a',dark:'#5a1a0a',wing:'#ff9050',eye:'#ffe060',fang:'#fff0c0',flame:'#ffb040'}},
+    magma_beetle:{name:'爆炎の甲虫',ai:'bomb',look:'magmaBeetle',hp:60,atk:26,def:4,r:16,speed:95,color:'#8a2a1a',drops:'magma_beetle',windup:1.0,
+      pal:{body:'#8a2a1a',dark:'#2a0a06',glow:'#ff6030',eye:'#ffe060'}},
+    molten_beast:{name:'溶鉄の魔獣',ai:'molten',look:'moltenBeast',hp:130,atk:16,def:6,r:22,speed:120,color:'#b84a1a',drops:'molten_beast',
+      charge:{wind:0.7,dist:320,speed:420,cd:[3.5,5]},
+      pal:{body:'#b84a1a',dark:'#3a1406',metal:'#e89040',glow:'#ffb050',eye:'#fff0a0'}},
+    scorpion:{name:'火口の大蠍',ai:'twin',look:'scorpion',hp:110,atk:18,def:7,r:20,speed:85,color:'#9a4a22',drops:'scorpion',
+      attacks:[{arc:0.7,r:72,wind:0.5,dirs:1,dmg:1.0},{arc:Math.PI*1.33,r:46,wind:0.6,dirs:1,dmg:0.9}],
+      pal:{body:'#9a4a22',dark:'#3a1a0a',shell:'#c8703a',tail:'#ff7040',sting:'#ffd080',eye:'#ffe060'}},
+    // ===== 灼熱の火山 ボス =====
+    lava_giant:{name:'溶岩の巨人',ai:'pattern',look:'lavaGiant',hp:3600,atk:32,def:14,r:40,speed:70,stunMax:160,stunTime:4,color:'#7a4a2a',drops:'lava_giant',boss:true,
+      pattern:[{k:'slam',wind:1.2,cd:6,dmg:1.5,r:140},{k:'toss',wind:1.0,cd:5,dmg:1.3,r:60},{k:'crack',wind:0.9,cd:6,dmg:1.2,len:360,width:44},{k:'sweep',wind:0.9,cd:4,dmg:1.3,r:120,arc:Math.PI*1.0}],
+      pal:{body:'#7a4a2a',dark:'#2a1608',rock:'#a06a40',lava:'#ff6a20',core:'#ffb050',rage:'#a03a1a',rageDark:'#3a0a04',eye:'#ffe060',rageEye:'#ffffff'}},
+    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:110,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,
+      pattern:[{k:'shot',wind:0.9,cd:4,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire'},{k:'toss',wind:1.0,cd:4.5,dmg:1.2,r:70},{k:'slam',wind:1.1,cd:6.5,dmg:1.2,r:170,below:0.5},{k:'erupt',wind:1.2,cd:7,dmg:1.0,r:60,n:4,spread:220,below:0.25}],
+      pal:{body:'#8a2a14',dark:'#2a0a04',scale:'#c04a20',lava:'#ff7a30',wing:'#5a1808',rage:'#b03010',rageDark:'#3a0800',eye:'#ffe060',rageEye:'#ffffff'}},
+    felgnas:{name:'熔鉄の魔獣フェルグナス',ai:'pattern',look:'felgnas',hp:3000,atk:30,def:9,r:36,speed:130,stunMax:140,stunTime:4,color:'#c05a1a',drops:'felgnas',boss:true,rageChain:2,
+      pattern:[{k:'charge',wind:0.7,cd:4.5,dmg:1.3},{k:'slam',wind:0.9,cd:5,dmg:1.1,r:130},{k:'pool',wind:1.0,cd:5,dmg:0.8,r:70,life:6,hz:'fire',below:0.4}],
+      pal:{body:'#c05a1a',dark:'#3a1406',metal:'#ffa040',glow:'#ffd080',rage:'#e05a10',rageDark:'#4a1404',eye:'#fff0a0',rageEye:'#ffffff'}},
+    // ===== 氷雪地帯（ステージ7）雑魚 =====
+    ice_beetle:{name:'氷晶甲虫',ai:'iceBeetle',look:'iceBeetle',hp:140,atk:14,def:14,r:22,speed:60,color:'#8fd0e8',drops:'ice_beetle',
+      shard:{wind:0.9,r:130,n:8,speed:260,dmg:0.8,cd:[3,4.5]},
+      pal:{body:'#8fd0e8',dark:'#2a5a70',shell:'#c8f0ff',eye:'#1a3a50'}},
+    snow_owl:{name:'吹雪フクロウ',ai:'owl',look:'snowOwl',hp:70,atk:14,def:2,r:16,speed:110,color:'#d8d0c0',drops:'snow_owl',aimTime:0.8,arrowSpeed:340,
+      pal:{body:'#d8d0c0',dark:'#6a6052',ear:'#a89c88',belly:'#f6f0e4',eye:'#ffd040',beak:'#e8a040'}},
+    ice_seal:{name:'凍牙アザラシ',ai:'dasher',look:'iceSeal',hp:100,atk:18,def:6,r:20,speed:110,color:'#9ab8c8',drops:'ice_seal',
+      dash:{wind:0.6,speed:600,dist:260,cd:[3,4.5]},
+      pal:{body:'#9ab8c8',dark:'#3a5a6a',belly:'#e8f4f8',tusk:'#f8f8f0',eye:'#1a2a3a'}},
+    ice_mantis:{name:'氷刃カマキリ',ai:'twin',look:'mantis',hp:90,atk:16,def:3,r:18,speed:130,color:'#70c8d8',drops:'ice_mantis',
+      attacks:[{arc:0.9,r:60,wind:0.45,dirs:1,dmg:1.0},{arc:0.7,r:50,wind:0.6,dirs:4,dmg:0.8}],
+      pal:{body:'#70c8d8',dark:'#1e4a58',blade:'#e8fbff',eye:'#ff9040'}},
+    snow_fox:{name:'雪影ギツネ',ai:'fox',look:'snowFox',hp:65,atk:14,def:2,r:14,speed:170,color:'#f0e8e0',drops:'snow_fox',
+      pounce:{wind:0.5,speed:560,dist:230,cd:[3.2,4.6]},shard:{speed:300,dmg:0.8,cd:[2.6,3.6]},
+      pal:{body:'#f6f0ea',dark:'#7a6a70',tail:'#ffb070',eye:'#4a3a4a',ear:'#ffb070'}},
+    snow_monkey:{name:'雪山の小猿',ai:'goblin',look:'monkey',hp:55,atk:13,def:2,r:13,speed:150,color:'#c8c0b0',drops:'snow_monkey',windup:0.3,
+      pal:{body:'#c8c0b0',dark:'#5a5040',face:'#f0e0c8',eye:'#2a2a2a'}},
+    // ===== 氷雪地帯 ボス =====
+    ice_deer:{name:'氷冠の大鹿',ai:'pattern',look:'iceDeer',hp:3200,atk:30,def:10,r:38,speed:115,stunMax:150,stunTime:4,color:'#a8d8f0',drops:'ice_deer',boss:true,
+      pattern:[{k:'charge',wind:0.8,cd:5,dmg:1.3},{k:'shot',wind:0.6,cd:4,n:5,spread:0.9,speed:300,dmg:0.9,kind:'ice'},{k:'erupt',wind:1.1,cd:6.5,dmg:1.1,r:55,n:4,spread:200}],
+      pal:{body:'#a8d8f0',dark:'#2a5a78',antler:'#e8f8ff',ice:'#c8f0ff',rage:'#7ab8e0',rageDark:'#1a3a58',eye:'#1a3a50',rageEye:'#ffffff'}},
+    frost_wyvern:{name:'永冬竜フロストレイン',ai:'pattern',look:'frostWyvern',hp:3300,atk:31,def:9,r:40,speed:120,stunMax:150,stunTime:4,color:'#7ac8e8',drops:'frost_wyvern',boss:true,
+      pattern:[{k:'shot',wind:0.9,cd:4.5,n:7,spread:1.2,speed:270,dmg:0.8,kind:'ice'},{k:'shot',wind:0.5,cd:3,n:1,speed:380,dmg:1.0,kind:'ice'},{k:'erupt',wind:1.1,cd:7,dmg:1.0,r:50,n:5,spread:240}],
+      pal:{body:'#7ac8e8',dark:'#1e4a68',scale:'#c8f0ff',wing:'#3a88b0',rage:'#50a8d8',rageDark:'#143a58',eye:'#ffffff',rageEye:'#ff8040'}},
+    ice_ape:{name:'氷嶺の剛猿',ai:'pattern',look:'iceApe',hp:3500,atk:33,def:10,r:40,speed:100,stunMax:160,stunTime:4,color:'#e8eef4',drops:'ice_ape',boss:true,
+      pattern:[{k:'slam',wind:1.0,cd:5.5,dmg:1.4,r:130},{k:'charge',wind:0.7,cd:6,dmg:1.2},{k:'shot',wind:0.6,cd:4,n:5,spread:0.8,speed:330,dmg:0.8,kind:'shard'},{k:'swarm',wind:1.0,cd:9,kind:'snow_monkey',n:2,max:4}],
+      pal:{body:'#e8eef4',dark:'#5a6a7a',fur:'#ffffff',ice:'#a8e8ff',rage:'#b8c8d8',rageDark:'#4a5a6a',eye:'#1a2a3a',rageEye:'#ff6040'}},
     bone_dragon:{name:'冥府の骨竜',ai:'dragon',hp:5200,atk:30,def:10,r:40,speed:92,stunMax:160,stunTime:3.5,color:'#d8d0c0',drops:'bone_dragon',boss:true,
       summon:'skeleton',pal:{body:'#d8d0c0',dark:'#5a5246',glow:'#80a0ff',rageGlow:'#c050ff'}},
   },
@@ -1177,6 +1306,22 @@ const DATA={
       {type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},
       {type:'deco',chance:0.75},{type:'deco',chance:0.35},
     ]},
+    fire_wyvern:{rolls:[{type:'mat',id:'flame_wing',chance:1.0,min:1,max:2},{type:'mat',id:'flame_fang',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    magma_beetle:{rolls:[{type:'mat',id:'blast_shell',chance:1.0,min:1,max:2},{type:'mat',id:'blast_sac',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    molten_beast:{rolls:[{type:'mat',id:'molten_armor',chance:1.0,min:1,max:2},{type:'mat',id:'molten_horn',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    scorpion:{rolls:[{type:'mat',id:'crater_shell',chance:1.0,min:1,max:2},{type:'mat',id:'hot_stinger',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    lava_giant:{rarityBoost:2.0,rolls:[{type:'mat',id:'rock_core',chance:1.0,min:2,max:3},{type:'mat',id:'red_arm',chance:1.0,min:1,max:2},{type:'mat',id:'hard_rock',chance:0.3,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
+    volcano_dragon:{rarityBoost:2.0,rolls:[{type:'mat',id:'hell_fang',chance:1.0,min:2,max:3},{type:'mat',id:'black_scale',chance:1.0,min:1,max:2},{type:'mat',id:'lava_dragon_core',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
+    felgnas:{rarityBoost:2.0,rolls:[{type:'mat',id:'felg_horn',chance:1.0,min:2,max:3},{type:'mat',id:'molten_armor',chance:1.0,min:1,max:2},{type:'mat',id:'heat_crystal',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
+    ice_beetle:{rolls:[{type:'mat',id:'ice_shell',chance:1.0,min:1,max:2},{type:'mat',id:'frozen_crystal',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    ice_seal:{rolls:[{type:'mat',id:'seal_fang',chance:1.0,min:1,max:2},{type:'mat',id:'snow_hide',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    ice_mantis:{rolls:[{type:'mat',id:'ice_sickle',chance:1.0,min:1,max:2},{type:'mat',id:'frost_shell',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    snow_monkey:{rolls:[{type:'mat',id:'snow_monkey_fur',chance:1.0,min:1,max:2},{type:'mat',id:'monkey_claw',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    ice_deer:{rarityBoost:2.0,rolls:[{type:'mat',id:'ice_antler',chance:1.0,min:2,max:3},{type:'mat',id:'silver_pelt',chance:1.0,min:1,max:2},{type:'mat',id:'frozen_heart',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
+    frost_wyvern:{rarityBoost:2.0,rolls:[{type:'mat',id:'frost_fang',chance:1.0,min:2,max:3},{type:'mat',id:'frost_scale',chance:1.0,min:1,max:2},{type:'mat',id:'eternal_core',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
+    ice_ape:{rarityBoost:2.0,rolls:[{type:'mat',id:'ice_arm',chance:1.0,min:2,max:3},{type:'mat',id:'white_pelt',chance:1.0,min:1,max:2},{type:'mat',id:'mountain_core',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
+    snow_owl:{rolls:[{type:'mat',id:'owl_feather',chance:1.0,min:1,max:2},{type:'mat',id:'owl_gem',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
+    snow_fox:{rolls:[{type:'mat',id:'fox_pelt',chance:1.0,min:1,max:2},{type:'mat',id:'fox_fang',chance:0.4,min:1,max:1},{type:'deco',chance:0.12}]},
     cave_bat:{rolls:[{type:'mat',id:'cave_wing',chance:1.0,min:1,max:2},{type:'mat',id:'cave_fang',chance:0.6,min:1,max:1},{type:'deco',chance:0.12}]},
     rock_shell:{rolls:[{type:'mat',id:'rock_scale',chance:1.0,min:1,max:2},{type:'mat',id:'rock_tooth',chance:0.35,min:1,max:1},{type:'deco',chance:0.12}]},
     cave_spider:{rolls:[{type:'mat',id:'spider_silk',chance:1.0,min:1,max:2},{type:'mat',id:'spider_fang',chance:0.35,min:1,max:1},{type:'deco',chance:0.12}]},
@@ -1221,7 +1366,7 @@ const DATA={
     {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:12,type:'mat',mat:'goblin_hide'},
     {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:12,type:'mat',mat:'old_bone'},
     {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:20,type:'mat',mat:'arrowhead'},
-    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:5},
+    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:8},
     {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:250,type:'deco'},
   ],
   /* ステージ：各依頼で使うダンジョンの敵・難易度。enemySet の melee / ranged / boss が配置される */
@@ -1235,10 +1380,14 @@ const DATA={
       enemySet:{melee:'leech',ranged:'carnivore_plant',boss:'hydra'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'swamp',bgm:'swamp'},
     {id:4,name:'蒼流の水辺',desc:'澄んだ川と、落ちる滝の音が響く水辺。水の底から雷の気配が漂う。最奥の「滝つぼ」には、水底を統べる主が潜んでいる。',
       enemySet:{melee:'piranha',ranged:'water_spirit',boss:'aquarios'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'river',bgm:'river'},
-    {id:5,name:'忘却の地下墓地',desc:'忘れ去られた墓所と地下遺跡。不気味な気配が満ちており、最奥の「冥府の祭壇」には恐ろしい主が棲みついている。',
-      enemySet:{melee:'hobgoblin',ranged:'sniper',boss:'black_wolf'},hp:1.0,atk:1.0,chest:'chest2',layout:'crypt',bgm:'crypt'},
-    {id:6,name:'晶石の大洞窟',desc:'きらめく結晶が壁を覆う、深く長い洞窟。道は一本道に近く、奥へ進むほど結晶の光が強くなる。最奥の「晶洞の底」には、地の底を統べる主が眠っている。',
+    {id:5,name:'晶石の大洞窟',desc:'きらめく結晶が壁を覆う、深く長い洞窟。道は一本道に近く、奥へ進むほど結晶の光が強くなる。最奥の「晶洞の底」には、地の底を統べる主が眠っている。',
       enemySet:{melee:'rock_shell',ranged:'cave_spider',boss:'grados'},hp:1.0,atk:1.0,chest:'chest2',layout:'crystal',bgm:'cave'},
+    {id:6,name:'灼熱の火山',desc:'溶岩が流れる火山の内部。赤い熱気と噴き上がる炎が絶えない。最奥の「火口の底」では、溶岩の巨人が目を覚ます。',
+      enemySet:{melee:'magma_beetle',ranged:'fire_wyvern',boss:'lava_giant'},hp:1.0,atk:1.0,chest:'chest2',layout:'volcano',bgm:'crypt'},
+    {id:7,name:'氷雪地帯',desc:'白い雪と氷柱が続く吹雪の山。風の音がやむことはない。山頂の「氷嶺」には、雪山の主が棲んでいる。',
+      enemySet:{melee:'ice_mantis',ranged:'snow_owl',boss:'ice_deer'},hp:1.0,atk:1.0,chest:'chest2',layout:'snow',bgm:'swamp'},
+    {id:8,name:'忘却の地下墓地',desc:'忘れ去られた墓所と地下遺跡。不気味な気配が満ちており、最奥の「冥府の祭壇」には恐ろしい主が棲みついている。',
+      enemySet:{melee:'hobgoblin',ranged:'sniper',boss:'black_wolf'},hp:1.0,atk:1.0,chest:'chest2',layout:'crypt',bgm:'crypt'},
   ],
   /* マップの部屋構成。毎回 main から数部屋・side から寄り道の部屋を選び、つなぎ方も変える。
      spawn：[魔物, 最少, 最多]／elite：強化された魔物の数／gather：採取ポイントの数 [最少,最多]／chest：必ず置く宝箱の数
@@ -1314,6 +1463,34 @@ const DATA={
         {id:'pocket',name:'結晶の袋小路',spawn:[['crystal_slime',0,1]],gather:[3,4]},
         {id:'lair3',name:'蜘蛛の巣',spawn:[['cave_spider',1,1],['rock_shell',0,1]],elite:1,chest:1},
       ]},
+    volcano:{theme:'cave',obstacle:'rocks',wander:['fire_wyvern','magma_beetle'],
+      start:{id:'entrance',name:'火山入口'},
+      boss:{id:'arena',name:'火口の底',spawn:[['molten_beast',1,2],['fire_wyvern',1,2]],obstacle:'pillars'},
+      main:[
+        {id:'lava_road',name:'溶岩の坂道',spawn:[['magma_beetle',2,3],['fire_wyvern',1,2]]},
+        {id:'vent',name:'噴気の通路',spawn:[['molten_beast',1,2],['magma_beetle',2,3]]},
+        {id:'cinder',name:'灰の広間',spawn:[['scorpion',1,2],['fire_wyvern',1,2]]},
+        {id:'crater',name:'火口の縁',spawn:[['molten_beast',2,3],['scorpion',1,2]]},
+        {id:'core',name:'灼熱の核室',spawn:[['magma_beetle',2,3],['molten_beast',1,2]]},
+      ],
+      side:[
+        {id:'pocket',name:'熱気の袋小路',spawn:[['magma_beetle',0,1]],gather:[3,4]},
+        {id:'lair4',name:'溶岩の巣',spawn:[['scorpion',1,1],['fire_wyvern',0,1]],elite:1,chest:1},
+      ]},
+    snow:{theme:'cave',obstacle:'rocks',wander:['snow_fox','snow_monkey'],
+      start:{id:'entrance',name:'氷雪入口'},
+      boss:{id:'arena',name:'氷嶺',spawn:[['ice_deer',1,1],['snow_monkey',1,2]],obstacle:'pillars'},
+      main:[
+        {id:'drift',name:'吹きだまりの道',spawn:[['snow_fox',2,3],['ice_beetle',1,2]]},
+        {id:'icicle',name:'氷柱の回廊',spawn:[['ice_seal',2,3],['snow_owl',1,2]]},
+        {id:'cliff',name:'崖道',spawn:[['ice_mantis',2,3],['snow_monkey',1,2]]},
+        {id:'ridge',name:'雪稜',spawn:[['snow_owl',2,3],['ice_seal',1,2]]},
+        {id:'summit',name:'山頂の平地',spawn:[['ice_mantis',1,2],['snow_fox',1,2]]},
+      ],
+      side:[
+        {id:'hollow',name:'雪の窪地',spawn:[['snow_monkey',0,1]],gather:[3,4]},
+        {id:'cave2',name:'氷の洞穴',spawn:[['ice_beetle',1,1],['snow_fox',0,1]],elite:1,chest:1},
+      ]},
     crypt:{theme:'crypt',obstacle:'tombs',wander:['skeleton','wisp'],
       start:{id:'entrance',name:'墓所の入口'},
       boss:{id:'arena',name:'冥府の祭壇',spawn:[['skeleton',2,3],['archer',1,2],['zombie',1,1]],obstacle:'pillars'},
@@ -1356,31 +1533,45 @@ const DATA={
     {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:500,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
     {id:'aq_turtle',stage:4,after:'aq_boss',boss:'turtle',name:'【強敵】滝を背負う大亀',desc:'滝の裏から、水を背負った大きな亀が現れた。',goal:{type:'boss'},reward:{gold:600,mats:{shell_heart:2,crab_shell:2,reinforce_orb:2},decos:1}},
     {id:'aq_eel',stage:4,after:'aq_turtle',boss:'thunderEel',name:'【強敵】雷鳴の大鰻',desc:'渦の淵で雷が鳴っている。雷を纏う大鰻が目を覚ました。',goal:{type:'boss'},reward:{gold:700,mats:{thunder_core:2,eel_sac:3,reinforce_orb:3},decos:1}},
-    {id:'s2_hob',stage:5,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを12体倒せ。',goal:{type:'kill',target:'hobgoblin',count:12},reward:{gold:300,mats:{hard_iron:3}}},
-    {id:'s2_sniper',stage:5,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを8体倒せ。',goal:{type:'kill',target:'sniper',count:8},reward:{gold:320,mats:{dark_bone:3}}},
-    {id:'s2_boss',stage:5,urgent:true,unlocks:6,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:900,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
+    {id:'s2_hob',stage:8,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを12体倒せ。',goal:{type:'kill',target:'hobgoblin',count:12},reward:{gold:300,mats:{hard_iron:3}}},
+    {id:'s2_sniper',stage:8,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを8体倒せ。',goal:{type:'kill',target:'sniper',count:8},reward:{gold:320,mats:{dark_bone:3}}},
+    {id:'s2_boss',stage:8,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:900,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
-    {id:'s6_bat',stage:6,key:true,name:'洞窟コウモリの掃討',desc:'素早く飛び回り、上空から襲いかかるコウモリを12体倒せ。',goal:{type:'kill',target:'cave_bat',count:12},reward:{gold:380,mats:{cave_fang:3}}},
-    {id:'s6_crystal',stage:6,key:true,name:'輝晶スライムの採取',desc:'結晶をまとったスライムを10体倒し、輝晶の欠片を集めろ。',goal:{type:'kill',target:'crystal_slime',count:10},reward:{gold:360,mats:{crystal_shard:4}}},
-    {id:'s6_boss',stage:6,urgent:true,name:'【緊急】地底王グラドス',desc:'洞窟の最奥で眠っていた地底王が目を覚ました。大きく動きは遅いが、一撃が重い。物理攻撃にはとても硬く、属性の攻撃がよく効く。',goal:{type:'boss'},reward:{gold:1200,mats:{grados_core:1,reinforce_orb:2},decos:2}},
-    {id:'s6_mole',stage:6,after:'s6_boss',boss:'mole',name:'【強敵】結晶喰いの土竜',desc:'結晶を食べ尽くす巨大な土竜が、地面の下から奇襲を仕掛けてくる。地中に潜る前の揺れに注意。',goal:{type:'boss'},reward:{gold:800,mats:{mole_crystal:1,reinforce_orb:2},decos:1}},
-    {id:'s6_centi',stage:6,after:'s6_mole',boss:'centipede',name:'【強敵】晶殻の大百足',desc:'細長い体の大百足が、炎の弾を吐き出す。尾の薙ぎ払いと炎の弾に注意。',goal:{type:'boss'},reward:{gold:900,mats:{centi_ember:1,reinforce_orb:2},decos:1}},
-    {id:'free_6',stage:6,explore:true,name:'【探索】晶石の大洞窟',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'s6_bat',stage:5,key:true,name:'洞窟コウモリの掃討',desc:'素早く飛び回り、上空から襲いかかるコウモリを12体倒せ。',goal:{type:'kill',target:'cave_bat',count:12},reward:{gold:380,mats:{cave_fang:3}}},
+    {id:'s6_crystal',stage:5,key:true,name:'輝晶スライムの採取',desc:'結晶をまとったスライムを10体倒し、輝晶の欠片を集めろ。',goal:{type:'kill',target:'crystal_slime',count:10},reward:{gold:360,mats:{crystal_shard:4}}},
+    {id:'s6_boss',stage:5,urgent:true,unlocks:6,name:'【緊急】地底王グラドス',desc:'洞窟の最奥で眠っていた地底王が目を覚ました。大きく動きは遅いが、一撃が重い。物理攻撃にはとても硬く、属性の攻撃がよく効く。',goal:{type:'boss'},reward:{gold:1200,mats:{grados_core:1,reinforce_orb:2},decos:2}},
+    {id:'s6_mole',stage:5,after:'s6_boss',boss:'mole',name:'【強敵】結晶喰いの土竜',desc:'結晶を食べ尽くす巨大な土竜が、地面の下から奇襲を仕掛けてくる。地中に潜る前の揺れに注意。',goal:{type:'boss'},reward:{gold:800,mats:{mole_crystal:1,reinforce_orb:2},decos:1}},
+    {id:'s6_centi',stage:5,after:'s6_mole',boss:'centipede',name:'【強敵】晶殻の大百足',desc:'細長い体の大百足が、炎の弾を吐き出す。尾の薙ぎ払いと炎の弾に注意。',goal:{type:'boss'},reward:{gold:900,mats:{centi_ember:1,reinforce_orb:2},decos:1}},
+    {id:'free_6',stage:5,explore:true,name:'【探索】晶石の大洞窟',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'v_ash',stage:6,key:true,name:'爆炎の甲虫の掃討',desc:'赤く光って爆発する甲虫を10体倒せ。爆発の前に離れること。',goal:{type:'kill',target:'magma_beetle',count:10},reward:{gold:420,mats:{blast_sac:3}}},
+    {id:'v_wing',stage:6,key:true,name:'炎翼竜の狩り',desc:'熱風のブレスを吐く炎翼竜を8体倒せ。',goal:{type:'kill',target:'fire_wyvern',count:8},reward:{gold:430,mats:{flame_fang:3}}},
+    {id:'v_beast',stage:6,key:true,name:'溶鉄の魔獣の討伐',desc:'溶けた鉄の体を持つ魔獣を8体倒せ。',goal:{type:'kill',target:'molten_beast',count:8},reward:{gold:440,mats:{molten_horn:2}}},
+    {id:'v_boss',stage:6,urgent:true,unlocks:7,name:'【緊急】溶岩の巨人',desc:'火口の底で、溶岩の巨人が立ち上がった。動きは遅いが一撃が重い。振り下ろしの前に大きく離れろ。',goal:{type:'boss'},reward:{gold:1300,mats:{rock_core:1,reinforce_orb:2},decos:2}},
+    {id:'v_dragon',stage:6,after:'v_boss',boss:'volcano_dragon',name:'【強敵】炎獄竜ヴォルカノス',desc:'火口の奥で、炎の竜が翼を広げた。炎のブレスと溶岩弾に注意せよ。',goal:{type:'boss'},reward:{gold:950,mats:{hell_fang:1,reinforce_orb:2},decos:1}},
+    {id:'v_felg',stage:6,after:'v_dragon',boss:'felgnas',name:'【強敵】熔鉄の魔獣フェルグナス',desc:'熔鉄をまとった魔獣が突進を繰り返す。残った熔鉄の地面に気をつけろ。',goal:{type:'boss'},reward:{gold:1000,mats:{felg_horn:1,reinforce_orb:2},decos:1}},
+    {id:'free_v',stage:6,explore:true,name:'【探索】灼熱の火山',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'n_fox',stage:7,key:true,name:'雪影ギツネの掃討',desc:'素早く動き回る雪影ギツネを10体倒せ。',goal:{type:'kill',target:'snow_fox',count:10},reward:{gold:480,mats:{fox_pelt:3}}},
+    {id:'n_owl',stage:7,key:true,name:'吹雪フクロウの撃墜',desc:'氷の弾を放つフクロウを9体倒せ。',goal:{type:'kill',target:'snow_owl',count:9},reward:{gold:480,mats:{owl_feather:3}}},
+    {id:'n_seal',stage:7,key:true,name:'凍牙アザラシの討伐',desc:'突進してくるアザラシを8体倒せ。',goal:{type:'kill',target:'ice_seal',count:8},reward:{gold:500,mats:{seal_fang:3}}},
+    {id:'n_boss',stage:7,urgent:true,unlocks:8,name:'【緊急】氷冠の大鹿',desc:'氷の角を持つ大鹿が、雪山の頂で待ち構えている。足元の予告を見て、氷柱を避けろ。',goal:{type:'boss'},reward:{gold:1400,mats:{ice_antler:1,reinforce_orb:2},decos:2}},
+    {id:'n_wyv',stage:7,after:'n_boss',boss:'frost_wyvern',name:'【強敵】永冬竜フロストレイン',desc:'雪山の奥で、凍える翼の竜が目を覚ました。冷気のブレスと氷柱に注意せよ。',goal:{type:'boss'},reward:{gold:950,mats:{frost_fang:1,reinforce_orb:2},decos:1}},
+    {id:'n_ape',stage:7,after:'n_wyv',boss:'ice_ape',name:'【強敵】氷嶺の剛猿',desc:'氷嶺の主が、仲間の小猿を呼び出す。呼び出しの予備動作を見て、先に小猿を倒せ。',goal:{type:'boss'},reward:{gold:1000,mats:{ice_arm:1,reinforce_orb:2},decos:1}},
+    {id:'free_n',stage:7,explore:true,name:'【探索】氷雪地帯',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
     {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:600,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
     {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:700,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
     {id:'s1_rabbit',stage:2,after:'s1_stag',boss:'forest_rabbit',name:'【強敵】古森の跳ね兎',desc:'森の奥で、白い毛並みの大きな兎が跳ね回っている。とても素早く、突進の前には足をためる。横へかわして背後から攻めろ。',goal:{type:'boss'},reward:{gold:800,mats:{rabbit_fur:2,rabbit_tuft:2,reinforce_orb:2},decos:1}},
-    {id:'s2_dragon',stage:5,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
+    {id:'s2_dragon',stage:8,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
     // 自由探索（目標なし・報酬なし。好きなときに帰れる）
     {id:'free_1',stage:1,explore:true,name:'【探索】風渡る草原',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
     {id:'free_2',stage:2,explore:true,name:'【探索】緑風の森林',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
     {id:'free_3',stage:3,explore:true,name:'【探索】腐毒の沼地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
     {id:'free_4',stage:4,explore:true,name:'【探索】蒼流の水辺',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'free_5',stage:5,explore:true,name:'【探索】忘却の地下墓地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_5',stage:8,explore:true,name:'【探索】忘却の地下墓地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
   bestiary:{
     goblin:{stage:[1,2],role:'近接攻撃型',desc:'森に住みつく小鬼。群れで近づき、こん棒で殴りかかってくる。この地では剣を持つ「ゴブリン剣士」と呼ばれることも。',tip:'振りかぶる動作（赤い扇形）が見えたら横へ。体力は低いので素早く倒そう。'},
-    archer:{stage:[2,5],role:'遠距離攻撃型',desc:'骨の弓兵（骸骨弓兵）。距離を取り、狙いを定めて矢を放つ。',tip:'狙いの線が赤く固まった直後に矢が来る。柱や木を盾にしながら近づこう。'},
+    archer:{stage:[2,8],role:'遠距離攻撃型',desc:'骨の弓兵（骸骨弓兵）。距離を取り、狙いを定めて矢を放つ。',tip:'狙いの線が赤く固まった直後に矢が来る。柱や木を盾にしながら近づこう。'},
     goblin_archer:{stage:[1,2],role:'遠距離攻撃型',desc:'見張り台や野営地に陣取るゴブリンの射手。ほかの魔物と組むと厄介。',tip:'近接の魔物を引きつけつつ、先に弓兵を倒すと楽になる。'},
     forest_wolf:{stage:[1,2],role:'高速近接型',desc:'森を駆ける狼。獲物を追いかけ、少し離れた場所から一直線に突進してくる。',tip:'突進は直線だけ。地面の帯が見えたら横へ回避して、止まったところを攻撃。'},
     slime:{stage:[1,2],role:'低速・範囲攻撃型',desc:'跳ねながら近づいてくるスライム。近くでは大きく跳び、着地点の周りを押しつぶす。',tip:'着地点に赤い円が出る。円の外へ出てから反撃しよう。'},
@@ -1398,13 +1589,29 @@ const DATA={
     gale_bird:{stage:[1],role:'ボス',desc:'草原の空を支配する巨大な鳥。とても素早く、急降下や羽根の投げつけで攻めてくるが、一撃は軽い。',tip:'急降下のあとは少しスキがある。羽根は扇状に飛ぶので横へよけよう。'},
     rock_lizard:{stage:[1],role:'ボス',desc:'岩のような鱗に覆われた大蜥蜴。噛みつき・尻尾の振り回し・岩の吐き出しを使い分ける。',tip:'尻尾の振り回しは足元の円。円が見えたらすぐ離れよう。'},
     stag_beetle:{stage:[2],role:'ボス',desc:'古森に棲む巨大なクワガタ。大顎のある正面からの攻撃はほとんど弾かれてしまう。向きを変えるのは遅い。',tip:'横や後ろへ回り込んで攻めよう。罠にかかったりスタンしている間は、正面からでも攻撃が通る。'},
-    cave_bat:{stage:[6],role:'雑魚',desc:'洞窟の天井に張りつく小さなコウモリ。素早く飛び回り、上空から急降下して襲いかかる。',tip:'急降下の前に影が見える。直線から外れて、降りてきたところを叩こう。'},
-    rock_shell:{stage:[6],role:'雑魚',desc:'岩のような鱗に覆われたトカゲ。正面からの攻撃にとても強く、体当たりを仕掛けてくる。',tip:'正面は硬い。横や後ろに回り込もう。'},
-    cave_spider:{stage:[6],role:'雑魚',desc:'鍾乳石の陰に巣を張る蜘蛛。糸を吐いて動きを鈍らせる。',tip:'糸に当たると足が遅くなる。巣の近くへは深入りしない。'},
-    crystal_slime:{stage:[6],role:'雑魚',desc:'結晶をまとったスライム。体当たりのほかに、結晶の破片を飛ばしてくる。',tip:'破片は直線で飛ぶ。少し離れて、揺れたら横へ。'},
-    mole:{stage:[6],role:'ボス',desc:'結晶を食べて育った大きな土竜。地面に潜り、プレイヤーの足元から飛び出して攻撃する。',tip:'潜っている間は攻撃が届かない。飛び出した後に隙がある。'},
-    centipede:{stage:[6],role:'ボス',desc:'細長い体の大百足。体を振るって薙ぎ払い、炎の弾を吐く。',tip:'炎の弾は火属性。ひるんだ隙に頭を狙おう。'},
-    grados:{stage:[6],role:'ボス',desc:'結晶と鉱石で出来た地底の王。とても大きく動きは遅いが、一撃が重い。物理攻撃にはとても硬い。',tip:'属性の攻撃がよく効く。叩きつけの後は隙が大きい。'},
+    cave_bat:{stage:[5],role:'雑魚',desc:'洞窟の天井に張りつく小さなコウモリ。素早く飛び回り、上空から急降下して襲いかかる。',tip:'急降下の前に影が見える。直線から外れて、降りてきたところを叩こう。'},
+    rock_shell:{stage:[5],role:'雑魚',desc:'岩のような鱗に覆われたトカゲ。正面からの攻撃にとても強く、体当たりを仕掛けてくる。',tip:'正面は硬い。横や後ろに回り込もう。'},
+    cave_spider:{stage:[5],role:'雑魚',desc:'鍾乳石の陰に巣を張る蜘蛛。糸を吐いて動きを鈍らせる。',tip:'糸に当たると足が遅くなる。巣の近くへは深入りしない。'},
+    crystal_slime:{stage:[5],role:'雑魚',desc:'結晶をまとったスライム。体当たりのほかに、結晶の破片を飛ばしてくる。',tip:'破片は直線で飛ぶ。少し離れて、揺れたら横へ。'},
+    mole:{stage:[5],role:'ボス',desc:'結晶を食べて育った大きな土竜。地面に潜り、プレイヤーの足元から飛び出して攻撃する。',tip:'潜っている間は攻撃が届かない。飛び出した後に隙がある。'},
+    centipede:{stage:[5],role:'ボス',desc:'細長い体の大百足。体を振るって薙ぎ払い、炎の弾を吐く。',tip:'炎の弾は火属性。ひるんだ隙に頭を狙おう。'},
+    grados:{stage:[5],role:'ボス',desc:'結晶と鉱石で出来た地底の王。とても大きく動きは遅いが、一撃が重い。物理攻撃にはとても硬い。',tip:'属性の攻撃がよく効く。叩きつけの後は隙が大きい。'},
+    fire_wyvern:{stage:[6],role:'雑魚',desc:'熱気の中を飛ぶ小型の飛竜。扇状の火炎ブレスを吐き、直線に滑空して突っ込んでくる。',tip:'ブレスは扇の形。扇の外へ回り込もう。'},
+    magma_beetle:{stage:[6],role:'雑魚',desc:'体内に爆熱を溜めた甲虫。近づくと赤く光り、しばらくして爆発する。',tip:'赤く光ったら円の外へ。爆発後は消える。'},
+    molten_beast:{stage:[6],role:'雑魚',desc:'溶けた鉄の体を持つ魔獣。直線に突進し、通った跡に熔鉄の炎を残す。',tip:'突進の前に向きが見える。跡の炎には触れないこと。'},
+    scorpion:{stage:[6],role:'雑魚',desc:'火口に住む大きな蠍。尾の突き刺しと、前方の薙ぎ払いを使う。',tip:'突き刺しは細い扇。薙ぎ払いの後は少し隙がある。'},
+    lava_giant:{stage:[6],role:'ボス',desc:'火口の底で眠っていた溶岩の巨人。叩きつけ・岩投げ・溶岩の亀裂で攻めてくる。',tip:'岩投げは着弾の円を予告する。亀裂は直線の帯。'},
+    volcano_dragon:{stage:[6],role:'ボス',desc:'炎獄竜ヴォルカノス。扇状の火炎ブレスと溶岩弾を使い、弱ると溶岩の噴出を起こす。',tip:'噴出の地点は事前に円で示される。ブレスの扇の外へ。'},
+    felgnas:{stage:[6],role:'ボス',desc:'熔鉄をまとった魔獣フェルグナス。直線の突進を最大3回続け、熱波と熔鉄の地面を生む。',tip:'突進中は方向を変えない。次の突進の予告を見て横へ。'},
+    ice_beetle:{stage:[7],role:'雑魚',desc:'氷晶の外殻を持つ甲虫。周囲に氷の破片を飛ばす。',tip:'破片は円の外へ広がる。外殻が硬いので、横から攻めよう。'},
+    snow_owl:{stage:[7],role:'遠距離攻撃型',desc:'吹雪の中を飛ぶフクロウ。氷の弾を放ち、弱ると複数方向へ撃つ。',tip:'狙いの線が見えたら横へ。弱ったら扇状の弾に注意。'},
+    ice_seal:{stage:[7],role:'直線突進型',desc:'身体を丸めて滑る、凍てついたアザラシ。突進の方向を先に示す。',tip:'突進は直線。壁に当たると少し隙ができる。'},
+    ice_mantis:{stage:[7],role:'近接攻撃型',desc:'氷の刃を持つカマキリ。前方の斬撃と、十字の斬撃を使う。',tip:'十字の斬撃は四方向。斜めに避けると安全。'},
+    snow_fox:{stage:[7],role:'高速撹乱型',desc:'素早く周囲を回る雪色のキツネ。距離を取ってから飛びかかり、遠くでは氷の破片を飛ばす。',tip:'飛びかかりの方向が先に見える。飛びかかりの後は少し離れる。'},
+    snow_monkey:{stage:[7],role:'近接攻撃型',desc:'雪山に住む小型の猿。素早く近づき、引っかきや小さな飛びかかりをする。',tip:'一体ずつなら楽に倒せる。剛猿が呼ぶ個体は数に上限がある。'},
+    ice_deer:{stage:[7],role:'ボス',desc:'氷の大角を持つ大鹿。角を構えての突進、扇状の氷の破片、地面からの氷柱を使う。',tip:'氷柱は足元に予告される。突進の直線から外れよう。'},
+    frost_wyvern:{stage:[7],role:'ボス',desc:'雪山に住む大型の氷竜。冷気のブレス、氷の弾、広範囲の氷柱を使う。',tip:'ブレスは扇形。弾は直線。氷柱の予告が出たら離れる。'},
+    ice_ape:{stage:[7],role:'ボス',desc:'雪山の主である巨大な猿。叩きつけ・突進・氷の破片を使い、弱ると小猿を呼ぶ。',tip:'呼び出しの予備動作の間に、先に小猿を減らそう。'},
     forest_rabbit:{stage:[2],role:'ボス',desc:'古森に棲む白い大兎。とても素早く跳ね回り、突進や耳の薙ぎ払いを使う。綿毛の弾は弱い。',tip:'突進の前には足をためる。跳ねた先を読んで、横へ回り込もう。'},
     hydra:{stage:[3],role:'ボス',desc:'沼の中心に棲む多頭の竜。三つの首で薙ぎ払い、毒の吐息を放つ。',tip:'首の薙ぎ払いは扇形。毒の沼には入らないこと。'},
     venomKing:{stage:[3],role:'ボス',desc:'毒蟲の王。子蟲を呼び、毒の沼を作り、重い前脚で叩きつける。',tip:'子蟲は早めに倒すと楽になる。'},
@@ -1418,15 +1625,15 @@ const DATA={
     aquarios:{stage:[4],role:'ボス',desc:'滝つぼに棲む蒼い海竜。尾の薙ぎ払い、水の弾、突進、ピラニアの召喚を使う。',tip:'突進は直線。水の弾は扇状に広がるので、間をすり抜けよう。'},
     turtle:{stage:[4],role:'ボス',desc:'滝の水を背負う大きな亀。重い叩きつけ、水の弾、尾の薙ぎ払い、滝守の甲殻獣を呼ぶ。',tip:'叩きつけの後に大きな隙がある。'},
     thunderEel:{stage:[4],role:'ボス',desc:'雷を纏う大きなウナギ。素早い突進と雷の叩きつけ、雷電ウナギを呼ぶ。',tip:'突進の前に体が光る。光ったら直線から離れよう。'},
-    hobgoblin:{stage:[5],role:'近接攻撃型',desc:'ゴブリンより大柄で打たれ強い。墓所の回廊や詰所に現れる。',tip:'一撃が重い。振りかぶりを見てから回避しよう。'},
-    sniper:{stage:[5],role:'遠距離攻撃型',desc:'遠くから素早い矢を放つスケルトン。',tip:'矢が速いので、狙いが固まる前に射線から外れよう。'},
-    skeleton:{stage:[5],role:'近接攻撃型',desc:'剣を手にした骸骨の兵士。複数で現れ、動ける場所を狭めてくる。',tip:'囲まれないよう、通路に引き込んで1体ずつ相手にしよう。'},
-    wisp:{stage:[5],role:'追尾・移動妨害型',desc:'墓地をさまよう霊。ふわふわと追いかけてきて、触れた者の動きを鈍らせる。',tip:'鈍足中は回避が遅れがち。ほかの魔物と一緒のときは先に倒そう。'},
-    zombie:{stage:[5],role:'高耐久型',desc:'墓所を守り続けるゾンビ。動きは遅いが打たれ強く、攻撃してものけぞらない。',tip:'狭い通路をふさがれると厄介。広い場所で戦うか、罠や爆弾を使おう。'},
-    cursed_knight:{stage:[5],role:'強敵・重攻撃型',desc:'呪いに囚われた騎士。大剣で広い範囲を薙ぎ払い、鋭い突きも放つ。',tip:'攻撃の後に大きな隙がある。範囲の外へ逃げて、振り終わりを狙おう。'},
-    shaman:{stage:[5],role:'支援型',desc:'周りの魔物を呪術で強化し、倒れた魔物をよみがえらせる。',tip:'詠唱中に攻撃を当てると中断できる。最優先で倒そう。'},
-    black_wolf:{stage:[5],role:'ボス',desc:'古狼の群れを率いた黒い狼。古狼より速く、力も強い。',tip:'動きは古狼と同じ。罠や閃光玉でスキを作ろう。'},
-    bone_dragon:{stage:[5],role:'ボス',desc:'地下墓地に封印されていた巨大な骨の竜。霊魂弾・薙ぎ払い・咆哮に加え、骸骨兵を呼び出す。',tip:'霊魂弾は追いかけてくるが、回避で抜けられる。呼ばれた骸骨兵は竜を倒すと崩れる。'},
+    hobgoblin:{stage:[8],role:'近接攻撃型',desc:'ゴブリンより大柄で打たれ強い。墓所の回廊や詰所に現れる。',tip:'一撃が重い。振りかぶりを見てから回避しよう。'},
+    sniper:{stage:[8],role:'遠距離攻撃型',desc:'遠くから素早い矢を放つスケルトン。',tip:'矢が速いので、狙いが固まる前に射線から外れよう。'},
+    skeleton:{stage:[8],role:'近接攻撃型',desc:'剣を手にした骸骨の兵士。複数で現れ、動ける場所を狭めてくる。',tip:'囲まれないよう、通路に引き込んで1体ずつ相手にしよう。'},
+    wisp:{stage:[8],role:'追尾・移動妨害型',desc:'墓地をさまよう霊。ふわふわと追いかけてきて、触れた者の動きを鈍らせる。',tip:'鈍足中は回避が遅れがち。ほかの魔物と一緒のときは先に倒そう。'},
+    zombie:{stage:[8],role:'高耐久型',desc:'墓所を守り続けるゾンビ。動きは遅いが打たれ強く、攻撃してものけぞらない。',tip:'狭い通路をふさがれると厄介。広い場所で戦うか、罠や爆弾を使おう。'},
+    cursed_knight:{stage:[8],role:'強敵・重攻撃型',desc:'呪いに囚われた騎士。大剣で広い範囲を薙ぎ払い、鋭い突きも放つ。',tip:'攻撃の後に大きな隙がある。範囲の外へ逃げて、振り終わりを狙おう。'},
+    shaman:{stage:[8],role:'支援型',desc:'周りの魔物を呪術で強化し、倒れた魔物をよみがえらせる。',tip:'詠唱中に攻撃を当てると中断できる。最優先で倒そう。'},
+    black_wolf:{stage:[8],role:'ボス',desc:'古狼の群れを率いた黒い狼。古狼より速く、力も強い。',tip:'動きは古狼と同じ。罠や閃光玉でスキを作ろう。'},
+    bone_dragon:{stage:[8],role:'ボス',desc:'地下墓地に封印されていた巨大な骨の竜。霊魂弾・薙ぎ払い・咆哮に加え、骸骨兵を呼び出す。',tip:'霊魂弾は追いかけてくるが、回避で抜けられる。呼ばれた骸骨兵は竜を倒すと崩れる。'},
   },
   equipPools:{
     basic:['iron_sword','hunter_sword','leather_cap','leather_vest','leather_gloves','leather_boots','bone_helm','leather_belt','iron_whip','iron_bow'],
@@ -1447,12 +1654,12 @@ const DATA={
     {id:'r_wolflegs',out:{type:'equip',id:'wolf_greaves'},cost:{wolf_pelt:2,wolf_claw:1,goblin_hide:3}},
     {id:'r_wolfwaist',out:{type:'equip',id:'wolf_faulds'},cost:{wolf_pelt:2,wolf_claw:1,old_bone:2}},
     {id:'r_fangking',out:{type:'equip',id:'fang_king'},cost:{wolf_heart:1,wolf_fang:3,wolf_claw:2},minRarity:2},
-    {id:'r_hardblade',out:{type:'equip',id:'hard_blade'},cost:{hard_iron:4,scrap_iron:4},stage:5},
+    {id:'r_hardblade',out:{type:'equip',id:'hard_blade'},cost:{hard_iron:4,scrap_iron:4},stage:8},
     {id:'r_iron_gs',out:{type:'equip',id:'iron_gs'},cost:{scrap_iron:5,goblin_hide:2,old_bone:2}},
     {id:'r_iron_tachi',out:{type:'equip',id:'iron_tachi'},cost:{scrap_iron:4,arrowhead:2}},
     {id:'r_iron_db',out:{type:'equip',id:'iron_db'},cost:{scrap_iron:4,goblin_hide:1,arrowhead:1}},
     {id:'r_wolf_db',out:{type:'equip',id:'wolf_db'},cost:{wolf_claw:2,wolf_fang:1,scrap_iron:3}},
-    {id:'r_bwolf_db',out:{type:'equip',id:'bwolf_db'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:5},
+    {id:'r_bwolf_db',out:{type:'equip',id:'bwolf_db'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:8},
     {id:'r_iron_hammer',out:{type:'equip',id:'iron_hammer'},cost:{scrap_iron:6,old_bone:2}},
     {id:'r_poison_bottle',out:{type:'item',id:'poison_bottle',n:2},cost:{poison_spore:2,forest_mushroom:1}},
     {id:'r_para_bottle',out:{type:'item',id:'para_bottle',n:2},cost:{poison_spore:1,herb:2}},
@@ -1462,15 +1669,15 @@ const DATA={
     {id:'r_wolf_gs',out:{type:'equip',id:'wolf_gs'},cost:{wolf_fang:2,wolf_pelt:2,scrap_iron:4}},
     {id:'r_wolf_tachi',out:{type:'equip',id:'wolf_tachi'},cost:{wolf_fang:2,wolf_claw:1,arrowhead:2}},
     {id:'r_wolf_hammer',out:{type:'equip',id:'wolf_hammer'},cost:{wolf_claw:2,wolf_pelt:1,scrap_iron:5}},
-    {id:'r_bwolf_gs',out:{type:'equip',id:'bwolf_gs'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:4},stage:5},
-    {id:'r_bwolf_tachi',out:{type:'equip',id:'bwolf_tachi'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:5},
-    {id:'r_bwolf_hammer',out:{type:'equip',id:'bwolf_hammer'},cost:{bwolf_pelt:2,hard_iron:5},stage:5},
-    {id:'r_bwsword',out:{type:'equip',id:'bwolf_sword'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:3},stage:5},
-    {id:'r_bwhelm',out:{type:'equip',id:'bwolf_helm'},cost:{bwolf_pelt:2,dark_bone:3},stage:5},
-    {id:'r_bwmail',out:{type:'equip',id:'bwolf_mail'},cost:{bwolf_pelt:3,hard_iron:2},stage:5},
-    {id:'r_bwarms',out:{type:'equip',id:'bwolf_vambrace'},cost:{bwolf_fang:1,dark_bone:2,hard_iron:2},stage:5},
-    {id:'r_bwlegs',out:{type:'equip',id:'bwolf_greaves'},cost:{bwolf_pelt:2,dark_bone:2},stage:5},
-    {id:'r_bwwaist',out:{type:'equip',id:'bwolf_faulds'},cost:{bwolf_pelt:2,hard_iron:1,dark_bone:1},stage:5},
+    {id:'r_bwolf_gs',out:{type:'equip',id:'bwolf_gs'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:4},stage:8},
+    {id:'r_bwolf_tachi',out:{type:'equip',id:'bwolf_tachi'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:8},
+    {id:'r_bwolf_hammer',out:{type:'equip',id:'bwolf_hammer'},cost:{bwolf_pelt:2,hard_iron:5},stage:8},
+    {id:'r_bwsword',out:{type:'equip',id:'bwolf_sword'},cost:{bwolf_fang:2,bwolf_pelt:2,hard_iron:3},stage:8},
+    {id:'r_bwhelm',out:{type:'equip',id:'bwolf_helm'},cost:{bwolf_pelt:2,dark_bone:3},stage:8},
+    {id:'r_bwmail',out:{type:'equip',id:'bwolf_mail'},cost:{bwolf_pelt:3,hard_iron:2},stage:8},
+    {id:'r_bwarms',out:{type:'equip',id:'bwolf_vambrace'},cost:{bwolf_fang:1,dark_bone:2,hard_iron:2},stage:8},
+    {id:'r_bwlegs',out:{type:'equip',id:'bwolf_greaves'},cost:{bwolf_pelt:2,dark_bone:2},stage:8},
+    {id:'r_bwwaist',out:{type:'equip',id:'bwolf_faulds'},cost:{bwolf_pelt:2,hard_iron:1,dark_bone:1},stage:8},
     // ザコ素材の防具：獣皮シリーズ
     {id:'r_beast_db',out:{type:'equip',id:'beast_db'},cost:{beast_fang:3,beast_hide:1,scrap_iron:2}},
     {id:'r_beast_hood',out:{type:'equip',id:'beast_hood'},cost:{beast_hide:2,beast_fang:1}},
@@ -1533,6 +1740,37 @@ const DATA={
     // 晶石の大洞窟の防具
     // 洞窟の雑魚防具
     // 氷雪地帯の雑魚防具
+    // 火山・氷雪のボス防具
+    {id:'r_lava_helm',out:{type:'equip',id:'lava_helm'},cost:{rock_core:2,hard_rock:1},stage:6},
+    {id:'r_lava_mail',out:{type:'equip',id:'lava_mail'},cost:{hard_rock:3,rock_core:1},stage:6},
+    {id:'r_lava_vambrace',out:{type:'equip',id:'lava_vambrace'},cost:{red_arm:2,rock_core:1},stage:6},
+    {id:'r_lava_faulds',out:{type:'equip',id:'lava_faulds'},cost:{hard_rock:2,red_arm:1},stage:6},
+    {id:'r_lava_greaves',out:{type:'equip',id:'lava_greaves'},cost:{hard_rock:2,rock_core:1},stage:6},
+    {id:'r_dragon_helm',out:{type:'equip',id:'dragon_helm'},cost:{hell_fang:2,black_scale:1},stage:6},
+    {id:'r_dragon_mail',out:{type:'equip',id:'dragon_mail'},cost:{black_scale:3,lava_dragon_core:1},stage:6},
+    {id:'r_dragon_vambrace',out:{type:'equip',id:'dragon_vambrace'},cost:{hell_fang:2,black_scale:1},stage:6},
+    {id:'r_dragon_faulds',out:{type:'equip',id:'dragon_faulds'},cost:{black_scale:2,hell_fang:1},stage:6},
+    {id:'r_dragon_greaves',out:{type:'equip',id:'dragon_greaves'},cost:{black_scale:2,lava_dragon_core:1},stage:6},
+    {id:'r_felg_helm',out:{type:'equip',id:'felg_helm'},cost:{felg_horn:2,heat_crystal:1},stage:6},
+    {id:'r_felg_mail',out:{type:'equip',id:'felg_mail'},cost:{molten_armor:3,heat_crystal:1},stage:6},
+    {id:'r_felg_vambrace',out:{type:'equip',id:'felg_vambrace'},cost:{felg_horn:2,molten_armor:1},stage:6},
+    {id:'r_felg_faulds',out:{type:'equip',id:'felg_faulds'},cost:{molten_armor:2,felg_horn:1},stage:6},
+    {id:'r_felg_greaves',out:{type:'equip',id:'felg_greaves'},cost:{molten_armor:2,heat_crystal:1},stage:6},
+    {id:'r_deer_helm',out:{type:'equip',id:'deer_helm'},cost:{ice_antler:2,frozen_heart:1},stage:7},
+    {id:'r_deer_mail',out:{type:'equip',id:'deer_mail'},cost:{silver_pelt:3,frozen_heart:1},stage:7},
+    {id:'r_deer_vambrace',out:{type:'equip',id:'deer_vambrace'},cost:{ice_antler:2,silver_pelt:1},stage:7},
+    {id:'r_deer_faulds',out:{type:'equip',id:'deer_faulds'},cost:{silver_pelt:2,ice_antler:1},stage:7},
+    {id:'r_deer_greaves',out:{type:'equip',id:'deer_greaves'},cost:{silver_pelt:2,frozen_heart:1},stage:7},
+    {id:'r_wyv_helm',out:{type:'equip',id:'wyv_helm'},cost:{frost_fang:2,frost_scale:1},stage:7},
+    {id:'r_wyv_mail',out:{type:'equip',id:'wyv_mail'},cost:{frost_scale:3,eternal_core:1},stage:7},
+    {id:'r_wyv_vambrace',out:{type:'equip',id:'wyv_vambrace'},cost:{frost_fang:2,frost_scale:1},stage:7},
+    {id:'r_wyv_faulds',out:{type:'equip',id:'wyv_faulds'},cost:{frost_scale:2,frost_fang:1},stage:7},
+    {id:'r_wyv_greaves',out:{type:'equip',id:'wyv_greaves'},cost:{frost_scale:2,eternal_core:1},stage:7},
+    {id:'r_ape_helm',out:{type:'equip',id:'ape_helm'},cost:{ice_arm:2,mountain_core:1},stage:7},
+    {id:'r_ape_mail',out:{type:'equip',id:'ape_mail'},cost:{white_pelt:3,mountain_core:1},stage:7},
+    {id:'r_ape_vambrace',out:{type:'equip',id:'ape_vambrace'},cost:{ice_arm:3},stage:7},
+    {id:'r_ape_faulds',out:{type:'equip',id:'ape_faulds'},cost:{white_pelt:2,ice_arm:1},stage:7},
+    {id:'r_ape_greaves',out:{type:'equip',id:'ape_greaves'},cost:{white_pelt:2,mountain_core:1},stage:7},
     {id:'r_fox_helm',out:{type:'equip',id:'fox_helm'},cost:{fox_pelt:2,fox_fang:1}},
     {id:'r_fox_mail',out:{type:'equip',id:'fox_mail'},cost:{fox_pelt:3,fox_fang:1}},
     {id:'r_fox_arms',out:{type:'equip',id:'fox_vambrace'},cost:{fox_pelt:2}},
@@ -1543,31 +1781,31 @@ const DATA={
     {id:'r_owl_arms',out:{type:'equip',id:'owl_vambrace'},cost:{owl_feather:2}},
     {id:'r_owl_waist',out:{type:'equip',id:'owl_faulds'},cost:{owl_feather:2,owl_gem:1}},
     {id:'r_owl_legs',out:{type:'equip',id:'owl_greaves'},cost:{owl_feather:3}},
-    {id:'r_bat_helm',out:{type:'equip',id:'bat_helm'},cost:{cave_wing:2,cave_fang:1},stage:6},
-    {id:'r_bat_mail',out:{type:'equip',id:'bat_mail'},cost:{cave_wing:3,cave_fang:1},stage:6},
-    {id:'r_bat_arms',out:{type:'equip',id:'bat_vambrace'},cost:{cave_wing:2},stage:6},
-    {id:'r_bat_waist',out:{type:'equip',id:'bat_faulds'},cost:{cave_wing:2,cave_fang:1},stage:6},
-    {id:'r_bat_legs',out:{type:'equip',id:'bat_greaves'},cost:{cave_wing:3},stage:6},
-    {id:'r_spider_helm',out:{type:'equip',id:'spider_helm'},cost:{spider_silk:2,spider_fang:1},stage:6},
-    {id:'r_spider_mail',out:{type:'equip',id:'spider_mail'},cost:{spider_silk:3},stage:6},
-    {id:'r_spider_arms',out:{type:'equip',id:'spider_vambrace'},cost:{spider_silk:2,spider_fang:1},stage:6},
-    {id:'r_spider_waist',out:{type:'equip',id:'spider_faulds'},cost:{spider_silk:2},stage:6},
-    {id:'r_spider_legs',out:{type:'equip',id:'spider_greaves'},cost:{spider_silk:3,spider_fang:1},stage:6},
-    {id:'r_mole_helm',out:{type:'equip',id:'mole_helm'},cost:{mole_claw:2,crystal_shard:2,hard_iron:2},stage:6},
-    {id:'r_mole_mail',out:{type:'equip',id:'mole_mail'},cost:{mole_claw:3,crystal_shard:3},stage:6},
-    {id:'r_mole_arms',out:{type:'equip',id:'mole_vambrace'},cost:{mole_claw:2,crystal_shard:1,hard_iron:1},stage:6},
-    {id:'r_mole_waist',out:{type:'equip',id:'mole_faulds'},cost:{crystal_shard:3,hard_iron:1},stage:6},
-    {id:'r_mole_legs',out:{type:'equip',id:'mole_greaves'},cost:{mole_claw:2,crystal_shard:2,beast_hide:1},stage:6},
-    {id:'r_centi_helm',out:{type:'equip',id:'centi_helm'},cost:{centi_shell:2,spider_silk:2,hard_iron:1},stage:6},
-    {id:'r_centi_mail',out:{type:'equip',id:'centi_mail'},cost:{centi_shell:3,hard_iron:2},stage:6},
-    {id:'r_centi_arms',out:{type:'equip',id:'centi_vambrace'},cost:{centi_shell:2,spider_fang:1,spider_silk:1},stage:6},
-    {id:'r_centi_waist',out:{type:'equip',id:'centi_faulds'},cost:{centi_shell:2,spider_silk:2},stage:6},
-    {id:'r_centi_legs',out:{type:'equip',id:'centi_greaves'},cost:{centi_shell:2,spider_silk:2,rock_scale:1},stage:6},
-    {id:'r_grados_helm',out:{type:'equip',id:'grados_helm'},cost:{grados_ore:2,hard_iron:2,reinforce_orb:1},stage:6},
-    {id:'r_grados_mail',out:{type:'equip',id:'grados_mail'},cost:{grados_ore:4,hard_iron:2},stage:6},
-    {id:'r_grados_arms',out:{type:'equip',id:'grados_vambrace'},cost:{grados_ore:2,grados_core:1,hard_iron:1},stage:6},
-    {id:'r_grados_waist',out:{type:'equip',id:'grados_faulds'},cost:{grados_ore:3,hard_iron:1},stage:6},
-    {id:'r_grados_legs',out:{type:'equip',id:'grados_greaves'},cost:{grados_ore:2,grados_core:1,rock_scale:2},stage:6},
+    {id:'r_bat_helm',out:{type:'equip',id:'bat_helm'},cost:{cave_wing:2,cave_fang:1},stage:5},
+    {id:'r_bat_mail',out:{type:'equip',id:'bat_mail'},cost:{cave_wing:3,cave_fang:1},stage:5},
+    {id:'r_bat_arms',out:{type:'equip',id:'bat_vambrace'},cost:{cave_wing:2},stage:5},
+    {id:'r_bat_waist',out:{type:'equip',id:'bat_faulds'},cost:{cave_wing:2,cave_fang:1},stage:5},
+    {id:'r_bat_legs',out:{type:'equip',id:'bat_greaves'},cost:{cave_wing:3},stage:5},
+    {id:'r_spider_helm',out:{type:'equip',id:'spider_helm'},cost:{spider_silk:2,spider_fang:1},stage:5},
+    {id:'r_spider_mail',out:{type:'equip',id:'spider_mail'},cost:{spider_silk:3},stage:5},
+    {id:'r_spider_arms',out:{type:'equip',id:'spider_vambrace'},cost:{spider_silk:2,spider_fang:1},stage:5},
+    {id:'r_spider_waist',out:{type:'equip',id:'spider_faulds'},cost:{spider_silk:2},stage:5},
+    {id:'r_spider_legs',out:{type:'equip',id:'spider_greaves'},cost:{spider_silk:3,spider_fang:1},stage:5},
+    {id:'r_mole_helm',out:{type:'equip',id:'mole_helm'},cost:{mole_claw:2,crystal_shard:2,hard_iron:2},stage:5},
+    {id:'r_mole_mail',out:{type:'equip',id:'mole_mail'},cost:{mole_claw:3,crystal_shard:3},stage:5},
+    {id:'r_mole_arms',out:{type:'equip',id:'mole_vambrace'},cost:{mole_claw:2,crystal_shard:1,hard_iron:1},stage:5},
+    {id:'r_mole_waist',out:{type:'equip',id:'mole_faulds'},cost:{crystal_shard:3,hard_iron:1},stage:5},
+    {id:'r_mole_legs',out:{type:'equip',id:'mole_greaves'},cost:{mole_claw:2,crystal_shard:2,beast_hide:1},stage:5},
+    {id:'r_centi_helm',out:{type:'equip',id:'centi_helm'},cost:{centi_shell:2,spider_silk:2,hard_iron:1},stage:5},
+    {id:'r_centi_mail',out:{type:'equip',id:'centi_mail'},cost:{centi_shell:3,hard_iron:2},stage:5},
+    {id:'r_centi_arms',out:{type:'equip',id:'centi_vambrace'},cost:{centi_shell:2,spider_fang:1,spider_silk:1},stage:5},
+    {id:'r_centi_waist',out:{type:'equip',id:'centi_faulds'},cost:{centi_shell:2,spider_silk:2},stage:5},
+    {id:'r_centi_legs',out:{type:'equip',id:'centi_greaves'},cost:{centi_shell:2,spider_silk:2,rock_scale:1},stage:5},
+    {id:'r_grados_helm',out:{type:'equip',id:'grados_helm'},cost:{grados_ore:2,hard_iron:2,reinforce_orb:1},stage:5},
+    {id:'r_grados_mail',out:{type:'equip',id:'grados_mail'},cost:{grados_ore:4,hard_iron:2},stage:5},
+    {id:'r_grados_arms',out:{type:'equip',id:'grados_vambrace'},cost:{grados_ore:2,grados_core:1,hard_iron:1},stage:5},
+    {id:'r_grados_waist',out:{type:'equip',id:'grados_faulds'},cost:{grados_ore:3,hard_iron:1},stage:5},
+    {id:'r_grados_legs',out:{type:'equip',id:'grados_greaves'},cost:{grados_ore:2,grados_core:1,rock_scale:2},stage:5},
     // 跳ね兎シリーズ（古森の跳ね兎）
     {id:'r_rabbit_helm',out:{type:'equip',id:'rabbit_helm'},cost:{rabbit_fur:2,rabbit_tuft:2,wood:2}},
     {id:'r_rabbit_mail',out:{type:'equip',id:'rabbit_mail'},cost:{rabbit_fur:3,rabbit_tuft:2}},
@@ -1893,7 +2131,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:11,
+  KEY:'kourou_dungeon_save',VERSION:12,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -1936,6 +2174,7 @@ const Save={
       8:d=>{if(d.progress&&(d.progress.stage|0)>=3)d.progress.stage+=1;return d;}, // 8 → 9：沼地を3番に追加（墓地は4番へ）
       9:d=>{if(d.progress&&(d.progress.stage|0)>=4)d.progress.stage+=1;return d;}, // 9 → 10：水辺を4番に追加（墓地は5番へ）
       10:d=>d, // 10 → 11：晶石の大洞窟を6番に追加
+      11:d=>{if(d.progress){const st=d.progress.stage|0;if(st>=6)d.progress.stage=8;else if(st===5)d.progress.stage=5;}return d;}, // 11 → 12：晶石の大洞窟を5番、火山を6番、氷雪を7番、墓地を8番へ
     };
     while(v<this.VERSION){if(migrations[v])data=migrations[v](data);v++;}
     return data;
@@ -1948,7 +2187,7 @@ const Save={
     for(const id of ITEM_ORDER)p.bag[id]=clamp(srcBag[id]|0,0,DATA.consumables[id].max);
     p.gold=Math.max(0,d.gold|0);
     if(d.progress&&typeof d.progress==='object'){
-      p.progress.stage=clamp(d.progress.stage|0||1,1,DATA.stages.length);
+      p.progress.stage=clamp(d.progress.stage|0||1,1,maxStageId());
       if(d.progress.done&&typeof d.progress.done==='object')for(const id in d.progress.done)if(DATA.quests.some(q=>q.id===id))p.progress.done[id]=Math.max(0,d.progress.done[id]|0);
     }
     if(d.settings&&typeof d.settings==='object')for(const k in p.settings){
@@ -2244,6 +2483,7 @@ function emit(w,ev){w.events.push(ev);}
 
 function questById(id){return DATA.quests.find(q=>q.id===id)||DATA.quests[0];}
 function stageById(id){return DATA.stages.find(s=>s.id===id)||DATA.stages[0];}
+function maxStageId(){return Math.max(...DATA.stages.map(s=>s.id));}
 /** ステージに出てくる魔物（ボスを除く）の一覧 */
 function stageRoster(stage){
   const L=stage.layout&&DATA.layouts[stage.layout];
@@ -2270,7 +2510,7 @@ function questGoalText(g,np){
 }
 /** 依頼の受注条件：ステージが解放されていること。緊急依頼は同じステージの通常の依頼をすべて達成していること */
 const QuestRules={
-  stage(p){return clamp((p.progress&&p.progress.stage)||1,1,DATA.stages.length);},
+  stage(p){return clamp((p.progress&&p.progress.stage)||1,1,maxStageId());},
   done(p,id){return (p.progress&&p.progress.done[id])||0;},
   keys(stage){return DATA.quests.filter(q=>q.stage===stage&&!q.urgent&&!q.after&&!q.explore);}, // 緊急を出すのに必要な「通常の依頼」
   keysDone(p,stage){return this.keys(stage).filter(q=>this.done(p,q.id)>0).length;},
@@ -2304,6 +2544,8 @@ function createWorld(opts){
       killed:0,total:0,chests:0,chestsTotal:0,boss:(goal.type==='boss'||goal.type==='explore')?'unseen':'none',bossType:(goal.type==='boss'||goal.type==='explore')?(quest.boss||stage.enemySet.boss):null},
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
   if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
+  if(stage.layout==='volcano')placeMagma(w);
+  if(stage.layout==='snow')w.blizzard={on:false,t:rand(20,30)};
   return w;
 }
 /** 部屋構成のあるステージ：部屋の種類ごとに魔物・宝箱・採取ポイントを置く */
@@ -2739,6 +2981,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.charging&&wt.charge)k=Math.min(k,wt.charge.move);   // チャージ中はかなり遅く歩ける
     if(p.using)k=Math.min(k,P.itemWalk);                      // アイテム使用中はゆっくり歩ける
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
+    if(w.blizzard&&w.blizzard.on)k*=0.92;                      // 吹雪：わずかに遅くなる（ほかの補正と掛け算で共存、終われば戻る）
     const spd=(p.drawn?s.speed:s.sheathSpeed)*k;
     moveEntity(w.map,p,mx*spd*dt,my*spd*dt);p.walk+=dt*spd/28;
   }
@@ -3096,7 +3339,11 @@ function updateWolf(w,e,p,dt){
 }
 /** 技の並べ方で動くボス（沼地のボス）。使える技から順番に選ぶ。体力が半分で怒る */
 function patternReady(w,e,mv,d,los){
+  if(mv.below&&e.hp>e.maxHp*mv.below)return false; // HPがこの割合を下回ったときだけ使う
   switch(mv.k){
+    case 'toss':return los&&d<700;
+    case 'erupt':return d<520;
+    case 'crack':return d>100&&d<520&&los;
     case 'sweep':return d<mv.r*0.9+e.r;
     case 'slam':return d<mv.r*0.8;
     case 'charge':return d>140&&d<480&&los;
@@ -3142,9 +3389,19 @@ function updateBossPattern(w,e,p,dt){
           e.state='windup';e.action=mv.k;e.timer=wind;
           if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
           else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
-          else if(mv.k==='pool'){ // 狙った場所に毒の沼：予告のあと、その場に残る
+          else if(mv.k==='pool'){ // 狙った場所に毒の沼（hz指定で炎の溜まりにもなる）：予告のあと、その場に残る
             addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
-            w.hazards.push({id:w.nextId++,kind:'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind});
+            w.hazards.push({id:w.nextId++,kind:mv.hz||'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind});
+          }
+          else if(mv.k==='toss')addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id}); // 溶岩弾・岩投げ：着弾点を予告
+          else if(mv.k==='erupt'){ // 噴出・氷柱：プレイヤーの周りの複数地点を予告（同時に出る）
+            for(let i=0;i<mv.n;i++){const a=rand(0,TAU),R=mv.spread*0.45*rand(0.6,1);
+              addTelegraph(w,{shape:'circle',x:p.x+Math.cos(a)*R,y:p.y+Math.sin(a)*R,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});}
+          }
+          else if(mv.k==='crack'){ // 溶岩の亀裂：直線の帯を予告し、時間差で炎が噴き出す
+            addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:mv.len+e.r,width:mv.width,total:wind,dmg:0,owner:e.id});
+            for(let i=1;i<=6;i++){const dd=e.r+(mv.len*i)/6;
+              w.hazards.push({id:w.nextId++,kind:'fire',x:e.x+Math.cos(ang)*dd,y:e.y+Math.sin(ang)*dd,r:mv.width*0.5,t:0,life:0.9,tick:0.45,acc:0,dmg:e.atk*mv.dmg*0.5,delay:wind+i*0.05});}
           }
         }
       }else{
@@ -3156,7 +3413,7 @@ function updateBossPattern(w,e,p,dt){
     case 'windup':{
       e.timer-=dt;if(e.timer>0)break;
       const mv=e.curMv||{};
-      if(e.action==='sweep'||e.action==='pool'){e.state='recover';e.timer=0.5;break;}
+      if(e.action==='sweep'||e.action==='pool'||e.action==='toss'||e.action==='erupt'||e.action==='crack'){e.state='recover';e.timer=0.6;break;}
       if(e.action==='slam'){e.state='recover';e.timer=0.7;emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});break;}
       if(e.action==='shot'){
         const n=mv.n||1,sp=mv.speed||300;
@@ -3536,8 +3793,188 @@ function updateDragon(w,e,p,dt){
   }
 }
 /** 行動パターン（DATA.enemies の ai）と処理の対応 */
+/** 炎翼竜：扇状の火炎ブレス、または直線の滑空。空を旋回しながら距離を保つ */
+function updateWyvern(w,e,p,d,dt){
+  const D=DATA.enemies[e.type],ang=Math.atan2(p.y-e.y,p.x-e.x);
+  if(e.state==='windup'){
+    e.timer-=dt;e.facing=e.atkAngle;
+    if(e.timer<=0){
+      if(e.action==='breath'){
+        const B=D.breath;
+        for(let i=0;i<B.n;i++){const a=e.atkAngle+(i-(B.n-1)/2)*B.spread/(B.n-1);
+          w.projectiles.push({id:w.nextId++,kind:'fire',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),vx:Math.cos(a)*B.speed,vy:Math.sin(a)*B.speed,r:7,life:2,dmg:e.atk*B.dmg,angle:a});}
+        emit(w,{type:'shoot',x:e.x,y:e.y});e.state='recover';e.timer=0.6;e.cd=rand(B.cd[0],B.cd[1]);
+      }else{e.state='glide';e.glideLeft=D.glide.dist;e.hitSet=new Set();}
+    }
+    return;
+  }
+  if(e.state==='glide'){
+    const sp=D.glide.speed*dt;
+    const blocked=moveEntity(w.map,e,Math.cos(e.atkAngle)*sp,Math.sin(e.atkAngle)*sp);
+    e.glideLeft-=sp;
+    for(const id in w.players){const q=w.players[id];if(q.dead||e.hitSet.has(q.id))continue;
+      if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,e.atk,e.x,e.y);}}
+    if(blocked||e.glideLeft<=0){e.state='recover';e.timer=0.7;e.cd=rand(D.glide.cd[0],D.glide.cd[1]);}
+    return;
+  }
+  if(e.state==='recover'){e.timer-=dt;if(e.timer<=0)e.state='chase';return;}
+  e.state='chase';
+  if(e.stun>0)return;
+  const los=lineOfSight(w.map,e.x,e.y,p.x,p.y);
+  if(e.cd<=0&&los&&d<440){
+    const act=d>170?'glide':'breath';
+    e.state='windup';e.action=act;e.atkAngle=ang;e.facing=ang;
+    if(act==='breath'){e.timer=D.breath.wind;addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:150,arc:D.breath.spread+0.3,total:e.timer,dmg:0,owner:e.id});}
+    else{e.timer=D.glide.wind;addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:D.glide.dist+e.r,width:e.r*2+8,total:e.timer,dmg:0,owner:e.id});}
+    return;
+  }
+  const sa=ang+Math.PI/2*(e.strafeDir||1);
+  if(d>260||!los)steerTo(w,e,p,e.speed,dt);
+  else{moveEntity(w.map,e,Math.cos(sa)*e.speed*0.6*dt,Math.sin(sa)*e.speed*0.6*dt);e.facing=ang;}
+}
+/** 爆炎の甲虫：近づき、赤く光ってから爆発する（爆発後は消える） */
+function updateBomb(w,e,p,d,dt){
+  const D=DATA.enemies[e.type];
+  if(e.state==='bomb'){
+    e.timer-=dt;
+    if(e.timer<=0){e.dead=true;e.hp=0;emit(w,{type:'roarWave',x:e.x,y:e.y,r:70});}
+    return;
+  }
+  if(e.stun>0)return;
+  if(d<e.r+p.r+14&&e.cd<=0){
+    e.state='bomb';e.timer=D.windup;e.facing=Math.atan2(p.y-e.y,p.x-e.x);
+    addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:64,total:D.windup,dmg:e.atk,owner:e.id});
+    return;
+  }
+  steerTo(w,e,p,e.speed,dt);
+}
+/** 溶鉄の魔獣：予告のあと直線に突進し、通った跡に熔鉄の炎を残す（急な方向転換なし） */
+function updateMolten(w,e,p,d,dt){
+  const D=DATA.enemies[e.type],ang=Math.atan2(p.y-e.y,p.x-e.x);
+  if(e.state==='windup'){e.timer-=dt;e.facing=e.atkAngle;if(e.timer<=0){e.state='charge';e.chargeLeft=D.charge.dist;e.hitSet=new Set();e.trailT=0;}return;}
+  if(e.state==='charge'){
+    const sp=D.charge.speed*dt;
+    const blocked=moveEntity(w.map,e,Math.cos(e.atkAngle)*sp,Math.sin(e.atkAngle)*sp);
+    e.chargeLeft-=sp;e.trailT-=dt;
+    if(e.trailT<=0){e.trailT=0.22;w.hazards.push({id:w.nextId++,kind:'fire',x:e.x,y:e.y,r:24,t:0,life:3,tick:0.5,acc:0,dmg:e.atk*0.6,delay:0});}
+    for(const id in w.players){const q=w.players[id];if(q.dead||e.hitSet.has(q.id))continue;
+      if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,e.atk*1.2,e.x,e.y);}}
+    if(blocked||e.chargeLeft<=0){if(blocked)emit(w,{type:'bump',x:e.x,y:e.y});e.state='recover';e.timer=blocked?1.0:0.8;}
+    return;
+  }
+  if(e.state==='recover'){e.timer-=dt;if(e.timer<=0){e.state='chase';e.cd=rand(D.charge.cd[0],D.charge.cd[1]);}return;}
+  e.state='chase';if(e.stun>0)return;
+  if(d>120&&d<620&&e.cd<=0&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){
+    e.state='windup';e.timer=D.charge.wind;e.atkAngle=ang;e.facing=ang;
+    addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:D.charge.dist+e.r,width:e.r*2+8,total:D.charge.wind,dmg:0,owner:e.id});
+    return;
+  }
+  steerTo(w,e,p,e.speed,dt);
+}
+/** 大蠍・氷刃カマキリ：複数の近接攻撃を持つ（予告の扇を出してから振る） */
+function updateTwin(w,e,p,d,dt){
+  const D=DATA.enemies[e.type],ang=Math.atan2(p.y-e.y,p.x-e.x);
+  if(e.state==='windup'){e.timer-=dt;e.facing=e.atkAngle;if(e.timer<=0){e.state='recover';e.timer=0.55;e.cd=rand(0.9,1.4);}return;}
+  if(e.state==='recover'){e.timer-=dt;if(e.timer<=0)e.state='chase';return;}
+  e.state='chase';
+  if(e.stun>0)return;
+  const ok=D.attacks.filter(A=>d<A.r+e.r+p.r+6);
+  if(ok.length&&e.cd<=0){
+    const A=ok[randInt(0,ok.length-1)];
+    e.state='windup';e.timer=A.wind;e.atkAngle=ang;e.facing=ang;
+    for(let k=0;k<A.dirs;k++){const a=A.dirs===1?ang:ang+k*Math.PI/2;
+      addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:a,r:A.r+e.r,arc:A.arc,total:A.wind,dmg:e.atk*A.dmg,owner:e.id});}
+    return;
+  }
+  if(d>e.r+p.r+10)steerTo(w,e,p,e.speed,dt);else e.facing=ang;
+}
+/** 氷晶甲虫：近づくと周囲へ氷の破片を放つ（円の予告つき） */
+function updateIceBeetle(w,e,p,d,dt){
+  const D=DATA.enemies[e.type],S=D.shard;
+  if(e.state==='windup'){
+    e.timer-=dt;
+    if(e.timer<=0){
+      for(let i=0;i<S.n;i++){const a=i*TAU/S.n+0.2;
+        w.projectiles.push({id:w.nextId++,kind:'shard',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),vx:Math.cos(a)*S.speed,vy:Math.sin(a)*S.speed,r:6,life:1.8,dmg:e.atk*S.dmg,angle:a});}
+      emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});e.state='recover';e.timer=0.7;e.cd=rand(S.cd[0],S.cd[1]);
+    }
+    return;
+  }
+  if(e.state==='recover'){e.timer-=dt;if(e.timer<=0)e.state='chase';return;}
+  e.state='chase';
+  if(e.stun>0)return;
+  if(e.cd<=0&&d<S.r*0.9){
+    e.state='windup';e.timer=S.wind;
+    addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:S.r,total:S.wind,dmg:0,owner:e.id});
+    return;
+  }
+  if(d>110)steerTo(w,e,p,e.speed,dt);
+}
+/** 吹雪フクロウ：遠くから氷の弾を放つ。弱ると周囲へ六方向に撃つ */
+function updateOwl(w,e,p,d,dt){
+  const D=DATA.enemies[e.type],ang=Math.atan2(p.y-e.y,p.x-e.x);
+  if(e.state==='aim'){
+    e.timer-=dt;if(e.timer>0.28)e.atkAngle=ang;e.facing=e.atkAngle;
+    if(e.timer<=0){
+      const sp=D.arrowSpeed||340;
+      if(e.hp<=e.maxHp*0.4){
+        for(let i=0;i<6;i++){const a=e.atkAngle+i*TAU/6;
+          w.projectiles.push({id:w.nextId++,kind:'ice',owner:'enemy',x:e.x+Math.cos(a)*(e.r+4),y:e.y+Math.sin(a)*(e.r+4),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6,life:2,dmg:e.atk*0.8,angle:a});}
+        e.cd=rand(2.6,3.4);
+      }else{
+        const a=e.atkAngle;
+        w.projectiles.push({id:w.nextId++,kind:'ice',owner:'enemy',x:e.x+Math.cos(a)*(e.r+4),y:e.y+Math.sin(a)*(e.r+4),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6,life:2,dmg:e.atk,angle:a});
+        e.cd=rand(1.8,2.6);
+      }
+      emit(w,{type:'shoot',x:e.x,y:e.y});e.state='recover';e.timer=0.4;
+    }
+    return;
+  }
+  if(e.state==='recover'){e.timer-=dt;if(e.timer<=0)e.state='move';return;}
+  e.state='move';
+  if(e.stun>0)return;
+  const los=lineOfSight(w.map,e.x,e.y,p.x,p.y);
+  if(los&&d<460&&e.cd<=0){e.state='aim';e.timer=e.aimTime||0.8;e.atkAngle=ang;return;}
+  if(!los||d>320)steerTo(w,e,p,e.speed,dt);
+  else if(d<170){moveEntity(w.map,e,-Math.cos(ang)*e.speed*dt,-Math.sin(ang)*e.speed*dt);e.facing=ang;}
+  else{const sa=ang+Math.PI/2*e.strafeDir;moveEntity(w.map,e,Math.cos(sa)*e.speed*0.5*dt,Math.sin(sa)*e.speed*0.5*dt);e.facing=ang;e.strafeT-=dt;if(e.strafeT<=0){e.strafeDir*=-1;e.strafeT=rand(1,2);}}
+}
+/** 雪影ギツネ：周囲を回り、距離を取ってから飛びかかる。遠くでは氷の破片を飛ばす */
+function updateFox(w,e,p,d,dt){
+  const D=DATA.enemies[e.type],ang=Math.atan2(p.y-e.y,p.x-e.x),P=D.pounce;
+  if(e.state==='tell'){e.timer-=dt;e.facing=e.atkAngle;if(e.timer<=0){e.state='pounce';e.chargeLeft=P.dist;e.hitSet=new Set();}return;}
+  if(e.state==='pounce'){
+    const sp=P.speed*dt;
+    const blocked=moveEntity(w.map,e,Math.cos(e.atkAngle)*sp,Math.sin(e.atkAngle)*sp);e.chargeLeft-=sp;
+    for(const id in w.players){const q=w.players[id];if(q.dead||e.hitSet.has(q.id))continue;
+      if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,e.atk,e.x,e.y);}}
+    if(blocked||e.chargeLeft<=0){e.state='retreat';e.timer=0.9;}
+    return;
+  }
+  if(e.state==='retreat'){
+    e.timer-=dt;moveEntity(w.map,e,-Math.cos(e.atkAngle)*e.speed*0.9*dt,-Math.sin(e.atkAngle)*e.speed*0.9*dt);
+    if(e.timer<=0){e.state='orbit';e.cd=rand(P.cd[0],P.cd[1]);}
+    return;
+  }
+  e.state='orbit';
+  if(e.stun>0)return;
+  const los=lineOfSight(w.map,e.x,e.y,p.x,p.y);
+  if(e.cd<=0&&los&&d<260&&d>100){
+    e.state='tell';e.timer=P.wind;e.atkAngle=ang;e.facing=ang;
+    addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:P.dist+e.r,width:e.r*2+8,total:P.wind,dmg:0,owner:e.id});
+    return;
+  }
+  if(d>200&&los&&e.cd2<=0){
+    const S=D.shard,sp=S.speed;
+    w.projectiles.push({id:w.nextId++,kind:'shard',owner:'enemy',x:e.x+Math.cos(ang)*(e.r+4),y:e.y+Math.sin(ang)*(e.r+4),vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,r:5,life:2,dmg:e.atk*S.dmg,angle:ang});
+    emit(w,{type:'shoot',x:e.x,y:e.y});e.cd2=rand(S.cd[0],S.cd[1]);
+  }
+  if(d<90){moveEntity(w.map,e,-Math.cos(ang)*e.speed*dt,-Math.sin(ang)*e.speed*dt);e.facing=ang;}
+  else if(!los||d>260)steerTo(w,e,p,e.speed,dt);
+  else{const sa=ang+Math.PI/2*(e.strafeDir||1);moveEntity(w.map,e,Math.cos(sa)*e.speed*0.7*dt,Math.sin(sa)*e.speed*0.7*dt);e.facing=ang;}
+}
 const ENEMY_AI={goblin:updateGoblin,archer:updateArcher,dasher:updateDasher,slime:updateSlime,beetle:updateBeetle,
-  spore:updateSpore,ghost:updateGhost,knight:updateKnight,shaman:updateShaman,bull:updateBull,wolf:updateWolf,dragon:updateDragon,pattern:updateBossPattern};
+  spore:updateSpore,ghost:updateGhost,knight:updateKnight,shaman:updateShaman,bull:updateBull,wolf:updateWolf,dragon:updateDragon,pattern:updateBossPattern,wyvern:updateWyvern,bomb:updateBomb,molten:updateMolten,twin:updateTwin,iceBeetle:updateIceBeetle,owl:updateOwl,fox:updateFox};
 function separateBodies(w){
   const es=w.enemies;
   for(let i=0;i<es.length;i++){
@@ -3650,15 +4087,34 @@ function updateGathers(w){
     }
   }
 }
+/** 灼熱の火山：常設のマグマ溜まり（通路は塞がず、スタート部屋には置かない） */
+function placeMagma(w){
+  const m=w.map,keys=Object.keys(m.rooms||{}).filter(k=>k!=='start'&&k!=='entrance');
+  for(const k of shuffle(keys).slice(0,Math.min(keys.length,4))){
+    const room=m.rooms[k];if(!room)continue;
+    const p=randomFloor(m,room,3);if(!p)continue;
+    w.hazards.push({id:w.nextId++,kind:'magma',x:p.x,y:p.y,r:rand(34,46),t:0,life:1e9,tick:0.6,acc:0,dmg:9,delay:0});
+  }
+}
 /** 毒の雲：中にいる間、一定間隔でダメージ */
+/** 氷雪地帯の吹雪：時々だけ発生する（通常時は視界も速度も変えない）。開始は全員に見えるよう知らせる */
+function updateBlizzard(w,dt){
+  const B=w.blizzard;if(!B)return;
+  B.t-=dt;if(B.t>0)return;
+  B.on=!B.on;
+  if(B.on){B.t=rand(7,9);for(const id in w.players){const q=w.players[id];if(!q.dead)emit(w,{type:'status',x:q.x,y:q.y-q.r-18,text:'吹雪が来た…',color:'#cfefff'});}}
+  else B.t=rand(40,55);
+}
 function updateHazards(w,dt){
   if(!w.hazards||!w.hazards.length)return;
+  const hit=new Set(); // 炎・マグマ：同じ瞬間に複数の炎に触れても、ダメージは一度だけ
   for(const hz of w.hazards){
     if(hz.delay>0){hz.delay-=dt;continue;}
     hz.t+=dt;hz.acc+=dt;
-    const inside=Object.values(w.players).filter(p=>!p.dead&&Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r+p.r*0.5);
-    for(const p of inside)p.poisoned=0.3;
-    if(hz.acc>=hz.tick){hz.acc-=hz.tick;for(const p of inside)dotPlayer(w,p,hz.dmg);}
+    let inside=Object.values(w.players).filter(p=>!p.dead&&Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r+p.r*0.5);
+    const heat=hz.kind==='fire'||hz.kind==='magma';
+    if(heat)inside=inside.filter(p=>!hit.has(p.id));else for(const p of inside)p.poisoned=0.3;
+    if(hz.acc>=hz.tick){hz.acc-=hz.tick;for(const p of inside){if(heat)hit.add(p.id);dotPlayer(w,p,hz.dmg);}}
   }
   w.hazards=w.hazards.filter(hz=>hz.t<hz.life);
 }
@@ -3734,7 +4190,7 @@ function updateWorld(w,dt,inputs){
   updateDrops(w,dt);
   updateChests(w);
   updateGathers(w);
-  updateHazards(w,dt);
+  updateBlizzard(w,dt);updateHazards(w,dt);
   updatePlaced(w,dt);
   w.enemies=w.enemies.filter(e=>!e.dead);
   if(w.clearTimer>0){w.clearTimer-=dt;if(w.clearTimer<=0)w.status='clear';}
@@ -3772,6 +4228,12 @@ const GEAR_LOOKS={
   lizard:{w:['spine'],main:'#7a8a4a',dark:'#3e4a22',accent:'#e8d890',light:'#a8b870',eye:'#ff9020',beast:'lizard',blade:'#e8e0b0'},
   // rabbit：跳ね兎の毛皮（長い耳の帽子、綿毛の胴、丸い尾、ぽんぽんの手首、丸い足先）。かわいい見た目
   rabbit:{main:'#f6eee8',dark:'#b8a8a0',accent:'#ffb8c8',light:'#ffffff',eye:'#d83c60',beast:'rabbit',blade:'#ffffff'},
+  lava:{main:'#7a4a2a',dark:'#2a1608',accent:'#ff8040',light:'#7a4a2a',eye:'#ffe060',blade:'#ff8040'},
+  dragon:{main:'#8a2a14',dark:'#2a0a04',accent:'#ff9040',light:'#8a2a14',eye:'#ffe060',blade:'#ff9040'},
+  felg:{main:'#c05a1a',dark:'#3a1406',accent:'#ffd080',light:'#c05a1a',eye:'#ffe060',blade:'#ffd080'},
+  deer:{main:'#a8d8f0',dark:'#2a5a78',accent:'#e8f8ff',light:'#a8d8f0',eye:'#ffe060',blade:'#e8f8ff'},
+  wyv:{main:'#7ac8e8',dark:'#1e4a68',accent:'#c8f0ff',light:'#7ac8e8',eye:'#ffe060',blade:'#c8f0ff'},
+  ape:{main:'#e8eef4',dark:'#5a6a7a',accent:'#a8e8ff',light:'#e8eef4',eye:'#ffe060',blade:'#a8e8ff'},
   fox:{main:'#f6f0ea',dark:'#8a7a80',accent:'#ffb070',light:'#e8dcd0',eye:'#4a3a4a',orn:'ears',blade:'#ffe0c0'},
   owl:{main:'#a88a6a',dark:'#5a4632',accent:'#ffe6a0',light:'#d8c4a0',eye:'#ffd040',orn:'ears',blade:'#e8dcc8'},
   bat:{main:'#4a3a6a',dark:'#1e1630',accent:'#ff5070',light:'#7a60a0',eye:'#ff5070',blade:'#f0f0e0'},
@@ -4229,6 +4691,12 @@ const Renderer={
     return !!this.explored[ty*w.map.W+tx];
   },
   /** 視野の外を暗くする。行ったことのない場所は真っ暗、一度見た場所は地形だけうっすら見える */
+  drawSnowfall(ctx){ // 吹雪の雪粒（画面に固定、軽量）
+    const W=this.w,H=this.h;ctx.save();ctx.fillStyle='rgba(230,245,255,0.8)';
+    for(let i=0;i<60;i++){const x=((i*73.7)+this.time*(40+(i%5)*12))%W,y=((i*41.3)+this.time*(70+(i%7)*9))%H;
+      ctx.beginPath();ctx.arc(x,y,1.2+(i%3)*0.6,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
   drawFog(w,shx,shy){
     const dpr=this.dpr,sc=this.viewScale,cw=this.cv.width,ch=this.cv.height;
     if(!this.fogCanvas)this.fogCanvas=document.createElement('canvas');
@@ -4245,7 +4713,7 @@ const Renderer={
     for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)if(!this.explored[ty*map.W+tx])g.fillRect(tx*TILE-0.5,ty*TILE-0.5,TILE+1,TILE+1);
     // 視野の部分をくり抜く（外側はふんわりぼかす）
     g.globalCompositeOperation='destination-out';
-    const R=CONFIG.vision.radius;
+    const R=CONFIG.vision.radius*(w.blizzard&&w.blizzard.on?0.8:1); // 吹雪の間は視界が少し狭まる
     for(const v of this.vis){
       const grad=g.createRadialGradient(v.x,v.y,R*0.55,v.x,v.y,R);
       grad.addColorStop(0,'rgba(0,0,0,1)');grad.addColorStop(1,'rgba(0,0,0,0)');
@@ -4492,6 +4960,7 @@ const Renderer={
     ctx.globalAlpha=1;
     if(fog){
       this.drawFog(w,shx,shy);
+      if(w.blizzard&&w.blizzard.on)this.drawSnowfall(ctx);
       ctx.setTransform(dpr*sc,0,0,dpr*sc,(-this.cam.x+shx)*sc*dpr,(-this.cam.y+shy)*sc*dpr);
       // 1P/2P の名前と復活ゲージは暗がりでも見えるよう、フォグの上に描き直す
       if(this.multi)for(const q of Object.values(w.players))this.drawPlayerLabel(ctx,q);
@@ -4687,6 +5156,22 @@ const Renderer={
       case 'mole':this.drawMole(ctx,e,hurt,ed.pal);break;
       case 'centipede':this.drawCentipede(ctx,e,hurt,ed.pal);break;
       case 'golem':this.drawGolem(ctx,e,hurt,ed.pal);break;
+      case 'fireWyvern':this.drawFireWyvern(ctx,e,hurt,ed.pal);break;
+      case 'magmaBeetle':this.drawMagmaBeetle(ctx,e,hurt,ed.pal);break;
+      case 'moltenBeast':this.drawMoltenBeast(ctx,e,hurt,ed.pal);break;
+      case 'scorpion':this.drawScorpion(ctx,e,hurt,ed.pal);break;
+      case 'lavaGiant':this.drawLavaGiant(ctx,e,hurt,ed.pal);break;
+      case 'volcanoDragon':this.drawVolcanoDragon(ctx,e,hurt,ed.pal);break;
+      case 'felgnas':this.drawFelgnas(ctx,e,hurt,ed.pal);break;
+      case 'iceBeetle':this.drawIceBeetle(ctx,e,hurt,ed.pal);break;
+      case 'snowOwl':this.drawSnowOwl(ctx,e,hurt,ed.pal);break;
+      case 'iceSeal':this.drawIceSeal(ctx,e,hurt,ed.pal);break;
+      case 'mantis':this.drawMantis(ctx,e,hurt,ed.pal);break;
+      case 'snowFox':this.drawSnowFox(ctx,e,hurt,ed.pal);break;
+      case 'monkey':this.drawMonkey(ctx,e,hurt,ed.pal);break;
+      case 'iceDeer':this.drawIceDeer(ctx,e,hurt,ed.pal);break;
+      case 'frostWyvern':this.drawFrostWyvern(ctx,e,hurt,ed.pal);break;
+      case 'iceApe':this.drawIceApe(ctx,e,hurt,ed.pal);break;
       case 'rabbit':this.drawRabbit(ctx,e,hurt,ed.pal);break;
     }
     ctx.restore();
@@ -4926,6 +5411,191 @@ const Renderer={
     const r=e.r,t=e.anim;
     ctx.save();ctx.fillStyle='#5a4228';ctx.strokeStyle='#2e2014';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.5,0,0,TAU);ctx.fill();ctx.stroke();
     ctx.fillStyle='rgba(180,150,110,0.6)';for(let i=0;i<4;i++){const a=t*2+i*1.6;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.8,Math.sin(a)*r*0.4-r*0.2*Math.abs(Math.sin(t*3+i)),r*0.12,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawFireWyvern(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,flap=Math.sin(e.anim*11)*0.5,fl=0.6+0.4*Math.sin(e.anim*9);
+    ctx.save();ctx.rotate(e.facing);
+    for(const sg of [-1,1]){ctx.save();ctx.scale(1,sg);ctx.fillStyle=pal.wing;ctx.strokeStyle=d;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(r*0.3,-r*(1.4+flap*0.5),-r*1.1,-r*(0.2+flap*0.3));ctx.quadraticCurveTo(-r*0.4,r*0.2,0,r*0.1);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*0.8,r*0.5,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.flame;ctx.globalAlpha=0.7*fl;ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.lineTo(-r*1.5,-r*0.2);ctx.lineTo(-r*1.5,r*0.2);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.5,sg*r*0.2,r*0.11,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.fang;ctx.beginPath();ctx.moveTo(r*0.7,-r*0.1);ctx.lineTo(r*0.95,0);ctx.lineTo(r*0.7,r*0.1);ctx.closePath();ctx.fill();
+    ctx.restore();
+  },
+  drawMagmaBeetle(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,warn=e.state==='bomb'?(0.5+0.5*Math.sin(e.anim*30)):0;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*1.0,r*0.8,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.strokeStyle=pal.glow;ctx.lineWidth=2;ctx.globalAlpha=0.6+0.4*warn;
+    ctx.beginPath();ctx.moveTo(-r*0.6,-r*0.2);ctx.lineTo(0,r*0.1);ctx.lineTo(r*0.5,-r*0.3);ctx.moveTo(-r*0.2,r*0.4);ctx.lineTo(r*0.3,r*0.2);ctx.stroke();
+    ctx.globalAlpha=1;
+    if(warn>0){ctx.fillStyle=`rgba(255,80,40,${0.35*warn})`;ctx.beginPath();ctx.arc(0,0,r*1.6,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.7,sg*r*0.35,r*0.1,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawMoltenBeast(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,st=Math.sin(e.anim*10)*r*0.15;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const [x,y] of [[-0.5,0.7],[0.2,0.7],[-0.5,-0.7],[0.2,-0.7]]){ctx.beginPath();ctx.moveTo(r*x,r*y*0.5);ctx.lineTo(r*x+st*(y>0?1:-1),r*y);ctx.stroke();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*1.1,r*0.75,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.metal;ctx.beginPath();ctx.ellipse(-r*0.2,0,r*0.6,r*0.5,0,0,TAU);ctx.fill();
+    ctx.strokeStyle=pal.glow;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-r*0.6,-r*0.2);ctx.lineTo(r*0.2,r*0.1);ctx.lineTo(r*0.6,-r*0.2);ctx.stroke();
+    ctx.fillStyle=pal.metal;ctx.beginPath();ctx.moveTo(r*0.8,-r*0.3);ctx.lineTo(r*1.4,-r*0.6);ctx.lineTo(r*0.9,-r*0.1);ctx.fill();
+    ctx.beginPath();ctx.moveTo(r*0.8,r*0.3);ctx.lineTo(r*1.4,r*0.6);ctx.lineTo(r*0.9,r*0.1);ctx.fill();
+    ctx.fillStyle=pal.eye;ctx.beginPath();ctx.arc(r*0.7,0,r*0.12,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawScorpion(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,sw=Math.sin(e.anim*6)*0.2;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.strokeStyle=pal.tail;ctx.lineWidth=r*0.35;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.quadraticCurveTo(-r*1.3,-r*0.4+sw*r,-r*1.0,-r*1.2+sw*r);ctx.stroke();
+    ctx.fillStyle=pal.sting;ctx.beginPath();ctx.moveTo(-r*1.0,-r*1.2+sw*r);ctx.lineTo(-r*0.8,-r*1.5+sw*r);ctx.lineTo(-r*1.2,-r*1.3+sw*r);ctx.closePath();ctx.fill();
+    ctx.lineCap='butt';
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*0.9,r*0.6,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.shell;ctx.beginPath();ctx.ellipse(r*0.2,0,r*0.5,r*0.45,0,0,TAU);ctx.fill();
+    for(const sg of [-1,1]){ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r*0.5,sg*r*0.4);ctx.lineTo(r*1.1,sg*r*1.0);ctx.stroke();
+      ctx.fillStyle=b;ctx.beginPath();ctx.arc(r*1.15,sg*r*1.1,r*0.22,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.7,sg*r*0.2,r*0.08,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawLavaGiant(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,sway=Math.sin(e.anim*2)*r*0.04,glow=0.5+0.5*Math.sin(e.anim*3);
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const sg of [-1,1]){ctx.beginPath();ctx.ellipse(r*0.3,sg*r*0.95,r*0.4,r*0.3,0,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.beginPath();ctx.ellipse(-r*0.05,sway,r*0.95,r*0.85,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.strokeStyle=pal.lava;ctx.lineWidth=2.5;ctx.globalAlpha=0.6+0.4*glow;
+    ctx.beginPath();ctx.moveTo(-r*0.6,-r*0.3);ctx.lineTo(-r*0.2,r*0.1);ctx.lineTo(-r*0.5,r*0.5);ctx.moveTo(r*0.1,-r*0.5);ctx.lineTo(r*0.4,-r*0.1);ctx.stroke();
+    ctx.globalAlpha=1;
+    ctx.fillStyle=pal.core;ctx.beginPath();ctx.arc(-r*0.1,sway,r*0.14,0,TAU);ctx.fill();
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.7,sg*r*0.25,r*0.07,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawVolcanoDragon(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,flap=Math.sin(e.anim*4)*0.2;
+    ctx.save();ctx.rotate(e.facing);
+    for(const sg of [-1,1]){ctx.save();ctx.scale(1,sg);ctx.fillStyle=pal.wing;ctx.strokeStyle=d;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(r*0.4,-r*(1.8+flap),-r*1.4,-r*(0.5+flap));ctx.quadraticCurveTo(-r*0.5,r*0.2,0,r*0.2);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.65,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.scale;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(-r*0.4+i*r*0.3,-r*0.6);ctx.lineTo(-r*0.25+i*r*0.3,-r*0.95);ctx.lineTo(-r*0.1+i*r*0.3,-r*0.6);ctx.fill();}
+    ctx.fillStyle=pal.lava;ctx.globalAlpha=0.6;ctx.beginPath();ctx.ellipse(r*0.5,0,r*0.35,r*0.25,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.7,sg*r*0.3,r*0.09,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawFelgnas(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,st=Math.sin(e.anim*8)*r*0.05;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const [x,y] of [[-0.5,0.8],[0.2,0.8],[-0.5,-0.8],[0.2,-0.8]]){ctx.beginPath();ctx.moveTo(r*x,r*y*0.5);ctx.lineTo(r*x+st,r*y);ctx.stroke();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,0,r*1.05,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.metal;ctx.beginPath();ctx.ellipse(-r*0.1,0,r*0.55,r*0.45,0,0,TAU);ctx.fill();
+    ctx.strokeStyle=pal.glow;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-r*0.5,0);ctx.lineTo(r*0.2,-r*0.2);ctx.lineTo(r*0.6,r*0.2);ctx.stroke();
+    ctx.fillStyle=pal.metal;for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.6,sg*r*0.3);ctx.lineTo(r*1.3,sg*r*0.7);ctx.lineTo(r*0.8,sg*r*0.1);ctx.fill();}
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.7,0,r*0.12,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawIceBeetle(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=pal.shell;ctx.strokeStyle=d;ctx.lineWidth=2;
+    for(let i=0;i<6;i++){const a=(i/6)*TAU;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.6,Math.sin(a)*r*0.6);ctx.lineTo(Math.cos(a)*r*1.25,Math.sin(a)*r*1.25);ctx.lineTo(Math.cos(a+0.3)*r*0.6,Math.sin(a+0.3)*r*0.6);ctx.closePath();ctx.fill();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.75,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.beginPath();ctx.ellipse(-r*0.2,-r*0.25,r*0.3,r*0.18,-0.4,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.6,sg*r*0.3,r*0.09,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawSnowOwl(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,flap=Math.sin(e.anim*8)*0.2;
+    ctx.save();ctx.rotate(e.facing);
+    for(const sg of [-1,1]){ctx.save();ctx.scale(1,sg);ctx.fillStyle=pal.ear;ctx.beginPath();ctx.ellipse(-r*0.1,-r*(0.9+flap*0.3),r*0.5,r*0.35,0.3,0,TAU);ctx.fill();ctx.restore();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*0.85,r*0.9,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.belly;ctx.beginPath();ctx.ellipse(r*0.25,0,r*0.5,r*0.6,0,0,TAU);ctx.fill();
+    ctx.fillStyle='#ffffff';for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.35,sg*r*0.35,r*0.28,0,TAU);ctx.fill();ctx.strokeStyle=d;ctx.lineWidth=1.2;ctx.stroke();}
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.4,sg*r*0.35,r*0.12,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.beak;ctx.beginPath();ctx.moveTo(r*0.6,-r*0.05);ctx.lineTo(r*0.9,0);ctx.lineTo(r*0.6,r*0.05);ctx.closePath();ctx.fill();
+    ctx.restore();
+  },
+  drawIceSeal(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,wig=Math.sin(e.anim*7)*r*0.1;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r*1.05,r*0.8,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.belly;ctx.beginPath();ctx.ellipse(r*0.3,0,r*0.6,r*0.55,0,0,TAU);ctx.fill();
+    ctx.fillStyle=d;for(const sg of [-1,1]){ctx.beginPath();ctx.ellipse(-r*0.5,sg*(r*0.8+wig),r*0.3,r*0.15,0.4*sg,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.tusk;for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.8,sg*r*0.15);ctx.lineTo(r*1.2,sg*r*0.25);ctx.lineTo(r*0.85,sg*r*0.3);ctx.closePath();ctx.fill();}
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.55,sg*r*0.3,r*0.1,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawMantis(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,sw=Math.sin(e.anim*8)*0.15;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.strokeStyle=d;ctx.lineWidth=2;
+    for(let i=0;i<3;i++)for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(-r*0.2+i*r*0.3,sg*r*0.5);ctx.lineTo(-r*0.6+i*r*0.4,sg*r*1.1);ctx.stroke();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(-r*0.2,0,r*0.7,r*0.45,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.blade;for(const sg of [-1,1]){ctx.save();ctx.translate(r*0.2,sg*r*0.6);ctx.rotate(sg*(0.5+sw));ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r*0.9,-r*0.05);ctx.lineTo(r*0.5,r*0.15);ctx.closePath();ctx.fill();ctx.restore();}
+    ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(r*0.4,-r*0.4);ctx.lineTo(r*0.9,0);ctx.lineTo(r*0.4,r*0.4);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.6,sg*r*0.2,r*0.08,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawSnowFox(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,wag=Math.sin(e.anim*6)*0.3;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.quadraticCurveTo(-r*1.6,-r*0.6+wag*r,-r*1.8,-r*0.2+wag*r);ctx.quadraticCurveTo(-r*1.4,r*0.4,-r*0.6,r*0.25);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.tail;ctx.beginPath();ctx.arc(-r*1.8,-r*0.2+wag*r,r*0.3,0,TAU);ctx.fill();
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.6,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.ear;for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.5,sg*r*0.3);ctx.lineTo(r*0.7,sg*r*0.8);ctx.lineTo(r*0.2,sg*r*0.45);ctx.closePath();ctx.fill();}
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.6,sg*r*0.25,r*0.09,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawMonkey(ctx,e,hurt,pal){
+    const r=e.r,b=hurt?'#ffffff':pal.body,d=pal.dark,sw=Math.sin(e.anim*8)*r*0.2;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.strokeStyle=d;ctx.lineWidth=3;ctx.lineCap='round';
+    for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(0,sg*r*0.5);ctx.lineTo(r*0.6,sg*(r*0.9+sw));ctx.stroke();}
+    ctx.lineCap='butt';
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(-r*0.1,0,r*0.85,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.face;ctx.beginPath();ctx.ellipse(r*0.5,0,r*0.5,r*0.45,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.6,sg*r*0.18,r*0.08,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawIceDeer(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,st=Math.sin(e.anim*8)*r*0.08;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const [x,y] of [[-0.5,0.7],[0.2,0.7],[-0.5,-0.7],[0.2,-0.7]]){ctx.beginPath();ctx.moveTo(r*x,r*y*0.5);ctx.lineTo(r*x+st*(y>0?1:-1),r*y*1.1);ctx.stroke();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(-r*0.1,0,r*0.9,r*0.6,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.ellipse(r*0.7,-r*0.2,r*0.35,r*0.28,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.strokeStyle=pal.antler;ctx.lineWidth=3;
+    for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.6,-r*0.3+sg*0);ctx.quadraticCurveTo(r*0.2,-r*(1.1),r*(-0.2),-r*(1.2+0.2*sg));ctx.moveTo(r*0.2,-r*0.9);ctx.lineTo(r*0.45,-r*1.35);ctx.stroke();}
+    ctx.fillStyle=pal.ice;ctx.globalAlpha=0.7;ctx.beginPath();ctx.arc(r*0.2,-r*0.9,r*0.12,0,TAU);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.9,-r*0.25,r*0.08,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawFrostWyvern(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,flap=Math.sin(e.anim*4)*0.2;
+    ctx.save();ctx.rotate(e.facing);
+    for(const sg of [-1,1]){ctx.save();ctx.scale(1,sg);ctx.fillStyle=pal.wing;ctx.strokeStyle=d;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(r*0.4,-r*(1.8+flap),-r*1.4,-r*(0.5+flap));ctx.quadraticCurveTo(-r*0.5,r*0.2,0,r*0.2);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,r*0.95,r*0.65,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.scale;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(-r*0.4+i*r*0.3,-r*0.6);ctx.lineTo(-r*0.25+i*r*0.3,-r*0.95);ctx.lineTo(-r*0.1+i*r*0.3,-r*0.6);ctx.fill();}
+    ctx.fillStyle=pal.scale;ctx.globalAlpha=0.5;ctx.beginPath();ctx.ellipse(r*0.5,0,r*0.35,r*0.25,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.7,sg*r*0.3,r*0.09,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawIceApe(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,sway=Math.sin(e.anim*2)*r*0.04;
+    ctx.save();ctx.rotate(e.facing);
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;
+    for(const sg of [-1,1]){ctx.beginPath();ctx.ellipse(r*0.3,sg*r*0.95,r*0.38,r*0.28,0,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.beginPath();ctx.ellipse(-r*0.05,sway,r*0.95,r*0.85,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.fur;ctx.globalAlpha=0.8;for(let i=0;i<6;i++){const a=i*0.9;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.6,Math.sin(a)*r*0.6+sway,r*0.14,0,TAU);ctx.fill();}
+    ctx.globalAlpha=1;
+    ctx.fillStyle=pal.ice;ctx.globalAlpha=0.6+0.3*Math.sin(e.anim*3);ctx.beginPath();ctx.arc(-r*0.1,sway,r*0.18,0,TAU);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const sg of [-1,1]){ctx.beginPath();ctx.arc(r*0.7,sg*r*0.25,r*0.07,0,TAU);ctx.fill();}
     ctx.restore();
   },
   drawRabbit(ctx,e,hurt,pal){
@@ -5304,7 +5974,19 @@ const Renderer={
     ctx.restore();
   },
   /** 毒の雲 */
+  drawLava(ctx,z){ // マグマ（常設）と炎（一時的）：赤橙の溜まりと、揺らぐ縁
+    const hot=z.kind==='magma',pulse=0.5+0.5*Math.sin(this.time*3+z.id);
+    const a=hot?1:clamp(Math.min(z.t/0.15,(z.life-z.t)/0.3),0,1);
+    ctx.save();ctx.globalAlpha=a;
+    const g=ctx.createRadialGradient(z.x,z.y,z.r*0.15,z.x,z.y,z.r);
+    g.addColorStop(0,hot?'rgba(255,200,90,.95)':'rgba(255,170,60,.9)');g.addColorStop(0.6,hot?'rgba(232,84,22,.9)':'rgba(255,100,30,.7)');g.addColorStop(1,'rgba(120,30,10,.35)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();
+    ctx.strokeStyle=`rgba(255,226,140,${0.3+0.35*pulse})`;ctx.lineWidth=2;ctx.setLineDash([8,5]);ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(255,240,170,.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(z.x-z.r*0.5,z.y+z.r*0.1);ctx.lineTo(z.x-z.r*0.1,z.y-z.r*0.2);ctx.lineTo(z.x+z.r*0.3,z.y+z.r*0.15);ctx.stroke();
+    ctx.restore();
+  },
   drawHazard(ctx,z){
+    if(z.kind==='magma'||z.kind==='fire'){this.drawLava(ctx,z);return;}
     const a=clamp(Math.min(z.t/0.3,(z.life-z.t)/0.6),0,1);
     ctx.save();ctx.globalAlpha=a;
     const g=ctx.createRadialGradient(z.x,z.y,z.r*0.2,z.x,z.y,z.r);
@@ -5642,6 +6324,10 @@ const Renderer={
       ctx.fillStyle='rgba(255,140,60,.35)';ctx.beginPath();ctx.ellipse(-10,0,12,5,0,0,TAU);ctx.fill();
       ctx.fillStyle='#ffb070';ctx.beginPath();ctx.arc(0,0,pr.r,0,TAU);ctx.fill();
       ctx.fillStyle='#ff5a20';ctx.beginPath();ctx.arc(0,0,pr.r*0.55,0,TAU);ctx.fill();
+    }else if(pr.kind==='ice'||pr.kind==='shard'){ // 氷の弾・氷の破片
+      ctx.shadowColor='#8ad8ff';ctx.shadowBlur=10;
+      ctx.fillStyle='rgba(180,235,255,.4)';ctx.beginPath();ctx.ellipse(-8,0,10,4,0,0,TAU);ctx.fill();
+      ctx.fillStyle=pr.kind==='ice'?'#d8f4ff':'#9ae8ff';ctx.beginPath();ctx.moveTo(pr.r*1.6,0);ctx.lineTo(0,-pr.r);ctx.lineTo(-pr.r,0);ctx.lineTo(0,pr.r);ctx.closePath();ctx.fill();
     }else if(pr.kind==='feather'){ // 疾風怪鳥の羽根
       ctx.fillStyle='#a8d0f0';ctx.beginPath();ctx.ellipse(-2,0,10,3.2,0,0,TAU);ctx.fill();
       ctx.strokeStyle='#2a4a7a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(8,0);ctx.stroke();
@@ -7099,6 +7785,7 @@ const Net={
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
+      blizzard:w.blizzard?{on:!!w.blizzard.on}:null,
       gathers:(w.gathers||[]).map(g=>({id:g.id,x:g.x,y:g.y,kind:g.kind,used:g.used})),
       drops:w.drops.map(d=>({id:d.id,x:r1(d.x),y:r1(d.y),loot:this.liteLoot(d.loot)})),
       chests:w.chests.map(c=>({id:c.id,x:c.x,y:c.y,opened:c.opened})),
@@ -7201,6 +7888,7 @@ const Net={
     w.chests=s.chests||[];
     w.placed=s.placed||[];
     w.hazards=s.hazards||[];
+    w.blizzard=s.blizzard?{on:!!s.blizzard.on,t:0}:undefined;
     w.gathers=s.gathers||[];
     for(const ev of (s.ev||[]))App.guestEvent(ev);
   },
@@ -7322,7 +8010,7 @@ const App={
   settings(){return this.profile.settings;},
   /* --- プレイヤーID とデータの対応 ---
      ひとり／同じ画面：全員が this.profile を共有（p1=キャラ0、p2=キャラ1）
-     オンラインのホスト：p1=ホスト自身、p2〜p4=各参加者のデータ（いずれもキャラ0） */
+     オンラインのホスト：p1=ホスト自身、p2〜p5=各参加者のデータ（いずれもキャラ0） */
   profileFor(pid){
     if(Net.role==='host'&&pid!=='p1'){const m=Net.member(pid);return m?m.profile:null;}
     return this.profile;
@@ -7925,7 +8613,7 @@ const App={
       <div class="campinfo">${this.charLine(0)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span><br>
       解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
-      <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大4人）</button>
+      <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
       <button data-act="inventory">装備・インベントリ（I）</button>
@@ -7979,7 +8667,7 @@ const App={
   onlineHTML(){
     return `<div class="panel camp"><h2>オンライン協力（別々のPC）</h2>
       <p class="small muted" style="line-height:1.7">ホストのPCがゲームの処理を行います。セーブデータは<b>持ち寄り式</b>で、各自が自分のPCのキャラクター（装備・素材・ゴールド）で参加し、入手したものも自分のPCに保存されます。
-      最大4人。インターネット接続が必要です（接続の仲介に無料サービス PeerJS を使い、つながった後はPC同士で直接通信します）。</p>
+      最大5人。インターネット接続が必要です（接続の仲介に無料サービス PeerJS を使い、つながった後はPC同士で直接通信します）。</p>
       <label class="field">あなたの名前<input id="netName" maxlength="12" value="${esc(Net.savedName())}" placeholder="名前（12文字まで）"></label>
       <div class="menu-col"><button class="primary" data-act="netHost">部屋を作る（ホストになる）</button></div>
       <label class="field">参加する部屋のコード<input id="netCode" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="例：483027" style="letter-spacing:.2em"></label>
@@ -8296,7 +8984,7 @@ const App={
   },
   /** モンスター図鑑：倒した魔物が登録される。ステージごとに一覧、選ぶと姿・特徴・攻略のヒント・素材 */
   bestiaryHTML(){
-    const p=this.profile,b=p.bestiary||{},st=clamp(this.bestStage||1,1,DATA.stages.length);
+    const p=this.profile,b=p.bestiary||{},st=clamp(this.bestStage||1,1,maxStageId());
     const ids=Object.keys(DATA.bestiary).filter(id=>DATA.bestiary[id].stage.includes(st)&&DATA.enemies[id]);
     const order=id=>(DATA.enemies[id].boss?1:0);
     ids.sort((a,c)=>order(a)-order(c));
