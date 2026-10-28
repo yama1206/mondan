@@ -2585,22 +2585,37 @@ function createWorld(opts){
 /** 部屋構成のあるステージ：部屋の種類ごとに魔物・宝箱・採取ポイントを置く */
 /** 配置する魔物の数：数の範囲（a〜b）にCONFIG.spawnRateをかける。端数は確率で切り上げ・切り下げ */
 const spawnCount=(a,b)=>Math.floor(randInt(a,b)*CONFIG.spawnRate+RNG.next());
+/** 雑魚の群れ：一か所に最低3体。主の種類が多めで、ほかは同じ部屋の魔物から混ざる */
+function spawnPack(w,m,rect,types,main,count,elite){
+  const c=randomFloor(m,rect,2);if(!c)return elite;
+  for(let i=0;i<count;i++){
+    const t=(i===0||RNG.next()<0.7)?main:pick(types);
+    let x=c.x,y=c.y;
+    if(i>0){const a=rand(0,TAU),r=rand(14,40),tx=c.x+Math.cos(a)*r,ty=c.y+Math.sin(a)*r;if(!circleHitsWall(m,tx,ty,10)){x=tx;y=ty;}}
+    spawnEnemy(w,t,x,y,{elite:elite-->0});
+  }
+  return elite;
+}
 function populateLayout(w,stage,quest,L){
   const m=w.map,goal=quest.goal,S=stage.enemySet;
   const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&(goal.type==='boss'||goal.type==='explore')));
   for(const rm of rooms){
     let elite=rm.def.elite||0;
-    for(const [t,a,b] of (rm.def.spawn||[]))for(let i=spawnCount(a,b);i>0;i--){
-      const p=randomFloor(m,rm.rect,2);if(!p)continue;
-      spawnEnemy(w,t,p.x,p.y,{elite:elite-->0});
-    }
+    const types=(rm.def.spawn||[]).map(s=>s[0]);
+    // 枠ごとに、3割の確率で3〜4体の群れ（魔物の総数は以前とほぼ同じ程度）
+    for(const [t,a,b] of (rm.def.spawn||[]))if(RNG.next()<0.3)elite=spawnPack(w,m,rm.rect,types,t,randInt(3,4),elite);
   }
-  // 中ボス：道の部屋のどこかに、その部屋の魔物の大きい版
+  // 中ボス：道の部屋のどこかに、その部屋の魔物の大きい版。取り巻きの雑魚も一緒に湧く
   const mains=shuffle(rooms.filter(rm=>rm.kind==='main'));
   for(let i=0,placed=0,n=randInt(CONFIG.midBoss.count[0],CONFIG.midBoss.count[1]);i<mains.length&&placed<n;i++){
     const types=(mains[i].def.spawn||[]).map(s=>s[0]).filter(t=>!CONFIG.midBoss.exclude.includes(t));
     const p=types.length&&(randomFloor(m,mains[i].rect,3)||randomFloor(m,mains[i].rect,2));
-    if(p){spawnEnemy(w,pick(types),p.x,p.y,{mid:true});placed++;}
+    if(p){
+      spawnEnemy(w,pick(types),p.x,p.y,{mid:true});placed++;
+      const escort=randInt(2,3);
+      for(let k=0;k<escort;k++){const a=rand(0,TAU),r=rand(40,70),tx=p.x+Math.cos(a)*r,ty=p.y+Math.sin(a)*r;
+        spawnEnemy(w,RNG.next()<0.7?types[0]:pick(types),circleHitsWall(m,tx,ty,10)?p.x:tx,circleHitsWall(m,tx,ty,10)?p.y:ty);}
+    }
   }
   // 通路をうろつく魔物
   for(const c of shuffle(m.corridors.slice()).slice(0,spawnCount(2,4))){
