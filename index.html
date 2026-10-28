@@ -2576,6 +2576,7 @@ function createWorld(opts){
   if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
   if(stage.layout==='volcano')placeMagma(w);
   if(stage.layout==='swamp')placeToxPools(w);
+  w.narrowVision=stage.layout==='crystal'; // 洞窟は常に視界が少し狭い
   if(stage.layout==='snow')w.blizzard={on:false,t:rand(20,30)};
   return w;
 }
@@ -4127,13 +4128,13 @@ function placeMagma(w){
     w.hazards.push({id:w.nextId++,kind:'magma',x:p.x,y:p.y,r:rand(34,46),t:0,life:1e9,tick:0.6,acc:0,dmg:9,delay:0});
   }
 }
-/** 沼地の毒池：小さく、乗ると毒。誰かが出てから2秒で消える（それまでは残る） */
+/** 沼地の毒池：小さく常設。乗ると毒になり、出てからも毒の状態は2秒続く */
 function placeToxPools(w){
   const m=w.map,keys=Object.keys(m.rooms||{}).filter(k=>k!=='start'&&k!=='entrance');
   for(const k of shuffle(keys).slice(0,Math.min(keys.length,4))){
     const room=m.rooms[k];if(!room)continue;
     const p=randomFloor(m,room,3);if(!p)continue;
-    w.hazards.push({id:w.nextId++,kind:'toxpool',x:p.x,y:p.y,r:20,t:0,life:1e9,tick:0.5,acc:0,dmg:6,delay:0,used:false,idle:0});
+    w.hazards.push({id:w.nextId++,kind:'toxpool',x:p.x,y:p.y,r:20,t:0,life:1e9,tick:0.5,acc:0,dmg:6,delay:0});
   }
 }
 /** 毒の雲：中にいる間、一定間隔でダメージ */
@@ -4153,11 +4154,7 @@ function updateHazards(w,dt){
     hz.t+=dt;hz.acc+=dt;
     let inside=Object.values(w.players).filter(p=>!p.dead&&Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r+p.r*0.5);
     const heat=hz.kind==='fire'||hz.kind==='magma';
-    if(hz.kind==='toxpool'){
-      if(inside.length){hz.used=true;hz.idle=0;}
-      else if(hz.used){hz.idle+=dt;if(hz.idle>=2)hz.life=hz.t;} // 出てから2秒で消える
-    }
-    if(heat)inside=inside.filter(p=>!hit.has(p.id));else for(const p of inside)p.poisoned=0.3;
+    if(heat)inside=inside.filter(p=>!hit.has(p.id));else for(const p of inside)p.poisoned=hz.kind==='toxpool'?2:0.3; // 沼の毒池は出てから2秒間毒が残る
     if(hz.acc>=hz.tick){hz.acc-=hz.tick;for(const p of inside){if(heat)hit.add(p.id);dotPlayer(w,p,hz.dmg);}}
   }
   w.hazards=w.hazards.filter(hz=>hz.t<hz.life);
@@ -4692,7 +4689,7 @@ const Renderer={
   explored:null,vis:null,fogCanvas:null,
   /** 光線を放射状に飛ばして、壁に遮られるまでの見える範囲（多角形）を求める */
   castVision(map,x,y){
-    const V=CONFIG.vision,R=V.radius,N=V.rays,pts=[];
+    const V=CONFIG.vision,R=V.radius*(this.visMul||1),N=V.rays,pts=[];
     const ex=this.explored;
     for(let i=0;i<N;i++){
       const a=i/N*TAU,c=Math.cos(a),s=Math.sin(a);
@@ -4712,6 +4709,7 @@ const Renderer={
   updateVision(w){
     const map=w.map;
     if(!this.explored||this.explored.length!==map.W*map.H)this.explored=new Uint8Array(map.W*map.H);
+    this.visMul=w.narrowVision?0.85:1;
     this.vis=Object.values(w.players).map(p=>this.castVision(map,p.x,p.y));
   },
   /** その位置が誰かの視野に入っているか（体の端が見えていれば見える扱い） */
@@ -4757,7 +4755,7 @@ const Renderer={
     for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)if(!this.explored[ty*map.W+tx])g.fillRect(tx*TILE-0.5,ty*TILE-0.5,TILE+1,TILE+1);
     // 視野の部分をくり抜く（外側はふんわりぼかす）
     g.globalCompositeOperation='destination-out';
-    const R=CONFIG.vision.radius*(w.blizzard&&w.blizzard.on?0.8:1); // 吹雪の間は視界が少し狭まる
+    const R=CONFIG.vision.radius*(this.visMul||1)*(w.blizzard&&w.blizzard.on?0.8:1); // 吹雪の間は視界が少し狭まる
     for(const v of this.vis){
       const grad=g.createRadialGradient(v.x,v.y,R*0.55,v.x,v.y,R);
       grad.addColorStop(0,'rgba(0,0,0,1)');grad.addColorStop(1,'rgba(0,0,0,0)');
@@ -7841,7 +7839,7 @@ const Net={
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
-      blizzard:w.blizzard?{on:!!w.blizzard.on}:null,
+      blizzard:w.blizzard?{on:!!w.blizzard.on}:null,narrowVision:!!w.narrowVision,
       gathers:(w.gathers||[]).map(g=>({id:g.id,x:g.x,y:g.y,kind:g.kind,used:g.used})),
       drops:w.drops.map(d=>({id:d.id,x:r1(d.x),y:r1(d.y),loot:this.liteLoot(d.loot)})),
       chests:w.chests.map(c=>({id:c.id,x:c.x,y:c.y,opened:c.opened})),
@@ -7945,6 +7943,7 @@ const Net={
     w.placed=s.placed||[];
     w.hazards=s.hazards||[];
     w.blizzard=s.blizzard?{on:!!s.blizzard.on,t:0}:undefined;
+    w.narrowVision=!!s.narrowVision;
     w.gathers=s.gathers||[];
     for(const ev of (s.ev||[]))App.guestEvent(ev);
   },
