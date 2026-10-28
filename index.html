@@ -2426,10 +2426,16 @@ function damageEnemy(w,p,e,mult,src){
   }
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
+  // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
   if(!e.boss&&!ed.heavy&&!e.mid){
-    e.stun=0.15;
-    // ノックバックは武器ごと（大剣・ハンマーだけ）。片手剣・太刀・双剣は吹き飛ばさない
-    if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].knockback){const a=Math.atan2(e.y-p.y,e.x-p.x),k=src.skill?260:170;e.kx=Math.cos(a)*k;e.ky=Math.sin(a)*k;}
+    if((e.hitAccT||0)<=0)e.hitAcc=0;
+    e.hitAcc=(e.hitAcc||0)+dmg;e.hitAccT=2;
+    if(e.hitAcc>=e.maxHp*0.25){
+      e.hitAcc=0;e.hitAccT=0;
+      e.stun=0.15;
+      // ノックバックは武器ごと（大剣・ハンマーだけ）。片手剣・太刀・双剣は吹き飛ばさない
+      if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].knockback){const a=Math.atan2(e.y-p.y,e.x-p.x),k=src.skill?260:170;e.kx=Math.cos(a)*k;e.ky=Math.sin(a)*k;}
+    }
   }
   // ハンマー：ボスの頭（向いている方向の前側）に当たるとスタン値がたまる
   const wt=DATA.weaponTypes[s.weaponType];let head=false;
@@ -2734,7 +2740,7 @@ function updateAttacks(w,dt){
 /* ---------- 敵 ---------- */
 function alertNearby(w,e){for(const o of w.enemies)if(!o.boss&&!o.aggro&&Math.hypot(o.x-e.x,o.y-e.y)<220)o.aggro=true;}
 function updateEnemy(w,e,dt){
-  e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;
+  e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;e.hitAccT=(e.hitAccT||0)-dt;
   // 呪術師の強化が切れたら元に戻す
   if(e.empowerT>0){e.empowerT-=dt;if(e.empowerT<=0){e.atk=e.baseAtk;e.speed=e.baseSpeed;}}
   if(e.kx||e.ky){moveEntity(w.map,e,e.kx*dt,e.ky*dt);e.kx*=0.82;e.ky*=0.82;if(Math.abs(e.kx)+Math.abs(e.ky)<5)e.kx=e.ky=0;}
