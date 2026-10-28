@@ -350,6 +350,8 @@ const DATA={
       pieces:{head:'gale_helm',body:'gale_mail',arms:'gale_vambrace',waist:'gale_faulds',legs:'gale_greaves'},need:4,apply:s=>{s.moveSpd+=8;s.dodgeDistPct+=15;}},
     lizard:{name:'大蜥蜴シリーズ',bonus:'岩肌の生命力',desc:'最大HP+25、受けるダメージ-5%',
       pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},need:4,apply:s=>{s.maxHp+=25;s.dmgCut+=5;}},
+    rabbit:{name:'跳ね兎シリーズ',bonus:'跳ね兎の跳躍',desc:'回避で動く距離+30%、移動速度+4%',
+      pieces:{head:'rabbit_helm',body:'rabbit_mail',arms:'rabbit_vambrace',waist:'rabbit_faulds',legs:'rabbit_greaves'},need:4,apply:s=>{s.dodgeDistPct+=30;s.moveSpd+=4;}},
     stag:{name:'大顎シリーズ',bonus:'大顎の甲殻',desc:'防御力+15、攻撃を受けたときの吹き飛び-50%',
       pieces:{head:'stag_helm',body:'stag_mail',arms:'stag_vambrace',waist:'stag_faulds',legs:'stag_greaves'},need:4,apply:s=>{s.def+=15;s.knockRes+=50;}},
     hydra:{name:'多頭竜シリーズ',bonus:'多頭の執念',desc:'攻撃力+8%、HPが毎秒0.5ずつ回復',
@@ -480,6 +482,12 @@ const DATA={
     lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{rescue:3,regen:4,hp_up:2},slots:1},
     lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
+    // 跳ね兎シリーズ（森の白うさぎ）：防具の性能は回避距離（跳ねる距離）
+    rabbit_helm:{name:'跳ね耳の帽子',slot:'head',def:6,skills:{dodge_dist:3,evade:1},slots:1},
+    rabbit_mail:{name:'綿毛の胴着',slot:'body',def:8,fixed:[{stat:'maxHp',v:6}],skills:{dodge_dist:3,def_up:1},slots:1},
+    rabbit_vambrace:{name:'ぽんぽんの手首飾り',slot:'arms',def:5,skills:{dodge_dist:2,atk_up:1},slots:1},
+    rabbit_faulds:{name:'まるい尾の腰飾り',slot:'waist',def:6,skills:{dodge_dist:4},slots:1},
+    rabbit_greaves:{name:'跳ね足の脚甲',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{dodge_dist:5},slots:1},
     stag_gs:{name:'大顎の大剣',slot:'weapon',wtype:'greatsword',atk:29,crit:4,fixed:[{stat:'critDmg',v:12}],slots:2},
     stag_hammer:{name:'大顎のハンマー',slot:'weapon',wtype:'hammer',atk:29,crit:2,fixed:[{stat:'def',v:5}],slots:2},
     stag_db:{name:'大顎の双剣',slot:'weapon',wtype:'dual',atk:25,crit:12,fixed:[{stat:'atkSpd',v:6}],slots:2},
@@ -567,6 +575,8 @@ const DATA={
     lizard_scale:{name:'大蜥蜴の鱗',color:'#8a9a5a',desc:'岩のように硬い大蜥蜴の鱗。（風渡る草原）'},
     lizard_spine:{name:'大蜥蜴の背棘',color:'#e8d890',desc:'大蜥蜴の背中に並ぶ棘。稀少素材。（風渡る草原）'},
     // ---- 緑風の森林で手に入る素材 ----
+    rabbit_fur:{name:'白うさぎの毛皮',color:'#f4eee8',desc:'ふかふかで温かい白い毛皮。（緑風の森林）'},
+    rabbit_tuft:{name:'うさぎの綿毛',color:'#fff8f0',desc:'ふわふわの綿毛。軽くて、ふれるととても心地よい。稀少素材。（緑風の森林）'},
     stag_mandible:{name:'大顎',color:'#c8a070',desc:'大顎クワガタの巨大なあご。稀少素材。（緑風の森林）'},
     stag_shell:{name:'黒鋼の甲殻',color:'#5a4030',desc:'大顎クワガタの、鋼のように硬い甲殻。（緑風の森林）'},
     goblin_string:{name:'ゴブリンの弓弦',color:'#c8b070',desc:'ゴブリン弓兵の弓に張られた弦。（緑風の森林）'},
@@ -689,6 +699,7 @@ const DATA={
      1回の攻撃で当たるのは1か所だけ：近接は振った側から一番近い部位、矢は最初に触れた部位 */
   bossParts:{
     wolf:[{id:'head',name:'頭',x:1.05,y:0,r:0.43,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.72,mult:1},{id:'tail',name:'尻尾',x:-1.2,y:0,r:0.36,mult:0.9}],
+    rabbit:[{id:'head',name:'頭',x:1.0,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.15,y:0,r:0.72,mult:1},{id:'tail',name:'丸い尾',x:-1.0,y:0,r:0.3,mult:0.9}],
     forest_king:'wolf',black_wolf:'wolf',
     meadow_bull:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9}],
     gale_bird:[{id:'head',name:'頭',x:0.8,y:0,r:0.36,mult:1.4,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.6,mult:1},
@@ -845,6 +856,15 @@ const DATA={
         {k:'swarm',wind:0.8,cd:10,n:2,kind:'beetle',max:3},
       ],
       pal:{body:'#3a2a22',dark:'#160e0a',shell:'#5a4030',jaw:'#7a5a3a',shine:'#c8a070',rage:'#5a2020',rageDark:'#200808',eye:'#ffd040',rageEye:'#ff3030'}},
+    // 森の白うさぎ：素早く跳ねて突進し、耳を振る薙ぎ払いと、弱めの綿毛弾を撃つ。森林の4体目のボス
+    forest_rabbit:{name:'古森の跳ね兎',ai:'pattern',look:'rabbit',hp:2400,atk:20,def:4,r:28,speed:165,stunMax:110,stunTime:4,color:'#f4eee8',drops:'forest_rabbit',boss:true,
+      pattern:[
+        {k:'charge',wind:0.45,cd:3.5,dmg:1.15},
+        {k:'shot',wind:0.6,cd:4,n:3,spread:0.5,speed:300,dmg:0.6,kind:'soul'},
+        {k:'sweep',wind:0.55,cd:3.0,dmg:1.0,r:105,arc:Math.PI*0.6},
+        {k:'slam',wind:0.7,cd:5.5,dmg:0.9,r:100},
+      ],
+      pal:{body:'#f4eee8',dark:'#b8a8a0',ear:'#ffb8c8',cheek:'#ffb0c0',eye:'#d83c60',rage:'#ffd8c8',rageDark:'#a07060',rageEye:'#ff2040'}},
     forest_king:{name:'古森の覇狼',ai:'wolf',hp:2600,atk:24,def:6,r:34,speed:128,stunMax:120,stunTime:4,color:'#5a6a3a',drops:'forest_king',boss:true,
       moves:['bite','sweep','charge','roar'],rageChain:2,rageCd:0.7,
       pal:{body:'#5a6a3a',dark:'#2e3a1c',rage:'#6a5a2a',rageDark:'#3a2a10',eye:'#e0ff70',rageEye:'#ff6020',moss:'#7aa040'}},
@@ -1062,6 +1082,12 @@ const DATA={
       {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
       {type:'deco',chance:0.7},{type:'deco',chance:0.3},
     ]},
+    forest_rabbit:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'rabbit_fur',chance:1.0,min:2,max:3},
+      {type:'mat',id:'rabbit_tuft',chance:1.0,min:1,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},
+      {type:'deco',chance:0.75},{type:'deco',chance:0.35},
+    ]},
     stag_beetle:{rarityBoost:2.0,rolls:[
       {type:'mat',id:'stag_shell',chance:1.0,min:2,max:3},
       {type:'mat',id:'stag_mandible',chance:1.0,min:1,max:2},
@@ -1224,6 +1250,7 @@ const DATA={
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
     {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:600,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
     {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:700,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
+    {id:'s1_rabbit',stage:2,after:'s1_stag',boss:'forest_rabbit',name:'【強敵】古森の跳ね兎',desc:'森の奥で、白い毛並みの大きな兎が跳ね回っている。とても素早く、突進の前には足をためる。横へかわして背後から攻めろ。',goal:{type:'boss'},reward:{gold:800,mats:{rabbit_fur:2,rabbit_tuft:2,reinforce_orb:2},decos:1}},
     {id:'s2_dragon',stage:5,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
     // 自由探索（目標なし・報酬なし。好きなときに帰れる）
     {id:'free_1',stage:1,explore:true,name:'【探索】風渡る草原',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
@@ -1253,6 +1280,7 @@ const DATA={
     gale_bird:{stage:[1],role:'ボス',desc:'草原の空を支配する巨大な鳥。とても素早く、急降下や羽根の投げつけで攻めてくるが、一撃は軽い。',tip:'急降下のあとは少しスキがある。羽根は扇状に飛ぶので横へよけよう。'},
     rock_lizard:{stage:[1],role:'ボス',desc:'岩のような鱗に覆われた大蜥蜴。噛みつき・尻尾の振り回し・岩の吐き出しを使い分ける。',tip:'尻尾の振り回しは足元の円。円が見えたらすぐ離れよう。'},
     stag_beetle:{stage:[2],role:'ボス',desc:'古森に棲む巨大なクワガタ。大顎のある正面からの攻撃はほとんど弾かれてしまう。向きを変えるのは遅い。',tip:'横や後ろへ回り込んで攻めよう。罠にかかったりスタンしている間は、正面からでも攻撃が通る。'},
+    forest_rabbit:{stage:[2],role:'ボス',desc:'古森に棲む白い大兎。とても素早く跳ね回り、突進や耳の薙ぎ払いを使う。綿毛の弾は弱い。',tip:'突進の前には足をためる。跳ねた先を読んで、横へ回り込もう。'},
     hydra:{stage:[3],role:'ボス',desc:'沼の中心に棲む多頭の竜。三つの首で薙ぎ払い、毒の吐息を放つ。',tip:'首の薙ぎ払いは扇形。毒の沼には入らないこと。'},
     venomKing:{stage:[3],role:'ボス',desc:'毒蟲の王。子蟲を呼び、毒の沼を作り、重い前脚で叩きつける。',tip:'子蟲は早めに倒すと楽になる。'},
     mireGiant:{stage:[3],role:'ボス',desc:'腐敗した沼の巨人。大きな腕で叩き、泥を投げ、沼を広げる。',tip:'叩きつけの後は大きな隙がある。その隙に攻めよう。'},
@@ -1377,6 +1405,12 @@ const DATA={
     {id:'r_lizard_arms',out:{type:'equip',id:'lizard_vambrace'},cost:{lizard_spine:1,lizard_scale:1,beast_fang:2}},
     {id:'r_lizard_waist',out:{type:'equip',id:'lizard_faulds'},cost:{lizard_scale:2,beast_hide:2}},
     {id:'r_lizard_legs',out:{type:'equip',id:'lizard_greaves'},cost:{lizard_scale:2,slime_gel:2}},
+    // 跳ね兎シリーズ（古森の跳ね兎）
+    {id:'r_rabbit_helm',out:{type:'equip',id:'rabbit_helm'},cost:{rabbit_fur:2,rabbit_tuft:2,wood:2}},
+    {id:'r_rabbit_mail',out:{type:'equip',id:'rabbit_mail'},cost:{rabbit_fur:3,rabbit_tuft:2}},
+    {id:'r_rabbit_arms',out:{type:'equip',id:'rabbit_vambrace'},cost:{rabbit_fur:2,rabbit_tuft:1,herb:1}},
+    {id:'r_rabbit_waist',out:{type:'equip',id:'rabbit_faulds'},cost:{rabbit_tuft:2,rabbit_fur:1,wood:2}},
+    {id:'r_rabbit_legs',out:{type:'equip',id:'rabbit_greaves'},cost:{rabbit_fur:2,rabbit_tuft:2,slime_gel:1}},
     // 大顎シリーズ（大顎クワガタ）
     {id:'r_stag_gs',out:{type:'equip',id:'stag_gs'},cost:{stag_mandible:2,stag_shell:2,scrap_iron:3}},
     {id:'r_stag_hammer',out:{type:'equip',id:'stag_hammer'},cost:{stag_shell:3,stag_mandible:1,wood:3}},
@@ -3560,6 +3594,8 @@ const GEAR_LOOKS={
   // beast：GEAR_ART の描き方を使うシリーズ
   gale:{w:['feather'],main:'#5a8ac0',dark:'#2a4a7a',accent:'#ffd060',light:'#a8d0f0',eye:'#ffe040',beast:'gale',blade:'#d8ecff'},
   lizard:{w:['spine'],main:'#7a8a4a',dark:'#3e4a22',accent:'#e8d890',light:'#a8b870',eye:'#ff9020',beast:'lizard',blade:'#e8e0b0'},
+  // rabbit：跳ね兎の毛皮（長い耳の帽子、綿毛の胴、丸い尾、ぽんぽんの手首、丸い足先）。かわいい見た目
+  rabbit:{main:'#f6eee8',dark:'#b8a8a0',accent:'#ffb8c8',light:'#ffffff',eye:'#d83c60',beast:'rabbit',blade:'#ffffff'},
   stag:{w:['mandible'],main:'#3a2a22',dark:'#160e0a',accent:'#c8a070',light:'#7a5a40',eye:'#ffd040',beast:'stag',blade:'#d8c0a0'},
   hydra:{w:['snake'],main:'#4a6a3a',dark:'#1e2e18',accent:'#e0e8a0',light:'#7a9a5a',eye:'#ffe060',beast:'hydra',blade:'#c8f0a0'},
   venom:{w:['stinger'],main:'#5a3a6a',dark:'#2a1a34',accent:'#b8e040',light:'#8a5aa0',eye:'#ffe060',beast:'venom',blade:'#d0b0ff'},
@@ -3729,6 +3765,33 @@ const GEAR_ART={
       ctx.beginPath();ctx.moveTo(ax+sd*r*0.25,ay-r*0.1);ctx.quadraticCurveTo(ax+sd*r*0.55+fx*r*0.3,ay+fy*r*0.3-r*0.2,ax+sd*r*0.35+fx*r*0.6,ay+fy*r*0.6-r*0.25);ctx.lineTo(ax+sd*r*0.15,ay+r*0.1);ctx.closePath();ctx.fill();ctx.stroke();
       ctx.strokeStyle=l.light;ctx.beginPath();ctx.arc(ax,ay,r*0.24,Math.PI*1.1,Math.PI*1.6);ctx.stroke();},
     foot(G,l,lx,ly){const {ctx,r}=G;ctx.strokeStyle=l.accent;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(lx-r*0.25,ly);ctx.lineTo(lx-r*0.42,ly+r*0.2);ctx.moveTo(lx+r*0.25,ly);ctx.lineTo(lx+r*0.42,ly+r*0.2);ctx.stroke();}
+  },
+  rabbit:{ // 跳ね兎：長い耳の帽子、綿毛の胴、丸い尾、ぽんぽんの手首、丸い足先
+    head(G,l){const {ctx,f,hx,hy,hr,tm}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.save();ctx.translate(hx,hy);ctx.rotate(f);
+      for(const s of [-1,1]){const sw=Math.sin(tm*3+s)*0.12; // 長い耳：頭の上から横へ倒れて、ゆれる
+        ctx.save();ctx.translate(-hr*0.35,s*hr*0.7);ctx.rotate(s*(0.3+sw));
+        ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(0,s*hr*0.55,hr*0.26,hr*0.85,0,0,TAU);ctx.fill();ctx.stroke();
+        ctx.fillStyle=l.accent;ctx.beginPath();ctx.ellipse(0,s*hr*0.6,hr*0.12,hr*0.6,0,0,TAU);ctx.fill();
+        ctx.restore();}
+      ctx.restore();
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+Math.cos(f)*hr*0.45+Math.cos(f+Math.PI/2)*s*hr*0.45,hy+Math.sin(f)*hr*0.45+Math.sin(f+Math.PI/2)*s*hr*0.45,1.6,0,TAU);ctx.fill();}
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(hx+Math.cos(f)*hr*1.0,hy+Math.sin(f)*hr*1.0,1.6,0,TAU);ctx.fill(); // 鼻
+    },
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.fillStyle=l.light;for(let k=-1;k<=1;k++)for(const s of [-1,1]){ctx.beginPath();ctx.arc(-fx*r*0.3+px*s*r*0.45+fx*k*r*0.3,-fy*r*0.3+py*s*r*0.45+fy*k*r*0.3+step,r*0.1,0,TAU);ctx.fill();} // 綿毛の点々
+      ctx.fillStyle=l.accent;ctx.globalAlpha*=0.6;ctx.beginPath();ctx.ellipse(fx*r*0.35,fy*r*0.35+step,r*0.3,r*0.4,f,0,TAU);ctx.fill();ctx.globalAlpha/=0.6; // おなかのピンク
+    },
+    tail(G,l){const {ctx,r,step,fx,fy}=G;
+      ctx.fillStyle=l.light;ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(-fx*r*1.02,-fy*r*1.02+step,r*0.3,0,TAU);ctx.fill();ctx.stroke(); // まるいしっぽ
+    },
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(ax,ay,r*0.26,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(ax+sd*r*0.05,ay-r*0.12,r*0.09,0,TAU);ctx.fill();}, // ぽんぽん
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.light;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      ctx.beginPath();ctx.ellipse(lx,ly+r*0.04,r*0.26,r*0.18,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.accent;for(const k of [-1,1]){ctx.beginPath();ctx.arc(lx+k*r*0.12,ly+r*0.16,r*0.05,0,TAU);ctx.fill();}},
   },
   hydra:{ // 多頭竜：三つの蛇の頭のかぶり物、鱗の胴、太い蛇の尾、蛇の頭の肩当て
     head(G,l){const {ctx,f,hx,hy,hr,tm}=G;
@@ -4433,6 +4496,7 @@ const Renderer={
       case 'galeBird':this.drawGaleBird(ctx,e,hurt,ed.pal);break;
       case 'rockLizard':this.drawRockLizard(ctx,e,hurt,ed.pal);break;
       case 'stagBeetle':this.drawStagBeetle(ctx,e,hurt,ed.pal);break;
+      case 'rabbit':this.drawRabbit(ctx,e,hurt,ed.pal);break;
     }
     ctx.restore();
     // 敵の体力は表示しない（モンハン式）
@@ -4590,6 +4654,32 @@ const Renderer={
       ctx.restore();
     }
     ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.75,s*r*0.32,r*0.07,0,TAU);ctx.fill();}
+    ctx.restore();
+  },
+  drawRabbit(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
+    const charging=e.state==='charge',hop=Math.abs(Math.sin(e.anim*(charging?14:5)))*r*0.12;
+    ctx.save();ctx.rotate(e.facing);
+    // 長い耳：後ろへ倒れて、ゆれる
+    for(const s of [-1,1]){const sw=Math.sin(e.anim*3+s)*0.12;
+      ctx.save();ctx.translate(-r*0.3,s*r*0.45);ctx.rotate(s*(0.45+sw)*(charging?0.5:1));
+      ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(-r*0.25,s*r*0.5,r*0.22,r*0.75,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=pal.ear;ctx.beginPath();ctx.ellipse(-r*0.25,s*r*0.52,r*0.1,r*0.55,0,0,TAU);ctx.fill();
+      ctx.restore();}
+    // 後ろ足（跳ねるとゆれる）
+    ctx.fillStyle=d;for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(-r*0.55,s*r*0.55+hop*0.3,r*0.32,r*0.2,0,0,TAU);ctx.fill();}
+    // 丸い尾
+    ctx.fillStyle='#ffffff';ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.arc(-r*1.0,0,r*0.26,0,TAU);ctx.fill();ctx.stroke();
+    // 体（ふっくら）
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(-r*0.15,-hop*0.3,r*0.85,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    // 頭
+    ctx.beginPath();ctx.ellipse(r*0.55,-hop*0.3,r*0.5,r*0.46,0,0,TAU);ctx.fill();ctx.stroke();
+    // ほっぺ・目・鼻・ひげ
+    ctx.globalAlpha*=0.7;ctx.fillStyle=pal.cheek;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.6,s*r*0.26,r*0.13,0,TAU);ctx.fill();}ctx.globalAlpha/=0.7;
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.78,s*r*0.16,r*0.075,0,TAU);ctx.fill();}
+    ctx.fillStyle='#ffffff';for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.8,s*r*0.19,r*0.022,0,TAU);ctx.fill();}
+    ctx.fillStyle=pal.ear;ctx.beginPath();ctx.moveTo(r*0.98,-r*0.04);ctx.lineTo(r*1.06,r*0.04);ctx.lineTo(r*0.98,r*0.08);ctx.closePath();ctx.fill(); // 鼻
+    ctx.strokeStyle=d;ctx.lineWidth=1;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.98,s*r*0.06);ctx.lineTo(r*1.3,s*r*0.16);ctx.moveTo(r*0.98,s*r*0.1);ctx.lineTo(r*1.3,s*r*0.1);ctx.stroke();}
     ctx.restore();
   },
   drawHydra(ctx,e,hurt,pal){
@@ -5471,7 +5561,7 @@ const Portraits={
     try{
       const d=DATA.enemies[id],c=document.createElement('canvas');c.width=c.height=size;
       const ctx=c.getContext('2d'),look=d.look||d.ai;
-      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='rockLizard'||look==='stagBeetle')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
+      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='rockLizard'||look==='stagBeetle'||look==='rabbit')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
       const sc=size/span;
       ctx.translate(size/2-(look==='dragon'?d.r*0.45*sc:look==='knight'?d.r*0.8*sc:look==='wolf'?d.r*0.15*sc:0),size/2+(look==='ghost'?4*sc:0));ctx.scale(sc,sc);
       const e={id:1,type:id,x:0,y:0,r:d.r,facing:look==='dragon'||look==='wolf'||look==='knight'?0:0.6,state:'chase',anim:1,hurt:0,phase:1,timer:0,z:0,boss:!!d.boss,aimTime:d.aimTime||0.8,atkAngle:0};
