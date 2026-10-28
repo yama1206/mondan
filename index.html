@@ -2575,6 +2575,7 @@ function createWorld(opts){
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
   if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
   if(stage.layout==='volcano')placeMagma(w);
+  if(stage.layout==='swamp')placeToxPools(w);
   if(stage.layout==='snow')w.blizzard={on:false,t:rand(20,30)};
   return w;
 }
@@ -4126,6 +4127,15 @@ function placeMagma(w){
     w.hazards.push({id:w.nextId++,kind:'magma',x:p.x,y:p.y,r:rand(34,46),t:0,life:1e9,tick:0.6,acc:0,dmg:9,delay:0});
   }
 }
+/** 沼地の毒池：小さく、乗ると毒。誰かが出てから2秒で消える（それまでは残る） */
+function placeToxPools(w){
+  const m=w.map,keys=Object.keys(m.rooms||{}).filter(k=>k!=='start'&&k!=='entrance');
+  for(const k of shuffle(keys).slice(0,Math.min(keys.length,4))){
+    const room=m.rooms[k];if(!room)continue;
+    const p=randomFloor(m,room,3);if(!p)continue;
+    w.hazards.push({id:w.nextId++,kind:'toxpool',x:p.x,y:p.y,r:20,t:0,life:1e9,tick:0.5,acc:0,dmg:6,delay:0,used:false,idle:0});
+  }
+}
 /** 毒の雲：中にいる間、一定間隔でダメージ */
 /** 氷雪地帯の吹雪：時々だけ発生する（通常時は視界も速度も変えない）。開始は全員に見えるよう知らせる */
 function updateBlizzard(w,dt){
@@ -4143,6 +4153,10 @@ function updateHazards(w,dt){
     hz.t+=dt;hz.acc+=dt;
     let inside=Object.values(w.players).filter(p=>!p.dead&&Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r+p.r*0.5);
     const heat=hz.kind==='fire'||hz.kind==='magma';
+    if(hz.kind==='toxpool'){
+      if(inside.length){hz.used=true;hz.idle=0;}
+      else if(hz.used){hz.idle+=dt;if(hz.idle>=2)hz.life=hz.t;} // 出てから2秒で消える
+    }
     if(heat)inside=inside.filter(p=>!hit.has(p.id));else for(const p of inside)p.poisoned=0.3;
     if(hz.acc>=hz.tick){hz.acc-=hz.tick;for(const p of inside){if(heat)hit.add(p.id);dotPlayer(w,p,hz.dmg);}}
   }
@@ -6017,6 +6031,18 @@ const Renderer={
   },
   drawHazard(ctx,z){
     if(z.kind==='magma'||z.kind==='fire'){this.drawLava(ctx,z);return;}
+    if(z.kind==='toxpool'){ // 沼地の毒池：紫緑の濁った水面と泡
+      const pulse=0.5+0.5*Math.sin(this.time*4+z.id);
+      const a=clamp(Math.min(z.t/0.3,(z.life-z.t)/0.6),0,1);
+      ctx.save();ctx.globalAlpha=a;
+      const g=ctx.createRadialGradient(z.x,z.y,z.r*0.2,z.x,z.y,z.r);
+      g.addColorStop(0,'rgba(150,80,200,.55)');g.addColorStop(1,'rgba(70,140,40,.2)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();
+      ctx.strokeStyle=`rgba(190,120,240,${0.4+0.3*pulse})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.stroke();
+      ctx.fillStyle='rgba(210,170,255,.6)';
+      for(let i=0;i<3;i++){const an=i*2.1+z.id,rr=z.r*0.5;ctx.beginPath();ctx.arc(z.x+Math.cos(an)*rr,z.y+Math.sin(an)*rr*0.6-((this.time*12+i*9)%12),2,0,TAU);ctx.fill();}
+      ctx.restore();return;
+    }
     const a=clamp(Math.min(z.t/0.3,(z.life-z.t)/0.6),0,1);
     ctx.save();ctx.globalAlpha=a;
     const g=ctx.createRadialGradient(z.x,z.y,z.r*0.2,z.x,z.y,z.r);
