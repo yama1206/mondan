@@ -682,6 +682,7 @@ const DATA={
     bwolf_pelt:{name:'黒狼の毛皮',color:'#4a4060',desc:'闇のように黒い毛皮。（ステージ5）'},
     bwolf_fang:{name:'黒狼の牙',color:'#d8c8ff',desc:'紫に光る牙。（ステージ5）'},
     reinforce_orb:{name:'強化玉',color:'#ffb040',desc:'ボス・宝箱・依頼から手に入る。防具の強化に使う。'},
+    enchant_orb:{name:'付与の玉',color:'#c890ff',desc:'鍛冶屋で武器・防具に効果を1つ付ける（付く効果は抽選）。'},
     bull_horn:{name:'暴角獣の角',color:'#f0e6c8',desc:'草原の暴角獣の大きな角。（風渡る草原）'},
     bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
     bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
@@ -1371,6 +1372,7 @@ const DATA={
     {id:'m_scrap',name:'粗い鉄片',desc:'武器の補強に使う基本素材',price:15,type:'mat',mat:'scrap_iron'},
     {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:12,type:'mat',mat:'goblin_hide'},
     {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:12,type:'mat',mat:'old_bone'},
+    {id:'m_enchant',name:'付与の玉',desc:'武器・防具に効果を1つ付ける（鍛冶屋）',price:200,type:'mat',mat:'enchant_orb'},
     {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:20,type:'mat',mat:'arrowhead'},
     {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:8},
     {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:250,type:'deco'},
@@ -1903,14 +1905,15 @@ const Items={
   rollRarity(boost=1,minR=0){
     return weightedPick(DATA.rarities.map((r,i)=>({w:i<minR?0:r.dropW*Math.pow(boost,i),v:i})));
   },
-  /** fixed=true は製作（クラフト）で作る防具。乱数を使わず、レア度・性能・付与がいつも同じになる */
+  /** fixed=true は製作（クラフト）で作る武器・防具。乱数を使わず、レア度・性能・付与がいつも同じになる */
   createEquipment(baseId,rarity,fixed){
     if(DATA.equipment[baseId].slot==='charm')return Items.createLetter(DATA.equipment[baseId].letter);
     const base=DATA.equipment[baseId],rar=DATA.rarities[rarity];
     const it={kind:'equip',uid:null,baseId,slot:base.slot,rarity,atk:0,def:0,crit:0,affixes:[],slots:[],effects:[]};
-    if(fixed&&base.slot!=='weapon'){
-      it.def=Math.max(1,Math.round(base.def*rar.statMult));
-      const pool=Object.keys(DATA.affixes);
+    if(fixed){
+      if(base.slot==='weapon'){it.atk=Math.round(base.atk*rar.statMult);it.crit=base.crit||0;}
+      else it.def=Math.max(1,Math.round(base.def*rar.statMult));
+      const pool=Object.keys(DATA.affixes).filter(id=>!(base.slot==='weapon'&&id==='def'));
       for(let k=0;k<rar.affix[0]&&k<pool.length;k++){
         const a=DATA.affixes[pool[k]];
         it.affixes.push({id:pool[k],v:Math.max(1,Math.round((a.min+a.max)/2*rar.statMult))});
@@ -7531,6 +7534,7 @@ function sellPrice(it){
   const base=DATA.equipment[it.baseId],power=base.slot==='charm'?15+Object.values(it.skills||{}).reduce((a,b)=>a+b,0)*3:(base.atk||base.def*2||10);
   return Math.round((8+power*2)*(1+it.rarity*0.6)+it.slots.length*10);
 }
+const ENCHANT_CAP=[1,1,2,2,3]; // 付与できる効果の数（レア度ごと）
 const REINFORCE_MAX=5,REINFORCE_GOLD=40; // 防具の強化：最大段階と、1段階ごとのお金（×段階数）
 /** データの参照ミスを見つける（魔物・素材・地図・依頼・レシピ・ショップの名前が実在するか） */
 function validateData(){
@@ -7588,7 +7592,7 @@ const MAT_TIER=(()=>{const boss=new Set(),mob=new Set();
     for(const r of (DATA.dropTables[k].rolls||[]))if(r.type==='mat')(isB?boss:mob).add(r.id);}
   return {boss,mob};})();
 function matSellPrice(id){
-  if(id==='reinforce_orb')return 0;
+  if(id==='reinforce_orb'||id==='enchant_orb')return 0;
   if(MAT_TIER.boss.has(id))return MAT_TIER.mob.has(id)?15:30;
   if(MAT_TIER.mob.has(id))return 6;
   return 5;
@@ -7679,6 +7683,22 @@ const Ops={
     Profile.spendMats(p,{reinforce_orb:orbs});p.gold-=gold;
     it.reinforce=lv+1;it.def+=1;
     return {changed:true,msg:`${DATA.equipment[it.baseId].name} を強化！ 防御力 +1（${lv+1}/${REINFORCE_MAX}）`,color:'#ffd23a'};
+  },
+  /** 付与の玉を1個使って、まだ付いていない効果を1つ抽選で付ける（付けられる数はレア度で決まる） */
+  enchant(p,who,a){
+    const it=p.items.find(x=>x.uid===a.uid);
+    if(!it||it.kind!=='equip'||it.slot==='charm')return {msg:'付与できない装備です',color:'#888'};
+    it.effects=it.effects||[];
+    const cap=ENCHANT_CAP[it.rarity]||1;
+    if(it.effects.length>=cap)return {msg:'これ以上付与できません',color:'#888'};
+    if((p.materials.enchant_orb||0)<1)return {msg:'付与の玉が足りません',color:'#ff8060'};
+    const pool=Object.keys(DATA.effects).filter(id=>!it.effects.includes(id))
+      .map(id=>({w:DATA.effects[id].w[it.rarity]||0,v:id})).filter(e=>e.w>0);
+    if(!pool.length)return {msg:'付けられる効果がありません',color:'#888'};
+    const eff=weightedPick(pool);
+    Profile.spendMats(p,{enchant_orb:1});
+    it.effects.push(eff);
+    return {changed:true,msg:`${DATA.equipment[it.baseId].name} に「${DATA.effects[eff].name}」を付与！`,color:'#ffd23a'};
   },
 };
 
@@ -8507,7 +8527,7 @@ const App={
   /** 参加者から届いた装備・製作の操作を、その人のデータに対して実行する */
   hostCmd(pid,d){
     const m=Net.member(pid);
-    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat'];
+    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','enchant'];
     if(!m||!allowed.includes(d.act))return;
     const args=(d.args&&typeof d.args==='object')?d.args:{};
     let r={};
@@ -8669,6 +8689,7 @@ const App={
       case 'smithCat':this.smithCat=ds.c;this.smithSub='all';this.goto('smith');break;
       case 'smithSub':this.smithSub=ds.s;this.goto('smith');break;
       case 'reinforce':this.doOp('reinforce',{uid:ds.uid});break;
+      case 'enchant':this.doOp('enchant',{uid:ds.uid});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
       case 'retry':if(Net.role==='host')this.startOnline();else this.startSortie(this.lastPlayers||1);break;
       case 'inventory':this.openInventory(this.state);break; // 鍛冶屋・ショップから開いた場合は閉じると施設に戻る
@@ -9167,11 +9188,23 @@ const App={
     const wt=DATA.weaponTypes[sub];
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
     const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).some(pc=>DATA.recipes.some(r=>r.out.id===pc&&this.recipeKnown(r)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')||'（ボスの素材を手に入れると、そのシリーズの防具と一式効果がここに並びます）'}</div>`:'';
-    const reinf=cat==='reinforce'?this.reinforceHTML():'';
+    const reinf=cat==='reinforce'?this.reinforceHTML()+this.enchantHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
       `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${reinf}${this.recipeListHTML(match).replace('class="col full" data-scroll="craft"','')}</div>`);
   },
   /** 防具の強化：持っている防具ごとに、強化段階と必要な強化玉・お金、強化ボタン */
+  enchantHTML(){
+    const p=this.profile,orbs=p.materials.enchant_orb||0;
+    const list=p.items.filter(it=>it.kind==='equip'&&it.slot!=='charm');
+    const rows=list.length?list.map(it=>{
+      const b=DATA.equipment[it.baseId],cap=ENCHANT_CAP[it.rarity]||1,effs=it.effects||[],n=effs.length,full=n>=cap,can=!full&&orbs>=1;
+      const names=effs.map(id=>DATA.effects[id].name).join('・')||'なし';
+      return `<div class="recipe"><div class="rn">${esc(b.name)}　<span style="color:${rarColor(it.rarity)}">${DATA.rarities[it.rarity].name}</span></div>
+        <div class="muted">効果 ${n}/${cap}：${esc(names)}</div>
+        <div class="btnrow"><button class="${can?'primary':''}" data-act="enchant" data-uid="${it.uid}" ${can?'':'disabled'}>${full?'付与の上限です':`付与の玉を使う（所持 ${orbs}個）`}</button></div></div>`;
+    }).join(''):'<div class="muted">装備を持っていません。</div>';
+    return `<div class="col full" style="margin-bottom:10px"><div class="col-t">効果の付与</div><div class="small muted" style="margin-bottom:6px">付与の玉を1個使うと、まだ付いていない効果を1つ抽選で付けます。付けられる数はレア度で決まります（コモン・アンコモン1、レア・エピック2、レジェンダリー3）。</div>${rows}</div>`;
+  },
   reinforceHTML(){
     const p=this.profile,orbs=p.materials.reinforce_orb||0,gold0=p.gold||0;
     const list=p.items.filter(it=>it.kind==='equip'&&it.slot!=='weapon'&&it.slot!=='charm');
