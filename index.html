@@ -180,7 +180,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.19',date:'2026/10/28'};
+const GAME_VERSION={no:'0.20',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -312,7 +312,7 @@ const DATA={
     tachi:{name:'太刀',range:68,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
-    dual:{name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
+    dual:{name:'双剣',range:26,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
     hammer:{name:'ハンマー',knockback:true,range:38,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
@@ -4619,7 +4619,7 @@ function weaponGeom(wtype,r){
   switch(wtype){
     case 'greatsword':return blade(r*0.4+13,r+58,6,r*0.4+11);
     case 'tachi':return blade(r*0.4+14,r+56,2.2,r*0.4+12);
-    case 'dual':return blade(r*0.5+7,r+23,2,r*0.5+6);
+    case 'dual':return blade(r*0.5+7,r+14,2,r*0.5+6);
     case 'hammer':{const g=blade(r*0.4,r+12,2,r*0.4+5);g.kind='hammer';g.head={x0:r+12,x1:r+26,hy:10};return g;}
     case 'bow':{const cx=r+4,R=22;return {kind:'bow',hw:2,gx:cx+R,along:t=>{const a=-1.2+2.4*t;return {x:cx+Math.cos(a)*R,y:Math.sin(a)*R,a:a+Math.PI/2};}};}
     case 'lance':return blade(r*0.4+10,r+66,2.2,r*0.4+8);
@@ -6184,10 +6184,11 @@ const Renderer={
         ctx.fillStyle='#3a2a4a';ctx.fillRect(r*0.4,-2,12,4);
         ctx.fillStyle=rc;ctx.beginPath();ctx.arc(r*0.4+12,0,3.5,0,TAU);ctx.fill();
         ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.4+14,-1.8);ctx.quadraticCurveTo(r+30,-5,r+54,-4);ctx.lineTo(r+56,-2);ctx.quadraticCurveTo(r+30,1,r*0.4+14,1.8);ctx.closePath();ctx.fill();wDeco();
-      }else if(wtype==='dual'){ // 短い刃を2本（もう1本は反対側）
+      }else if(wtype==='dual'){ // 短い刃を2本。構えているときは向きの左右に開き、攻撃中は向きを挟んで対称に振る
         const blade=()=>{ctx.fillStyle='#6a4520';ctx.fillRect(r*0.5,-1.5,6,3);ctx.fillStyle=rc;ctx.fillRect(r*0.5+5,-4,2,8);
-          ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+7,-2);ctx.lineTo(r+18,-2);ctx.lineTo(r+23,0);ctx.lineTo(r+18,2);ctx.lineTo(r*0.5+7,2);ctx.closePath();ctx.fill();wDeco();};
-        blade();ctx.restore();ctx.save();ctx.rotate(sheathed?swordA+0.35:p.facing-(p.swing>0?swordA-p.facing:0.9));blade();
+          ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+7,-2);ctx.lineTo(r+9,-2);ctx.lineTo(r+14,0);ctx.lineTo(r+9,2);ctx.lineTo(r*0.5+7,2);ctx.closePath();ctx.fill();wDeco();};
+        const F=p.facing,sw=p.swing>0||p.charging,a1=sw?swordA:F+0.3,a2=sw?2*F-swordA:F-0.3;
+        ctx.restore();ctx.save();ctx.rotate(a1);blade();ctx.restore();ctx.save();ctx.rotate(a2);blade();
       }else if(wtype==='hammer'){ // 柄と大きな頭
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.4,-2,r+14,4);
         ctx.fillStyle=wl.main;ctx.fillRect(r+12,-10,14,20);
