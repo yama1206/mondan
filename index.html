@@ -491,6 +491,17 @@ const DATA={
     lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{rescue:3,regen:4,hp_up:2},slots:1},
     lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
+    // 氷雪地帯の雑魚防具（キツネ・フクロウ）：1スロット・スキルpt少なめ。1式効果なし
+    fox_helm:{name:'雪狐の耳帽子',slot:'head',def:6,fixed:[{stat:'moveSpd',v:2}],skills:{evade:2},slots:1},
+    fox_mail:{name:'雪狐のふわ胴着',slot:'body',def:9,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:2},slots:1},
+    fox_vambrace:{name:'雪狐の手袋',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{atk_up:2},slots:1},
+    fox_faulds:{name:'雪狐のしっぽ飾り',slot:'waist',def:6,skills:{dodge_dist:2},slots:1},
+    fox_greaves:{name:'雪狐の足袋',slot:'legs',def:6,skills:{move_up:2},slots:1},
+    owl_helm:{name:'フクロウの羽毛帽',slot:'head',def:6,fixed:[{stat:'crit',v:2}],skills:{crit_up:2},slots:1},
+    owl_mail:{name:'フクロウの羽毛着',slot:'body',def:9,fixed:[{stat:'maxHp',v:10}],skills:{def_up:2},slots:1},
+    owl_vambrace:{name:'フクロウの翼袖',slot:'arms',def:6,skills:{crit_dmg:2},slots:1},
+    owl_faulds:{name:'フクロウの丸尾羽',slot:'waist',def:6,skills:{heal_up:2},slots:1},
+    owl_greaves:{name:'フクロウの足輪',slot:'legs',def:6,skills:{flinch_free:2},slots:1},
     // 洞窟の雑魚防具（コウモリ・蜘蛛）：ボス防具より弱め（1スロット・スキルpt少なめ）。雑魚防具は1式効果なし
     bat_helm:{name:'コウモリの頭巾',slot:'head',def:6,fixed:[{stat:'moveSpd',v:2}],skills:{dodge_dist:2},slots:1},
     bat_mail:{name:'翼膜の胴着',slot:'body',def:9,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:2},slots:1},
@@ -613,6 +624,11 @@ const DATA={
     // ---- 緑風の森林で手に入る素材 ----
     rabbit_fur:{name:'白うさぎの毛皮',color:'#f4eee8',desc:'ふかふかで温かい白い毛皮。（緑風の森林）'},
     rabbit_tuft:{name:'うさぎの綿毛',color:'#fff8f0',desc:'ふわふわの綿毛。軽くて、ふれるととても心地よい。稀少素材。（緑風の森林）'},
+    // ---- 氷雪地帯の雑魚素材（雪影ギツネ・吹雪フクロウ）----
+    fox_pelt:{name:'雪影ギツネの毛皮',color:'#f6f0ea',desc:'雪影ギツネのふわふわの毛皮。（氷雪地帯）'},
+    fox_fang:{name:'氷狐の牙',color:'#e8f4ff',desc:'雪影ギツネの小さな氷の牙。（氷雪地帯）'},
+    owl_feather:{name:'吹雪鳥の羽',color:'#e8dcc8',desc:'吹雪フクロウの柔らかな羽。（氷雪地帯）'},
+    owl_gem:{name:'氷結の眼晶',color:'#9ae8ff',desc:'吹雪フクロウの目に宿る氷の結晶。（氷雪地帯）'},
     // ---- 晶石の大洞窟で手に入る素材 ----
     cave_wing:{name:'コウモリの翼膜',color:'#7a60a0',desc:'洞窟コウモリの薄くて丈夫な翼。（晶石の大洞窟）'},
     cave_fang:{name:'鋭牙',color:'#f0f0e0',desc:'洞窟コウモリの鋭い牙。（晶石の大洞窟）'},
@@ -1516,6 +1532,17 @@ const DATA={
     {id:'r_lizard_legs',out:{type:'equip',id:'lizard_greaves'},cost:{lizard_scale:2,slime_gel:2}},
     // 晶石の大洞窟の防具
     // 洞窟の雑魚防具
+    // 氷雪地帯の雑魚防具
+    {id:'r_fox_helm',out:{type:'equip',id:'fox_helm'},cost:{fox_pelt:2,fox_fang:1}},
+    {id:'r_fox_mail',out:{type:'equip',id:'fox_mail'},cost:{fox_pelt:3,fox_fang:1}},
+    {id:'r_fox_arms',out:{type:'equip',id:'fox_vambrace'},cost:{fox_pelt:2}},
+    {id:'r_fox_waist',out:{type:'equip',id:'fox_faulds'},cost:{fox_pelt:2,fox_fang:1}},
+    {id:'r_fox_legs',out:{type:'equip',id:'fox_greaves'},cost:{fox_pelt:3}},
+    {id:'r_owl_helm',out:{type:'equip',id:'owl_helm'},cost:{owl_feather:2,owl_gem:1}},
+    {id:'r_owl_mail',out:{type:'equip',id:'owl_mail'},cost:{owl_feather:3,owl_gem:1}},
+    {id:'r_owl_arms',out:{type:'equip',id:'owl_vambrace'},cost:{owl_feather:2}},
+    {id:'r_owl_waist',out:{type:'equip',id:'owl_faulds'},cost:{owl_feather:2,owl_gem:1}},
+    {id:'r_owl_legs',out:{type:'equip',id:'owl_greaves'},cost:{owl_feather:3}},
     {id:'r_bat_helm',out:{type:'equip',id:'bat_helm'},cost:{cave_wing:2,cave_fang:1},stage:6},
     {id:'r_bat_mail',out:{type:'equip',id:'bat_mail'},cost:{cave_wing:3,cave_fang:1},stage:6},
     {id:'r_bat_arms',out:{type:'equip',id:'bat_vambrace'},cost:{cave_wing:2},stage:6},
@@ -3745,6 +3772,8 @@ const GEAR_LOOKS={
   lizard:{w:['spine'],main:'#7a8a4a',dark:'#3e4a22',accent:'#e8d890',light:'#a8b870',eye:'#ff9020',beast:'lizard',blade:'#e8e0b0'},
   // rabbit：跳ね兎の毛皮（長い耳の帽子、綿毛の胴、丸い尾、ぽんぽんの手首、丸い足先）。かわいい見た目
   rabbit:{main:'#f6eee8',dark:'#b8a8a0',accent:'#ffb8c8',light:'#ffffff',eye:'#d83c60',beast:'rabbit',blade:'#ffffff'},
+  fox:{main:'#f6f0ea',dark:'#8a7a80',accent:'#ffb070',light:'#e8dcd0',eye:'#4a3a4a',orn:'ears',blade:'#ffe0c0'},
+  owl:{main:'#a88a6a',dark:'#5a4632',accent:'#ffe6a0',light:'#d8c4a0',eye:'#ffd040',orn:'ears',blade:'#e8dcc8'},
   bat:{main:'#4a3a6a',dark:'#1e1630',accent:'#ff5070',light:'#7a60a0',eye:'#ff5070',blade:'#f0f0e0'},
   spider:{main:'#5a4a6a',dark:'#261c33',accent:'#a8c040',light:'#3a2e48',eye:'#ff4040',blade:'#c8c0d8'},
   mole:{main:'#8a6a4a',dark:'#3e2e1e',accent:'#9ae8ff',light:'#b89a72',eye:'#ffe060',beast:'mole',blade:'#d8c8a8'},
