@@ -81,7 +81,9 @@ button.danger:hover{background:#6e2a3a}
 .padfocus{outline:3px solid #ffd23a!important;outline-offset:2px;box-shadow:0 0 12px rgba(255,210,58,.5)}
 .padfocus:disabled{outline-color:#a99a6a!important;box-shadow:none}
 body.pad #game{cursor:none}
-@media (max-width:900px){.inv-body{flex-direction:column}.col-left,.col-right{width:auto}.inv-panel{height:94vh}}
+@media (max-width:900px){.inv-body{flex-direction:column}.col-left,.col-right{width:auto}.inv-panel{height:94vh}
+/* 依頼選択：スマホでも左に一覧、右に説明を並べる */
+.board-body{flex-direction:row}.board-body .col-mid{flex:0 0 42%;min-width:0}.board-body .col-right{width:auto!important;flex:1;min-width:0}}
 /* スマホ・タブレット用の操作ボタン（プレイ中だけ表示） */
 #touch{position:fixed;inset:0;display:none;pointer-events:none;z-index:6;-webkit-user-select:none;user-select:none}
 #touch.on{display:block}
@@ -8706,7 +8708,7 @@ const App={
     return `<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs}</div>
       <div class="inv-meta">${esc(stage.name)}　通常の依頼 ${kd}/${keys.length} 達成${kd>=keys.length?'　<span style="color:#ff8a6a">緊急依頼 出現中！</span>':''}</div>
       <button data-act="boardBack">戻る（Esc）</button></div>
-      <div class="inv-body"><div class="col col-mid" data-scroll="board"><div class="col-t">依頼一覧</div>
+      <div class="inv-body board-body"><div class="col col-mid" data-scroll="board"><div class="col-t">依頼一覧</div>
         <div class="small muted" style="margin-bottom:6px">${esc(stage.desc)}<br>通常の依頼をすべて達成すると、大ボスの「緊急」依頼が出現します。達成済みの依頼も何度でも受けられます。</div>${rows}</div>
       <div class="col col-right" data-scroll="qdetail" style="width:400px">
         <div class="iname" style="color:${sel.urgent?'#ff8a6a':'#f3d48a'}">${sel.name}</div>
