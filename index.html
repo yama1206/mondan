@@ -180,7 +180,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.17',date:'2026/10/28'};
+const GAME_VERSION={no:'0.18',date:'2026/10/28'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -1366,20 +1366,20 @@ const DATA={
   // ショップ（拠点・ロビー・装備画面の「ショップ」タブ）。ゴールドで買える
   // stage：そのステージが解放されると並ぶ
   shop:[
-    {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:30,type:'item',item:'potion'},
-    {id:'heal_all',name:'癒しの香',desc:'周囲の味方全員のHPを最大HPの30%回復',price:120,type:'item',item:'heal_all'},
-    {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:150,type:'item',item:'atk_horn'},
-    {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:150,type:'item',item:'def_horn'},
-    {id:'flash',name:'閃光玉',desc:'周りの敵の目をくらませる',price:80,type:'item',item:'flash'},
-    {id:'pit_trap',name:'落とし穴',desc:'踏んだ敵を足止めする罠',price:200,type:'item',item:'pit_trap'},
-    {id:'shock_trap',name:'シビレ罠',desc:'踏むと周りの敵をしびれさせる罠',price:220,type:'item',item:'shock_trap'},
-    {id:'bomb',name:'大タル爆弾',desc:'3秒後に爆発する大型の爆弾',price:150,type:'item',item:'bomb'},
-    {id:'m_scrap',name:'粗い鉄片',desc:'武器の補強に使う基本素材',price:15,type:'mat',mat:'scrap_iron'},
-    {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:12,type:'mat',mat:'goblin_hide'},
-    {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:12,type:'mat',mat:'old_bone'},
-    {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:20,type:'mat',mat:'arrowhead'},
-    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:45,type:'mat',mat:'hard_iron',stage:8},
-    {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:250,type:'deco'},
+    {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
+    {id:'heal_all',name:'癒しの香',desc:'周囲の味方全員のHPを最大HPの30%回復',price:60,type:'item',item:'heal_all'},
+    {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:75,type:'item',item:'atk_horn'},
+    {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:75,type:'item',item:'def_horn'},
+    {id:'flash',name:'閃光玉',desc:'周りの敵の目をくらませる',price:40,type:'item',item:'flash'},
+    {id:'pit_trap',name:'落とし穴',desc:'踏んだ敵を足止めする罠',price:100,type:'item',item:'pit_trap'},
+    {id:'shock_trap',name:'シビレ罠',desc:'踏むと周りの敵をしびれさせる罠',price:110,type:'item',item:'shock_trap'},
+    {id:'bomb',name:'大タル爆弾',desc:'3秒後に爆発する大型の爆弾',price:75,type:'item',item:'bomb'},
+    {id:'m_scrap',name:'粗い鉄片',desc:'武器の補強に使う基本素材',price:8,type:'mat',mat:'scrap_iron'},
+    {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:6,type:'mat',mat:'goblin_hide'},
+    {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:6,type:'mat',mat:'old_bone'},
+    {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:10,type:'mat',mat:'arrowhead'},
+    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:22,type:'mat',mat:'hard_iron',stage:8},
+    {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:125,type:'deco'},
   ],
   /* ステージ：各依頼で使うダンジョンの敵・難易度。enemySet の melee / ranged / boss が配置される */
   stages:[
