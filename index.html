@@ -30,6 +30,7 @@ button.danger:hover{background:#6e2a3a}
 .menu-col{display:flex;flex-direction:column;gap:8px;min-width:280px;margin:12px 0}
 .menu-col button{padding:11px 14px;font-size:15px}
 .camp{width:min(560px,94vw);text-align:center}
+.gver{position:fixed;top:8px;right:12px;font-size:12px;color:#8a8298;pointer-events:none;z-index:5}
 .campinfo{background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px;color:#cfc7e6;line-height:1.7}
 .howto{margin-top:12px;text-align:left;background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px 14px;font-size:13px;line-height:1.8;color:#bdb5d6}
 .howto b{display:inline-block;min-width:110px;color:#f0e6c0}
@@ -178,6 +179,8 @@ const $=sel=>document.querySelector(sel);
 
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
+// 更新したら番号と日付を変える（最初の画面の右上に出る）
+const GAME_VERSION={no:'0.13',date:'2026/10/28'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -8911,7 +8914,7 @@ const App={
   },
   campHTML(){
     const p=this.profile;
-    return `<div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
+    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}</div><div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
       <div class="campinfo">${this.charLine(0)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span><br>
       解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
