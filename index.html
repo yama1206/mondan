@@ -708,6 +708,7 @@ const DATA={
     // ステージ3：腐毒の沼地（既存の動きを流用し、見た目と能力を変えた魔物）
     poison_frog:{name:'毒沼ガエル',ai:'dasher',look:'frog',hp:58,atk:15,def:2,r:14,speed:140,color:'#5a9a3a',drops:'poison_frog',
       dash:{wind:0.5,speed:520,dist:200,cd:[2.4,3.4]},
+      spit:{range:[120,320],wind:0.55,cd:[3.2,4.6],speed:300,dmg:0.15,status:'poison'}, // 毒吐き：ダメージはごく少ないが、当たると必ず毒
       pal:{body:'#5a9a3a',dark:'#243d14',spot:'#d8e860',eye:'#ffe060'}},
     leech:{name:'血吸いヒル',ai:'goblin',look:'leech',hp:50,atk:14,def:0,r:12,speed:105,color:'#7a2a2a',drops:'leech',
       pal:{body:'#7a2a2a',dark:'#3a1010',ring:'#c05050',eye:'#ffffff'}},
@@ -1212,7 +1213,7 @@ const DATA={
     forest_king:{stage:[2],role:'ボス',desc:'森林を支配する巨大な狼。突進・前方の薙ぎ払い・周囲への咆哮を使い分ける。',tip:'怒ると突進が何度も続く。帯の向きをよく見て横へ。咆哮は円の外へ。'},
     meadow_bull:{stage:[1],role:'ボス',desc:'草原の主。角で突き、薙ぎ払い、足で大地を踏み鳴らす。',tip:'突進は直線。突進の後は大きな隙がある。踏みつけの円の外へ逃げよう。'},
     wolf:{stage:[2],role:'ボス',desc:'森の最奥に棲みつく古い狼。噛みつき・突進・地面への叩きつけで襲いかかる。',tip:'叩きつけの円は大きい。弱ると怒り、叩きつけの周りにも衝撃が走る。'},
-    poison_frog:{stage:[3],role:'跳躍攻撃型',desc:'沼の毒を含んだ蛙。大きく跳ねて飛びかかってくる。',tip:'跳ねる直前に体が沈むので、その瞬間に横へ避けよう。'},
+    poison_frog:{stage:[3],role:'跳躍攻撃型',desc:'沼の毒を含んだ蛙。大きく跳ねて飛びかかってくるほか、離れると毒の玉を吐く。毒の玉の威力は低いが、当たると必ず毒になる。',tip:'跳ねる直前に体が沈むので、その瞬間に横へ避けよう。'},
     leech:{stage:[3],role:'近接吸血型',desc:'泥の中から這い出す吸血ヒル。ぬめりを残しながら追いかけてくる。',tip:'囲まれると逃げにくい。数を減らしてから戦おう。'},
     carnivore_plant:{stage:[3],role:'範囲妨害型',desc:'地面に根を張る食虫の花。近づくと毒の霧を吐く。',tip:'霧の範囲は広い。遠くから倒すのがおすすめ。'},
     bloater:{stage:[3],role:'範囲攻撃型',desc:'毒袋を膨らませた魔物。着地の衝撃で周囲に毒をまき散らす。',tip:'膨らんでいる間は近づかない。'},
@@ -2994,6 +2995,12 @@ function updateDasher(w,e,p,d,dt){
     e.timer-=dt;e.facing=e.atkAngle;
     if(e.timer<=0){
       if(e.action==='dash'){e.state='dash';e.chargeLeft=D.dist;e.hitSet=new Set();}
+      else if(e.action==='spit'){ // 毒吐き：毒の玉を1つ飛ばす
+        const S=DATA.enemies[e.type].spit,a=e.atkAngle;
+        w.projectiles.push({id:w.nextId++,kind:'spit',owner:'enemy',x:e.x+Math.cos(a)*(e.r+4),y:e.y+Math.sin(a)*(e.r+4),vx:Math.cos(a)*S.speed,vy:Math.sin(a)*S.speed,
+          r:7,life:S.range[1]/S.speed+0.2,dmg:e.atk*S.dmg,angle:a,inflict:S.status});
+        emit(w,{type:'shoot',x:e.x,y:e.y});e.state='recover';e.timer=0.5;e.cd3=rand(S.cd[0],S.cd[1]);
+      }
       else{e.state='recover';e.timer=0.4;e.cd=rand(0.9,1.3);moveEntity(w.map,e,Math.cos(e.atkAngle)*10,Math.sin(e.atkAngle)*10);}
     }
     return;
@@ -3008,6 +3015,12 @@ function updateDasher(w,e,p,d,dt){
   if(e.state==='recover'){e.timer-=dt;if(e.timer<=0)e.state='chase';return;}
   e.state='chase';
   if(e.stun>0)return;
+  {const S=DATA.enemies[e.type].spit;
+    if(S&&d>S.range[0]&&d<S.range[1]&&e.cd3<=0&&lineOfSight(w.map,e.x,e.y,p.x,p.y)&&RNG.next()<0.5){
+      e.state='windup';e.action='spit';e.timer=S.wind;e.atkAngle=ang;e.facing=ang;e.cd3=rand(S.cd[0],S.cd[1]);
+      addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:S.range[1],width:16,total:S.wind,dmg:0,owner:e.id,small:true});
+      return;
+    }}
   if(d>90&&d<300&&e.cd2<=0&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){
     e.state='windup';e.action='dash';e.timer=D.wind;e.atkAngle=ang;e.facing=ang;
     addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:D.dist+e.r,width:e.r*2+6,total:D.wind,dmg:0,owner:e.id,small:true});
@@ -3295,7 +3308,7 @@ function updateProjectiles(w,dt){
     if(alive&&pr.owner==='enemy'){
       for(const id in w.players){
         const p=w.players[id];if(p.dead)continue;
-        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src)){alive=false;break;}
+        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src)){if(pr.inflict)inflictPlayer(w,p,pr.inflict);alive=false;break;}
       }
     }else if(alive&&pr.kind==='playerArrow'){
       const p=w.players[pr.pid];
@@ -5191,6 +5204,10 @@ const Renderer={
       ctx.fillStyle='rgba(150,120,255,.35)';ctx.beginPath();ctx.ellipse(-10,0,14,6,0,0,TAU);ctx.fill();
       ctx.fillStyle='#d8c8ff';ctx.beginPath();ctx.arc(0,0,pr.r,0,TAU);ctx.fill();
       ctx.fillStyle='#8a60ff';ctx.beginPath();ctx.arc(0,0,pr.r*0.55,0,TAU);ctx.fill();
+    }else if(pr.kind==='spit'){ // 毒吐き：緑の毒の玉としずく
+      ctx.fillStyle='rgba(150,220,60,.45)';ctx.beginPath();ctx.ellipse(-8,0,10,4,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#a8e040';ctx.beginPath();ctx.arc(0,0,pr.r,0,TAU);ctx.fill();
+      ctx.fillStyle='#e8ff90';ctx.beginPath();ctx.arc(-2,-2,pr.r*0.35,0,TAU);ctx.fill();
     }else if(pr.kind==='feather'){ // 疾風怪鳥の羽根
       ctx.fillStyle='#a8d0f0';ctx.beginPath();ctx.ellipse(-2,0,10,3.2,0,0,TAU);ctx.fill();
       ctx.strokeStyle='#2a4a7a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(8,0);ctx.stroke();
