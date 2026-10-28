@@ -271,6 +271,7 @@ const DATA={
     regen:{name:'自動回復',cat:'回復',max:2,vals:[0.5,1],fmt:'HPが毎秒 {v} ずつ回復',apply:(s,v)=>{s.regen+=v;}},
     move_up:{name:'移動速度アップ',cat:'移動・回避',max:2,vals:[8,15],fmt:'移動速度 +{v}%',apply:(s,v)=>{s.moveSpd+=v;}},
     dodge_dist:{name:'回避距離アップ',cat:'移動・回避',max:2,vals:[20,40],fmt:'回避距離 +{v}%',apply:(s,v)=>{s.dodgeDistPct+=v;}},
+    charge_up:{name:'チャージ速度',cat:'攻撃',max:2,vals:[20,40],fmt:'チャージが速くたまる +{v}%',apply:(s,v)=>{s.chargeSpdPct+=v;}},
     evade:{name:'回避性能',cat:'移動・回避',max:3,vals:[0.05,0.1,0.15],fmt:'回避後の無敵 +{v}秒',apply:(s,v)=>{s.dodgeIframe+=v;}},
     item_power:{name:'アイテム使用強化',cat:'アイテム',max:2,vals:[25,50],fmt:'角笛・香の効果範囲と効果時間 +{v}%',apply:(s,v)=>{s.itemPowerPct+=v;}},
     item_speed:{name:'アイテム使用高速化',cat:'アイテム',max:2,vals:[0.3,0.6],fmt:'アイテムの発動 -{v}秒',apply:(s,v)=>{s.itemDelayAdj-=v;}},
@@ -384,7 +385,7 @@ const DATA={
     leather_vest:{name:'革の胴着',slot:'body',def:6,skills:{evade:3,gather_up:1}},
     wolf_mail:{name:'古狼の胴鎧',slot:'body',def:12,fixed:[{stat:'maxHp',v:20}],skills:{weakness:3,hp_up:3},slots:1},
     leather_gloves:{name:'革の小手',slot:'arms',def:3,skills:{evade:2,item_speed:2}},
-    wolf_vambrace:{name:'古狼の腕甲',slot:'arms',def:8,fixed:[{stat:'atk',v:2}],skills:{crit_up:3,weakness:2},slots:1},
+    wolf_vambrace:{name:'古狼の腕甲',slot:'arms',def:8,fixed:[{stat:'atk',v:2}],skills:{crit_up:3,weakness:2,charge_up:3},slots:1},
     // 腰（追加した部位）
     leather_belt:{name:'革の腰当て',slot:'waist',def:3,skills:{evade:2,gather_up:2}},
     wolf_faulds:{name:'古狼の腰甲',slot:'waist',def:8,skills:{move_up:4,crit_up:2},slots:1},
@@ -394,7 +395,7 @@ const DATA={
     bwolf_sword:{name:'黒狼の剣',slot:'weapon',el:{k:'dragon',v:12},wtype:'sword',atk:34,crit:10,fixed:[{stat:'atkSpd',v:8}],slots:2},
     bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:14,fixed:[{stat:'crit',v:5}],skills:{boss_hunter:4,crit_dmg:2},slots:2},
     bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:35}],skills:{atk_up:4,boss_hunter:3},slots:2},
-    bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:12,fixed:[{stat:'atk',v:4}],skills:{atk_up:4,crit_dmg:3},slots:2},
+    bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:12,fixed:[{stat:'atk',v:4}],skills:{atk_up:4,crit_dmg:3,charge_up:3},slots:2},
     bwolf_faulds:{name:'黒狼の腰甲',slot:'waist',def:12,skills:{dodge_dist:5,item_speed:3},slots:2},
     bwolf_greaves:{name:'黒狼の脚甲',slot:'legs',def:13,fixed:[{stat:'moveSpd',v:6}],skills:{dodge_dist:5,boss_hunter:3,atk_up:2},slots:2},
     hard_blade:{name:'鋼鉄の剣',slot:'weapon',wtype:'sword',atk:24,crit:6,slots:1},
@@ -462,7 +463,7 @@ const DATA={
     bull_bow:{name:'暴角の角弓',slot:'weapon',wtype:'bow',atk:13,crit:5,fixed:[{stat:'critDmg',v:8}],slots:1},
     bull_helm:{name:'暴角の兜',slot:'head',def:7,fixed:[{stat:'maxHp',v:10}],skills:{flinch_free:3,def_up:2},slots:1},
     bull_mail:{name:'暴角の胴当て',slot:'body',def:9,fixed:[{stat:'maxHp',v:15}],skills:{def_up:4,hp_up:3},slots:1},
-    bull_vambrace:{name:'暴角の籠手',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{flinch_free:3,atk_up:2},slots:1},
+    bull_vambrace:{name:'暴角の籠手',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{flinch_free:3,atk_up:2,charge_up:3},slots:1},
     bull_faulds:{name:'暴角の腰当て',slot:'waist',def:6,skills:{flinch_free:2,def_up:2},slots:1},
     bull_greaves:{name:'暴角の脚当て',slot:'legs',def:7,skills:{flinch_free:2,dodge_dist:3},slots:1},
     // ---- 疾風シリーズ（疾風怪鳥・草原）：素早さと回避 ----
@@ -480,7 +481,7 @@ const DATA={
     lizard_gs:{name:'大蜥蜴の大剣',slot:'weapon',el:{k:'fire',v:8},wtype:'greatsword',atk:19,crit:3,fixed:[{stat:'def',v:3}],slots:1},
     lizard_helm:{name:'大蜥蜴の兜',slot:'head',def:8,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:3,regen:2},slots:1},
     lizard_mail:{name:'大蜥蜴の鱗鎧',slot:'body',def:10,fixed:[{stat:'maxHp',v:15}],skills:{hp_up:4,def_up:2},slots:1},
-    lizard_vambrace:{name:'大蜥蜴の棘肩',slot:'arms',def:7,fixed:[{stat:'atk',v:1}],skills:{atk_up:3,hp_up:1},slots:1},
+    lizard_vambrace:{name:'大蜥蜴の棘肩',slot:'arms',def:7,fixed:[{stat:'atk',v:1}],skills:{atk_up:3,hp_up:1,charge_up:3},slots:1},
     lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{rescue:3,regen:4,hp_up:2},slots:1},
     lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
@@ -495,7 +496,7 @@ const DATA={
     stag_db:{name:'大顎の双剣',slot:'weapon',wtype:'dual',atk:25,crit:12,fixed:[{stat:'atkSpd',v:6}],slots:2},
     stag_helm:{name:'大顎の兜',slot:'head',def:12,fixed:[{stat:'def',v:2}],skills:{rescue:2,def_up:3,flinch_free:3},slots:2},
     stag_mail:{name:'大顎の甲殻',slot:'body',def:16,fixed:[{stat:'maxHp',v:25}],skills:{def_up:4,dmg_cut:3},slots:2},
-    stag_vambrace:{name:'大顎の肩甲',slot:'arms',def:11,fixed:[{stat:'atk',v:3}],skills:{atk_up:3,def_up:2},slots:2},
+    stag_vambrace:{name:'大顎の肩甲',slot:'arms',def:11,fixed:[{stat:'atk',v:3}],skills:{atk_up:3,def_up:2,charge_up:3},slots:2},
     stag_faulds:{name:'大顎の腰甲',slot:'waist',def:11,skills:{dmg_cut:3,flinch_free:3},slots:2},
     stag_greaves:{name:'大顎の脚甲',slot:'legs',def:12,skills:{dmg_cut:4,flinch_free:2,def_up:1},slots:2},
     // ---- 多頭竜シリーズ（ヒュドラ・沼地）：毒耐性と攻撃 ----
@@ -521,7 +522,7 @@ const DATA={
     mire_gs:{name:'沼巨人の大剣',slot:'weapon',wtype:'greatsword',atk:32,crit:3,fixed:[{stat:'def',v:5}],slots:2},
     mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,heal_up:2},slots:2},
     mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,fixed:[{stat:'maxHp',v:40}],skills:{hp_up:4,def_up:3},slots:2},
-    mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{hp_up:3,atk_up:2},slots:2},
+    mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{hp_up:3,atk_up:2,charge_up:3},slots:2},
     mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{rescue:3,heal_up:4,hp_up:2},slots:2},
     mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,hp_up:1},slots:2},
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
@@ -1573,7 +1574,7 @@ function computeStats(profile,override,who){
     atkPct:0,dodgeCdMult:1,itemDelayAdj:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
     weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,dragon:0},
-    dodgeDistPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
+    dodgeDistPct:0,chargeSpdPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
   const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
     const item=(override&&Object.prototype.hasOwnProperty.call(override,slot))?override[slot]:Profile.getItem(profile,ch.equipped[slot]);
@@ -2615,7 +2616,7 @@ function updatePlayer(w,p,inp,dt){
   if(p.sheathing||!p.drawn){}
   else if(wt.charge){
     if(p.charging){
-      if(inp.attack)p.charge+=dt;
+      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100); // チャージ速度（防具スキル）
       else{
         const lv=chargeLevel(wt.charge,p.charge);
         p.charging=false;p.charge=0;
