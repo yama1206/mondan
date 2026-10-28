@@ -9100,8 +9100,15 @@ const App={
     const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬']];
     // 防具は「シリーズ」ごとに見る（シリーズに属さない防具は「その他」）
     const seriesOf=id=>Object.keys(DATA.armorSets).find(k=>Object.values(DATA.armorSets[k].pieces).includes(id));
+    const SLOT_ORDER_ARMOR=()=>Object.keys(SLOT_NAMES).filter(k=>k!=='weapon'&&k!=='charm');
+    // 防具：部位ごとの絞り込みと、いま作れるシリーズの絞り込みの両方（作れないシリーズは出さない）
+    const availR=r=>(!r.stage||QuestRules.stage(this.profile)>=r.stage)&&this.recipeKnown(r);
+    const availEq=DATA.recipes.filter(r=>r.out.type==='equip'&&availR(r)).map(r=>r.out.id);
+    const partTabs=SLOT_ORDER_ARMOR().map(k=>['slot:'+k,SLOT_NAMES[k]]);
+    const setTabs=Object.keys(DATA.armorSets).filter(k=>availEq.some(id=>seriesOf(id)===k)).map(k=>['set:'+k,DATA.armorSets[k].name]);
+    if(availEq.some(id=>DATA.equipment[id].slot!=='weapon'&&!seriesOf(id)))setTabs.push(['misc','その他']);
     const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
-      :cat==='armor'?[...Object.keys(DATA.armorSets).map(k=>[k,DATA.armorSets[k].name]),['misc','その他']]:[];
+      :cat==='armor'?[...partTabs,...setTabs]:[];
     let sub=this.smithSub||'all';
     if(cat==='armor'&&!subs.some(([k])=>k===sub))sub=subs[0][0];
     const match=r=>{
@@ -9111,8 +9118,9 @@ const App={
       const b=DATA.equipment[r.out.id];
       if(cat==='weapon')return b.slot==='weapon'&&(sub==='all'||b.wtype===sub);
       if(b.slot==='weapon'||b.slot==='charm')return false;
+      if(sub.startsWith('slot:'))return b.slot===sub.slice(5);
       const se=seriesOf(r.out.id);
-      return sub==='misc'?!se:se===sub;
+      return sub==='misc'?!se:se===sub.slice(4);
     };
     const catTabs=`<div class="tabs" style="margin-bottom:6px">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="smithCat" data-c="${k}">${n}</button>`).join('')}</div>`;
     const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
