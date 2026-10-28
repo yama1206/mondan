@@ -194,7 +194,7 @@ const CONFIG={
   spawnRate:0.25, // 部屋や通路に置く魔物の数の倍率（ボス・中ボスは対象外）
   // 中ボス（ザコの大きい版）：1回の探索に count 体。報酬は bonusRolls 回多く抽選＋ midboss の表
   midBoss:{hp:6,atk:1.55,size:1.6,count:[1,2],bonusRolls:2,exclude:['mushroom','shaman','cursed_knight']},
-  chestChance:0.1, // 宝箱の候補場所ごとの出現確率（宝箱の依頼に必要な数は必ず置く）
+  chestChance:0.08, // 宝箱はとても珍しい：1回の探索で宝箱が置かれる確率（置かれても1つだけ。中身は豪華）
   pickupRadius:26,magnetRadius:80,
   difficulty:{hpPerClear:0.18,atkPerClear:0.10,maxHp:3.0,maxAtk:2.2},
   // 同じ画面での協力プレイ
@@ -636,7 +636,7 @@ const DATA={
   // ステージごとに出る手紙のレア度の上限：1〜2＝旅人まで、3〜4＝騎士まで、5〜6＝賢者まで、7以降＝王家まで
   letterCap:s=>Math.min(4,Math.floor((Math.max(1,s)-1)/2)+1),
   // 1回の挑戦で手に入る目安：ボスの依頼は3枚くらい（依頼1＋ボス1＋中ボス・宝箱）、それ以外は2枚くらい（依頼1＋中ボス・宝箱）
-  letterDrops:{chest:0.3,chest2:0.4,midboss:0.5,boss:1},
+  letterDrops:{chest:1,chest2:1,midboss:0.5,boss:1}, // 宝箱はとても珍しいので、必ず手紙が入っている
   /* 属性（火・水・雷・氷・冥の5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
      enemyElem：魔物の属性。atk＝攻撃の属性（ダメージの share 割が属性ダメージになり、プレイヤーの属性耐性で減る）
      weak＝弱点属性（1つ目×1.5、2つ目以降×1.25）／strong＝効きにくい属性（×0.5）。攻撃と同じ属性は×0.25 */
@@ -974,7 +974,7 @@ const DATA={
       {type:'deco',chance:0.8},
       {type:'deco',chance:0.4},
     ]},
-    chest2:{rarityBoost:1.6,rolls:[
+    chest2:{rarityBoost:2.4,rolls:[
       {type:'deco',chance:0.4},
       {type:'mat',id:'reinforce_orb',chance:0.4,min:1,max:1},
       {type:'gold',chance:1.0,min:40,max:70},
@@ -1078,7 +1078,7 @@ const DATA={
     ]},
     // 中ボスを倒したときの追加報酬
     midboss:{rarityBoost:1.6,rolls:[{type:'deco',chance:0.5}]},
-    chest:{rarityBoost:1.25,rolls:[
+    chest:{rarityBoost:2.0,rolls:[
       {type:'deco',chance:0.3},
       {type:'mat',id:'reinforce_orb',chance:0.3,min:1,max:1},
       {type:'gold',chance:1.0,min:20,max:40},
@@ -1193,7 +1193,7 @@ const DATA={
   },
   /* 依頼（クエスト）
      goal.type：kill（target を count 体）／chest（宝箱を count 個）／boss（ボス討伐）
-     key：キー依頼。同じステージのキー依頼をすべて達成すると urgent（緊急依頼）が出現する
+     緊急依頼（urgent）は、同じステージの通常の依頼（緊急・強敵・探索以外）をすべて達成すると出現する（key は昔の名残）
      unlocks：クリアすると解放されるステージ */
   quests:[
     {id:'m1_goblin',stage:1,key:true,name:'草原の掃討',desc:'草原をうろつく小鬼の群れを9体退治してほしい。',goal:{type:'kill',target:'goblin',count:9},reward:{gold:90,mats:{goblin_hide:2}}},
@@ -1204,31 +1204,33 @@ const DATA={
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:300,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。12体退治してほしい。',goal:{type:'kill',target:'goblin',count:12},reward:{gold:120,mats:{goblin_hide:2,scrap_iron:1}}},
     {id:'s1_archer',stage:2,key:true,name:'骨の弓兵',desc:'暗がりから矢を射るスケルトンアーチャーを8体倒せ。',goal:{type:'kill',target:'archer',count:8},reward:{gold:150,mats:{old_bone:3,arrowhead:1}}},
-    {id:'s1_chest',stage:2,key:true,name:'森の宝探し',desc:'森に眠る宝箱を3つ見つけて開けてほしい。',goal:{type:'chest',count:3},reward:{gold:100,mats:{scrap_iron:3,reinforce_orb:1},decos:1}},
     {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'ゴブリンとスケルトンを合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:160,mats:{goblin_hide:2,old_bone:2}}},
     {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:400,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
     {id:'sw_frog',stage:3,key:true,name:'毒沼の討伐',desc:'沼地に潜む毒の蛙を12体倒せ。',goal:{type:'kill',target:'poison_frog',count:12},reward:{gold:180,mats:{toxic_gland:2}}},
     {id:'sw_plant',stage:3,key:true,name:'花食いの刈り取り',desc:'沼地に根を張る食虫の花を8体刈り取れ。',goal:{type:'kill',target:'carnivore_plant',count:8},reward:{gold:180,mats:{swamp_moss:2}}},
-    {id:'sw_chest',stage:3,key:true,name:'沼底の宝探し',desc:'沼地に沈んだ宝箱を3つ開けてほしい。',goal:{type:'chest',count:3},reward:{gold:200,mats:{swamp_moss:2,reinforce_orb:1},decos:1}},
     {id:'sw_hunt',stage:3,name:'素材集め：沼地',desc:'沼地の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:200,mats:{leech_skin:1,croc_scale:1}}},
     {id:'sw_boss',stage:3,urgent:true,unlocks:4,name:'【緊急】多頭竜の沼',desc:'沼の中心に潜む多頭竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:400,mats:{hydra_scale:2,toxic_gland:2,reinforce_orb:2},decos:1}},
     {id:'sw_king',stage:3,after:'sw_boss',boss:'venomKing',name:'【強敵】毒蟲王の巣',desc:'沼の奥の巣に、毒蟲の王が待ち構えている。',goal:{type:'boss'},reward:{gold:500,mats:{venom_shell:2,toxic_gland:2,reinforce_orb:2},decos:1}},
     {id:'sw_giant',stage:3,after:'sw_king',boss:'mireGiant',name:'【強敵】腐敗の沼巨人',desc:'沼の底から、腐敗した巨人が這い上がってきた。',goal:{type:'boss'},reward:{gold:600,mats:{mire_core:2,swamp_moss:3,reinforce_orb:3},decos:1}},
     {id:'aq_lizard',stage:4,key:true,name:'水辺のトカゲ狩り',desc:'川辺を走る水棲トカゲを12体倒せ。',goal:{type:'kill',target:'water_lizard',count:12},reward:{gold:260,mats:{water_scale:2}}},
     {id:'aq_jelly',stage:4,key:true,name:'漂う泡の掃除',desc:'水辺に漂う泡沫クラゲを9体倒せ。',goal:{type:'kill',target:'jellyfish',count:9},reward:{gold:260,mats:{jelly_gel:2}}},
-    {id:'aq_chest',stage:4,key:true,name:'水底の宝箱',desc:'水辺の宝箱を3つ開けてほしい。',goal:{type:'chest',count:3},reward:{gold:300,mats:{piranha_tooth:2,reinforce_orb:1},decos:1}},
     {id:'aq_hunt',stage:4,name:'素材集め：水辺',desc:'水辺の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:280,mats:{crab_shell:1,eel_sac:1}}},
     {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:500,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
     {id:'aq_turtle',stage:4,after:'aq_boss',boss:'turtle',name:'【強敵】滝を背負う大亀',desc:'滝の裏から、水を背負った大きな亀が現れた。',goal:{type:'boss'},reward:{gold:600,mats:{shell_heart:2,crab_shell:2,reinforce_orb:2},decos:1}},
     {id:'aq_eel',stage:4,after:'aq_turtle',boss:'thunderEel',name:'【強敵】雷鳴の大鰻',desc:'渦の淵で雷が鳴っている。雷を纏う大鰻が目を覚ました。',goal:{type:'boss'},reward:{gold:700,mats:{thunder_core:2,eel_sac:3,reinforce_orb:3},decos:1}},
     {id:'s2_hob',stage:5,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを12体倒せ。',goal:{type:'kill',target:'hobgoblin',count:12},reward:{gold:300,mats:{hard_iron:3}}},
     {id:'s2_sniper',stage:5,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを8体倒せ。',goal:{type:'kill',target:'sniper',count:8},reward:{gold:320,mats:{dark_bone:3}}},
-    {id:'s2_chest',stage:5,key:true,name:'墓地の秘宝',desc:'墓地に眠る宝箱を3つ開けろ。',goal:{type:'chest',count:3},reward:{gold:260,mats:{hard_iron:2,reinforce_orb:1},decos:1}},
     {id:'s2_boss',stage:5,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:900,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
     {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:600,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
     {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:700,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
     {id:'s2_dragon',stage:5,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:1200,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
+    // 自由探索（目標なし・報酬なし。好きなときに帰れる）
+    {id:'free_1',stage:1,explore:true,name:'【探索】風渡る草原',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_2',stage:2,explore:true,name:'【探索】緑風の森林',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_3',stage:3,explore:true,name:'【探索】腐毒の沼地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_4',stage:4,explore:true,name:'【探索】蒼流の水辺',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_5',stage:5,explore:true,name:'【探索】忘却の地下墓地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
   bestiary:{
@@ -2066,13 +2068,14 @@ function questGoalText(g,np){
   np=np||partySize();
   if(g.type==='kill')return (g.target==='any'?'魔物':DATA.enemies[g.target].name)+'を'+questNeed(g,np)+'体討伐';
   if(g.type==='chest')return '宝箱を'+g.count+'個開ける';
+  if(g.type==='explore')return '自由に探索（いつでも帰れる）';
   return 'ボスを討伐';
 }
-/** 依頼の受注条件：ステージが解放されていること。緊急依頼は同じステージのキー依頼をすべて達成していること */
+/** 依頼の受注条件：ステージが解放されていること。緊急依頼は同じステージの通常の依頼をすべて達成していること */
 const QuestRules={
   stage(p){return clamp((p.progress&&p.progress.stage)||1,1,DATA.stages.length);},
   done(p,id){return (p.progress&&p.progress.done[id])||0;},
-  keys(stage){return DATA.quests.filter(q=>q.stage===stage&&q.key);},
+  keys(stage){return DATA.quests.filter(q=>q.stage===stage&&!q.urgent&&!q.after&&!q.explore);}, // 緊急を出すのに必要な「通常の依頼」
   keysDone(p,stage){return this.keys(stage).filter(q=>this.done(p,q.id)>0).length;},
   urgentOpen(p,stage){return this.keysDone(p,stage)>=this.keys(stage).length;},
   available(p,q){return q.stage<=this.stage(p)&&(!q.urgent||this.urgentOpen(p,q.stage))&&(!q.after||this.done(p,q.after)>0);},
@@ -2082,6 +2085,8 @@ const QuestRules={
     for(const k in (r.mats||{}))parts.push(`${DATA.materials[k].name}×${r.mats[k]}`);
     if(r.decos)parts.push(`<span style="color:#c06bff">装飾品×${r.decos}</span>`);
     if(q.goal.type==='boss')parts.push('ボスの素材（個別抽選）');
+    if(q.goal.type==='boss')parts.push('手紙×'+(r.letters??1));else if((r.letters??1)>0)parts.push('手紙×'+(r.letters??1));
+    if(q.explore)parts.push('なし（倒したボスの素材は持ち帰れる）');
     return parts.join('、');
   },
 };
@@ -2098,8 +2103,8 @@ function createWorld(opts){
     // 人数が増えるほど敵のHPを増やす（2人で1.5倍）
     diff:{hp:stage.hp*(1+CONFIG.coop.hpPerExtraPlayer*(np-1)),atk:stage.atk,level:stage.id},
     flow:null,flowTimer:0,
-    quest:{title:quest.name,goal,progress:0,need:goal.type==='boss'?1:questNeed(goal,np),done:false,
-      killed:0,total:0,chests:0,chestsTotal:0,boss:goal.type==='boss'?'unseen':'none',bossType:goal.type==='boss'?(quest.boss||stage.enemySet.boss):null},
+    quest:{title:quest.name,goal,progress:0,need:goal.type==='boss'?1:goal.type==='explore'?0:questNeed(goal,np),done:false,
+      killed:0,total:0,chests:0,chestsTotal:0,boss:(goal.type==='boss'||goal.type==='explore')?'unseen':'none',bossType:(goal.type==='boss'||goal.type==='explore')?(quest.boss||stage.enemySet.boss):null},
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
   if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
   return w;
@@ -2109,7 +2114,7 @@ function createWorld(opts){
 const spawnCount=(a,b)=>Math.floor(randInt(a,b)*CONFIG.spawnRate+RNG.next());
 function populateLayout(w,stage,quest,L){
   const m=w.map,goal=quest.goal,S=stage.enemySet;
-  const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&goal.type==='boss'));
+  const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&(goal.type==='boss'||goal.type==='explore')));
   for(const rm of rooms){
     let elite=rm.def.elite||0;
     for(const [t,a,b] of (rm.def.spawn||[]))for(let i=spawnCount(a,b);i>0;i--){
@@ -2136,17 +2141,15 @@ function populateLayout(w,stage,quest,L){
     for(let guard=0;w.enemies.filter(match).length<want&&guard<60;guard++){const p=randomFloor(m,pick(rooms).rect,2);if(p)spawnEnemy(w,type,p.x,p.y);}
   }
   // 宝箱：「必ず置く」部屋から先に、残りは道や寄り道の部屋へ。出現は確率制（宝箱の依頼に必要な数だけは必ず置く）
-  const nChests=goal.type==='chest'?goal.count+1:3,need=goal.type==='chest'?goal.count:0,order=[];
+  const need=goal.type==='chest'?goal.count:0,nChests=Math.max(need,Math.random()<CONFIG.chestChance?1:0),order=[];
   for(const rm of m.roomList)for(let i=0;i<(rm.def.chest||0);i++)order.push(rm);
-  const others=shuffle(m.roomList.filter(rm=>rm.kind==='main'||rm.kind==='side'));
-  for(let i=0;order.length<nChests+4;i++)order.push(others[i%others.length]);
-  for(const rm of order){
+  order.push(...shuffle(m.roomList.filter(rm=>rm.kind==='main'||rm.kind==='side')));
+  for(const rm of shuffle(order)){
     if(w.chests.length>=nChests)break;
-    if(w.chests.length>=need&&Math.random()>=CONFIG.chestChance)continue;
     const p=randomFloor(m,rm.rect,1);if(p)w.chests.push({id:w.nextId++,x:p.x,y:p.y,opened:false,table:stage.chest});
   }
   for(const g of m.gatherSpots)w.gathers.push({id:w.nextId++,x:g.x,y:g.y,kind:g.kind,used:false,table:'gather_'+g.kind});
-  if(goal.type==='boss'){const boss=spawnEnemy(w,w.quest.bossType,m.bossSpot.x,m.bossSpot.y);w.bossId=boss.id;}
+  if(goal.type==='boss'||goal.type==='explore'){const boss=spawnEnemy(w,w.quest.bossType,m.bossSpot.x,m.bossSpot.y);w.bossId=boss.id;} // 自由探索にも主がいる（倒しても探索は続く）
   w.quest.total=w.enemies.filter(e=>!e.boss).length;
   w.quest.chestsTotal=w.chests.length;
 }
@@ -2192,12 +2195,11 @@ function populate(w,stage,quest){
       const p=randomFloor(m,R[pick(rooms)],2);if(p)spawnEnemy(w,type,p.x,p.y);
     }
   }
-  const nChests=goal.type==='chest'?goal.count+1:3,need=goal.type==='chest'?goal.count:0;
+  const need=goal.type==='chest'?goal.count:0,nChests=Math.max(need,Math.random()<CONFIG.chestChance?1:0);
   const chestSpots=shuffle([[3,14],[12,22],[21,4],[32,4],[21,32],[32,32],[41,12],[52,24],[52,12],[41,24],[64,8],[84,30]]);
   for(const [tx,ty] of chestSpots){
     if(w.chests.length>=nChests)break;
     if(isWall(m,tx,ty))continue;
-    if(w.chests.length>=need&&Math.random()>=CONFIG.chestChance)continue;
     w.chests.push({id:w.nextId++,x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,opened:false,table:stage.chest});
   }
   if(goal.type==='boss'){const boss=spawnEnemy(w,S.boss,74*TILE,19.5*TILE);w.bossId=boss.id;}
@@ -5403,9 +5405,9 @@ const Renderer={
     ctx.textAlign='left';ctx.fillStyle='#f3d48a';ctx.font=`bold 13px ${FONT}`;ctx.fillText(q.title,qx+12,30);
     // 目標（達成したら緑）
     ctx.font=`bold 13px ${FONT}`;ctx.fillStyle=q.done?'#5fe08a':'#ffffff';
-    ctx.fillText('目標：'+questGoalText(q.goal,w.playerCount)+(q.goal.type==='boss'?'':`　${q.progress} / ${q.need}`)+(q.done?'　達成！':''),qx+12,52);
+    ctx.fillText('目標：'+questGoalText(q.goal,w.playerCount)+((q.goal.type==='boss'||q.goal.type==='explore')?'':`　${q.progress} / ${q.need}`)+(q.done?'　達成！':''),qx+12,52);
     ctx.fillStyle='#cfc7e6';ctx.font=`12px ${FONT}`;
-    ctx.fillText(`撃破 ${q.killed} / ${q.total}　宝箱 ${q.chests} / ${q.chestsTotal}`,qx+12,72);
+    ctx.fillText(`撃破 ${q.killed} / ${q.total}`+(q.chestsTotal?`　宝箱 ${q.chests} / ${q.chestsTotal}`:''),qx+12,72);
     if(q.boss!=='none'){
       const bn=DATA.enemies[q.bossType||st.enemySet.boss].name,bs={unseen:'最深部に潜んでいる',fighting:'交戦中！',defeated:'討伐完了'}[q.boss];
       ctx.fillStyle=q.boss==='fighting'?'#ff8a6a':(q.boss==='defeated'?'#5fe08a':'#cfc7e6');
@@ -6973,7 +6975,7 @@ const App={
   /* ---------- 出撃・進行 ---------- */
   startSortie(n){
     const p=this.profile;
-    n=clamp(n||1,1,CHAR_COUNT);this.lastPlayers=n;
+    n=1;this.lastPlayers=1; // 同じ画面でのふたりプレイは廃止（マルチはオンラインのみ）
     p.stats.sorties++;
     Input.setupPlayers(n);
     const q=questById(this.questSel);
@@ -7045,6 +7047,8 @@ const App={
       this.goto('gameover');
     }else if(w.status==='clear')this.finishQuest();
   },
+  /** 今の依頼が自由探索か */
+  isExplore(){const w=this.world;return !!(w&&questById(w.questId).explore);},
   /** 全滅したとき：この探索で手に入れた素材・装備・装飾品・お金を取り消す（ひとりでもマルチでも。誰かが生き残ってクリアすれば全員持ち帰れる） */
   revertRunGains(){
     let n=0;
@@ -7085,7 +7089,7 @@ const App={
     }
     for(const pid in this.bossRewards)if(res[pid])for(const l of this.bossRewards[pid])res[pid].rewards.push(this.grantLoot(l,pid));
     w.drops=[];this.bossRewards={};
-    const base={time:w.time,kills:w.quest.killed,total:w.quest.total,chests:w.quest.chests,chestsTotal:w.quest.chestsTotal,questName:q.name,goal:questGoalText(q.goal,w.playerCount)};
+    const base={time:w.time,kills:w.quest.killed,total:w.quest.total,chests:w.quest.chests,chestsTotal:w.quest.chestsTotal,questName:q.name,goal:questGoalText(q.goal,w.playerCount),explore:!!q.explore};
     const mineIds=Net.role?['p1']:pids;
     this.lastResult=Object.assign({},base,{
       rewards:[].concat(...mineIds.map(pid=>res[pid]?res[pid].rewards:[])),
@@ -7348,7 +7352,7 @@ const App={
       const pid=Input.ownerOf(padIndex);
       if(i===9){this.onKey('Escape');return;}       // START：メニュー（誰が押してもよい）
       if(i===8){                                    // BACK：押した人の装備画面を開く
-        if(pid&&!Net.role)this.inv.who=this.whoFor(pid);
+        if(pid&&!Net.role)this.inv.who=0;
         this.openInventory('playing');return;
       }
       if(!pid)return;                               // 割り当てのないコントローラー
@@ -7371,7 +7375,7 @@ const App={
     }
   },
   onPadNav(dir){if(this.state!=='playing')UI.padNav(dir);},
-  openInventory(from){this.returnState=from;this.inv.decoPick=null;if(Net.role)this.inv.who=0;this.goto('inventory');},
+  openInventory(from){this.returnState=from;this.inv.decoPick=null;this.inv.who=0;this.goto('inventory');},
   goto(st){
     const was=this.state;
     this.state=st;
@@ -7423,6 +7427,7 @@ const App={
       case 'settings':this.settingsReturn=this.state;this.goto('settings');break;
       case 'reset':UI.confirm('セーブデータをすべて削除して最初からやり直します。<br><b>この操作は取り消せません。</b>よろしいですか？',()=>this.resetSave());break;
       case 'resume':this.goto('playing');break;
+      case 'exploreReturn':UI.confirm('探索を終えて帰りますか？<br><small>（この探索で手に入れたものは持ち帰れます）</small>',()=>{const w=this.world;if(w&&w.status==='playing'){w.status='clear';this.checkStatus();}});break;
       case 'retreat':UI.confirm('探索を中断して拠点に戻りますか？<br><small>（入手済みのアイテムは保持されます）</small>',()=>{this.save();this.goto('camp');});break;
       case 'camp':this.save();this.goto('camp');break;
       case 'online':this.goto('online');break;
@@ -7516,10 +7521,8 @@ const App={
       <b>START</b>メニュー　<b>BACK</b>装備画面<br><b>メニュー内</b>十字/スティックで選択、${this.settings().padSwitch?'右のボタン（SwitchのA）で決定、下のボタン（SwitchのB）で戻る':'A(×)で決定、B(○)で戻る'}、LB/RBでタブ切替（設定でSwitch式に変更可）</div>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2e2840"><span style="color:#ffd23a">⚔ 武器の特徴</span><br>
       ${Object.values(DATA.weaponTypes).map(t=>`<b>${t.name}</b>移動${t.marks.move} 振り${t.marks.speed} 威力${t.marks.power} リーチ${t.marks.reach} 納刀${t.sheathe}秒　${t.feature}`).join('<br>')}</div>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2e2840"><span style="color:#ffb070">👥 ふたりで遊ぶ（同じ画面）</span><br>
-      コントローラー2台 → 1P・2Pともコントローラー<br>コントローラー1台 → 1P：キーボード＆マウス／2P：コントローラー<br>
-      コントローラーなし → 2P は <b>矢印キー</b>移動、<b>Enter</b>攻撃、<b>右Shift</b>回避、<b>/</b>納刀、<b>.</b>持ち物を使う、<b>,</b>切り替え<br>
-      倒れた仲間に重なって5秒動かずにいると助け起こせます（倒れてから30秒以内。過ぎると力尽きます）。全員倒れるとゲームオーバー。素材・装備品・持ち物は2人で共有です。</div></div>`;
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2e2840"><span style="color:#ffb070">👥 みんなで遊ぶ（オンライン）</span><br>
+      倒れた仲間に重なって5秒動かずにいると助け起こせます（倒れてから30秒以内。過ぎると力尽きます）。全員倒れるとゲームオーバー。</div></div>`;
   },
   charLine(who){
     const st=computeStats(this.profile,null,who),pc=PLAYER_COLORS[who];
@@ -7530,7 +7533,7 @@ const App={
   campHTML(){
     const p=this.profile;
     return `<div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
-      <div class="campinfo">${this.charLine(0)}<br>${this.charLine(1)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span>（2人で共有）<br>
+      <div class="campinfo">${this.charLine(0)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span><br>
       解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大4人）</button>
@@ -7558,28 +7561,29 @@ const App={
     const keys=QuestRules.keys(st),kd=QuestRules.keysDone(p,st);
     const rows=DATA.quests.filter(q=>q.stage===st).map(q=>{
       const ok=QuestRules.available(p,q),n=QuestRules.done(p,q.id);
+      if(!ok)return ''; // 緊急・強敵は条件を満たすまで一覧に出さない
       if(!ok&&q.after)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">「${esc(questById(q.after).name)}」を達成すると出現</small></span><span class="tag" style="background:#6a3a9a">強敵</span></div>`;
       if(!ok)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">キー依頼をすべて達成すると出現</small></span><span class="tag" style="background:#8a2a2a">緊急</span></div>`;
       return `<div class="itemrow ${q.id===sel.id?'sel':''}" data-act="pickQuest" data-id="${q.id}">
         <span class="nm" style="color:${q.urgent?'#ff8a6a':q.after?'#d0a0ff':'#f0ead8'}">${q.name}</span>
-        ${q.key?'<span class="tag" style="background:#b8862a">キー</span>':''}${q.urgent?'<span class="tag" style="background:#c03030">緊急</span>':''}${q.after?'<span class="tag" style="background:#6a3a9a">強敵</span>':''}
+        ${q.explore?'<span class="tag" style="background:#2a7a9a">探索</span>':''}${q.urgent?'<span class="tag" style="background:#c03030">緊急</span>':''}${q.after?'<span class="tag" style="background:#6a3a9a">強敵</span>':''}
         ${n?`<span class="tag" style="background:#2d8a5a">達成 ${n}</span>`:'<small class="muted">未達成</small>'}</div>`;}).join('');
     const btns=online
       ?`<button class="primary" data-act="chooseQuest" data-id="${sel.id}">この依頼に決める</button>`
-      :`<button class="primary" data-act="start" data-n="1">ひとりで出発</button><button class="primary" data-act="start" data-n="2" style="background:#b8601f;border-color:#f0a060">ふたりで出発（同じ画面）</button>`;
+      :`<button class="primary" data-act="start" data-n="1">出発する</button>`;
     return `<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs}</div>
-      <div class="inv-meta">${esc(stage.name)}　キー依頼 ${kd}/${keys.length} 達成${kd>=keys.length?'　<span style="color:#ff8a6a">緊急依頼 出現中！</span>':''}</div>
+      <div class="inv-meta">${esc(stage.name)}　通常の依頼 ${kd}/${keys.length} 達成${kd>=keys.length?'　<span style="color:#ff8a6a">緊急依頼 出現中！</span>':''}</div>
       <button data-act="boardBack">戻る（Esc）</button></div>
       <div class="inv-body"><div class="col col-mid" data-scroll="board"><div class="col-t">依頼一覧</div>
-        <div class="small muted" style="margin-bottom:6px">${esc(stage.desc)}<br>「キー」依頼をすべて達成すると、大ボスの「緊急」依頼が出現します。達成済みの依頼も何度でも受けられます。</div>${rows}</div>
+        <div class="small muted" style="margin-bottom:6px">${esc(stage.desc)}<br>通常の依頼をすべて達成すると、大ボスの「緊急」依頼が出現します。達成済みの依頼も何度でも受けられます。</div>${rows}</div>
       <div class="col col-right" data-scroll="qdetail" style="width:400px">
         <div class="iname" style="color:${sel.urgent?'#ff8a6a':'#f3d48a'}">${sel.name}</div>
-        <div class="isub">ステージ${sel.stage}「${esc(stage.name)}」${sel.key?'・キー依頼':''}${sel.urgent?'・緊急依頼':''}</div>
+        <div class="isub">ステージ${sel.stage}「${esc(stage.name)}」${sel.explore?'・自由探索':''}${sel.urgent?'・緊急依頼':''}</div>
         <p style="margin:10px 0;line-height:1.7">${esc(sel.desc)}</p>
         ${sec('目標',`<div class="eff"><b>${questGoalText(sel.goal)}</b></div>`)}
         ${sec('報酬',`<div class="eff">${QuestRules.rewardText(sel)}</div><div class="small muted">ほかに、倒した魔物や開けた宝箱からも素材・ゴールドが手に入ります</div>`)}
         ${sel.unlocks?sec('クリアすると',`<div class="eff" style="color:#7fe09a">ステージ${sel.unlocks}「${esc(stageById(sel.unlocks).name)}」が解放</div>`):''}
-        ${sec('出現する魔物（図鑑で討伐したものだけ表示）',stageRoster(stage).concat(sel.goal.type==='boss'?[sel.boss||stage.enemySet.boss]:[]).map(t=>(this.profile.bestiary||{})[t]>0?DATA.enemies[t].name:'？？？').join('、'))}
+        ${sec('出現する魔物（図鑑で討伐したものだけ表示）',stageRoster(stage).concat((sel.goal.type==='boss'||sel.explore)?[sel.boss||stage.enemySet.boss]:[]).map(t=>(this.profile.bestiary||{})[t]>0?DATA.enemies[t].name:'？？？').join('、'))}
         <div class="small muted">持ち物：${bagText(p)}（出発前にショップで用意できます）</div>
         <div class="btnrow">${btns}</div></div></div></div>`;
   },
@@ -7620,14 +7624,14 @@ const App={
         <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
         <button data-act="inventory">装備・インベントリ（I）</button>
         <button data-act="settings">設定</button>
-        ${host?'<button class="danger" data-act="toLobby">探索を中断して全員でロビーに戻る</button>':''}
+        ${host&&this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて全員で帰る（持ち帰れる）</button>':''}${host?'<button class="danger" data-act="toLobby">探索を中断して全員でロビーに戻る</button>':''}
         <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>${this.howtoHTML()}</div>`;
     }
     return `<div class="panel camp"><h2>一時停止</h2><div class="menu-col">
       <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
       <button data-act="inventory">装備・インベントリ（I）</button>
       <button data-act="settings">設定</button>
-      <button class="danger" data-act="retreat">探索を中断して拠点へ戻る</button></div>${this.howtoHTML()}</div>`;
+      ${this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて帰る（持ち帰れる）</button>':'<button class="danger" data-act="retreat">探索を中断して拠点へ戻る</button>'}</div>${this.howtoHTML()}</div>`;
   },
   settingsHTML(){
     const s=this.settings();
@@ -7663,9 +7667,9 @@ const App={
     const mm=Math.floor(r.time/60),ss=Math.floor(r.time%60);
     const list=r.rewards.map(l=>`<div style="color:${l.color}">◆ ${l.text}</div>`).join('')||'<div class="muted">なし</div>';
     const notes=(r.notes||[]).map(n=>`<div style="color:#ffd23a;font-weight:bold;margin:4px 0">★ ${esc(n)}</div>`).join('');
-    return `<div class="panel camp"><h2>クエストクリア！</h2><p><b>${esc(r.questName||'')}</b>　${esc(r.goal||'')} 達成</p>
+    return `<div class="panel camp"><h2>${r.explore?'探索から帰還！':'クエストクリア！'}</h2><p><b>${esc(r.questName||'')}</b>　${esc(r.goal||'')} 達成</p>
       ${notes}
-      <div class="campinfo">クリアタイム ${mm}分${String(ss).padStart(2,'0')}秒　撃破 ${r.kills}/${r.total}　宝箱 ${r.chests}/${r.chestsTotal}</div>
+      <div class="campinfo">クリアタイム ${mm}分${String(ss).padStart(2,'0')}秒　撃破 ${r.kills}/${r.total}${r.chestsTotal?`　宝箱 ${r.chests}/${r.chestsTotal}`:''}</div>
       <div class="reward-list"><div class="col-t">依頼の報酬</div>${list}
       <div class="small muted" style="margin-top:6px">探索中に手に入れたもの：${r.count}件（素材・ゴールド・装飾品）</div></div>
       ${Net.role?`<div class="row">${Net.role==='host'?'<button class="primary" data-act="netStart">同じメンバーでもう一度</button>':''}<button data-act="toLobby">ロビーに戻る</button></div>
@@ -7691,7 +7695,7 @@ const App={
     const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品']];
     const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.decosTabHTML();
     UI.show(`<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
-      <div class="inv-meta">${this.charLine(this.inv.who)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>${Net.role?'':'（共有）'}　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
+      <div class="inv-meta">${this.charLine(this.inv.who)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
       <div class="inv-body">${body}</div></div>`);
   },
   statsBlockHTML(st){
@@ -7734,8 +7738,8 @@ const App={
   ownerSuffix(item){const o=Profile.equippedBy(this.profile,item.uid);return o<0?'':(Net.role?'（装備中）':`（${o+1}P装備中）`);},
   equipTabHTML(){
     const p=this.profile,who=this.inv.who,ch=charOf(p,who),st=computeStats(p,null,who),f=this.inv.filter;
-    const whoSel=Net.role?'':`<div class="filters">${[0,1].map(i=>`<button class="${who===i?'on':''}" data-act="who" data-who="${i}" style="${who===i?'background:'+PLAYER_COLORS[i].body:''}">${i+1}P の装備</button>`).join('')}</div>`;
-    const left=`<div class="col col-left" data-scroll="left">${whoSel}<div class="col-t">${Net.role?'装備中':(who+1)+'P が装備中'}</div>${SLOTS.map(sl=>{
+    const whoSel=true?'':`<div class="filters">${[0,1].map(i=>`<button class="${who===i?'on':''}" data-act="who" data-who="${i}" style="${who===i?'background:'+PLAYER_COLORS[i].body:''}">${i+1}P の装備</button>`).join('')}</div>`;
+    const left=`<div class="col col-left" data-scroll="left">${whoSel}<div class="col-t">装備中</div>${SLOTS.map(sl=>{
       const it=Profile.getItem(p,ch.equipped[sl]);
       const sk=it&&sl!=='weapon'?skillPtsText(DATA.equipment[it.baseId].skills):'';
       return it?`<div class="eqslot ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}"><span class="sl">${SLOT_NAMES[sl]}</span><span style="color:${rarColor(it.rarity)}">${itemName(it)}</span><small class="muted">${slotDots(it)}</small>${sk?`<div class="small" style="width:100%;color:#9ad8ff;padding-left:2.6em">${sk}</div>`:''}</div>`
