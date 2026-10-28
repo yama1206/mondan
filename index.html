@@ -8065,7 +8065,7 @@ const Net={
 
 const App={
   profile:null,world:null,state:'camp',localId:'p1',returnState:'camp',settingsReturn:'camp',
-  inv:{tab:'equip',filter:'all',sel:null,decoPick:null},lastPlayers:1,inGame:false,
+  inv:{tab:'equip',filter:'weapon',sel:null,decoPick:null},lastPlayers:1,inGame:false,
   questSel:'s1_goblin',boardStage:1,boardFrom:'camp',facilityFrom:'camp',
   sessionLoot:[],sessionCounts:{},dirty:false,saveTimer:0,acc:0,last:0,lastResult:null,
   init(){
@@ -8520,12 +8520,12 @@ const App={
   },
   enterGuest(profile){
     this.applyHostProfile(profile);
-    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null};
+    this.inv={tab:'equip',filter:'weapon',sel:null,decoPick:null};
   },
   leaveGuest(){
     this.save();
     this.world=null;this.inGame=false;Renderer.focusId=null;
-    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null};
+    this.inv={tab:'equip',filter:'weapon',sel:null,decoPick:null};
   },
   guestStart(d){
     Net.myPid=d.pid;
@@ -8700,7 +8700,7 @@ const App={
   },
   resetSave(){
     Save.reset();this.profile=Profile.create();this.save();
-    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null};
+    this.inv={tab:'equip',filter:'weapon',sel:null,decoPick:null};
     this.goto('camp');UI.notify('セーブデータをリセットしました','#ff8060');
   },
 
@@ -8968,7 +8968,7 @@ const App={
       const ea=rank(a.uid),eb=rank(b.uid);
       return ea-eb||order[a.slot]-order[b.slot]||b.rarity-a.rarity||(b.atk+b.def)-(a.atk+a.def);
     });
-    const filters=[['all','すべて'],...SLOTS.map(s=>[s,SLOT_NAMES[s]])];
+    const filters=SLOTS.map(s=>[s,SLOT_NAMES[s]]);
     const mid=`<div class="col col-mid" data-scroll="mid"><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>
       <div class="small muted" style="margin-bottom:6px">所持装備 ${p.items.length}件　◇=空きスロット ◆=装飾品</div>
       ${items.map(it=>`<div class="itemrow ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}">
