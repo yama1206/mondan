@@ -274,6 +274,7 @@ const DATA={
     item_power:{name:'アイテム使用強化',cat:'アイテム',max:2,vals:[25,50],fmt:'角笛・香の効果範囲と効果時間 +{v}%',apply:(s,v)=>{s.itemPowerPct+=v;}},
     item_speed:{name:'アイテム使用高速化',cat:'アイテム',max:2,vals:[0.3,0.6],fmt:'アイテムの発動 -{v}秒',apply:(s,v)=>{s.itemDelayAdj-=v;}},
     gather_up:{name:'採取強化',cat:'採取・報酬',max:2,vals:[50,100],fmt:'採取ポイントで {v}% の確率でもう1回採取',apply:(s,v)=>{s.gatherBonus+=v;}},
+    rescue:{name:'救命',cat:'回復',max:2,vals:[1.5,3],fmt:'仲間を助け起こすのにかかる時間 -{v}秒',apply:(s,v)=>{s.reviveCut+=v;}},
     elem_up:{name:'属性攻撃強化',cat:'攻撃',max:3,vals:[10,20,30],fmt:'武器の属性ダメージ +{v}%',apply:(s,v)=>{s.elemPct+=v;}},
     rare_up:{name:'レア素材率アップ',cat:'採取・報酬',max:2,vals:[20,40],fmt:'確定でない素材・装飾品の出る確率 ×{v}%増し',apply:(s,v)=>{s.rareBonus+=v;}},
   },
@@ -409,12 +410,12 @@ const DATA={
     beast_hood:{name:'獣皮のフード',slot:'head',def:5,skills:{move_up:2,evade:2}},
     beast_vest:{name:'獣皮の胴着',slot:'body',def:6,fixed:[{stat:'maxHp',v:5}],skills:{move_up:3,evade:1}},
     beast_gloves:{name:'獣皮の手甲',slot:'arms',def:4,skills:{evade:2,crit_up:1}},
-    beast_belt:{name:'獣皮の腰巻き',slot:'waist',def:4,skills:{move_up:2,evade:2}},
+    beast_belt:{name:'獣皮の腰巻き',slot:'waist',def:4,skills:{rescue:2,move_up:2,evade:2}},
     beast_boots:{name:'獣皮の靴',slot:'legs',def:5,skills:{move_up:3,evade:1}},
     // 草原：ゴブリンシリーズ（ゴブリン・ゴブリン弓兵・スライム）
     goblin_bow:{name:'ゴブリンの弓',slot:'weapon',wtype:'bow',atk:11,crit:5,fixed:[{stat:'atkSpd',v:4}]},
     goblin_cap:{name:'ゴブリンの耳当て帽',slot:'head',def:5,skills:{gather_up:3,minion_hunter:2}},
-    goblin_vest:{name:'ゴブリンの継ぎ当て服',slot:'body',def:6,skills:{minion_hunter:3,gather_up:2}},
+    goblin_vest:{name:'ゴブリンの継ぎ当て服',slot:'body',def:6,skills:{rescue:2,minion_hunter:3,gather_up:2}},
     goblin_gloves:{name:'ゴブリンの小手',slot:'arms',def:4,skills:{minion_hunter:2,item_speed:2}},
     goblin_belt:{name:'ゴブリンの縄帯',slot:'waist',def:4,skills:{gather_up:3,item_speed:1}},
     goblin_boots:{name:'ゴブリンのぼろ靴',slot:'legs',def:5,skills:{gather_up:2,minion_hunter:3}},
@@ -427,7 +428,7 @@ const DATA={
     beetle_greaves:{name:'甲虫の脚甲',slot:'legs',def:7,skills:{def_up:2,dmg_cut:2}},
     // 森林：骨シリーズ（スケルトンアーチャー。兜は前からある骨の兜）
     bone_gs:{name:'骨の大剣',slot:'weapon',wtype:'greatsword',atk:18,crit:3,fixed:[{stat:'critDmg',v:6}]},
-    bone_mail:{name:'骨の胸当て',slot:'body',def:8,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:3,minion_hunter:3}},
+    bone_mail:{name:'骨の胸当て',slot:'body',def:8,fixed:[{stat:'maxHp',v:10}],skills:{rescue:2,hp_up:3,minion_hunter:3}},
     bone_vambrace:{name:'骨の肩当て',slot:'arms',def:6,fixed:[{stat:'atk',v:1}],skills:{atk_up:3,hp_up:1}},
     bone_faulds:{name:'骨の腰当て',slot:'waist',def:6,skills:{minion_hunter:2,atk_up:2}},
     bone_greaves:{name:'骨の脚当て',slot:'legs',def:7,skills:{hp_up:2,atk_up:3}},
@@ -443,7 +444,7 @@ const DATA={
     frog_hood:{name:'毒蛙のフード',slot:'head',def:9,skills:{status_res:2,dodge_dist:2},slots:1},
     frog_vest:{name:'毒蛙の皮衣',slot:'body',def:11,fixed:[{stat:'maxHp',v:10}],skills:{dodge_dist:3,status_res:2},slots:1},
     frog_gloves:{name:'毒蛙の手袋',slot:'arms',def:8,skills:{item_power:3,dodge_dist:1},slots:1},
-    frog_belt:{name:'毒蛙の腰巻き',slot:'waist',def:8,skills:{status_res:3,item_power:1},slots:1},
+    frog_belt:{name:'毒蛙の腰巻き',slot:'waist',def:8,skills:{rescue:3,status_res:3,item_power:1},slots:1},
     frog_boots:{name:'毒蛙の水かき',slot:'legs',def:9,fixed:[{stat:'moveSpd',v:3}],skills:{dodge_dist:4,status_res:1},slots:1},
     // ステージ1：草原の暴角獣の素材（鉄と古狼の間の強さ。守りが固い）
     bull_hammer:{name:'暴角の大槌',slot:'weapon',wtype:'hammer',atk:17,crit:0,fixed:[{stat:'def',v:3}],slots:1},
@@ -470,13 +471,13 @@ const DATA={
     lizard_helm:{name:'大蜥蜴の兜',slot:'head',def:8,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:3,regen:2},slots:1},
     lizard_mail:{name:'大蜥蜴の鱗鎧',slot:'body',def:10,fixed:[{stat:'maxHp',v:15}],skills:{hp_up:4,def_up:2},slots:1},
     lizard_vambrace:{name:'大蜥蜴の棘肩',slot:'arms',def:7,fixed:[{stat:'atk',v:1}],skills:{atk_up:3,hp_up:1},slots:1},
-    lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{regen:4,hp_up:2},slots:1},
+    lizard_faulds:{name:'大蜥蜴の尻尾',slot:'waist',def:7,skills:{rescue:3,regen:4,hp_up:2},slots:1},
     lizard_greaves:{name:'大蜥蜴の脚',slot:'legs',def:8,skills:{regen:4,dodge_dist:2},slots:1},
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
     stag_gs:{name:'大顎の大剣',slot:'weapon',wtype:'greatsword',atk:29,crit:4,fixed:[{stat:'critDmg',v:12}],slots:2},
     stag_hammer:{name:'大顎のハンマー',slot:'weapon',wtype:'hammer',atk:29,crit:2,fixed:[{stat:'def',v:5}],slots:2},
     stag_db:{name:'大顎の双剣',slot:'weapon',wtype:'dual',atk:25,crit:12,fixed:[{stat:'atkSpd',v:6}],slots:2},
-    stag_helm:{name:'大顎の兜',slot:'head',def:12,fixed:[{stat:'def',v:2}],skills:{def_up:3,flinch_free:3},slots:2},
+    stag_helm:{name:'大顎の兜',slot:'head',def:12,fixed:[{stat:'def',v:2}],skills:{rescue:2,def_up:3,flinch_free:3},slots:2},
     stag_mail:{name:'大顎の甲殻',slot:'body',def:16,fixed:[{stat:'maxHp',v:25}],skills:{def_up:4,dmg_cut:3},slots:2},
     stag_vambrace:{name:'大顎の肩甲',slot:'arms',def:11,fixed:[{stat:'atk',v:3}],skills:{atk_up:3,def_up:2},slots:2},
     stag_faulds:{name:'大顎の腰甲',slot:'waist',def:11,skills:{dmg_cut:3,flinch_free:3},slots:2},
@@ -505,7 +506,7 @@ const DATA={
     mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,heal_up:2},slots:2},
     mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,fixed:[{stat:'maxHp',v:40}],skills:{hp_up:4,def_up:3},slots:2},
     mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{hp_up:3,atk_up:2},slots:2},
-    mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{heal_up:4,hp_up:2},slots:2},
+    mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{rescue:3,heal_up:4,hp_up:2},slots:2},
     mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,hp_up:1},slots:2},
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
     haro_tachi:{name:'覇狼の太刀',slot:'weapon',el:{k:'ice',v:9},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
@@ -607,6 +608,7 @@ const DATA={
     quick_jewel:{name:'早業珠',color:'#ffe080',skill:'item_speed'},
     gather_jewel:{name:'採取珠',color:'#8ac060',skill:'gather_up'},
     lucky_jewel:{name:'幸運珠',color:'#ffd0f0',skill:'rare_up'},
+    rescue_jewel:{name:'救命珠',color:'#ff9ab0',skill:'rescue'},
     elem_jewel:{name:'属性珠',color:'#ff8ad0',skill:'elem_up'},
   },
   /* 属性（火・水・雷・氷・冥の5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
@@ -1487,7 +1489,7 @@ function computeStats(profile,override,who){
     effects:{},weaponType:'sword',weaponName:'素手',weaponRarity:0,decoCapped:[],
     atkPct:0,dodgeCdMult:1,itemDelayAdj:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
-    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,elemRes:{fire:0,water:0,thunder:0,ice:0,dragon:0},
+    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,dragon:0},
     dodgeDistPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
   const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
@@ -3434,10 +3436,11 @@ function updateRevive(w,dt){
     if(!p.dead||p.out)continue;
     // 仲間が重なった状態で動かずにいると助け起こせる（動いたり離れたりすると最初から）
     const helper=ps.find(q=>!q.dead&&!q.moving&&!(q.dodgeTime>0)&&Math.hypot(q.x-p.x,q.y-p.y)<CONFIG.coop.reviveRadius);
+    p.reviveNeed=Math.max(1.5,CONFIG.coop.reviveTime-(helper?helper.stats.reviveCut||0:0)); // 防具スキル「救命」で短くなる
     if(helper)p.revive+=dt;
     else{p.revive=0;p.downT-=dt;} // 助け起こし中は待ち時間が止まる
     if(p.downT<=0){p.out=true;p.revive=0;p.downT=0;emit(w,{type:'playerOut',pid:p.id,x:p.x,y:p.y});continue;} // 力尽きた：もう助け起こせない
-    if(p.revive>=CONFIG.coop.reviveTime){
+    if(p.revive>=p.reviveNeed){
       p.dead=false;p.revive=0;p.downT=0;
       p.hp=Math.max(1,Math.round(p.stats.maxHp*CONFIG.coop.reviveHpRatio));
       p.hitInv=1.5;p.dodgeTime=0;p.swing=0;
@@ -5191,10 +5194,10 @@ const Renderer={
       if(p.dead){
         if(p.out){ctx.fillStyle='#ff8080';ctx.font=`bold 11px ${FONT}`;ctx.strokeText('力尽きた',p.x,p.y+r+18);ctx.fillText('力尽きた',p.x,p.y+r+18);}
         else{
-          const k=clamp(p.revive/CONFIG.coop.reviveTime,0,1),left=Math.ceil(p.downT||0);
+          const need=p.reviveNeed||CONFIG.coop.reviveTime,k=clamp(p.revive/need,0,1),left=Math.ceil(p.downT||0);
           ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5;ctx.beginPath();ctx.arc(p.x,p.y,r+10,0,TAU);ctx.stroke();
           ctx.strokeStyle='#5fe08a';ctx.beginPath();ctx.arc(p.x,p.y,r+10,-Math.PI/2,-Math.PI/2+TAU*k);ctx.stroke();
-          const tx=k>0?`助け起こし中… ${Math.ceil(CONFIG.coop.reviveTime*(1-k))}秒`:`重なって5秒止まると復活`;
+          const tx=k>0?`助け起こし中… ${Math.ceil(need*(1-k))}秒`:`重なって5秒止まると復活`;
           ctx.font=`bold 11px ${FONT}`;ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(tx,p.x,p.y+r+18);ctx.fillStyle='#fff';ctx.fillText(tx,p.x,p.y+r+18);
           const lt=`あと${left}秒`;ctx.strokeText(lt,p.x,p.y+r+32);ctx.fillStyle=left<=10?'#ff8060':'#ffd23a';ctx.fillText(lt,p.x,p.y+r+32);
         }
@@ -6645,7 +6648,7 @@ const Net={
     const s={t:'s',time:r1(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
       players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
-        hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
+        hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
         sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),curseT:r3(p.curseT||0),
         dodgeCd:r3(p.dodgeCd),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
