@@ -621,17 +621,20 @@ const DATA={
      pool：付きやすいスキルと重み／pts：1つ目のスキルのポイント [最少,最多]／pts2：2つ目のポイント／two：2つ目が付く確率
      slotW：装飾品スロット数 0・1・2 の重み。drops：手紙が出る確率（宝箱・中ボス・ボス報酬） */
   letters:[
-    {name:'走り書きの手紙',pts:[2,4],pts2:[1,2],two:0.15,slotW:[1,0,0],
-      pool:{gather_up:3,move_up:3,evade:2,hp_up:3,poison_res:3,status_res:3,item_speed:2,heal_up:2,rescue:1}},
-    {name:'旅人の手紙',pts:[3,5],pts2:[1,3],two:0.35,slotW:[0.8,0.2,0],
-      pool:{move_up:3,evade:3,hp_up:3,def_up:2,dodge_dist:2,regen:2,rescue:2,minion_hunter:2,item_speed:2,heal_up:2,poison_res:1,status_res:1}},
-    {name:'騎士の手紙',pts:[4,6],pts2:[2,4],two:0.55,slotW:[0.6,0.4,0],
-      pool:{atk_up:3,def_up:3,dmg_cut:2,flinch_free:2,crit_up:2,hp_up:2,minion_hunter:2,elem_up:2,regen:1,evade:1}},
-    {name:'賢者の手紙',pts:[5,8],pts2:[3,5],two:0.8,slotW:[0.2,0.7,0.1],
-      pool:{crit_up:3,crit_dmg:2,weakness:2,atk_up:3,elem_up:3,item_power:2,dmg_cut:2,boss_hunter:2,rare_up:1,evade:1}},
+    {name:'走り書きの手紙',pts:[2,4],pts2:[1,2],two:0.35,slotW:[1,0,0],
+      pool:{gather_up:3,evade:2,hp_up:3,poison_res:3,status_res:3,item_speed:2,heal_up:2,rescue:1}},
+    {name:'旅人の手紙',pts:[3,5],pts2:[1,3],two:0.5,slotW:[0.8,0.2,0],
+      pool:{evade:3,hp_up:3,def_up:2,dodge_dist:2,regen:2,rescue:2,minion_hunter:2,item_speed:2,heal_up:2,poison_res:1,status_res:1}},
+    // 移動速度アップは騎士の手紙から
+    {name:'騎士の手紙',pts:[4,6],pts2:[2,4],two:0.65,slotW:[0.6,0.4,0],
+      pool:{atk_up:3,def_up:3,move_up:3,dmg_cut:2,flinch_free:2,crit_up:2,hp_up:2,minion_hunter:2,elem_up:2,regen:1,evade:1}},
+    {name:'賢者の手紙',pts:[5,8],pts2:[3,5],two:0.85,slotW:[0.2,0.7,0.1],
+      pool:{crit_up:3,crit_dmg:2,weakness:2,atk_up:3,elem_up:3,move_up:2,item_power:2,dmg_cut:2,boss_hunter:2,rare_up:1,evade:1}},
     {name:'王家の手紙',pts:[7,10],pts2:[4,7],two:1,slotW:[0,0.5,0.5],
-      pool:{crit_dmg:3,weakness:3,boss_hunter:3,atk_up:3,elem_up:2,rescue:1,rare_up:2,evade:2,dmg_cut:1}},
+      pool:{crit_dmg:3,weakness:3,boss_hunter:3,atk_up:3,elem_up:2,move_up:2,rescue:1,rare_up:2,evade:2,dmg_cut:1}},
   ],
+  // ステージごとに出る手紙のレア度の上限：1〜2＝旅人まで、3〜4＝騎士まで、5〜6＝賢者まで、7以降＝王家まで
+  letterCap:s=>Math.min(4,Math.floor((Math.max(1,s)-1)/2)+1),
   letterDrops:{chest:0.12,chest2:0.2,midboss:0.3,boss:0.45},
   /* 属性（火・水・雷・氷・冥の5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
      enemyElem：魔物の属性。atk＝攻撃の属性（ダメージの share 割が属性ダメージになり、プレイヤーの属性耐性で減る）
@@ -1469,6 +1472,9 @@ const Items={
     const ns=weightedPick(L.slotW.map((w,i)=>({w,v:i})));
     return {kind:'equip',uid:null,baseId:'letter_'+tier,slot:'charm',rarity:tier,atk:0,def:0,crit:0,affixes:[],effects:[],slots:new Array(ns).fill(null),skills};
   },
+  lootStage:1, // 今探索しているステージ（手紙のレア度の上限に使う。出撃のときに App が入れる）
+  /** 手紙のレア度：上限（cap）より上は出ない。上限までは普段のレア度の出やすさのまま */
+  rollLetterTier(boost,cap){return weightedPick(DATA.rarities.map((r,i)=>({w:i>cap?0:r.dropW*Math.pow(boost,i),v:i})));},
   /** 今のルールで持てるスロット数（手紙は作ったときの数のまま） */
   maxSlots(it){return it.slot==='charm'?Math.min(2,it.slots.length):Items.slotCount(it.baseId,it.rarity);},
   createDeco(decoId,rarity){return {kind:'deco',uid:null,decoId,rarity};},
@@ -1481,7 +1487,7 @@ const Items={
     if(!t)return out;
     { // 手紙：宝箱・中ボス・ボスの報酬から（レア度は報酬の良さ rarityBoost で上がりやすくなる）
       const isBoss=Object.values(DATA.enemies).some(e=>e.boss&&e.drops===tableId),ch=DATA.letterDrops[tableId]??(isBoss?DATA.letterDrops.boss:0);
-      if(ch>0&&RNG.next()<ch*(1+(rareBonus||0)/100))out.push({type:'equip',item:Items.createLetter(Items.rollRarity(Math.pow(t.rarityBoost||1,0.6)))});
+      if(ch>0&&RNG.next()<ch*(1+(rareBonus||0)/100))out.push({type:'equip',item:Items.createLetter(Items.rollLetterTier(Math.pow(t.rarityBoost||1,0.6),DATA.letterCap(Items.lootStage||1)))});
     }
     if(t.one){ // 素材は1つだけ（落ちないこともある）
       const mats=t.rolls.filter(r=>r.type==='mat');
@@ -6986,6 +6992,7 @@ const App={
     Renderer.focusId=Net.role?(Net.role==='guest'?Net.myPid:'p1'):null;
     this.placeNotes(n);
     this.sessionLoot=[];this.sessionCounts={};this.bossRewards={};this.runGains={};this.lostCount=0;
+    Items.lootStage=this.world?this.world.stageId:1;
     this.inGame=true;
     this.refreshInfo();
     this.save();
