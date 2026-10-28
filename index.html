@@ -7399,9 +7399,14 @@ const UI={
   overlay:null,modal:null,notes:null,modalCb:null,
   init(){
     this.overlay=$('#overlay');this.modal=$('#modal');this.notes=$('#notify');
+    // 押し始めた項目を覚えておく（スマホでは、画面が切り替わった直後に「押したつもりのない」クリックが新しい画面に届くため）
+    this.overlay.addEventListener('pointerdown',e=>{const el=e.target.closest('[data-act]');this.pressKey=el?this.padKey(el):null;},true);
     this.overlay.addEventListener('click',e=>{
       const el=e.target.closest('[data-act]');
       if(!el||el.disabled)return;
+      // 指で押したのと同じ項目でないクリックは無視する（画面の切り替え直後に、次の画面のボタンが押される誤操作を防ぐ）
+      if(e.detail>0&&this.pressKey!==this.padKey(el)){this.pressKey=undefined;return;}
+      this.pressKey=undefined;
       if(el.tagName==='BUTTON'||el.dataset.act==='selItem'||el.dataset.act==='pickQuest')Sound.ui('click');
       App.action(el.dataset.act,el.dataset,el);
     });
