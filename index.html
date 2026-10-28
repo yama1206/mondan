@@ -198,7 +198,8 @@ const CONFIG={
   pickupRadius:26,magnetRadius:80,
   difficulty:{hpPerClear:0.18,atkPerClear:0.10,maxHp:3.0,maxAtk:2.2},
   // 同じ画面での協力プレイ
-  coop:{hpPerExtraPlayer:0.5,leash:640,reviveRadius:44,reviveTime:2.5,reviveHpRatio:0.35},
+  coop:{hpPerExtraPlayer:0.5,leash:640,reviveRadius:20,reviveTime:5,reviveHpRatio:0.35,reviveWait:30},
+  // reviveRadius：倒れた仲間と重なっているとみなす距離／reviveTime：重なって動かずにいる秒数／reviveWait：蘇生を待てる秒数（過ぎると力尽きる）
   // 視野：プレイヤーから radius まで、壁に遮られない範囲だけが見える。
   // radius はスケルトンアーチャーの射程(420)より長くし、見えない敵から一方的に撃たれないようにしている
   vision:{radius:440,rays:240,fogAlpha:0.8},
@@ -2286,7 +2287,7 @@ function inflictPlayer(w,p,k){
   else if(k==='curse')p.curseT=Math.max(p.curseT||0,time);
   emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-30,text:d.name+'!',color:d.color});
 }
-function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
+function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviveWait;p.out=false;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
 /** 毒の雲などの継続ダメージ：のけぞらず、無敵時間も発生しない（回避中は受けない） */
 function dotPlayer(w,p,raw){
   if(p.dead||p.dodgeInv>0)return;
@@ -3425,16 +3426,19 @@ function enforceLeash(w,before){
     }
   }
 }
-/** 倒れた仲間の近くに立ち続けると助け起こせる */
+/** 倒れた仲間に重なって5秒動かずにいると助け起こせる（30秒以内） */
 function updateRevive(w,dt){
   const ps=Object.values(w.players);
   if(ps.length<2)return;
   for(const p of ps){
-    if(!p.dead)continue;
-    const helper=ps.find(q=>!q.dead&&Math.hypot(q.x-p.x,q.y-p.y)<CONFIG.coop.reviveRadius);
-    if(helper)p.revive+=dt;else p.revive=Math.max(0,p.revive-dt*0.5);
+    if(!p.dead||p.out)continue;
+    // 仲間が重なった状態で動かずにいると助け起こせる（動いたり離れたりすると最初から）
+    const helper=ps.find(q=>!q.dead&&!q.moving&&!(q.dodgeTime>0)&&Math.hypot(q.x-p.x,q.y-p.y)<CONFIG.coop.reviveRadius);
+    if(helper)p.revive+=dt;
+    else{p.revive=0;p.downT-=dt;} // 助け起こし中は待ち時間が止まる
+    if(p.downT<=0){p.out=true;p.revive=0;p.downT=0;emit(w,{type:'playerOut',pid:p.id,x:p.x,y:p.y});continue;} // 力尽きた：もう助け起こせない
     if(p.revive>=CONFIG.coop.reviveTime){
-      p.dead=false;p.revive=0;
+      p.dead=false;p.revive=0;p.downT=0;
       p.hp=Math.max(1,Math.round(p.stats.maxHp*CONFIG.coop.reviveHpRatio));
       p.hitInv=1.5;p.dodgeTime=0;p.swing=0;
       emit(w,{type:'revive',pid:p.id,by:helper.id,x:p.x,y:p.y});
@@ -5185,10 +5189,15 @@ const Renderer={
       ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(nm,p.x,p.y-r-14);
       ctx.fillStyle=pc.label;ctx.fillText(nm,p.x,p.y-r-14);
       if(p.dead){
-        const k=clamp(p.revive/CONFIG.coop.reviveTime,0,1);
-        ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5;ctx.beginPath();ctx.arc(p.x,p.y,r+10,0,TAU);ctx.stroke();
-        ctx.strokeStyle='#5fe08a';ctx.beginPath();ctx.arc(p.x,p.y,r+10,-Math.PI/2,-Math.PI/2+TAU*k);ctx.stroke();
-        ctx.fillStyle='#fff';ctx.font=`bold 11px ${FONT}`;ctx.fillText(k>0?'助け起こし中…':'近くに立つと復活',p.x,p.y+r+18);
+        if(p.out){ctx.fillStyle='#ff8080';ctx.font=`bold 11px ${FONT}`;ctx.strokeText('力尽きた',p.x,p.y+r+18);ctx.fillText('力尽きた',p.x,p.y+r+18);}
+        else{
+          const k=clamp(p.revive/CONFIG.coop.reviveTime,0,1),left=Math.ceil(p.downT||0);
+          ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5;ctx.beginPath();ctx.arc(p.x,p.y,r+10,0,TAU);ctx.stroke();
+          ctx.strokeStyle='#5fe08a';ctx.beginPath();ctx.arc(p.x,p.y,r+10,-Math.PI/2,-Math.PI/2+TAU*k);ctx.stroke();
+          const tx=k>0?`助け起こし中… ${Math.ceil(CONFIG.coop.reviveTime*(1-k))}秒`:`重なって5秒止まると復活`;
+          ctx.font=`bold 11px ${FONT}`;ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(tx,p.x,p.y+r+18);ctx.fillStyle='#fff';ctx.fillText(tx,p.x,p.y+r+18);
+          const lt=`あと${left}秒`;ctx.strokeText(lt,p.x,p.y+r+32);ctx.fillStyle=left<=10?'#ff8060':'#ffd23a';ctx.fillText(lt,p.x,p.y+r+32);
+        }
       }
       ctx.restore();
     }
@@ -6636,7 +6645,7 @@ const Net={
     const s={t:'s',time:r1(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
       players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
-        hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
+        hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
         sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),curseT:r3(p.curseT||0),
         dodgeCd:r3(p.dodgeCd),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
@@ -6924,7 +6933,7 @@ const App={
     this.beginRun(n);
     if(n>1){
       UI.notify(`1P：${Input.describe('p1')}　／　2P：${Input.describe('p2')}`,'#ffb070',6);
-      UI.notify('仲間が倒れたら、近くに立ち続けると助け起こせます','#5fe08a',6);
+      UI.notify('仲間が倒れたら、30秒以内に重なって5秒動かずにいると助け起こせます','#5fe08a',6);
     }
   },
   /** 画面左上の通知の位置を、HP欄の下にそろえる（表示の大きさに合わせる） */
@@ -7032,8 +7041,9 @@ const App={
       case 'playerDead':
         if(mine)Input.rumble(400,1.0,mine);
         if(this.world&&this.world.playerCount>1&&Object.values(this.world.players).some(q=>!q.dead))
-          UI.notify(`${this.label(ev.pid)} が倒れた！ 近くに立ち続けると助け起こせます`,'#ff6060',4);
+          UI.notify(`${this.label(ev.pid)} が倒れた！ 30秒以内に重なって5秒動かずにいると助け起こせます`,'#ff6060',4);
         break;
+      case 'playerOut':UI.notify(`${this.label(ev.pid)} は力尽きた……`,'#ff8080',3);break;
       case 'revive':UI.notify(`${this.label(ev.by)} が ${this.label(ev.pid)} を助け起こした！`,'#5fe08a',3);Renderer.ring(ev.x,ev.y,10,70,'#5fe08a',0.6,4);break;
       case 'bossStart':Input.rumble(350,0.8,Net.role?'p1':undefined);if(!Net.role&&this.playerIds().length>1)Input.rumble(350,0.8,'p2');UI.notify((ev.name||'ボス')+'が目を覚ました！ 赤い範囲は攻撃の予兆です','#ff9a6a',4);break;
       case 'doorClose':UI.notify('退路が閉ざされた……','#ff6060',3);break;
@@ -7440,7 +7450,7 @@ const App={
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2e2840"><span style="color:#ffb070">👥 ふたりで遊ぶ（同じ画面）</span><br>
       コントローラー2台 → 1P・2Pともコントローラー<br>コントローラー1台 → 1P：キーボード＆マウス／2P：コントローラー<br>
       コントローラーなし → 2P は <b>矢印キー</b>移動、<b>Enter</b>攻撃、<b>右Shift</b>回避、<b>/</b>納刀、<b>.</b>持ち物を使う、<b>,</b>切り替え<br>
-      倒れた仲間の近くに立ち続けると助け起こせます。2人とも倒れるとゲームオーバー。素材・装備品・持ち物は2人で共有です。</div></div>`;
+      倒れた仲間に重なって5秒動かずにいると助け起こせます（倒れてから30秒以内。過ぎると力尽きます）。全員倒れるとゲームオーバー。素材・装備品・持ち物は2人で共有です。</div></div>`;
   },
   charLine(who){
     const st=computeStats(this.profile,null,who),pc=PLAYER_COLORS[who];
