@@ -212,7 +212,7 @@ const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝�
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
 const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
-const VOL_SCALE=0.5; // 音量の全体倍率（設定画面の表示は0〜100%。その値が音量の上限1に対応する）
+const VOL_SCALE=0.25; // 音量の全体倍率。設定の100%が、ゲーム内の音量の上限（以前の50%の大きさ）
 const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚',charm:'手紙'};
 const STAT_NAMES={maxHp:'最大HP',atk:'攻撃力',def:'防御力',crit:'会心率',critDmg:'会心ダメージ',moveSpd:'移動速度',atkSpd:'攻撃速度',dodgeIframe:'回避後無敵',drainChance:'吸血確率'};
 const STAT_UNITS={crit:'%',critDmg:'%',moveSpd:'%',atkSpd:'%',dodgeIframe:'秒',drainChance:'%'};
