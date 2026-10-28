@@ -3213,6 +3213,33 @@ function updateAttacks(w,dt){
 
 /* ---------- 敵 ---------- */
 function alertNearby(w,e){for(const o of w.enemies)if(!o.boss&&!o.aggro&&Math.hypot(o.x-e.x,o.y-e.y)<220)o.aggro=true;}
+/** 障害物にハマって動けなくなった敵を、近くの通れる場所へずらす。
+    追いかけるべき相手が近くにいるのに、1.2秒ほとんど動けないときだけ働く（壁抜けしないよう、見通せる場所を優先） */
+function unstickEnemy(w,e,dt){
+  const MOVING={chase:1,move:1,orbit:1,retreat:1,pounce:1,dash:1};
+  const moving=!e.state||!!MOVING[e.state];
+  if(e._ux===undefined){e._ux=e.x;e._uy=e.y;e._ut=0;}
+  const moved=Math.hypot(e.x-e._ux,e.y-e._uy);
+  if(!moving||moved>4){e._ux=e.x;e._uy=e.y;e._ut=0;return;}
+  let tgt=null,best=1e9;
+  for(const p of Object.values(w.players)){if(p.dead)continue;const d=Math.hypot(p.x-e.x,p.y-e.y);if(d<best){best=d;tgt=p;}}
+  if(!tgt||best>700||best<e.r+tgt.r+8){e._ut=0;e._ux=e.x;e._uy=e.y;return;}
+  e._ut+=dt;
+  if(e._ut<1.2)return;
+  e._ut=0;e._ux=e.x;e._uy=e.y;
+  let pick=null,pickScore=1e9,anyPick=null,anyScore=1e9;
+  for(let R=28;R<=180&&!pick&&!anyPick;R+=38){
+    for(let i=0;i<16;i++){
+      const a=i/16*TAU,nx=e.x+Math.cos(a)*R,ny=e.y+Math.sin(a)*R;
+      if(circleHitsWall(w.map,nx,ny,e.r))continue;
+      const sc=Math.hypot(nx-tgt.x,ny-tgt.y);
+      if(lineOfSight(w.map,e.x,e.y,nx,ny)){if(sc<pickScore){pickScore=sc;pick={x:nx,y:ny};}}
+      else if(sc<anyScore){anyScore=sc;anyPick={x:nx,y:ny};}
+    }
+  }
+  const to=pick||anyPick;
+  if(to){e.x=to.x;e.y=to.y;}
+}
 function updateEnemy(w,e,dt){
   e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;e.hitAccT=(e.hitAccT||0)-dt;
   // 呪術師の強化が切れたら元に戻す
@@ -3227,6 +3254,7 @@ function updateEnemy(w,e,dt){
   }
   if(e.sleepT>0){e.sleepT-=dt;return;} // 睡眠：攻撃されるまで動かない
   if(e.trapT>0){e.trapT-=dt;if(e.trapT<=0){e.trapKind=null;emit(w,{type:'trapEnd',x:e.x,y:e.y});}return;}
+  unstickEnemy(w,e,dt);
   // 目がくらんでいる間は、うろうろするだけ
   if(e.blindT>0){
     e.blindT-=dt;
