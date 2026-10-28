@@ -298,8 +298,8 @@ const DATA={
     sword:{name:'片手剣',range:66,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
       marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い'},
     greatsword:{name:'大剣',knockback:true,range:92,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
-      charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],over:2.4,overLevel:2,move:0.22},
-      marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎると2段階の威力）'},
+      charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
+      marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）'},
     tachi:{name:'太刀',range:82,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
@@ -314,7 +314,8 @@ const DATA={
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'細長く伸びる。先端に近いほど威力が上がる'},
     bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
-      marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'矢は無限。瓶で矢に毒・麻痺・睡眠を付けられる'},
+      charge:{levels:[0.35,0.8,1.3],mult:[1.5,2.5,3.6],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
+      marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで3段階チャージして射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -2715,27 +2716,26 @@ function updatePlaced(w,dt){
   }
   w.placed=w.placed.filter(o=>!o.done);
 }
-/** チャージ時間から段階を求める（0=ため無し）。溜めすぎると overLevel の威力に落ちる */
+/** チャージ時間から段階を求める（0=ため無し）。最大は3段階で、溜めすぎても威力は変わらない */
 function chargeLevel(c,t){
-  if(c.over&&t>=c.over)return c.overLevel;
   let lv=0;for(let i=0;i<c.levels.length;i++)if(t>=c.levels[i])lv=i+1;
   return lv;
 }
 /** 弓：矢を1本撃つ（瓶を装填していれば、その状態異常を付ける） */
-function fireArrow(w,p){
-  const s=p.stats,bw=DATA.weaponTypes[s.weaponType].bow,a=p.facing;
+function fireArrow(w,p,opt){
+  const s=p.stats,bw=DATA.weaponTypes[s.weaponType].bow,a=p.facing,lv=(opt&&opt.level)||0;
   const coat=p.coat&&p.coat.shots>0?p.coat:null;
   w.projectiles.push({id:w.nextId++,kind:'playerArrow',owner:'player',pid:p.id,x:p.x+Math.cos(a)*16,y:p.y+Math.sin(a)*16,
-    vx:Math.cos(a)*bw.speed,vy:Math.sin(a)*bw.speed,angle:a,r:7,life:bw.life,hit:new Set(),status:coat?coat.status:null});
+    vx:Math.cos(a)*bw.speed,vy:Math.sin(a)*bw.speed,angle:a,r:7,life:bw.life,hit:new Set(),status:coat?coat.status:null,mult:(opt&&opt.mult)||1});
   if(coat){coat.shots--;if(coat.shots<=0){p.coat=null;emit(w,{type:'info',pid:p.id,text:'瓶の中身がなくなった'});}}
-  emit(w,{type:'swing',pid:p.id,combo:false,level:0,x:p.x,y:p.y,w:s.weaponType});
+  emit(w,{type:'swing',pid:p.id,combo:false,level:lv,x:p.x,y:p.y,w:s.weaponType});
 }
 function playerAttack(w,p,opt){
   const s=p.stats;
   p.atkTimer=s.attackInterval;
   p.swingTotal=Math.min(s.swingTime,s.attackInterval*0.9);p.swing=p.swingTotal;
   p.swingAngle=p.facing;p.swingDir=-p.swingDir;p.combo++;p.lastLevel=opt.level||0;
-  if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].bow){fireArrow(w,p);return;}
+  if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].bow){fireArrow(w,p,opt);return;}
   const third=!!s.effects.combo&&p.combo%3===0;
   w.attacks.push({id:w.nextId++,pid:p.id,angle:p.facing,range:s.range,arc:s.arc,life:s.activeTime,hit:new Set(),tip:s.tip,
     mult:(opt.mult||1)*(third?1.6:1),stunMult:opt.stunMult||1});
@@ -3407,7 +3407,7 @@ function updateProjectiles(w,dt){
       const p=w.players[pr.pid];
       if(p)for(const e of w.enemies){
         if(e.dead||pr.hit.has(e.id))continue;
-        const hit=projPart(e,pr.x,pr.y,pr.r,pr.x-pr.vx*dt,pr.y-pr.vy*dt);if(hit){pr.hit.add(e.id);damageEnemy(w,p,e,1,{arrow:true,hit});if(pr.status)applyStatus(w,e,pr.status);alive=false;break;}
+        const hit=projPart(e,pr.x,pr.y,pr.r,pr.x-pr.vx*dt,pr.y-pr.vy*dt);if(hit){pr.hit.add(e.id);damageEnemy(w,p,e,pr.mult||1,{arrow:true,hit});if(pr.status)applyStatus(w,e,pr.status);alive=false;break;}
       }
     }else if(alive&&pr.kind==='wave'){
       const p=w.players[pr.pid];
@@ -5417,7 +5417,7 @@ const Renderer={
     let wlabel=wt.name||'',wsub='',wfill=0,wcol='#ffd23a';
     if(wt.charge){
       const lv=p.charging?chargeLevel(wt.charge,p.charge):0,mx=wt.charge.levels.length;
-      wlabel=p.charging?(wt.charge.over&&p.charge>=wt.charge.over?'溜めすぎ':`チャージ${lv}/${mx}`):'チャージ';
+      wlabel=p.charging?`チャージ${lv}/${mx}`:'チャージ';
       wsub='攻撃長押し';wfill=p.charging?clamp(p.charge/wt.charge.levels[mx-1],0,1):0;
       wcol=lv>=mx?'#ff6040':'#ffd23a';
     }else if(wt.flow){
