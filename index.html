@@ -207,12 +207,12 @@ const CONFIG={
   hud:{scale:0.8,min:0.6,max:1.2,choices:[0.6,0.7,0.8,0.9,1.0,1.1,1.2]}, // scale は初期値。設定画面で変えられる
 };
 
-const SLOTS=['weapon','head','body','arms','waist','legs'];
+const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝手紙（モンハンのお守り）
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
 const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
 const VOL_SCALE=0.5; // 音量の全体倍率（設定画面の表示も同じ倍率で出す）
-const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚'};
+const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚',charm:'手紙'};
 const STAT_NAMES={maxHp:'最大HP',atk:'攻撃力',def:'防御力',crit:'会心率',critDmg:'会心ダメージ',moveSpd:'移動速度',atkSpd:'攻撃速度',dodgeIframe:'回避後無敵',drainChance:'吸血確率'};
 const STAT_UNITS={crit:'%',critDmg:'%',moveSpd:'%',atkSpd:'%',dodgeIframe:'秒',drainChance:'%'};
 function fmtNum(stat,v){return stat==='dodgeIframe'?v.toFixed(2):String(Math.round(v*10)/10);}
@@ -363,6 +363,12 @@ const DATA={
   },
   // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
+    // 手紙（中身は Items.createLetter でランダムに決まる。名前とレア度だけここで決める）
+    letter_0:{name:'走り書きの手紙',slot:'charm',def:0,letter:0},
+    letter_1:{name:'旅人の手紙',slot:'charm',def:0,letter:1},
+    letter_2:{name:'騎士の手紙',slot:'charm',def:0,letter:2},
+    letter_3:{name:'賢者の手紙',slot:'charm',def:0,letter:3},
+    letter_4:{name:'王家の手紙',slot:'charm',def:0,letter:4},
     iron_sword:{name:'鉄の剣',slot:'weapon',wtype:'sword',atk:10,crit:5},
     hunter_sword:{name:'狩猟の弓',slot:'weapon',wtype:'bow',atk:11,crit:6,fixed:[{stat:'critDmg',v:5}]}, // IDは昔の名残（セーブデータを壊さないため hunter_sword のまま）
     wolf_sword:{name:'古狼の剣',slot:'weapon',wtype:'sword',atk:20,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
@@ -611,6 +617,22 @@ const DATA={
     rescue_jewel:{name:'救命珠',color:'#ff9ab0',skill:'rescue'},
     elem_jewel:{name:'属性珠',color:'#ff8ad0',skill:'elem_up'},
   },
+  /* 手紙（モンハンのお守り）：防御力はなく、防具スキルのポイントがランダムに付く。レア度（tier）が高いほど強いスキル・多いポイント。
+     pool：付きやすいスキルと重み／pts：1つ目のスキルのポイント [最少,最多]／pts2：2つ目のポイント／two：2つ目が付く確率
+     slotW：装飾品スロット数 0・1・2 の重み。drops：手紙が出る確率（宝箱・中ボス・ボス報酬） */
+  letters:[
+    {name:'走り書きの手紙',pts:[2,4],pts2:[1,2],two:0.15,slotW:[1,0,0],
+      pool:{gather_up:3,move_up:3,evade:2,hp_up:3,poison_res:3,status_res:3,item_speed:2,heal_up:2,rescue:1}},
+    {name:'旅人の手紙',pts:[3,5],pts2:[1,3],two:0.35,slotW:[0.8,0.2,0],
+      pool:{move_up:3,evade:3,hp_up:3,def_up:2,dodge_dist:2,regen:2,rescue:2,minion_hunter:2,item_speed:2,heal_up:2,poison_res:1,status_res:1}},
+    {name:'騎士の手紙',pts:[4,6],pts2:[2,4],two:0.55,slotW:[0.6,0.4,0],
+      pool:{atk_up:3,def_up:3,dmg_cut:2,flinch_free:2,crit_up:2,hp_up:2,minion_hunter:2,elem_up:2,regen:1,evade:1}},
+    {name:'賢者の手紙',pts:[5,8],pts2:[3,5],two:0.8,slotW:[0.2,0.7,0.1],
+      pool:{crit_up:3,crit_dmg:2,weakness:2,atk_up:3,elem_up:3,item_power:2,dmg_cut:2,boss_hunter:2,rare_up:1,evade:1}},
+    {name:'王家の手紙',pts:[7,10],pts2:[4,7],two:1,slotW:[0,0.5,0.5],
+      pool:{crit_dmg:3,weakness:3,boss_hunter:3,atk_up:3,elem_up:2,rescue:1,rare_up:2,evade:2,dmg_cut:1}},
+  ],
+  letterDrops:{chest:0.12,chest2:0.2,midboss:0.3,boss:0.45},
   /* 属性（火・水・雷・氷・冥の5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
      enemyElem：魔物の属性。atk＝攻撃の属性（ダメージの share 割が属性ダメージになり、プレイヤーの属性耐性で減る）
      weak＝弱点属性（1つ目×1.5、2つ目以降×1.25）／strong＝効きにくい属性（×0.5）。攻撃と同じ属性は×0.25 */
@@ -1420,6 +1442,7 @@ const Items={
     return weightedPick(DATA.rarities.map((r,i)=>({w:i<minR?0:r.dropW*Math.pow(boost,i),v:i})));
   },
   createEquipment(baseId,rarity){
+    if(DATA.equipment[baseId].slot==='charm')return Items.createLetter(DATA.equipment[baseId].letter);
     const base=DATA.equipment[baseId],rar=DATA.rarities[rarity];
     const it={kind:'equip',uid:null,baseId,slot:base.slot,rarity,atk:0,def:0,crit:0,affixes:[],slots:[],effects:[]};
     // 基本性能は±10%程度の揺らぎに抑え、武器の個性を保つ
@@ -1437,6 +1460,17 @@ const Items={
     if(rarity===4&&RNG.next()<0.4)it.effects.push(effPick());
     return it;
   },
+  /** 手紙を作る：レア度ごとの「付きやすいスキル」から1〜2種、ポイントもレア度ごとの範囲で決まる */
+  createLetter(tier){
+    tier=clamp(tier|0,0,4);const L=DATA.letters[tier],skills={};
+    const pickSkill=()=>weightedPick(Object.keys(L.pool).filter(k=>!skills[k]&&DATA.armorSkills[k]).map(k=>({w:L.pool[k],v:k})));
+    skills[pickSkill()]=randInt(L.pts[0],L.pts[1]);
+    if(RNG.next()<L.two){const k=pickSkill();if(k)skills[k]=randInt(L.pts2[0],L.pts2[1]);}
+    const ns=weightedPick(L.slotW.map((w,i)=>({w,v:i})));
+    return {kind:'equip',uid:null,baseId:'letter_'+tier,slot:'charm',rarity:tier,atk:0,def:0,crit:0,affixes:[],effects:[],slots:new Array(ns).fill(null),skills};
+  },
+  /** 今のルールで持てるスロット数（手紙は作ったときの数のまま） */
+  maxSlots(it){return it.slot==='charm'?Math.min(2,it.slots.length):Items.slotCount(it.baseId,it.rarity);},
   createDeco(decoId,rarity){return {kind:'deco',uid:null,decoId,rarity};},
   decoValue(d){return DATA.decoPts[d.rarity]||1;},
   decoText(d){const dd=DATA.decorations[d.decoId],sk=DATA.armorSkills[dd.skill];return (sk?sk.name:dd.skill)+' +'+Items.decoValue(d)+'pt';},
@@ -1445,6 +1479,10 @@ const Items={
   rollLoot(tableId,rareBonus){
     const t=DATA.dropTables[tableId],out=[];
     if(!t)return out;
+    { // 手紙：宝箱・中ボス・ボスの報酬から（レア度は報酬の良さ rarityBoost で上がりやすくなる）
+      const isBoss=Object.values(DATA.enemies).some(e=>e.boss&&e.drops===tableId),ch=DATA.letterDrops[tableId]??(isBoss?DATA.letterDrops.boss:0);
+      if(ch>0&&RNG.next()<ch*(1+(rareBonus||0)/100))out.push({type:'equip',item:Items.createLetter(Items.rollRarity(Math.pow(t.rarityBoost||1,0.6)))});
+    }
     if(t.one){ // 素材は1つだけ（落ちないこともある）
       const mats=t.rolls.filter(r=>r.type==='mat');
       if(mats.length&&RNG.next()<Math.min(1,t.one*(1+(rareBonus||0)/100))){
@@ -1558,8 +1596,9 @@ function computeStats(profile,override,who){
 function armorSkillPoints(items){
   const pts={};
   for(const it of items){
-    const b=DATA.equipment[it.baseId];if(!b||!b.skills)continue;
-    for(const k in b.skills)if(DATA.armorSkills[k])pts[k]=(pts[k]||0)+b.skills[k];
+    const b=DATA.equipment[it.baseId];if(!b)continue;
+    const sk=it.skills||b.skills;if(!sk)continue; // 手紙は1枚ごとのスキル（it.skills）
+    for(const k in sk)if(DATA.armorSkills[k])pts[k]=(pts[k]||0)+sk[k];
   }
   return pts;
 }
@@ -1585,7 +1624,7 @@ function skillPtsText(skills){
    素材・装備品・装飾品・回復薬は「パーティ共有の倉庫」。
    キャラクター固有のデータ（装備中アイテム）は
    1P = プロフィール直下（equipped）、2P = profile.p2 に持つ。 */
-const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null});
+const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null,charm:null});
 function charOf(profile,who){return who===1?profile.p2:profile;}
 const CHAR_COUNT=2;
 const Profile={
@@ -1623,7 +1662,7 @@ const Profile={
   getDeco(p,uid){if(!uid)return null;for(const d of p.decos)if(d.uid===uid)return d;return null;},
   /** スロット数を今のルール（装備ごとの slots）に合わせる。はみ出した装飾品は外れて手元に残る */
   fitSlots(it,used){
-    const n=Items.slotCount(it.baseId,it.rarity),keep=it.slots.filter(u=>u).slice(0,n);
+    const n=Items.maxSlots(it),keep=it.slots.filter(u=>u).slice(0,n);
     if(used)for(const u of it.slots)if(u&&!keep.includes(u))used.delete(u);
     it.slots=keep.concat(new Array(n-keep.length).fill(null));
   },
@@ -1732,6 +1771,7 @@ const Save={
         affixes:Array.isArray(x.affixes)?x.affixes.filter(a=>a&&DATA.affixes[a.id]&&typeof a.v==='number').map(a=>({id:a.id,v:a.v})):[],
         effects:Array.isArray(x.effects)?x.effects.filter(e=>DATA.effects[e]):[],
         slots:Array.isArray(x.slots)?x.slots.slice(0,3).map(u=>{if(u&&decoIds.has(u)&&!usedDecos.has(u)){usedDecos.add(u);return u;}return null;}):[]};
+      if(base.slot==='charm'){it.skills={};if(x.skills&&typeof x.skills==='object')for(const k in x.skills)if(DATA.armorSkills[k])it.skills[k]=clamp(x.skills[k]|0,1,15);it.def=0;}
       Profile.fitSlots(it,usedDecos);
       p.items.push(it);itemIds.add(it.uid);noteUid(it.uid);
     }
@@ -6250,7 +6290,7 @@ function itemName(it){return DATA.equipment[it.baseId].name;}
    オンライン参加者の操作はホストがこの関数をその参加者のデータに対して実行する。 */
 /** 売値：基本性能・レアリティ・スロット数で決まる */
 function sellPrice(it){
-  const base=DATA.equipment[it.baseId],power=base.atk||base.def*2||10;
+  const base=DATA.equipment[it.baseId],power=base.slot==='charm'?15+Object.values(it.skills||{}).reduce((a,b)=>a+b,0)*3:(base.atk||base.def*2||10);
   return Math.round((8+power*2)*(1+it.rarity*0.6)+it.slots.length*10);
 }
 const REINFORCE_MAX=5,REINFORCE_GOLD=40; // 防具の強化：最大段階と、1段階ごとのお金（×段階数）
@@ -6617,7 +6657,7 @@ const Net={
       const base=DATA.equipment[it.baseId];
       if(base.slot==='weapon'){it.atk=Math.min(it.atk,Math.ceil(base.atk*1.1*1.25)+1);it.crit=Math.min(it.crit,base.crit+3);}
       else it.def=Math.min(it.def,Math.ceil(base.def*1.12*1.25)+1);
-      it.slots=it.slots.slice(0,Items.slotCount(it.baseId,it.rarity));it.effects=it.effects.slice(0,2);it.affixes=it.affixes.slice(0,3).map(a=>({id:a.id,v:Math.min(a.v,Math.ceil(DATA.affixes[a.id].max*1.25))}));
+      it.slots=it.slots.slice(0,Items.maxSlots(it));it.effects=it.effects.slice(0,2);it.affixes=it.affixes.slice(0,3).map(a=>({id:a.id,v:Math.min(a.v,Math.ceil(DATA.affixes[a.id].max*1.25))}));
     }
     for(const k in p.materials)p.materials[k]=Math.min(p.materials[k],9999);
   },
@@ -7702,7 +7742,7 @@ const App={
       ${items.map(it=>`<div class="itemrow ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}">
         <span class="sl">${SLOT_NAMES[it.slot]}</span><span class="nm" style="color:${rarColor(it.rarity)}">${itemName(it)}</span>
         ${it.effects.length?'<span title="特殊効果あり" style="color:#ffcf6a">★</span>':''}
-        <small>${it.slot==='weapon'?'攻'+it.atk+' 会'+it.crit+'%':'防'+it.def}</small><small class="muted">${slotDots(it)}</small>
+        <small>${it.slot==='weapon'?'攻'+it.atk+' 会'+it.crit+'%':it.slot==='charm'?skillPtsText(it.skills||{}):'防'+it.def}</small><small class="muted">${slotDots(it)}</small>
         ${this.equipTag(it.uid)}</div>`).join('')||'<div class="muted">該当する装備がありません</div>'}</div>`;
     const sel=Profile.getItem(p,this.inv.sel);
     const right=`<div class="col col-right" data-scroll="right">${this.inv.decoPick?this.decoPickHTML():(sel?this.itemDetailHTML(sel):'<div class="muted">装備を選択すると詳細と性能比較が表示されます。</div>')}</div>`;
@@ -7751,16 +7791,17 @@ const App={
     const owner=Profile.equippedBy(p,it.uid),eq=owner===who,other=owner>=0&&owner!==who;
     let h=`<div class="iname" style="color:${rar.color}">${base.name}</div><div class="isub">${rar.name}・${SLOT_NAMES[it.slot]}${base.wtype?'（'+DATA.weaponTypes[base.wtype].name+'）':''}　${this.equipTag(it.uid)}</div>`;
     {const sr=DATA.seriesRes[it.baseId==='fang_king'?'fang':it.baseId.split('_')[0]];
-    h+=sec('基本性能',it.slot==='weapon'?row('攻撃力',it.atk)+row('会心率',it.crit+'%')+(base.el?row('属性',`<span style="color:${DATA.elements[base.el.k].color}">${DATA.elements[base.el.k].name} ${Math.round(base.el.v*rar.statMult)}</span>`):''):row('防御力',it.def)+(sr?row('属性耐性',elemResText(sr)):''));}
-    if(it.slot==='weapon'){const t=DATA.weaponTypes[base.wtype];h+=sec('武器種の特徴',`<div class="eff">移動${t.marks.move} 振り${t.marks.speed} 威力${t.marks.power} リーチ${t.marks.reach}　納刀${t.sheathe}秒<br>${t.feature}</div>`);}
+    h+=it.slot==='charm'?'':sec('基本性能',it.slot==='weapon'?row('攻撃力',it.atk)+row('会心率',it.crit+'%')+(base.el?row('属性',`<span style="color:${DATA.elements[base.el.k].color}">${DATA.elements[base.el.k].name} ${Math.round(base.el.v*rar.statMult)}</span>`):''):row('防御力',it.def)+(sr?row('属性耐性',elemResText(sr)):''));}
+    if(it.slot==='charm'){const sk=it.skills||{};h+=sec('スキルポイント（この手紙だけのもの）',Object.keys(sk).map(k=>{const d=DATA.armorSkills[k];return d?row(d.name,'+'+sk[k]+'pt'):'';}).join('')+`<div class="small muted">手紙は1枚ずつ付いているスキルとポイントが違います。レア度が高いほど強いスキル・多いポイントが付きやすくなります。</div>`);}
+    else if(it.slot==='weapon'){const t=DATA.weaponTypes[base.wtype];h+=sec('武器種の特徴',`<div class="eff">移動${t.marks.move} 振り${t.marks.speed} 威力${t.marks.power} リーチ${t.marks.reach}　納刀${t.sheathe}秒<br>${t.feature}</div>`);}
     else{
       h+=sec('スキルポイント（この装備共通）',base.skills&&Object.keys(base.skills).length?Object.keys(base.skills).map(k=>{const d=DATA.armorSkills[k];return d?row(d.name,'+'+base.skills[k]+'pt'):'';}).join('')+`<div class="small muted">同じスキルを合計${CONFIG.skillPoints.per}ポイントそろえると発動します</div>`:'<div class="muted small">なし</div>');
       const set=Object.values(DATA.armorSets).find(s=>s.pieces[it.slot]===it.baseId);
       if(set)h+=sec('シリーズ',`<div class="eff"><b style="color:#7fe09a">${set.name}</b>：${Object.keys(set.pieces).length}部位のうち${set.need||Object.keys(set.pieces).length}部位をそろえると「${set.bonus}」${set.desc}</div>`);
     }
     if(base.fixed&&base.fixed.length)h+=sec('固有特性（この装備共通）',base.fixed.map(f=>row(STAT_NAMES[f.stat],fmtStat(f.stat,f.v))).join(''));
-    h+=sec('付加ステータス（個体ごとにランダム）',it.affixes.length?it.affixes.map(a=>{const st=DATA.affixes[a.id].stat;return row(STAT_NAMES[st],fmtStat(st,a.v));}).join(''):'<div class="muted small">なし</div>');
-    h+=sec('特殊効果',it.effects.length?it.effects.map(e=>`<div class="eff"><b>${DATA.effects[e].name}</b>：${DATA.effects[e].desc}</div>`).join(''):'<div class="muted small">なし</div>');
+    if(it.slot!=='charm')h+=sec('付加ステータス（個体ごとにランダム）',it.affixes.length?it.affixes.map(a=>{const st=DATA.affixes[a.id].stat;return row(STAT_NAMES[st],fmtStat(st,a.v));}).join(''):'<div class="muted small">なし</div>');
+    if(it.slot!=='charm')h+=sec('特殊効果',it.effects.length?it.effects.map(e=>`<div class="eff"><b>${DATA.effects[e].name}</b>：${DATA.effects[e].desc}</div>`).join(''):'<div class="muted small">なし</div>');
     h+=sec(`装飾品スロット（${it.slots.length}）`,it.slots.length?it.slots.map((u,i)=>{
       const d=Profile.getDeco(p,u);
       return `<button class="slotbtn" data-act="decoSlot" data-uid="${it.uid}" data-idx="${i}">${d?`<span style="color:${rarColor(d.rarity)}">◆ ${DATA.decorations[d.decoId].name}</span> <small>${Items.decoText(d)}</small>`:'<span class="muted">◇ 空きスロット（クリックで装着）</span>'}</button>`;
@@ -7821,7 +7862,7 @@ const App={
     const cat=this.smithCat||'weapon',sub=this.smithSub||'all';
     const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬']];
     const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
-      :cat==='armor'?[['all','すべて'],...Object.keys(SLOT_NAMES).filter(k=>k!=='weapon').map(k=>[k,SLOT_NAMES[k]])]:[];
+      :cat==='armor'?[['all','すべて'],...Object.keys(SLOT_NAMES).filter(k=>k!=='weapon'&&k!=='charm').map(k=>[k,SLOT_NAMES[k]])]:[];
     const match=r=>{
       if(cat==='item')return r.out.type==='item';
       if(cat==='deco')return r.out.type==='deco';
@@ -7842,7 +7883,7 @@ const App={
   /** 防具の強化：持っている防具ごとに、強化段階と必要な強化玉・お金、強化ボタン */
   reinforceHTML(){
     const p=this.profile,orbs=p.materials.reinforce_orb||0,gold0=p.gold||0;
-    const list=p.items.filter(it=>it.kind==='equip'&&it.slot!=='weapon');
+    const list=p.items.filter(it=>it.kind==='equip'&&it.slot!=='weapon'&&it.slot!=='charm');
     const rows=list.length?list.map(it=>{
       const lv=it.reinforce||0,b=DATA.equipment[it.baseId],full=lv>=REINFORCE_MAX;
       const need=lv+1,gold=REINFORCE_GOLD*(lv+1),can=!full&&orbs>=need&&gold0>=gold;
