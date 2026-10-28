@@ -84,7 +84,9 @@ button.danger:hover{background:#6e2a3a}
 body.pad #game{cursor:none}
 @media (max-width:900px){.inv-body{flex-direction:column}.col-left,.col-right{width:auto}.inv-panel{height:94vh}
 /* 依頼選択：スマホでも左に一覧、右に説明を並べる */
-.board-body{flex-direction:row}.board-body .col-mid{flex:0 0 42%;min-width:0}.board-body .col-right{width:auto!important;flex:1;min-width:0}}
+.board-body{flex-direction:row}.board-body .col-mid{flex:0 0 42%;min-width:0}.board-body .col-right{width:auto!important;flex:1;min-width:0}
+/* スマホ：画面の部分（装備中・一覧・詳細）をまとめて縦にスクロールする（それぞれが縮んで一覧が見えなくなるのを防ぐ） */
+.inv-body:not(.board-body){overflow-y:auto}.inv-body:not(.board-body)>.col{flex:0 0 auto;min-height:auto;overflow:visible}}
 /* スマホ・タブレット用の操作ボタン（プレイ中だけ表示） */
 #touch{position:fixed;inset:0;display:none;pointer-events:none;z-index:6;-webkit-user-select:none;user-select:none}
 #touch.on{display:block}
