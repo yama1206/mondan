@@ -6640,6 +6640,31 @@ const Renderer={
       ctx.lineWidth=5;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(bn.text,W/2,H*0.3);
       ctx.fillStyle=bn.color;ctx.fillText(bn.text,W/2,H*0.3);ctx.globalAlpha=1;
     }
+    this.drawItemWheel(ctx,w);
+  },
+  /** 持ち物ホイール（RB長押し）：11種類を円に並べ、右スティックの向きで選ぶ */
+  drawItemWheel(ctx,w){
+    const wh=Input.wheel;if(!wh||!wh.open)return;
+    const W=this.w,H=this.h,N=ITEM_ORDER.length,cx=W/2,cy=H/2,R=Math.min(W,H)*0.3,ri=R*0.42,step=2*Math.PI/N;
+    const p=w.players[wh.pid]||null,bag=(p&&p.bag)||{};
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,0,W,H);
+    for(let i=0;i<N;i++){
+      const id=ITEM_ORDER[i],c=DATA.consumables[id],n=bag[id]||0,on=wh.sel===i,has=n>0;
+      const a0=-Math.PI/2+(i-0.5)*step,a1=a0+step,am=a0+step/2;
+      ctx.beginPath();ctx.arc(cx,cy,R,a0,a1);ctx.arc(cx,cy,ri,a1,a0,true);ctx.closePath();
+      ctx.fillStyle=on?'rgba(255,210,58,.9)':(has?'rgba(30,26,40,.9)':'rgba(30,26,40,.5)');ctx.fill();
+      ctx.strokeStyle=c.color;ctx.lineWidth=on?4:2;ctx.stroke();
+      const tx=cx+Math.cos(am)*(R+ri)/2,ty=cy+Math.sin(am)*(R+ri)/2;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=on?'#1a1420':(has?'#fff':'#777');ctx.font='bold 13px sans-serif';ctx.fillText(c.short||c.name,tx,ty-7);
+      ctx.fillStyle=on?'#1a1420':(has?c.color:'#666');ctx.font='12px sans-serif';ctx.fillText('×'+n,tx,ty+9);
+    }
+    const sid=ITEM_ORDER[wh.sel!=null?wh.sel:((p&&p.sel)||0)],sc=DATA.consumables[sid];
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText(sc.name,cx,cy-8);
+    ctx.fillStyle='#ccc';ctx.font='13px sans-serif';ctx.fillText('スティックで選び、離すと決定',cx,cy+14);
+    ctx.restore();
   },
 };
 
@@ -7318,10 +7343,31 @@ const Input={
         const owner=this.ownerOf(gp.index);
         if(owner)this.aimMode[owner]='pad';
       }
-      S.move={x:lx,y:ly};
-      S.attack=cur[7]||cur[2];
+      // RB：短く押すと持ち物を次へ、0.3秒以上押すとホイールを開く（右スティックで選び、離すと決定）
+      const owner=this.ownerOf(gp.index);
+      const rbHeld=!!cur[5]&&App.state==='playing'&&!!owner;
+      if(rbHeld&&!S.prev[5]){S.rbT=0;S.rbOpen=false;}
+      if(rbHeld){
+        S.rbT=(S.rbT||0)+dt;
+        if(!S.rbOpen&&S.rbT>=0.3){S.rbOpen=true;this.wheel={pid:owner,open:true,sel:null};}
+        if(S.rbOpen&&Math.hypot(rx,ry)>0.5){ // 上から時計回りに並ぶ。スティックの向きの枠を選ぶ
+          const N=ITEM_ORDER.length,step=2*Math.PI/N;
+          let a=Math.atan2(ry,rx)+Math.PI/2;a=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+          this.wheel.sel=Math.round(a/step)%N;
+        }
+      }
+      if(!cur[5]&&S.prev[5]){
+        if(S.rbOpen){
+          if(this.wheel&&this.wheel.sel!=null&&owner&&this.edges[owner])this.edges[owner].pick=this.wheel.sel;
+          this.wheel=null;S.rbOpen=false;
+        }else if(owner&&App.state==='playing'&&this.edges[owner]&&(S.rbT||0)<0.3)this.edges[owner].cycle=1;
+        S.rbT=0;
+      }
+      if(S.rbOpen){S.move={x:0,y:0};S.attack=false;}
+      else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];}
       // 右スティックで向きを指定。倒していないときは移動方向を向く（攻撃中は向きを維持）
-      if(Math.hypot(rx,ry)>0.35){S.aim=Math.atan2(ry,rx);S.aimT=performance.now();}
+      if(S.rbOpen){/* ホイールを開いている間は向きを変えない */}
+      else if(Math.hypot(rx,ry)>0.35){S.aim=Math.atan2(ry,rx);S.aimT=performance.now();}
       else if(Math.hypot(lx,ly)>0.3&&!S.attack){S.aim=Math.atan2(ly,lx);S.aimT=performance.now();}
       for(let i=0;i<cur.length;i++)if(cur[i]&&!S.prev[i])App.onPad(i,gp.index);
       S.prev=cur;
@@ -8628,7 +8674,7 @@ const App={
       const E=Input.edges[pid];
       if(i===0)E.dodge=true;                        // A / ×：回避
       else if(i===3){E.sheathe=true;E.skill=true;}  // Y / △：納刀（スキルのある武器ならスキルも）
-      else if(i===5)E.cycle=1;                      // RB / R1：持ち物の切り替え
+      // RB / R1：持ち物の切り替え（短く押す＝次へ、長く押す＝ホイール。Input.pollPads で判定）
       else if(i===4)E.heal=true;                    // LB / L1：持ち物を使う
       return;                                        // RT / X は攻撃（押しっぱなし判定は sample で行う）
     }
