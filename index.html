@@ -2121,7 +2121,18 @@ const Profile={
   create(){
     const p=Profile.blank();
     for(let who=0;who<CHAR_COUNT;who++){Profile.giveStarterWeapon(p,who);Profile.giveStarterCloth(p,who);}
+    Profile.grantStones(p);
     return p;
+  },
+  /** 出発前に選べる石の武器（まだ渡していない古いデータにも、一度だけ渡す） */
+  grantStones(p){
+    if(p.stoneGiven)return false;
+    for(const id of ['stone_db','stone_gs','stone_tachi','stone_hammer','stone_bow','stone_whip']){
+      const it=Items.createEquipment(id,0);
+      it.atk=DATA.equipment[id].atk;it.crit=DATA.equipment[id].crit;it.affixes=[];it.effects=[];it.slots=[];
+      Profile.addItem(p,it);
+    }
+    p.stoneGiven=true;return true;
   },
   giveStarterWeapon(p,who){
     const sw=Items.createEquipment('iron_sword',0);
@@ -2221,6 +2232,7 @@ const Save={
   sanitize(d){
     const p=Profile.blank();
     p.bag=emptyBag();
+    p.stoneGiven=!!d.stoneGiven;
     const srcBag=(d.bag&&typeof d.bag==='object')?d.bag:{potion:d.potions|0};
     for(const id of ITEM_ORDER)p.bag[id]=clamp(srcBag[id]|0,0,DATA.consumables[id].max);
     p.gold=Math.max(0,d.gold|0);
@@ -8047,6 +8059,7 @@ const App={
   init(){
     UI.init();
     const r=Save.load();this.profile=r.profile;
+    if(Profile.grantStones(this.profile))this.dirty=true;
     Net.init();
     Renderer.init($('#game'));Input.init($('#game'));Input.initTouch();
     Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);
