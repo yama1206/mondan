@@ -7425,7 +7425,7 @@ const UI={
     if(!el)return '';
     const d=el.dataset;
     // どの欄にあるか（左の装備欄と中央の一覧で同じ項目でも、別物として覚える）
-    const col=el.closest('[data-scroll]');
+    const col=el.closest?el.closest('[data-scroll]'):null; // 合成したキー（dataset だけのもの）にも対応
     return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||'',col?col.dataset.scroll:''].join('|');
   },
   focusRoot(){
@@ -8656,6 +8656,10 @@ const App={
       case 'online':this.goto('online');break;
       case 'netHost':this.questSel=null;Net.host(this.readNetName());break;
       case 'netJoin':{const c=document.getElementById('netCode');Net.join(c&&c.value,this.readNetName());break;}
+      case 'padDigit':case 'padBack':case 'padClear':{ // コントローラー用の数字入力（部屋のコード）
+        const el=document.getElementById('netCode');let v=el?el.value:(this.netCodeDraft||'');
+        v=ds.act==='padClear'?'':ds.act==='padBack'?v.slice(0,-1):(v+ds.id).replace(/\D/g,'').slice(0,6);
+        this.netCodeDraft=v;this.goto('online');break;}
       case 'netStart':this.startOnline();break;
       case 'netReady':{const me=Net.lobbyList().find(m=>m.pid===Net.myPid);Net.setReady(!(me&&me.ready));break;}
       case 'toLobby':
@@ -8819,7 +8823,8 @@ const App={
       最大5人。インターネット接続が必要です（接続の仲介に無料サービス PeerJS を使い、つながった後はPC同士で直接通信します）。</p>
       <label class="field">あなたの名前<input id="netName" maxlength="12" value="${esc(Net.savedName())}" placeholder="名前（12文字まで）"></label>
       <div class="menu-col"><button class="primary" data-act="netHost">部屋を作る（ホストになる）</button></div>
-      <label class="field">参加する部屋のコード<input id="netCode" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="例：483027" style="letter-spacing:.2em"></label>
+      <label class="field">参加する部屋のコード<input id="netCode" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="例：483027" value="${esc(this.netCodeDraft||'')}" style="letter-spacing:.2em"></label>
+      <div class="filters" style="margin:6px 0">${[1,2,3,4,5,6,7,8,9,0].map(d=>`<button data-act="padDigit" data-id="${d}">${d}</button>`).join('')}<button data-act="padBack">⌫ 1字消す</button><button data-act="padClear">全部消す</button></div>
       <div class="menu-col"><button class="primary" data-act="netJoin" style="background:#2d8a5a;border-color:#6fd8a0">部屋に参加する</button><button data-act="camp">戻る</button></div>
       <p id="netStatus" class="small" style="min-height:1.5em"></p>
       <p class="small muted">※全員が同じHTMLファイルを使ってください。ネットワーク環境（会社・学校・一部のモバイル回線など）によってはつながらないことがあります。</p></div>`;
@@ -9098,17 +9103,23 @@ const App={
   },
   /** 鍛冶屋：素材から装備・装飾品を作る */
   smithHTML(){
-    const cat=this.smithCat||'weapon',sub=this.smithSub||'all';
+    const cat=this.smithCat||'weapon';
     const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬']];
+    // 防具は「シリーズ」ごとに見る（シリーズに属さない防具は「その他」）
+    const seriesOf=id=>Object.keys(DATA.armorSets).find(k=>Object.values(DATA.armorSets[k].pieces).includes(id));
     const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
-      :cat==='armor'?[['all','すべて'],...Object.keys(SLOT_NAMES).filter(k=>k!=='weapon'&&k!=='charm').map(k=>[k,SLOT_NAMES[k]])]:[];
+      :cat==='armor'?[...Object.keys(DATA.armorSets).map(k=>[k,DATA.armorSets[k].name]),['misc','その他']]:[];
+    let sub=this.smithSub||'all';
+    if(cat==='armor'&&!subs.some(([k])=>k===sub))sub=subs[0][0];
     const match=r=>{
       if(cat==='item')return r.out.type==='item';
       if(cat==='deco')return r.out.type==='deco';
       if(r.out.type!=='equip')return false;
       const b=DATA.equipment[r.out.id];
       if(cat==='weapon')return b.slot==='weapon'&&(sub==='all'||b.wtype===sub);
-      return b.slot!=='weapon'&&(sub==='all'||b.slot===sub);
+      if(b.slot==='weapon'||b.slot==='charm')return false;
+      const se=seriesOf(r.out.id);
+      return sub==='misc'?!se:se===sub;
     };
     const catTabs=`<div class="tabs" style="margin-bottom:6px">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="smithCat" data-c="${k}">${n}</button>`).join('')}</div>`;
     const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
