@@ -87,7 +87,12 @@ body.pad #game{cursor:none}
 /* 依頼選択：スマホでも左に一覧、右に説明を並べる */
 .board-body{flex-direction:row}.board-body .col-mid{flex:0 0 42%;min-width:0}.board-body .col-right{width:auto!important;flex:1;min-width:0}
 /* スマホ：画面の部分（装備中・一覧・詳細）をまとめて縦にスクロールする（それぞれが縮んで一覧が見えなくなるのを防ぐ） */
-.inv-body:not(.board-body){overflow-y:auto}.inv-body:not(.board-body)>.col{flex:0 0 auto;min-height:auto;overflow:visible}}
+.inv-body:not(.board-body){overflow-y:auto}.inv-body:not(.board-body)>.col{flex:0 0 auto;min-height:auto;overflow:visible}
+/* スマホの装備画面：左に装備中（そのまま）、右に所持装備を並べ、詳細は下に置く */
+.eq-body{flex-direction:row;flex-wrap:wrap;align-items:flex-start}
+.eq-body>.col-left{flex:0 0 44%;width:auto;min-width:0}
+.eq-body>.col-mid{flex:1 1 0;width:auto;min-width:0}
+.eq-body>.col-right{flex:0 0 100%;width:auto}}
 /* スマホ・タブレット用の操作ボタン（プレイ中だけ表示） */
 #touch{position:fixed;inset:0;display:none;pointer-events:none;z-index:6;-webkit-user-select:none;user-select:none}
 #touch.on{display:block}
@@ -180,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.20',date:'2026/10/29'};
+const GAME_VERSION={no:'0.21',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -9096,7 +9101,7 @@ const App={
     const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.decosTabHTML();
     UI.show(`<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
       <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
-      <div class="inv-body">${body}</div></div>`);
+      <div class="inv-body ${this.inv.tab==='equip'?'eq-body':''}">${body}</div></div>`);
   },
   statsBlockHTML(st){
     let h=row('最大HP',st.maxHp)+row('攻撃力',st.atk)+row('防御力',st.def)+row('会心率',st.crit+'%')+row('会心ダメージ','+'+st.critDmg+'%')
@@ -9247,6 +9252,7 @@ const App={
     const p=this.profile;
     return `<div class="col full" data-scroll="mats"><div class="col-t">素材</div><div class="grid-mats">${Object.keys(DATA.materials).map(id=>{
       const m=DATA.materials[id],n=p.materials[id]||0;
+      if(!n&&!(p.matSeen&&p.matSeen[id]))return '';
       return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${m.color};color:${m.color}"></span>${m.name}<b>×${n}</b><div class="small muted">${m.desc}</div></div>`;
     }).join('')}</div><div class="col-t" style="margin-top:14px">消耗品</div>
     <div class="grid-mats">${ITEM_ORDER.map(id=>{const c=DATA.consumables[id],n=p.bag[id]||0;
