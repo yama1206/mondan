@@ -6945,7 +6945,7 @@ const App={
     Renderer.resetForWorld();
     Renderer.focusId=Net.role?(Net.role==='guest'?Net.myPid:'p1'):null;
     this.placeNotes(n);
-    this.sessionLoot=[];this.sessionCounts={};this.bossRewards={};
+    this.sessionLoot=[];this.sessionCounts={};this.bossRewards={};this.runGains={};this.lostCount=0;
     this.inGame=true;
     this.refreshInfo();
     this.save();
@@ -6992,10 +6992,23 @@ const App={
   checkStatus(){
     const w=this.world;if(!w||!this.inGame)return;
     if(w.status==='gameover'){
-      this.inGame=false;this.save();
+      this.inGame=false;this.revertRunGains();this.save();
       if(Net.role==='host'){Net.flushProfiles();Net.broadcast({t:'end',kind:'gameover'});Net.broadcastLobby();}
       this.goto('gameover');
     }else if(w.status==='clear')this.finishQuest();
+  },
+  /** 全滅したとき：この探索で手に入れた素材・装備・装飾品・お金を取り消す（ひとりでもマルチでも。誰かが生き残ってクリアすれば全員持ち帰れる） */
+  revertRunGains(){
+    let n=0;
+    for(const pid in (this.runGains||{})){
+      const g=this.runGains[pid],p=this.profileFor(pid)||this.profile;if(!p)continue;
+      for(const k in g.mats){const v=Math.min(g.mats[k],p.materials[k]||0);p.materials[k]=(p.materials[k]||0)-v;if(p.materials[k]<=0)delete p.materials[k];n+=v;}
+      for(const uid of g.items)if(Profile.getItem(p,uid)){Profile.removeItem(p,uid);n++;}
+      for(const uid of g.decos)if(Profile.getDeco(p,uid)){const o=Profile.decoOwner(p,uid);if(o){const i=o.slots.indexOf(uid);if(i>=0)o.slots[i]=null;}p.decos=p.decos.filter(d=>d.uid!==uid);n++;}
+      if(g.gold){p.gold=Math.max(0,(p.gold||0)-g.gold);}
+      Net.markProfile(pid);
+    }
+    this.runGains={};this.lostCount=n;this.sessionLoot=[];this.dirty=true;
   },
   finishQuest(){
     const w=this.world,pids=this.playerIds();
@@ -7163,10 +7176,12 @@ const App={
   grantLoot(loot,pid){
     pid=pid||'p1';
     const p=this.profileFor(pid)||this.profile;
-    if(loot.type==='mat'){p.materials[loot.id]=(p.materials[loot.id]||0)+loot.n;(p.matSeen=p.matSeen||{})[loot.id]=1;}
-    else if(loot.type==='equip')Profile.addItem(p,loot.item);
-    else if(loot.type==='deco')Profile.addDeco(p,loot.item);
-    else if(loot.type==='gold')p.gold=(p.gold||0)+loot.n;
+    // 探索中に手に入れた素材・装備・装飾品・お金は runGains に記録（全滅したら取り消す）
+    const g=this.inGame&&this.runGains?(this.runGains[pid]=this.runGains[pid]||{mats:{},items:[],decos:[],gold:0}):null;
+    if(loot.type==='mat'){p.materials[loot.id]=(p.materials[loot.id]||0)+loot.n;(p.matSeen=p.matSeen||{})[loot.id]=1;if(g)g.mats[loot.id]=(g.mats[loot.id]||0)+loot.n;}
+    else if(loot.type==='equip'){Profile.addItem(p,loot.item);if(g)g.items.push(loot.item.uid);}
+    else if(loot.type==='deco'){Profile.addDeco(p,loot.item);if(g)g.decos.push(loot.item.uid);}
+    else if(loot.type==='gold'){p.gold=(p.gold||0)+loot.n;if(g)g.gold+=loot.n;}
     else if(loot.type==='item'){
       const c=DATA.consumables[loot.id],before=p.bag[loot.id]||0;p.bag[loot.id]=Math.min(c.max,before+loot.n);
       this.syncPotions(pid);
@@ -7584,12 +7599,12 @@ const App={
     if(Net.role){
       const host=Net.role==='host';
       return `<div class="panel camp"><h2 style="color:#ff6b6b">全滅……クエスト失敗</h2>
-        <p>探索中に入手したものは、それぞれのPCに保存されています。</p>
+        <p>全員倒れてしまったため、この探索で手に入れた素材・装備・装飾品・お金は持ち帰れませんでした。</p>
         <div class="row">${host?'<button class="primary" data-act="netStart">同じメンバーでリトライ</button>':''}<button data-act="toLobby">ロビーに戻る</button></div>
         ${host?'':'<p class="small muted">ホストがリトライすると自動で出発します</p>'}</div>`;
     }
     return `<div class="panel camp"><h2 style="color:#ff6b6b">クエスト失敗……</h2>
-      <p>依頼は達成できませんでしたが、探索中に手に入れたもの ${this.sessionLoot.length}件 は持ち帰ることができました。</p>
+      <p>倒れてしまったため、この探索で手に入れた素材・装備・装飾品・お金は持ち帰れませんでした${this.lostCount?`（${this.lostCount}個）`:''}。</p>
       <div class="row"><button class="primary" data-act="retry">リトライ</button><button data-act="camp">拠点に戻る</button></div></div>`;
   },
   clearHTML(){
