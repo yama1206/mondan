@@ -180,7 +180,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.16',date:'2026/10/28'};
+const GAME_VERSION={no:'0.17',date:'2026/10/28'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -8495,7 +8495,7 @@ const App={
           if(ev.boss)this.rollBossRewards(ev.table);
           else if(ev.table){
             this.giveRewards(ev.table,'');
-            if(ev.elite)for(let i=0;i<CONFIG.elite.bonusRolls;i++)this.giveRewards(ev.table,'強敵：');
+            if(ev.elite)for(let i=0;i<CONFIG.elite.bonusRolls;i++)this.giveRewards(ev.table,'強敵：',null,i===0&&(Items.lootStage||1)>=5?[{type:'mat',id:'enchant_orb',n:1}]:null); // ステージ5以降は付与の玉を確定
             if(ev.mid){for(let i=0;i<CONFIG.midBoss.bonusRolls;i++)this.giveRewards(ev.table,'中ボス：');this.giveRewards('midboss','中ボス：');}
           }
           break;
@@ -8543,10 +8543,11 @@ const App={
     return out;
   },
   /** 敵を倒した・宝箱を開けた瞬間に、素材・装飾品・ゴールドを直接渡し、1行にまとめて通知する */
-  giveRewards(table,prefix,kind){
+  giveRewards(table,prefix,kind,extra){
     for(const pid of this.rewardReceivers()){
       const st=this.skillStatsFor(pid);
       const loot=Items.rollLoot(table,st.rareBonus);
+      if(extra)loot.push(...extra.map(x=>({...x}))); // 確定の報酬（強敵の付与の玉）
       if(kind==='gather'&&st.gatherBonus>0&&RNG.next()*100<st.gatherBonus)loot.push(...Items.rollLoot(table,st.rareBonus)); // 採取強化
       if(!loot.length)continue;
       const labels=loot.map(l=>this.grantLoot(l,pid));
