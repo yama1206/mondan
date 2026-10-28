@@ -7424,7 +7424,9 @@ const UI={
   padKey(el){
     if(!el)return '';
     const d=el.dataset;
-    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||''].join('|');
+    // どの欄にあるか（左の装備欄と中央の一覧で同じ項目でも、別物として覚える）
+    const col=el.closest('[data-scroll]');
+    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||'',col?col.dataset.scroll:''].join('|');
   },
   focusRoot(){
     if(this.modalOpen())return this.modal;
