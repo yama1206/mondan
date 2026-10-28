@@ -1903,10 +1903,22 @@ const Items={
   rollRarity(boost=1,minR=0){
     return weightedPick(DATA.rarities.map((r,i)=>({w:i<minR?0:r.dropW*Math.pow(boost,i),v:i})));
   },
-  createEquipment(baseId,rarity){
+  /** fixed=true は製作（クラフト）で作る防具。乱数を使わず、レア度・性能・付与がいつも同じになる */
+  createEquipment(baseId,rarity,fixed){
     if(DATA.equipment[baseId].slot==='charm')return Items.createLetter(DATA.equipment[baseId].letter);
     const base=DATA.equipment[baseId],rar=DATA.rarities[rarity];
     const it={kind:'equip',uid:null,baseId,slot:base.slot,rarity,atk:0,def:0,crit:0,affixes:[],slots:[],effects:[]};
+    if(fixed&&base.slot!=='weapon'){
+      it.def=Math.max(1,Math.round(base.def*rar.statMult));
+      const pool=Object.keys(DATA.affixes);
+      for(let k=0;k<rar.affix[0]&&k<pool.length;k++){
+        const a=DATA.affixes[pool[k]];
+        it.affixes.push({id:pool[k],v:Math.max(1,Math.round((a.min+a.max)/2*rar.statMult))});
+      }
+      it.slots=new Array(Items.slotCount(baseId,rarity)).fill(null);
+      if(rar.effectChance>=1){const eff=Object.keys(DATA.effects).sort((x,y)=>DATA.effects[y].w[rarity]-DATA.effects[x].w[rarity])[0];it.effects.push(eff);}
+      return it;
+    }
     // 基本性能は±10%程度の揺らぎに抑え、武器の個性を保つ
     if(base.slot==='weapon'){it.atk=Math.round(base.atk*rand(0.9,1.1)*rar.statMult);it.crit=Math.max(0,base.crit+randInt(-2,3));}
     else it.def=Math.max(1,Math.round(base.def*rand(0.88,1.12)*rar.statMult));
@@ -7643,7 +7655,7 @@ const Ops={
     Profile.spendMats(p,r.cost);p.gold-=gold;
     let label,sel=null;
     if(r.out.type==='equip'){
-      const it=Items.createEquipment(r.out.id,Items.rollRarity(1.3,r.minRarity||0));
+      const it=Items.createEquipment(r.out.id,r.minRarity||0,true);
       Profile.addItem(p,it);label=lootLabel({type:'equip',item:it});sel=it.uid;
     }else if(r.out.type==='deco'){
       const d=Items.createDeco(pick(Object.keys(DATA.decorations)),Items.rollRarity(1.3));
