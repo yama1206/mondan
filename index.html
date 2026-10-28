@@ -2531,6 +2531,11 @@ function questNeed(g,np){
   if(g.type!=='kill')return g.count;
   return Math.round(g.count*CONFIG.killQuota[clamp(np||1,1,5)-1]);
 }
+/** 依頼の文章。討伐数は人数で増えるので、実際の目標数に合わせて書き換える */
+function questDesc(q,np){
+  if(q.goal.type!=='kill')return q.desc;
+  return q.desc.replace(q.goal.count+'体',questNeed(q.goal,np)+'体');
+}
 /** いま話題にしている人数（オンラインならロビーの人数、ひとりなら1） */
 function partySize(){return (typeof Net!=='undefined'&&Net.role)?Math.max(1,Net.lobbyList().length):1;}
 /** 依頼の目標を文章にする */
@@ -2603,8 +2608,8 @@ function populateLayout(w,stage,quest,L){
   for(const rm of rooms){
     let elite=rm.def.elite||0;
     const types=(rm.def.spawn||[]).map(s=>s[0]);
-    // 枠ごとに、3割の確率で3〜4体の群れ（魔物の総数は以前とほぼ同じ程度）
-    for(const [t,a,b] of (rm.def.spawn||[]))if(RNG.next()<0.3)elite=spawnPack(w,m,rm.rect,types,t,randInt(3,4),elite);
+    // 枠ごとに、1割半の確率で3〜4体の群れ（魔物の総数は以前とほぼ同じ程度）
+    for(const [t,a,b] of (rm.def.spawn||[]))if(RNG.next()<0.15)elite=spawnPack(w,m,rm.rect,types,t,randInt(3,4),elite);
   }
   // 中ボス：道の部屋のどこかに、その部屋の魔物の大きい版。取り巻きの雑魚も一緒に湧く
   const mains=shuffle(rooms.filter(rm=>rm.kind==='main'));
@@ -2613,7 +2618,7 @@ function populateLayout(w,stage,quest,L){
     const p=types.length&&(randomFloor(m,mains[i].rect,3)||randomFloor(m,mains[i].rect,2));
     if(p){
       spawnEnemy(w,pick(types),p.x,p.y,{mid:true});placed++;
-      const escort=randInt(2,3);
+      const escort=2;
       for(let k=0;k<escort;k++){const a=rand(0,TAU),r=rand(40,70),tx=p.x+Math.cos(a)*r,ty=p.y+Math.sin(a)*r;
         spawnEnemy(w,RNG.next()<0.7?types[0]:pick(types),circleHitsWall(m,tx,ty,10)?p.x:tx,circleHitsWall(m,tx,ty,10)?p.y:ty);}
     }
@@ -6574,7 +6579,7 @@ const Renderer={
     ctx.font=`bold 13px ${FONT}`;ctx.fillStyle=q.done?'#5fe08a':'#ffffff';
     ctx.fillText('目標：'+questGoalText(q.goal,w.playerCount)+((q.goal.type==='boss'||q.goal.type==='explore')?'':`　${q.progress} / ${q.need}`)+(q.done?'　達成！':''),qx+12,52);
     ctx.fillStyle='#cfc7e6';ctx.font=`12px ${FONT}`;
-    ctx.fillText(`撃破 ${q.killed} / ${q.total}`+(q.chestsTotal?`　宝箱 ${q.chests} / ${q.chestsTotal}`:''),qx+12,72);
+    ctx.fillText((q.goal.type==='kill'?`撃破 ${q.killed}`:`撃破 ${q.killed} / ${q.total}`)+(q.chestsTotal?`　宝箱 ${q.chests} / ${q.chestsTotal}`:''),qx+12,72);
     if(q.boss!=='none'){
       const bn=DATA.enemies[q.bossType||st.enemySet.boss].name,bs={unseen:'最深部に潜んでいる',fighting:'交戦中！',defeated:'討伐完了'}[q.boss];
       ctx.fillStyle=q.boss==='fighting'?'#ff8a6a':(q.boss==='defeated'?'#5fe08a':'#cfc7e6');
@@ -8797,7 +8802,7 @@ const App={
       <div class="col col-right" data-scroll="qdetail" style="width:400px">
         <div class="iname" style="color:${sel.urgent?'#ff8a6a':'#f3d48a'}">${sel.name}</div>
         <div class="isub">ステージ${sel.stage}「${esc(stage.name)}」${sel.explore?'・自由探索':''}${sel.urgent?'・緊急依頼':''}</div>
-        <p style="margin:10px 0;line-height:1.7">${esc(sel.desc)}</p>
+        <p style="margin:10px 0;line-height:1.7">${esc(questDesc(sel,partySize()))}</p>
         ${sec('目標',`<div class="eff"><b>${questGoalText(sel.goal)}</b></div>`)}
         ${sec('報酬',`<div class="eff">${QuestRules.rewardText(sel)}</div><div class="small muted">ほかに、倒した魔物や開けた宝箱からも素材・ゴールドが手に入ります</div>`)}
         ${sel.unlocks?sec('クリアすると',`<div class="eff" style="color:#7fe09a">ステージ${sel.unlocks}「${esc(stageById(sel.unlocks).name)}」が解放</div>`):''}
