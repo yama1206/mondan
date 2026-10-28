@@ -9133,12 +9133,15 @@ const App={
   /** モンスター図鑑：倒した魔物が登録される。ステージごとに一覧、選ぶと姿・特徴・攻略のヒント・素材 */
   bestiaryHTML(){
     const p=this.profile,b=p.bestiary||{},st=clamp(this.bestStage||1,1,maxStageId());
-    const ids=Object.keys(DATA.bestiary).filter(id=>DATA.bestiary[id].stage.includes(st)&&DATA.enemies[id]);
+    // まだ解放していないステージは、名前も中身も出さない（ネタバレ防止）
+    const maxSt=clamp((p.progress&&p.progress.stage)||1,1,maxStageId());
+    const stName=id=>id<=maxSt?esc(stageById(id).name):'？？？';
+    const ids=st>maxSt?[]:Object.keys(DATA.bestiary).filter(id=>DATA.bestiary[id].stage.includes(st)&&DATA.enemies[id]);
     const order=id=>(DATA.enemies[id].boss?1:0);
     ids.sort((a,c)=>order(a)-order(c));
     const all=Object.keys(DATA.bestiary).filter(id=>DATA.enemies[id]),got=all.filter(id=>b[id]>0).length;
     let sel=this.bestSel&&ids.includes(this.bestSel)?this.bestSel:(ids.find(id=>b[id]>0)||ids[0]);
-    const tabs=DATA.stages.map(s=>`<button class="tab ${s.id===st?'on':''}" data-act="bestStage" data-s="${s.id}">${esc(s.name)}</button>`).join('');
+    const tabs=DATA.stages.map(s=>s.id<=maxSt?`<button class="tab ${s.id===st?'on':''}" data-act="bestStage" data-s="${s.id}">${esc(s.name)}</button>`:`<button class="tab" disabled>🔒 ？？？</button>`).join('');
     const rows=ids.map(id=>{
       const known=b[id]>0,E=DATA.enemies[id];
       return `<div class="itemrow ${id===sel?'sel':''}" data-act="bestSel" data-id="${id}">
@@ -9147,9 +9150,10 @@ const App={
         ${E.boss?'<span class="tag" style="background:#c03030">ボス</span>':''}${known?`<small class="muted">討伐 ${b[id]}</small>`:''}</div>`;}).join('');
     const E=DATA.enemies[sel],B=DATA.bestiary[sel],known=b[sel]>0;
     let detail;
-    if(!known)detail=`<div class="iname" style="color:#888">？？？</div><img src="${Portraits.get(sel,true,128)}" width="128" height="128" style="display:block;margin:10px auto">
+    if(!sel)detail=`<div class="muted">このステージはまだ解放されていません。先の依頼をクリアすると、ここに魔物が載ります。</div>`;
+    else if(!known)detail=`<div class="iname" style="color:#888">？？？</div><img src="${Portraits.get(sel,true,128)}" width="128" height="128" style="display:block;margin:10px auto">
       <p class="muted">まだ倒したことのない魔物です。一度倒すと図鑑に登録されます。</p>
-      <div class="small muted">出現：${B.stage.map(s=>esc(stageById(s).name)).join('、')}</div>`;
+      <div class="small muted">出現：${B.stage.map(stName).join('、')}</div>`;
     else{
       const mats=[];
       for(const r of ((DATA.dropTables[E.drops]||{}).rolls||[]))if(r.type==='mat'&&!mats.includes(r.id))mats.push(r.id);
@@ -9171,7 +9175,7 @@ const App={
       if(E.stunMax)feats.push('ハンマーで頭を叩くとスタン');
       const hpRank=E.hp>=2000?'★★★★★':E.hp>=200?'★★★★':E.hp>=100?'★★★':E.hp>=45?'★★':'★';
       detail=`<div class="iname" style="color:${E.boss?'#ff8a6a':'#f3d48a'}">${esc(E.name)}</div>
-        <div class="isub">${esc(B.role)}　出現：${B.stage.map(s=>esc(stageById(s).name)).join('、')}</div>
+        <div class="isub">${esc(B.role)}　出現：${B.stage.map(stName).join('、')}</div>
         <img src="${Portraits.get(sel,false,128)}" width="128" height="128" style="display:block;margin:10px auto">
         <p style="margin:8px 0;line-height:1.7">${esc(B.desc)}</p>
         ${sec('攻略のヒント',`<div class="eff">${esc(B.tip)}</div>`)}
