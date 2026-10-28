@@ -212,7 +212,7 @@ const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝�
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
 const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
-const VOL_SCALE=0.5; // 音量の全体倍率（設定画面の表示も同じ倍率で出す）
+const VOL_SCALE=0.5; // 音量の全体倍率（設定画面の表示は0〜100%。その値が音量の上限1に対応する）
 const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚',charm:'手紙'};
 const STAT_NAMES={maxHp:'最大HP',atk:'攻撃力',def:'防御力',crit:'会心率',critDmg:'会心ダメージ',moveSpd:'移動速度',atkSpd:'攻撃速度',dodgeIframe:'回避後無敵',drainChance:'吸血確率'};
 const STAT_UNITS={crit:'%',critDmg:'%',moveSpd:'%',atkSpd:'%',dodgeIframe:'秒',drainChance:'%'};
@@ -7737,8 +7737,8 @@ const App={
         <div class="filters" style="margin-top:6px"><button data-act="touchEdit">位置を変える</button><button data-act="touchReset">初期の位置に戻す</button></div></div>
       <div class="setting" style="display:block">HP・回避などの表示の大きさ（いまは ${Math.round((s.hudScale||CONFIG.hud.scale)*100)}%）
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
-      ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100*VOL_SCALE)}%）
-        <div class="filters" style="margin-top:6px">${[0,0.25,0.5,0.75,1].map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100*VOL_SCALE)+'%'}</button>`).join('')}</div></div>`).join('')}
+      ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
+        <div class="filters" style="margin-top:6px">${[0,1,2,3,4,5,6,7,8,9,10].map(i=>i/10).map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100)+'%'}</button>`).join('')}</div></div>`).join('')}
       <div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div></div>`;
   },
   gameoverHTML(){
