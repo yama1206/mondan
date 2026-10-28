@@ -1699,8 +1699,7 @@ const Profile={
   },
   /** そのアイテムを装備しているキャラ番号（0=1P,1=2P）。誰も装備していなければ -1 */
   equippedBy(p,uid){
-    for(let who=0;who<CHAR_COUNT;who++){const eq=charOf(p,who).equipped;if(SLOTS.some(s=>eq[s]===uid))return who;}
-    return -1;
+    return SLOTS.some(s=>p.equipped[s]===uid)?0:-1; // 装備は1Pのみ（2Pの装備は画面に出さない）
   },
   addItem(p,it){it.uid='e'+(p.nextUid++);p.items.push(it);return it;},
   addDeco(p,d){d.uid='d'+(p.nextUid++);p.decos.push(d);return d;},
@@ -6456,12 +6455,8 @@ const Ops={
     const it=Profile.getItem(p,a.uid);if(!it)return {};
     const owner=Profile.equippedBy(p,a.uid);
     if(owner===who)return {};
-    if(owner>=0){
-      if(it.slot==='weapon')return {msg:`この武器は ${owner+1}P が装備中です。${owner+1}P に別の武器を装備させてから選んでください`,color:'#ff8060'};
-      charOf(p,owner).equipped[it.slot]=null;
-    }
     charOf(p,who).equipped[it.slot]=it.uid;
-    return {changed:true,msg:`<span style="color:${rarColor(it.rarity)}">${itemName(it)}</span> を装備しました${owner>=0?`（${owner+1}P から付け替え）`:''}`,color:rarColor(it.rarity)};
+    return {changed:true,msg:`<span style="color:${rarColor(it.rarity)}">${itemName(it)}</span> を装備しました`,color:rarColor(it.rarity)};
   },
   unequip(p,who,a){
     const it=Profile.getItem(p,a.uid);if(!it)return {};
@@ -6942,7 +6937,7 @@ const Net={
 
 const App={
   profile:null,world:null,state:'camp',localId:'p1',returnState:'camp',settingsReturn:'camp',
-  inv:{tab:'equip',filter:'all',sel:null,decoPick:null,who:0},lastPlayers:1,inGame:false,
+  inv:{tab:'equip',filter:'all',sel:null,decoPick:null},lastPlayers:1,inGame:false,
   questSel:'s1_goblin',boardStage:1,boardFrom:'camp',facilityFrom:'camp',
   sessionLoot:[],sessionCounts:{},dirty:false,saveTimer:0,acc:0,last:0,lastResult:null,
   init(){
@@ -7396,12 +7391,12 @@ const App={
   },
   enterGuest(profile){
     this.applyHostProfile(profile);
-    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null,who:0};
+    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null};
   },
   leaveGuest(){
     this.save();
     this.world=null;this.inGame=false;Renderer.focusId=null;
-    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null,who:0};
+    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null};
   },
   guestStart(d){
     Net.myPid=d.pid;
@@ -7450,7 +7445,6 @@ const App={
       const pid=Input.ownerOf(padIndex);
       if(i===9){this.onKey('Escape');return;}       // START：メニュー（誰が押してもよい）
       if(i===8){                                    // BACK：押した人の装備画面を開く
-        if(pid&&!Net.role)this.inv.who=0;
         this.openInventory('playing');return;
       }
       if(!pid)return;                               // 割り当てのないコントローラー
@@ -7473,7 +7467,7 @@ const App={
     }
   },
   onPadNav(dir){if(this.state!=='playing')UI.padNav(dir);},
-  openInventory(from){this.returnState=from;this.inv.decoPick=null;this.inv.who=0;this.goto('inventory');},
+  openInventory(from){this.returnState=from;this.inv.decoPick=null;this.goto('inventory');},
   goto(st){
     const was=this.state;
     this.state=st;
@@ -7520,7 +7514,6 @@ const App={
       case 'reinforce':this.doOp('reinforce',{uid:ds.uid});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
       case 'retry':if(Net.role==='host')this.startOnline();else this.startSortie(this.lastPlayers||1);break;
-      case 'who':this.inv.who=Number(ds.who)||0;this.inv.decoPick=null;this.renderInventory();break;
       case 'inventory':this.openInventory(this.state);break; // 鍛冶屋・ショップから開いた場合は閉じると施設に戻る
       case 'settings':this.settingsReturn=this.state;this.goto('settings');break;
       case 'reset':UI.confirm('セーブデータをすべて削除して最初からやり直します。<br><b>この操作は取り消せません。</b>よろしいですか？',()=>this.resetSave());break;
@@ -7578,7 +7571,7 @@ const App={
   },
   resetSave(){
     Save.reset();this.profile=Profile.create();this.save();
-    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null,who:0};
+    this.inv={tab:'equip',filter:'all',sel:null,decoPick:null};
     this.goto('camp');UI.notify('セーブデータをリセットしました','#ff8060');
   },
 
@@ -7586,7 +7579,7 @@ const App={
   /** 装備・製作の操作を実行する。オンライン参加者はホストに依頼し、結果のデータが届いたら画面を更新する */
   doOp(act,args){
     if(Net.role==='guest'){Net.send({t:'cmd',act,args});this.refreshPanel();return;}
-    const r=Ops[act](this.profile,this.inv.who,args)||{};
+    const r=Ops[act](this.profile,0,args)||{};
     if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
     if(r.sel)this.inv.sel=r.sel;
     if(r.cleared&&this.inv.sel===r.cleared)this.inv.sel=null;
@@ -7793,7 +7786,7 @@ const App={
     const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品']];
     const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.decosTabHTML();
     UI.show(`<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
-      <div class="inv-meta">${this.charLine(this.inv.who)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
+      <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
       <div class="inv-body">${body}</div></div>`);
   },
   statsBlockHTML(st){
@@ -7829,20 +7822,17 @@ const App={
   },
   /** 装備一覧の「装備中」タグ。誰が装備しているかを色分けで表示 */
   equipTag(uid){
-    const o=Profile.equippedBy(this.profile,uid);if(o<0)return '';
-    if(Net.role)return '<span class="tag">装備中</span>';
-    return `<span class="tag" style="background:${PLAYER_COLORS[o].body}">${o+1}P装備中</span>`;
+    return Profile.equippedBy(this.profile,uid)<0?'':'<span class="tag">装備中</span>';
   },
-  ownerSuffix(item){const o=Profile.equippedBy(this.profile,item.uid);return o<0?'':(Net.role?'（装備中）':`（${o+1}P装備中）`);},
+  ownerSuffix(item){return Profile.equippedBy(this.profile,item.uid)<0?'':'（装備中）';},
   equipTabHTML(){
-    const p=this.profile,who=this.inv.who,ch=charOf(p,who),st=computeStats(p,null,who),f=this.inv.filter;
-    const whoSel=true?'':`<div class="filters">${[0,1].map(i=>`<button class="${who===i?'on':''}" data-act="who" data-who="${i}" style="${who===i?'background:'+PLAYER_COLORS[i].body:''}">${i+1}P の装備</button>`).join('')}</div>`;
-    const left=`<div class="col col-left" data-scroll="left">${whoSel}<div class="col-t">装備中</div>${SLOTS.map(sl=>{
+    const p=this.profile,who=0,ch=charOf(p,who),st=computeStats(p,null,who),f=this.inv.filter;
+    const left=`<div class="col col-left" data-scroll="left"><div class="col-t">装備中</div>${SLOTS.map(sl=>{
       const it=Profile.getItem(p,ch.equipped[sl]);
       const sk=it&&sl!=='weapon'?skillPtsText(DATA.equipment[it.baseId].skills):'';
       return it?`<div class="eqslot ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}"><span class="sl">${SLOT_NAMES[sl]}</span><span style="color:${rarColor(it.rarity)}">${itemName(it)}</span><small class="muted">${slotDots(it)}</small>${sk?`<div class="small" style="width:100%;color:#9ad8ff;padding-left:2.6em">${sk}</div>`:''}</div>`
         :`<div class="eqslot" data-act="filter" data-f="${sl}"><span class="sl">${SLOT_NAMES[sl]}</span><span class="muted">なし</span></div>`;
-    }).join('')}<div class="col-t">${Net.role?'':(who+1)+'P の'}ステータス</div>${this.statsBlockHTML(st)}</div>`;
+    }).join('')}<div class="col-t">ステータス</div>${this.statsBlockHTML(st)}</div>`;
     const order={weapon:0,head:1,body:2,arms:3,waist:4,legs:5};
     const items=p.items.filter(i=>f==='all'||i.slot===f).sort((a,b)=>{
       const rank=u=>{const o=Profile.equippedBy(p,u);return o===who?0:(o<0?1:2);};
@@ -7864,7 +7854,7 @@ const App={
   /** 装備画面で、まだ装備していない装備品を選んだら「装備しますか？」と性能差を出して確認する */
   askEquip(uid){
     const p=this.profile,it=Profile.getItem(p,uid);if(!it)return;
-    const who=this.inv.who,owner=Profile.equippedBy(p,uid);
+    const who=0,owner=Profile.equippedBy(p,uid);
     if(owner===who)return;                       // すでに装備中
     if(owner>=0&&it.slot==='weapon')return;      // 相手が使っている武器は取れない（詳細欄に表示）
     const rar=DATA.rarities[it.rarity];
@@ -7873,7 +7863,7 @@ const App={
     UI.confirm(`<div class="iname" style="color:${rar.color}">${itemName(it)}</div>
       <div class="isub">${rar.name}・${SLOT_NAMES[it.slot]}　スロット ${slotDots(it)||'なし'}</div>
       <div style="text-align:left;margin:10px 0">${cmp||'<div class="muted small">ステータスは変わりません</div>'}${effs}</div>
-      <div>${Net.role?'':(who+1)+'P が'}装備しますか？${owner>=0?`<br><small>（${owner+1}P から外して付け替えます）</small>`:''}</div>`,
+      <div>装備しますか？</div>`,
       ()=>this.doOp('equip',{uid}),{yes:'装備する',no:'やめる',yesClass:'primary',focusYes:true});
   },
   compareHTML(cur,nxt,changedOnly){
@@ -7900,8 +7890,8 @@ const App={
     return h;
   },
   itemDetailHTML(it){
-    const p=this.profile,base=DATA.equipment[it.baseId],rar=DATA.rarities[it.rarity],who=this.inv.who;
-    const owner=Profile.equippedBy(p,it.uid),eq=owner===who,other=owner>=0&&owner!==who;
+    const p=this.profile,base=DATA.equipment[it.baseId],rar=DATA.rarities[it.rarity],who=0;
+    const owner=Profile.equippedBy(p,it.uid),eq=owner===who;
     let h=`<div class="iname" style="color:${rar.color}">${base.name}</div><div class="isub">${rar.name}・${SLOT_NAMES[it.slot]}${base.wtype?'（'+DATA.weaponTypes[base.wtype].name+'）':''}　${this.equipTag(it.uid)}</div>`;
     {const sr=DATA.seriesRes[it.baseId==='fang_king'?'fang':it.baseId.split('_')[0]];
     h+=it.slot==='charm'?'':sec('基本性能',it.slot==='weapon'?row('攻撃力',it.atk)+row('会心率',it.crit+'%')+(base.el?row('属性',`<span style="color:${DATA.elements[base.el.k].color}">${DATA.elements[base.el.k].name} ${Math.round(base.el.v*rar.statMult)}</span>`):''):row('防御力',it.def)+(sr?row('属性耐性',elemResText(sr)):''));}
@@ -7919,11 +7909,10 @@ const App={
       const d=Profile.getDeco(p,u);
       return `<button class="slotbtn" data-act="decoSlot" data-uid="${it.uid}" data-idx="${i}">${d?`<span style="color:${rarColor(d.rarity)}">◆ ${DATA.decorations[d.decoId].name}</span> <small>${Items.decoText(d)}</small>`:'<span class="muted">◇ 空きスロット（クリックで装着）</span>'}</button>`;
     }).join(''):'<div class="muted small">スロットなし</div>');
-    if(!eq)h+=sec(`${Net.role?'':(who+1)+'P の'}現在の装備との比較`,this.compareHTML(computeStats(p,null,who),computeStats(p,{[it.slot]:it},who)));
+    if(!eq)h+=sec(`現在の装備との比較`,this.compareHTML(computeStats(p,null,who),computeStats(p,{[it.slot]:it},who)));
     let btns='';
     if(eq){if(it.slot!=='weapon')btns+=`<button data-act="unequip" data-uid="${it.uid}">外す</button>`;}
-    else if(other&&it.slot==='weapon')btns+=`<button disabled>${owner+1}P が装備中の武器</button>`;
-    else btns+=`<button class="primary" data-act="equip" data-uid="${it.uid}">${Net.role?'':(who+1)+'P が'}装備する${other?`（${owner+1}P から外す）`:''}</button>`;
+    else btns+=`<button class="primary" data-act="equip" data-uid="${it.uid}">装備する</button>`;
     if(!(owner>=0&&it.slot==='weapon'))btns+=`<button class="danger" data-act="sell" data-uid="${it.uid}">売却（${sellPrice(it)}G）</button>`;
     h+=`<div class="btnrow">${btns}</div>`;
     return h;
