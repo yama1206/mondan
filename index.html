@@ -272,6 +272,7 @@ const DATA={
     item_power:{name:'アイテム使用強化',cat:'アイテム',max:2,vals:[25,50],fmt:'角笛・香の効果範囲と効果時間 +{v}%',apply:(s,v)=>{s.itemPowerPct+=v;}},
     item_speed:{name:'アイテム使用高速化',cat:'アイテム',max:2,vals:[0.3,0.6],fmt:'アイテムの発動 -{v}秒',apply:(s,v)=>{s.itemDelayAdj-=v;}},
     gather_up:{name:'採取強化',cat:'採取・報酬',max:2,vals:[50,100],fmt:'採取ポイントで {v}% の確率でもう1回採取',apply:(s,v)=>{s.gatherBonus+=v;}},
+    elem_up:{name:'属性攻撃強化',cat:'攻撃',max:3,vals:[10,20,30],fmt:'武器の属性ダメージ +{v}%',apply:(s,v)=>{s.elemPct+=v;}},
     rare_up:{name:'レア素材率アップ',cat:'採取・報酬',max:2,vals:[20,40],fmt:'確定でない素材・装飾品の出る確率 ×{v}%増し',apply:(s,v)=>{s.rareBonus+=v;}},
   },
   // w: レアリティ別の出現重み [コモン,アンコモン,レア,エピック,レジェンダリー]
@@ -377,7 +378,7 @@ const DATA={
     leather_boots:{name:'革の靴',slot:'legs',def:3,skills:{evade:1,move_up:2,gather_up:1}},
     wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,fixed:[{stat:'moveSpd',v:4}],skills:{move_up:6,weakness:2},slots:1},
     // ステージ5：黒狼シリーズ
-    bwolf_sword:{name:'黒狼の剣',slot:'weapon',wtype:'sword',atk:34,crit:10,fixed:[{stat:'atkSpd',v:8}],slots:2},
+    bwolf_sword:{name:'黒狼の剣',slot:'weapon',el:{k:'dragon',v:12},wtype:'sword',atk:34,crit:10,fixed:[{stat:'atkSpd',v:8}],slots:2},
     bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:14,fixed:[{stat:'crit',v:5}],skills:{boss_hunter:4,crit_dmg:2},slots:2},
     bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:35}],skills:{atk_up:4,boss_hunter:3},slots:2},
     bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:12,fixed:[{stat:'atk',v:4}],skills:{atk_up:4,crit_dmg:3},slots:2},
@@ -387,16 +388,16 @@ const DATA={
     // 大剣・太刀・ハンマー（鉄→古狼→黒狼）
     iron_gs:{name:'鉄の大剣',slot:'weapon',wtype:'greatsword',atk:11,crit:2},
     wolf_gs:{name:'古狼の大剣',slot:'weapon',wtype:'greatsword',atk:22,crit:5,fixed:[{stat:'critDmg',v:10}],slots:1},
-    bwolf_gs:{name:'黒狼の大剣',slot:'weapon',wtype:'greatsword',atk:37,crit:6,fixed:[{stat:'critDmg',v:15}],slots:2},
+    bwolf_gs:{name:'黒狼の大剣',slot:'weapon',el:{k:'dragon',v:13},wtype:'greatsword',atk:37,crit:6,fixed:[{stat:'critDmg',v:15}],slots:2},
     iron_tachi:{name:'鉄の太刀',slot:'weapon',wtype:'tachi',atk:10,crit:6},
     wolf_tachi:{name:'古狼の太刀',slot:'weapon',wtype:'tachi',atk:20,crit:10,fixed:[{stat:'moveSpd',v:4}],slots:1},
-    bwolf_tachi:{name:'黒狼の太刀',slot:'weapon',wtype:'tachi',atk:34,crit:12,fixed:[{stat:'crit',v:4}],slots:2},
+    bwolf_tachi:{name:'黒狼の太刀',slot:'weapon',el:{k:'dragon',v:12},wtype:'tachi',atk:34,crit:12,fixed:[{stat:'crit',v:4}],slots:2},
     iron_db:{name:'鉄の双剣',slot:'weapon',wtype:'dual',atk:9,crit:8},
     wolf_db:{name:'古狼の双剣',slot:'weapon',wtype:'dual',atk:18,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:1},
-    bwolf_db:{name:'黒狼の双剣',slot:'weapon',wtype:'dual',atk:31,crit:14,fixed:[{stat:'critDmg',v:10}],slots:2},
+    bwolf_db:{name:'黒狼の双剣',slot:'weapon',el:{k:'dragon',v:10},wtype:'dual',atk:31,crit:14,fixed:[{stat:'critDmg',v:10}],slots:2},
     iron_hammer:{name:'鉄のハンマー',slot:'weapon',wtype:'hammer',atk:11,crit:0},
     wolf_hammer:{name:'古狼のハンマー',slot:'weapon',wtype:'hammer',atk:22,crit:3,fixed:[{stat:'maxHp',v:20}],slots:1},
-    bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}],slots:2},
+    bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',el:{k:'dragon',v:13},wtype:'hammer',atk:37,crit:4,fixed:[{stat:'def',v:6}],slots:2},
     iron_whip:{name:'鉄の鞭',slot:'weapon',wtype:'whip',atk:9,crit:4},
     iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:8,crit:4},
     wolf_whip:{name:'古狼の鞭',slot:'weapon',wtype:'whip',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
@@ -429,14 +430,14 @@ const DATA={
     bone_faulds:{name:'骨の腰当て',slot:'waist',def:6,skills:{minion_hunter:2,atk_up:2}},
     bone_greaves:{name:'骨の脚当て',slot:'legs',def:7,skills:{hp_up:2,atk_up:3}},
     // 沼地：沼鰐シリーズ（沼喰いワニ・血吸いヒル）
-    croc_tachi:{name:'鰐牙の太刀',slot:'weapon',wtype:'tachi',atk:22,crit:9,fixed:[{stat:'critDmg',v:6}],slots:1},
+    croc_tachi:{name:'鰐牙の太刀',slot:'weapon',el:{k:'water',v:7},wtype:'tachi',atk:22,crit:9,fixed:[{stat:'critDmg',v:6}],slots:1},
     croc_helm:{name:'沼鰐の兜',slot:'head',def:10,skills:{def_up:2,poison_res:2},slots:1},
     croc_mail:{name:'沼鰐の鱗鎧',slot:'body',def:12,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,poison_res:2},slots:1},
     croc_vambrace:{name:'沼鰐の肩甲',slot:'arms',def:9,fixed:[{stat:'atk',v:2}],skills:{def_up:2,atk_up:2},slots:1},
     croc_faulds:{name:'沼鰐の尻尾',slot:'waist',def:9,skills:{poison_res:3,def_up:1},slots:1},
     croc_greaves:{name:'沼鰐の脚甲',slot:'legs',def:10,skills:{def_up:2,poison_res:1,hp_up:2},slots:1},
     // 沼地：毒蛙シリーズ（毒沼ガエル・膨張体・食虫花）
-    frog_whip:{name:'毒蛙の舌鞭',slot:'weapon',wtype:'whip',atk:21,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
+    frog_whip:{name:'毒蛙の舌鞭',slot:'weapon',el:{k:'water',v:7},wtype:'whip',atk:21,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
     frog_hood:{name:'毒蛙のフード',slot:'head',def:9,skills:{status_res:2,dodge_dist:2},slots:1},
     frog_vest:{name:'毒蛙の皮衣',slot:'body',def:11,fixed:[{stat:'maxHp',v:10}],skills:{dodge_dist:3,status_res:2},slots:1},
     frog_gloves:{name:'毒蛙の手袋',slot:'arms',def:8,skills:{item_power:3,dodge_dist:1},slots:1},
@@ -452,18 +453,18 @@ const DATA={
     bull_faulds:{name:'暴角の腰当て',slot:'waist',def:6,skills:{flinch_free:2,def_up:2},slots:1},
     bull_greaves:{name:'暴角の脚当て',slot:'legs',def:7,skills:{flinch_free:2,dodge_dist:3},slots:1},
     // ---- 疾風シリーズ（疾風怪鳥・草原）：素早さと回避 ----
-    gale_sword:{name:'疾風の剣',slot:'weapon',wtype:'sword',atk:17,crit:8,fixed:[{stat:'atkSpd',v:6}],slots:1},
-    gale_db:{name:'疾風の双剣',slot:'weapon',wtype:'dual',atk:15,crit:12,fixed:[{stat:'moveSpd',v:5}],slots:1},
-    gale_bow:{name:'疾風の弓',slot:'weapon',wtype:'bow',atk:14,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
+    gale_sword:{name:'疾風の剣',slot:'weapon',el:{k:'thunder',v:6},wtype:'sword',atk:17,crit:8,fixed:[{stat:'atkSpd',v:6}],slots:1},
+    gale_db:{name:'疾風の双剣',slot:'weapon',el:{k:'thunder',v:5},wtype:'dual',atk:15,crit:12,fixed:[{stat:'moveSpd',v:5}],slots:1},
+    gale_bow:{name:'疾風の弓',slot:'weapon',el:{k:'thunder',v:6},wtype:'bow',atk:14,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
     gale_helm:{name:'疾風の羽冠',slot:'head',def:7,fixed:[{stat:'crit',v:2}],skills:{evade:3,move_up:2},slots:1},
     gale_mail:{name:'疾風の羽衣',slot:'body',def:8,fixed:[{stat:'maxHp',v:10}],skills:{move_up:4,evade:2},slots:1},
     gale_vambrace:{name:'疾風の翼手',slot:'arms',def:6,skills:{evade:3,item_speed:2},slots:1},
     gale_faulds:{name:'疾風の尾羽',slot:'waist',def:6,skills:{evade:2,move_up:2},slots:1},
     gale_greaves:{name:'疾風の鉤爪',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{move_up:3,dodge_dist:3},slots:1},
     // ---- 大蜥蜴シリーズ（岩肌の大蜥蜴・草原）：体力と自動回復 ----
-    lizard_tachi:{name:'大蜥蜴の太刀',slot:'weapon',wtype:'tachi',atk:18,crit:8,fixed:[{stat:'critDmg',v:8}],slots:1},
-    lizard_whip:{name:'大蜥蜴の尾鞭',slot:'weapon',wtype:'whip',atk:17,crit:6,fixed:[{stat:'maxHp',v:15}],slots:1},
-    lizard_gs:{name:'大蜥蜴の大剣',slot:'weapon',wtype:'greatsword',atk:19,crit:3,fixed:[{stat:'def',v:3}],slots:1},
+    lizard_tachi:{name:'大蜥蜴の太刀',slot:'weapon',el:{k:'fire',v:7},wtype:'tachi',atk:18,crit:8,fixed:[{stat:'critDmg',v:8}],slots:1},
+    lizard_whip:{name:'大蜥蜴の尾鞭',slot:'weapon',el:{k:'fire',v:6},wtype:'whip',atk:17,crit:6,fixed:[{stat:'maxHp',v:15}],slots:1},
+    lizard_gs:{name:'大蜥蜴の大剣',slot:'weapon',el:{k:'fire',v:8},wtype:'greatsword',atk:19,crit:3,fixed:[{stat:'def',v:3}],slots:1},
     lizard_helm:{name:'大蜥蜴の兜',slot:'head',def:8,fixed:[{stat:'maxHp',v:10}],skills:{hp_up:3,regen:2},slots:1},
     lizard_mail:{name:'大蜥蜴の鱗鎧',slot:'body',def:10,fixed:[{stat:'maxHp',v:15}],skills:{hp_up:4,def_up:2},slots:1},
     lizard_vambrace:{name:'大蜥蜴の棘肩',slot:'arms',def:7,fixed:[{stat:'atk',v:1}],skills:{atk_up:3,hp_up:1},slots:1},
@@ -479,9 +480,9 @@ const DATA={
     stag_faulds:{name:'大顎の腰甲',slot:'waist',def:11,skills:{dmg_cut:3,flinch_free:3},slots:2},
     stag_greaves:{name:'大顎の脚甲',slot:'legs',def:12,skills:{dmg_cut:4,flinch_free:2,def_up:1},slots:2},
     // ---- 多頭竜シリーズ（ヒュドラ・沼地）：毒耐性と攻撃 ----
-    hydra_sword:{name:'多頭竜の剣',slot:'weapon',wtype:'sword',atk:28,crit:10,fixed:[{stat:'maxHp',v:20}],slots:2},
-    hydra_whip:{name:'多頭竜の鞭',slot:'weapon',wtype:'whip',atk:27,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
-    hydra_bow:{name:'多頭竜の弓',slot:'weapon',wtype:'bow',atk:24,crit:8,fixed:[{stat:'critDmg',v:10}],slots:2},
+    hydra_sword:{name:'多頭竜の剣',slot:'weapon',el:{k:'water',v:10},wtype:'sword',atk:28,crit:10,fixed:[{stat:'maxHp',v:20}],slots:2},
+    hydra_whip:{name:'多頭竜の鞭',slot:'weapon',el:{k:'water',v:9},wtype:'whip',atk:27,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    hydra_bow:{name:'多頭竜の弓',slot:'weapon',el:{k:'water',v:9},wtype:'bow',atk:24,crit:8,fixed:[{stat:'critDmg',v:10}],slots:2},
     hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,fixed:[{stat:'crit',v:3}],skills:{poison_res:3,atk_up:2},slots:2},
     hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:17,fixed:[{stat:'maxHp',v:30}],skills:{poison_res:4,hp_up:3},slots:2},
     hydra_vambrace:{name:'多頭竜の蛇肩',slot:'arms',def:12,fixed:[{stat:'atk',v:3}],skills:{atk_up:4,poison_res:1},slots:2},
@@ -497,17 +498,17 @@ const DATA={
     venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{status_res:4,item_speed:2},slots:2},
     venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,fixed:[{stat:'moveSpd',v:4}],skills:{item_speed:3,evade:3},slots:2},
     // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
-    mire_hammer:{name:'沼巨人のハンマー',slot:'weapon',wtype:'hammer',atk:32,crit:0,fixed:[{stat:'maxHp',v:30}],slots:2},
-    mire_gs:{name:'沼巨人の大剣',slot:'weapon',wtype:'greatsword',atk:32,crit:3,fixed:[{stat:'def',v:5}],slots:2},
+    mire_hammer:{name:'沼巨人のハンマー',slot:'weapon',el:{k:'water',v:11},wtype:'hammer',atk:32,crit:0,fixed:[{stat:'maxHp',v:30}],slots:2},
+    mire_gs:{name:'沼巨人の大剣',slot:'weapon',el:{k:'water',v:12},wtype:'greatsword',atk:32,crit:3,fixed:[{stat:'def',v:5}],slots:2},
     mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,heal_up:2},slots:2},
     mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,fixed:[{stat:'maxHp',v:40}],skills:{hp_up:4,def_up:3},slots:2},
     mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{hp_up:3,atk_up:2},slots:2},
     mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{heal_up:4,hp_up:2},slots:2},
     mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,hp_up:1},slots:2},
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
-    haro_tachi:{name:'覇狼の太刀',slot:'weapon',wtype:'tachi',atk:26,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
-    haro_db:{name:'覇狼の双剣',slot:'weapon',wtype:'dual',atk:23,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
-    haro_whip:{name:'覇狼の鞭',slot:'weapon',wtype:'whip',atk:24,crit:10,fixed:[{stat:'moveSpd',v:5}],slots:2},
+    haro_tachi:{name:'覇狼の太刀',slot:'weapon',el:{k:'ice',v:9},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
+    haro_db:{name:'覇狼の双剣',slot:'weapon',el:{k:'ice',v:7},wtype:'dual',atk:23,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    haro_whip:{name:'覇狼の鞭',slot:'weapon',el:{k:'ice',v:8},wtype:'whip',atk:24,crit:10,fixed:[{stat:'moveSpd',v:5}],slots:2},
     haro_helm:{name:'覇狼の兜',slot:'head',def:11,fixed:[{stat:'crit',v:4}],skills:{crit_dmg:3,weakness:2},slots:2},
     haro_mail:{name:'覇狼の鎧',slot:'body',def:14,fixed:[{stat:'maxHp',v:25}],skills:{crit_dmg:3,regen:3},slots:2},
     haro_vambrace:{name:'覇狼の篭手',slot:'arms',def:10,fixed:[{stat:'atk',v:3}],skills:{crit_dmg:3,crit_up:2},slots:2},
@@ -604,6 +605,36 @@ const DATA={
     quick_jewel:{name:'早業珠',color:'#ffe080',skill:'item_speed'},
     gather_jewel:{name:'採取珠',color:'#8ac060',skill:'gather_up'},
     lucky_jewel:{name:'幸運珠',color:'#ffd0f0',skill:'rare_up'},
+    elem_jewel:{name:'属性珠',color:'#ff8ad0',skill:'elem_up'},
+  },
+  /* 属性（モンハンと同じ5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
+     enemyElem：魔物の属性。atk＝攻撃の属性（ダメージの share 割が属性ダメージになり、プレイヤーの属性耐性で減る）
+     weak＝弱点属性（1つ目×1.5、2つ目以降×1.25）／strong＝効きにくい属性（×0.5）。攻撃と同じ属性は×0.25 */
+  elements:{
+    fire:{name:'火',color:'#ff6a3a'},water:{name:'水',color:'#4aa8ff'},thunder:{name:'雷',color:'#ffe040'},
+    ice:{name:'氷',color:'#a8ecff'},dragon:{name:'龍',color:'#c060e0'},
+  },
+  elemShare:0.5,
+  seriesRes:{
+    beast:{ice:2,fire:-1},goblin:{fire:1,dragon:-1},beetle:{water:2,fire:-2},bone:{dragon:2,thunder:-1},
+    croc:{water:3,thunder:-2},frog:{water:2,fire:1,thunder:-1},bull:{fire:1,thunder:-1},gale:{thunder:3,ice:-2},
+    lizard:{fire:3,water:-2},wolf:{ice:2,fire:-1},fang:{ice:2,fire:-1},haro:{ice:3,fire:-2},stag:{thunder:2,fire:-2},
+    hydra:{water:3,thunder:-2},venom:{ice:1,dragon:1,fire:-2},mire:{water:3,thunder:1,fire:-2},bwolf:{dragon:3,thunder:-2},
+  },
+  enemyElem:{
+    goblin:{weak:['fire']},goblin_archer:{weak:['fire']},slime:{atk:'water',weak:['thunder']},forest_wolf:{weak:['fire'],strong:['ice']},
+    meadow_bull:{weak:['thunder','ice']},gale_bird:{atk:'thunder',weak:['ice'],strong:['water']},rock_lizard:{atk:'fire',weak:['water','ice']},
+    archer:{weak:['dragon','fire']},beetle:{weak:['fire'],strong:['water']},mushroom:{weak:['fire']},
+    wolf:{weak:['fire'],strong:['ice']},forest_king:{atk:'ice',weak:['fire','thunder']},stag_beetle:{weak:['fire'],strong:['thunder']},
+    poison_frog:{atk:'water',weak:['thunder']},leech:{weak:['fire','thunder']},carnivore_plant:{weak:['fire'],strong:['water']},
+    bloater:{weak:['fire']},swamp_croc:{atk:'water',weak:['thunder'],strong:['fire']},parasite:{weak:['fire','dragon']},
+    hydra:{atk:'water',weak:['thunder','fire']},venomKing:{weak:['fire'],strong:['ice']},mireGiant:{atk:'water',weak:['fire','thunder']},
+    water_lizard:{atk:'water',weak:['thunder']},jellyfish:{atk:'thunder',weak:['fire']},piranha:{atk:'water',weak:['thunder']},
+    crab:{atk:'water',weak:['thunder'],strong:['fire']},eel:{atk:'thunder',weak:['ice'],strong:['water']},water_spirit:{atk:'water',weak:['thunder','dragon']},
+    aquarios:{atk:'water',weak:['thunder','dragon']},turtle:{atk:'water',weak:['thunder'],strong:['fire']},thunderEel:{atk:'thunder',weak:['ice'],strong:['water']},
+    hobgoblin:{weak:['fire']},sniper:{weak:['dragon']},skeleton:{weak:['dragon','fire']},wisp:{atk:'ice',weak:['fire','dragon']},
+    zombie:{weak:['fire']},cursed_knight:{atk:'dragon',weak:['thunder']},shaman:{atk:'dragon',weak:['fire']},
+    black_wolf:{atk:'dragon',weak:['thunder'],strong:['ice']},bone_dragon:{atk:'dragon',weak:['dragon','fire'],strong:['ice']},
   },
   /* プレイヤーにかかる状態異常。time：秒（防具スキル「状態異常耐性」で短くなる）
      poison：毒（tick 秒ごとに最大HPの pct ずつ減る。毒ではHP1より下がらない。「毒耐性」で減る量が下がる）
@@ -1453,7 +1484,7 @@ function computeStats(profile,override,who){
     effects:{},weaponType:'sword',weaponName:'素手',weaponRarity:0,decoCapped:[],
     atkPct:0,dodgeCdMult:1,itemDelayAdj:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
-    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,
+    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,elemRes:{fire:0,water:0,thunder:0,ice:0,dragon:0},
     dodgeDistPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
   const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
@@ -1471,8 +1502,9 @@ function computeStats(profile,override,who){
       decoPts[dd.skill]=(decoPts[dd.skill]||0)+Items.decoValue(d);
     }
     wearing[slot]=item.baseId;
-    if(slot==='weapon'){s.weaponType=base.wtype;s.weaponName=base.name;s.weaponRarity=item.rarity;}
-    else armor.push(item);
+    if(slot==='weapon'){s.weaponType=base.wtype;s.weaponName=base.name;s.weaponRarity=item.rarity;
+      if(base.el)s.elem={k:base.el.k,v:Math.round(base.el.v*DATA.rarities[item.rarity].statMult)};} // 武器の属性
+    else{const sr=DATA.seriesRes[item.baseId==='fang_king'?'fang':item.baseId.split('_')[0]];if(sr)for(const k in sr)s.elemRes[k]+=sr[k];armor.push(item);} // 防具の属性耐性
   }
   s.look=Object.assign({},wearing); // 見た目（部位→装備ID）。描画とオンラインの表示に使う
   // 防具スキル（ポイントの合算 → 発動判定 → 効果の適用）
@@ -2224,6 +2256,7 @@ function hitPlayer(w,p,raw,sx,sy,src){
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
   if(p.curseT>0)dmg*=1+DATA.playerStatus.curse.dmgUp/100; // 呪い：受けるダメージが増える
+  {const ee=DATA.enemyElem[src||w._atk];if(ee&&ee.atk){const res=clamp(p.stats.elemRes[ee.atk]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
   p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
@@ -2266,6 +2299,14 @@ function slowPlayer(w,p,sl){
   const time=sl.time*(1-clamp(p.stats.statusRes||0,0,100)/100);if(time<=0)return;
   if(!(p.slowT>0))emit(w,{type:'slowed',pid:p.id,x:p.x,y:p.y-26});
   p.slowT=Math.max(p.slowT||0,time);p.slowMult=sl.mult;
+}
+/** 魔物に対する属性の効き（倍率） */
+function elemMult(type,k){
+  const d=DATA.enemyElem[type];if(!d)return 1;
+  if(d.atk===k)return 0.25;
+  const wi=(d.weak||[]).indexOf(k);if(wi===0)return 1.5;if(wi>0)return 1.25;
+  if((d.strong||[]).includes(k))return 0.5;
+  return 1;
 }
 /** ボスの部位（当たり判定）をワールド座標で返す。部位の無い敵は体そのものを1つの部位として返す */
 function bossPartsOf(e){
@@ -2318,6 +2359,13 @@ function damageEnemy(w,p,e,mult,src){
   const ed=DATA.enemies[e.type];let guarded=false;
   if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&(part?!!part.guard:Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2)){dmg*=ed.guard.mult;guarded=true;}
   dmg=Math.max(1,Math.round(dmg-e.armor*0.5));
+  // 属性ダメージ：防御力で減らず、会心の影響も受けない。モーションの重さ（倍率）の平方根に比例
+  let elHit=null;
+  if(s.elem&&s.elem.v>0){
+    const em=elemMult(e.type,s.elem.k);let ed=s.elem.v*em*Math.sqrt(Math.max(0.2,mult))*(1+(s.elemPct||0)/100);
+    if(guarded)ed*=DATA.enemies[e.type].guard.mult;
+    dmg+=Math.max(0,Math.round(ed));elHit={k:s.elem.k,m:em};
+  }
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
   if(!e.boss&&!ed.heavy&&!e.mid){
@@ -2339,7 +2387,7 @@ function damageEnemy(w,p,e,mult,src){
       }
     }
   }
-  emit(w,{type:'damage',target:'enemy',x:hp_&&part?hp_.x:e.x,y:hp_&&part?hp_.y-hp_.r:e.y-e.r,amount:dmg,crit,skill:!!src.skill,head,guard:guarded,weak:weakPart&&!guarded,arrowWeak:weakPart&&!!src.arrow});
+  emit(w,{type:'damage',target:'enemy',x:hp_&&part?hp_.x:e.x,y:hp_&&part?hp_.y-hp_.r:e.y-e.r,amount:dmg,crit,skill:!!src.skill,head,guard:guarded,weak:weakPart&&!guarded,arrowWeak:weakPart&&!!src.arrow,el:elHit?elHit.k:null,elEff:elHit?(elHit.m>=1.5?2:elHit.m>1?1:elHit.m<1?-1:0):0});
   if(s.drainChance>0&&RNG.next()*100<s.drainChance&&p.hp<s.maxHp){
     const h=Math.max(2,Math.round(s.maxHp*0.03));p.hp=Math.min(s.maxHp,p.hp+h);
     emit(w,{type:'heal',x:p.x,y:p.y-20,amount:h,drain:true});
@@ -3899,7 +3947,7 @@ const Renderer={
       case 'damage':
         if(settings.damageNumbers){
           const col=ev.dot?'#a8e060':ev.target==='player'?'#ff5050':(ev.guard?'#9aa0a8':(ev.crit?'#ffd23a':(ev.skill?'#7fe0ff':'#ffffff')));
-          this.floater(ev.x+rand(-8,8),ev.y,(ev.guard?'弾かれた ':'')+(ev.weak?'弱点! ':'')+(ev.crit?'会心! ':'')+ev.amount,col,ev.dot?13:ev.crit?22:(ev.target==='player'?18:15));
+          this.floater(ev.x+rand(-8,8),ev.y,(ev.guard?'弾かれた ':'')+(ev.weak?'弱点! ':'')+(ev.el&&ev.elEff>0?DATA.elements[ev.el].name+(ev.elEff>1?'◎ ':'○ '):'')+(ev.crit?'会心! ':'')+ev.amount,col,ev.dot?13:ev.crit?22:(ev.target==='player'?18:15));
         }
         if(!ev.dot)this.burst(ev.x,ev.y+10,ev.guard?'#c8d0d8':ev.crit?'#ffd23a':(ev.target==='player'?'#ff6060':'#ffffff'),ev.crit?12:5,ev.crit?220:140);
         if(ev.head)this.burst(ev.x,ev.y,'#ffe060',4,90,3);
@@ -6158,6 +6206,8 @@ const UI={
 
 const row=(k,v,cls)=>`<div class="st-row"><span>${k}</span><span class="${cls||''}">${v}</span></div>`;
 const sec=(t,body)=>`<div class="sec"><div class="sec-t">${t}</div>${body}</div>`;
+/** 属性耐性の表示（例：火+3 水-2）。全部0なら「なし」 */
+function elemResText(r){const a=Object.keys(DATA.elements).filter(k=>r[k]).map(k=>`<span style="color:${DATA.elements[k].color}">${DATA.elements[k].name}${r[k]>0?'+':''}${r[k]}</span>`);return a.length?a.join(' '):'なし';}
 function slotDots(it){return it.slots.map(u=>u?'◆':'◇').join('');}
 function itemName(it){return DATA.equipment[it.baseId].name;}
 
@@ -6205,6 +6255,8 @@ function validateData(){
     for(const m in r.cost)bad(M[m],`レシピ「${r.id}」：素材「${m}」がありません`);
     bad(!r.stage||S.some(s=>s.id===r.stage),`レシピ「${r.id}」：stage ${r.stage} がありません`);
   }
+  for(const k in DATA.enemyElem){const d=DATA.enemyElem[k];bad(E[k],`属性：魔物「${k}」がありません`);for(const x of [d.atk,...(d.weak||[]),...(d.strong||[])].filter(Boolean))bad(DATA.elements[x],`属性：「${x}」がありません`);}
+  for(const id in DATA.equipment){const b=DATA.equipment[id];if(b.el)bad(DATA.elements[b.el.k],`装備「${id}」：属性「${b.el.k}」がありません`);}
   for(const k in DATA.enemyStatus){bad(E[k],`状態異常：魔物「${k}」がありません`);bad(DATA.playerStatus[DATA.enemyStatus[k].k],`状態異常：「${DATA.enemyStatus[k].k}」がありません`);}
   for(const it of DATA.shop)if(it.type==='mat')bad(M[it.mat],`ショップ「${it.id}」：素材「${it.mat}」がありません`);
   for(const k in DATA.armorSets)for(const sl in DATA.armorSets[k].pieces)bad(eqOk(DATA.armorSets[k].pieces[sl]),`防具一式「${k}」：装備「${DATA.armorSets[k].pieces[sl]}」がありません`);
@@ -7546,6 +7598,8 @@ const App={
       +row('移動速度',(st.moveSpd>=0?'+':'')+st.moveSpd+'%')+row('攻撃速度',(1/st.attackInterval).toFixed(2)+'回/秒')
       +row('回避後無敵',st.dodgeIframe.toFixed(2)+'秒')+row('回避CT',st.dodgeCd.toFixed(2)+'秒')
       +row('武器種',(DATA.weaponTypes[st.weaponType]||{}).name||'')+row('威力倍率','×'+(st.power||1))
+      +row('属性',st.elem?`<span style="color:${DATA.elements[st.elem.k].color}">${DATA.elements[st.elem.k].name} ${st.elem.v}</span>`:'なし')
+      +row('属性耐性',elemResText(st.elemRes))
       +row('回復薬の回復量',st.potionHeal)+row('アイテム発動まで',Math.max(CONFIG.player.minItemDelay,2+st.itemDelayAdj).toFixed(1)+'秒');
     const effs=Object.keys(st.effects);
     h+=`<div class="col-t">発動中の特殊効果</div>`+(effs.length?effs.map(e=>`<div class="eff"><b>${DATA.effects[e].name}</b>：${DATA.effects[e].desc}</div>`).join(''):'<div class="muted small">なし</div>');
@@ -7646,7 +7700,8 @@ const App={
     const p=this.profile,base=DATA.equipment[it.baseId],rar=DATA.rarities[it.rarity],who=this.inv.who;
     const owner=Profile.equippedBy(p,it.uid),eq=owner===who,other=owner>=0&&owner!==who;
     let h=`<div class="iname" style="color:${rar.color}">${base.name}</div><div class="isub">${rar.name}・${SLOT_NAMES[it.slot]}${base.wtype?'（'+DATA.weaponTypes[base.wtype].name+'）':''}　${this.equipTag(it.uid)}</div>`;
-    h+=sec('基本性能',it.slot==='weapon'?row('攻撃力',it.atk)+row('会心率',it.crit+'%'):row('防御力',it.def));
+    {const sr=DATA.seriesRes[it.baseId==='fang_king'?'fang':it.baseId.split('_')[0]];
+    h+=sec('基本性能',it.slot==='weapon'?row('攻撃力',it.atk)+row('会心率',it.crit+'%')+(base.el?row('属性',`<span style="color:${DATA.elements[base.el.k].color}">${DATA.elements[base.el.k].name} ${Math.round(base.el.v*rar.statMult)}</span>`):''):row('防御力',it.def)+(sr?row('属性耐性',elemResText(sr)):''));}
     if(it.slot==='weapon'){const t=DATA.weaponTypes[base.wtype];h+=sec('武器種の特徴',`<div class="eff">移動${t.marks.move} 振り${t.marks.speed} 威力${t.marks.power} リーチ${t.marks.reach}　納刀${t.sheathe}秒<br>${t.feature}</div>`);}
     else{
       h+=sec('スキルポイント（この装備共通）',base.skills&&Object.keys(base.skills).length?Object.keys(base.skills).map(k=>{const d=DATA.armorSkills[k];return d?row(d.name,'+'+base.skills[k]+'pt'):'';}).join('')+`<div class="small muted">同じスキルを合計${CONFIG.skillPoints.per}ポイントそろえると発動します</div>`:'<div class="muted small">なし</div>');
@@ -7776,6 +7831,10 @@ const App={
       {let bp=DATA.bossParts[sel];if(typeof bp==='string')bp=DATA.bossParts[bp];
         if(bp){const wk=[...new Set(bp.filter(x=>x.weak).map(x=>x.name))];if(wk.length)feats.push('弱点：'+wk.join('・')+'（弓の矢は弱点に当たると大ダメージ）');
           const hd=[...new Set(bp.filter(x=>(x.mult||1)<0.9||x.guard).map(x=>x.name))];if(hd.length)feats.push('硬い部位：'+hd.join('・'));}}
+      {const ee=DATA.enemyElem[sel],EL=DATA.elements,c=k=>`<span style="color:${EL[k].color}">${EL[k].name}</span>`;
+        if(ee){if(ee.atk)feats.push('攻撃の属性：'+c(ee.atk));
+          if(ee.weak&&ee.weak.length)feats.push('弱点属性：'+ee.weak.map((k,i)=>c(k)+(i?'○':'◎')).join(' '));
+          const st=[...(ee.strong||[]),...(ee.atk?[ee.atk]:[])];if(st.length)feats.push('効きにくい属性：'+[...new Set(st)].map(c).join(' '));}}
       {const es=DATA.enemyStatus[sel];if(es)feats.push('攻撃が当たると、ときどき'+DATA.playerStatus[es.k].name+(es.k==='poison'?'（少しずつHPが減る）':es.k==='paralysis'?'（しばらく動けない）':'（受けるダメージが増える）'));}
       if(E.guard)feats.push('正面からの攻撃を弾く');
       if(E.heavy)feats.push('攻撃でのけぞらない');
@@ -7816,7 +7875,7 @@ const App={
       if(r.out.type==='equip'){
         const b=DATA.equipment[r.out.id];name=b.name;
         const set=b.slot!=='weapon'?Object.values(DATA.armorSets).find(s=>s.pieces[b.slot]===r.out.id):null;
-        info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk}前後 / 会心 ${b.crit}%前後`:`防御力 ${b.def}前後`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（一式で「${set.bonus}」）</span>`:''}`;
+        info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk}前後 / 会心 ${b.crit}%前後${b.el?` / <span style="color:${DATA.elements[b.el.k].color}">${DATA.elements[b.el.k].name}属性 ${b.el.v}</span>`:''}`:`防御力 ${b.def}前後`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（一式で「${set.bonus}」）</span>`:''}`;
         if(b.fixed)info+='<br>固有：'+b.fixed.map(f=>STAT_NAMES[f.stat]+' '+fmtStat(f.stat,f.v)).join('、');
         if(r.minRarity)info+=`<br><span style="color:${rarColor(r.minRarity)}">${DATA.rarities[r.minRarity].name}以上確定</span>`;
       }else if(r.out.type==='deco'){name='ランダム装飾品';info='5種類のいずれか（レアリティもランダム）';}
