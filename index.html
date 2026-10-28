@@ -608,12 +608,12 @@ const DATA={
     lucky_jewel:{name:'幸運珠',color:'#ffd0f0',skill:'rare_up'},
     elem_jewel:{name:'属性珠',color:'#ff8ad0',skill:'elem_up'},
   },
-  /* 属性（モンハンと同じ5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
+  /* 属性（火・水・雷・氷・冥の5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
      enemyElem：魔物の属性。atk＝攻撃の属性（ダメージの share 割が属性ダメージになり、プレイヤーの属性耐性で減る）
      weak＝弱点属性（1つ目×1.5、2つ目以降×1.25）／strong＝効きにくい属性（×0.5）。攻撃と同じ属性は×0.25 */
   elements:{
     fire:{name:'火',color:'#ff6a3a'},water:{name:'水',color:'#4aa8ff'},thunder:{name:'雷',color:'#ffe040'},
-    ice:{name:'氷',color:'#a8ecff'},dragon:{name:'龍',color:'#c060e0'},
+    ice:{name:'氷',color:'#a8ecff'},dragon:{name:'冥',color:'#a070ff'}, // 冥属性（内部の名前は dragon のまま）
   },
   elemShare:0.5,
   seriesRes:{
