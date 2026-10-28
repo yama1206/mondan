@@ -2113,7 +2113,7 @@ const Profile={
   blank(){
     return {materials:{},matSeen:{},items:[],decos:[],equipped:emptyEquip(),
       p2:{equipped:emptyEquip()},
-      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
+      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
       bestiary:{}}; // モンスター図鑑：魔物ごとの討伐数（1以上で登録済み）
@@ -2243,7 +2243,7 @@ const Save={
     if(d.settings&&typeof d.settings==='object')for(const k in p.settings){
       if(typeof p.settings[k]==='boolean'&&typeof d.settings[k]==='boolean')p.settings[k]=d.settings[k];
       else if(typeof p.settings[k]==='number'&&typeof d.settings[k]==='number'&&isFinite(d.settings[k])){
-        const rg=k==='hudScale'?[CONFIG.hud.min,CONFIG.hud.max]:k==='touchSize'?[0.6,1.5]:[0,1]; // 音量は 0〜1
+        const rg=k==='hudScale'?[CONFIG.hud.min,CONFIG.hud.max]:k==='touchSize'?[0.6,1.5]:k==='mapZoom'?[0.7,1.6]:[0,1]; // 音量は 0〜1
         p.settings[k]=clamp(d.settings[k],rg[0],rg[1]);
       }
     }
@@ -4831,7 +4831,7 @@ const Renderer={
     const ctx=this.ctx;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fc,0,0);ctx.restore();
   },
-  viewScale:1,focusId:null, // focusId：オンライン時にカメラが追う自分のプレイヤーID
+  viewScale:1,zoomMul:1,focusId:null, // focusId：オンライン時にカメラが追う自分のプレイヤーID
   screenToWorld(sx,sy){const s=this.viewScale||this.scale;return {x:this.cam.x+sx/s,y:this.cam.y+sy/s};},
   addShake(v){this.shake=Math.max(this.shake,v);},
   showBanner(text,color){this.banner={text,color:color||'#f3d48a',t:0,life:2.6};},
@@ -5032,7 +5032,7 @@ const Renderer={
     const focus=this.focusId&&w.players[this.focusId]?[w.players[this.focusId]]:ps;
     let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
     for(const q of focus){x0=Math.min(x0,q.x);x1=Math.max(x1,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y);}
-    const base=this.scale;
+    const base=this.scale*(this.zoomMul||1); // 戦闘画面の拡大（設定の「戦闘画面の大きさ」）
     let want=base;
     if(focus.length>1)want=Math.max(base*0.55,Math.min(base,this.w/(x1-x0+320),this.h/(y1-y0+280)));
     this.viewScale=this.camInit?lerp(this.viewScale,want,0.08):want;
@@ -8073,6 +8073,7 @@ const App={
   init(){
     UI.init();
     const r=Save.load();this.profile=r.profile;
+    Renderer.zoomMul=this.profile.settings.mapZoom||1;
     if(Profile.grantStones(this.profile))this.dirty=true;
     Net.init();
     Renderer.init($('#game'));Input.init($('#game'));Input.initTouch();
@@ -8694,6 +8695,9 @@ const App={
       case 'touchEdit':document.body.classList.add('touch-edit');Input.applyTouchLayout();break;
       case 'touchEditDone':document.body.classList.remove('touch-edit');this.goto('settings');break;
       case 'touchReset':try{localStorage.removeItem('kourou_touch_pos');}catch(e){}Input.applyTouchLayout();this.goto('settings');break;
+      case 'mapZoom':
+        this.settings().mapZoom=clamp(Number(ds.id)||1,0.7,1.6);this.save();Renderer.zoomMul=this.settings().mapZoom;
+        this.goto('settings');UI.restoreFocus();break;
       case 'hudScale':
         this.settings().hudScale=clamp(Number(ds.id)||CONFIG.hud.scale,CONFIG.hud.min,CONFIG.hud.max);this.save();
         if(this.inGame&&this.world)this.placeNotes(Object.keys(this.world.players).length);
@@ -8866,6 +8870,8 @@ const App={
         <div class="filters" style="margin-top:6px">${[0.3,0.5,0.7,0.85,1].map(v=>`<button class="${Math.abs((s.touchAlpha??0.85)-v)<0.001?'on':''}" data-act="touchAlpha" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">スマホのボタンの位置
         <div class="filters" style="margin-top:6px"><button data-act="touchEdit">位置を変える</button><button data-act="touchReset">初期の位置に戻す</button></div></div>
+      <div class="setting" style="display:block">戦闘画面の大きさ（いまは ${Math.round((s.mapZoom||1)*100)}%）
+        <div class="filters" style="margin-top:6px">${[0.8,0.9,1,1.15,1.3,1.5].map(v=>`<button class="${Math.abs((s.mapZoom||1)-v)<0.001?'on':''}" data-act="mapZoom" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">HP・回避などの表示の大きさ（いまは ${Math.round((s.hudScale||CONFIG.hud.scale)*100)}%）
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
