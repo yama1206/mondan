@@ -635,7 +635,7 @@ const DATA={
   ],
   // ステージごとに出る手紙のレア度の上限：1〜2＝旅人まで、3〜4＝騎士まで、5〜6＝賢者まで、7以降＝王家まで
   letterCap:s=>Math.min(4,Math.floor((Math.max(1,s)-1)/2)+1),
-  // 1回の挑戦で3枚くらい手に入る目安：依頼の報酬（ボスの依頼は1枚・それ以外は2枚）＋ボス報酬1枚＋中ボス・宝箱から
+  // 1回の挑戦で手に入る目安：ボスの依頼は3枚くらい（依頼1＋ボス1＋中ボス・宝箱）、それ以外は2枚くらい（依頼1＋中ボス・宝箱）
   letterDrops:{chest:0.3,chest2:0.4,midboss:0.5,boss:1},
   /* 属性（火・水・雷・氷・冥の5種）。武器の el：{k:属性,v:属性値}／防具の属性耐性は seriesRes（シリーズごと・1部位あたり）
      enemyElem：魔物の属性。atk＝攻撃の属性（ダメージの share 割が属性ダメージになり、プレイヤーの属性耐性で減る）
@@ -7069,8 +7069,8 @@ const App={
       if(R.gold)list.push({type:'gold',n:R.gold});
       for(const k in (R.mats||{}))list.push({type:'mat',id:k,n:R.mats[k]});
       for(let i=0;i<(R.decos||0);i++)list.push({type:'deco',item:Items.createDeco(pick(Object.keys(DATA.decorations)),Items.rollRarity(1.2+0.4*stage.id))});
-      // 手紙：依頼の報酬にも付く（reward.letters で個別に決められる。無ければボスの依頼は1枚、それ以外は2枚）
-      {const nl=R.letters??(q.goal.type==='boss'?1:2),bst=(q.urgent||q.boss)?1.5:1.25;
+      // 手紙：依頼の報酬にも付く（reward.letters で個別に決められる。無ければ1枚）
+      {const nl=R.letters??1,bst=(q.urgent||q.boss)?1.5:1.25;
         for(let i=0;i<nl;i++)list.push({type:'equip',item:Items.createLetter(Items.rollLetterTier(bst,DATA.letterCap(q.stage)))});}
       for(const l of list)res[pid].rewards.push(this.grantLoot(l,pid));
       // 進行の記録とステージ解放
