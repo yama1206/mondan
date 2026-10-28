@@ -7564,16 +7564,16 @@ const App={
       case 'toggleSetting':this.settings()[ds.key]=!!el.checked;this.save();break;
       case 'vol':
         if(ds.key==='bgmVol'||ds.key==='sfxVol'){this.settings()[ds.key]=clamp(Number(ds.id),0,1);this.save();Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);Sound.ui('click');}
-        this.goto('settings');UI.restoreFocus('vol||||'+ds.id+'|'+ds.key+'||');break;
-      case 'touchSize':this.settings().touchSize=clamp(Number(ds.id)||1,0.6,1.5);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus('touchSize||||'+ds.id+'|||');break;
-      case 'touchAlpha':this.settings().touchAlpha=clamp(Number(ds.id)||0.85,0.2,1);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus('touchAlpha||||'+ds.id+'|||');break;
+        this.goto('settings');UI.restoreFocus();break;
+      case 'touchSize':this.settings().touchSize=clamp(Number(ds.id)||1,0.6,1.5);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus();break;
+      case 'touchAlpha':this.settings().touchAlpha=clamp(Number(ds.id)||0.85,0.2,1);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus();break;
       case 'touchEdit':document.body.classList.add('touch-edit');Input.applyTouchLayout();break;
       case 'touchEditDone':document.body.classList.remove('touch-edit');this.goto('settings');break;
       case 'touchReset':try{localStorage.removeItem('kourou_touch_pos');}catch(e){}Input.applyTouchLayout();this.goto('settings');break;
       case 'hudScale':
         this.settings().hudScale=clamp(Number(ds.id)||CONFIG.hud.scale,CONFIG.hud.min,CONFIG.hud.max);this.save();
         if(this.inGame&&this.world)this.placeNotes(Object.keys(this.world.players).length);
-        this.goto('settings');UI.restoreFocus('hudScale||||'+ds.id+'|||');break;
+        this.goto('settings');UI.restoreFocus();break;
     }
   },
   resetSave(){
