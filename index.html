@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.31',date:'2026/10/29'};
+const GAME_VERSION={no:'0.32',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -464,7 +464,7 @@ const DATA={
     ice_shuriken:{name:'氷刃の手裏剣',slot:'weapon',el:{k:'ice',v:7},wtype:'shuriken',atk:15,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
     frost_shuriken:{name:'氷嶺の手裏剣',slot:'weapon',el:{k:'ice',v:6},wtype:'shuriken',atk:16,crit:8,fixed:[{stat:'critDmg',v:5}],slots:1},
     bwolf_shuriken:{name:'黒狼の手裏剣',slot:'weapon',el:{k:'dragon',v:12},wtype:'shuriken',atk:31,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
-    goblin_sword:{name:'ゴブリンの剣',slot:'weapon',wtype:'sword',atk:12,crit:6},
+    iron_blade:{name:'鉄の剣',slot:'weapon',wtype:'sword',atk:9,crit:5},
     lizard_sword:{name:'大蜥蜴の剣',slot:'weapon',wtype:'sword',atk:16,crit:8,fixed:[{stat:'atkSpd',v:3}],slots:1},
     bone_tachi:{name:'骨の太刀',slot:'weapon',wtype:'tachi',atk:14,crit:8,fixed:[{stat:'critDmg',v:4}]},
     lizard_bow:{name:'大蜥蜴の弓',slot:'weapon',wtype:'bow',atk:13,crit:7,fixed:[{stat:'critDmg',v:4}]},
@@ -1714,7 +1714,7 @@ const DATA={
     {id:'r_ice_shuriken',out:{type:'equip',id:'ice_shuriken'},cost:{ice_sickle:2,frozen_crystal:1,hard_iron:1},stage:7},
     {id:'r_frost_shuriken',out:{type:'equip',id:'frost_shuriken'},cost:{frost_shell:2,owl_feather:1,owl_gem:1},stage:7},
     {id:'r_bwolf_shuriken',out:{type:'equip',id:'bwolf_shuriken'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:8},
-    {id:'r_goblin_sword',out:{type:'equip',id:'goblin_sword'},cost:{goblin_hide:2,scrap_iron:3,old_bone:1}},
+    {id:'r_iron_blade',out:{type:'equip',id:'iron_blade'},cost:{scrap_iron:3,arrowhead:1}},
     {id:'r_lizard_sword',out:{type:'equip',id:'lizard_sword'},cost:{lizard_scale:2,lizard_spine:1,scrap_iron:2}},
     {id:'r_bone_tachi',out:{type:'equip',id:'bone_tachi'},cost:{old_bone:3,arrowhead:2,scrap_iron:2}},
     {id:'r_lizard_bow',out:{type:'equip',id:'lizard_bow'},cost:{lizard_spine:2,lizard_scale:1,goblin_string:2}},
