@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.26',date:'2026/10/29'};
+const GAME_VERSION={no:'0.27',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -6306,12 +6306,14 @@ const Renderer={
       ctx.fillStyle='#8a6a40';ctx.beginPath();ctx.moveTo(r+1,-8);ctx.lineTo(r+10,-8);ctx.lineTo(r+10,4);ctx.quadraticCurveTo(r+10,11,r+5,13);ctx.quadraticCurveTo(r+1,11,r+1,4);ctx.closePath();ctx.fill();
       ctx.strokeStyle='#d8c8a0';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
     }
-    const behind=sheathed||Math.sin(swordA)<-0.2;
+    let behind=sheathed||Math.sin(swordA)<-0.2;
     const wtype=s.weaponType||'sword',wt=DATA.weaponTypes[wtype]||{};
     // チャージ中は武器を構えて後ろに引く。納刀中は背中に背負う
     // チャージ中：弓は狙っている方向に構える（ほかの武器は後ろに引く）
     if(p.charging&&!p.dead)swordA=wtype==='bow'?p.facing:p.facing+Math.PI*0.75*(p.swingDir||1);
     if(sheathed)swordA=p.facing+Math.PI*0.8;
+    // 大剣・ハンマーのチャージ中は、狙いの斜め後ろに構え、体の後ろ（下）に描く
+    if(p.charging&&!p.dead&&(wtype==='greatsword'||wtype==='hammer'))behind=true;
     const lk=(s.look||{}),wl=gearLook(lk.weapon)||GEAR_LOOKS.iron,bl=wl.blade||'#e6ecf8';
     const wg=weaponGeom(wtype,r),wDeco=()=>{for(const k of (wl.w||[]))if(WEAPON_ART[k])WEAPON_ART[k](ctx,wg,wl);};
     const drawSword=()=>{
