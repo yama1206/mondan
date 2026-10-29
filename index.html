@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.30',date:'2026/10/29'};
+const GAME_VERSION={no:'0.31',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -455,6 +455,23 @@ const DATA={
     iron_lance:{name:'鉄のランス',slot:'weapon',wtype:'lance',atk:8,crit:4},
     iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:7,crit:4},
     iron_shuriken:{name:'鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:7,crit:4},
+    hunter_shuriken:{name:'狩猟の手裏剣',slot:'weapon',wtype:'shuriken',atk:10,crit:5},
+    wolf_shuriken:{name:'古狼の手裏剣',slot:'weapon',wtype:'shuriken',atk:16,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
+    gale_shuriken:{name:'疾風の手裏剣',slot:'weapon',el:{k:'thunder',v:6},wtype:'shuriken',atk:14,crit:9,fixed:[{stat:'atkSpd',v:5}],slots:1},
+    frog_shuriken:{name:'毒蛙の手裏剣',slot:'weapon',el:{k:'water',v:7},wtype:'shuriken',atk:21,crit:9,fixed:[{stat:'atkSpd',v:4}],slots:1},
+    flame_shuriken:{name:'炎翼の手裏剣',slot:'weapon',el:{k:'fire',v:6},wtype:'shuriken',atk:16,crit:8,fixed:[{stat:'critDmg',v:5}],slots:1},
+    hot_shuriken:{name:'灼熱の手裏剣',slot:'weapon',el:{k:'fire',v:6},wtype:'shuriken',atk:14,crit:8,fixed:[{stat:'moveSpd',v:3}],slots:1},
+    ice_shuriken:{name:'氷刃の手裏剣',slot:'weapon',el:{k:'ice',v:7},wtype:'shuriken',atk:15,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
+    frost_shuriken:{name:'氷嶺の手裏剣',slot:'weapon',el:{k:'ice',v:6},wtype:'shuriken',atk:16,crit:8,fixed:[{stat:'critDmg',v:5}],slots:1},
+    bwolf_shuriken:{name:'黒狼の手裏剣',slot:'weapon',el:{k:'dragon',v:12},wtype:'shuriken',atk:31,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    goblin_sword:{name:'ゴブリンの剣',slot:'weapon',wtype:'sword',atk:12,crit:6},
+    lizard_sword:{name:'大蜥蜴の剣',slot:'weapon',wtype:'sword',atk:16,crit:8,fixed:[{stat:'atkSpd',v:3}],slots:1},
+    bone_tachi:{name:'骨の太刀',slot:'weapon',wtype:'tachi',atk:14,crit:8,fixed:[{stat:'critDmg',v:4}]},
+    lizard_bow:{name:'大蜥蜴の弓',slot:'weapon',wtype:'bow',atk:13,crit:7,fixed:[{stat:'critDmg',v:4}]},
+    bone_hammer:{name:'骨の大槌',slot:'weapon',wtype:'hammer',atk:14,crit:1,fixed:[{stat:'def',v:2}]},
+    bone_lance:{name:'骨のランス',slot:'weapon',wtype:'lance',atk:13,crit:6,fixed:[{stat:'atkSpd',v:3}]},
+    beast_lance:{name:'獣牙のランス',slot:'weapon',wtype:'lance',atk:12,crit:6,slots:1},
+    mire_lance:{name:'沼喰いのランス',slot:'weapon',wtype:'lance',atk:22,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:1},
     wolf_lance:{name:'古狼のランス',slot:'weapon',wtype:'lance',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
     /* ---- ザコ素材の防具（各ステージ2シリーズ）：同じステージのボス装備より一段弱く、一式効果はなし ---- */
     // 草原：獣皮シリーズ（森狼）
@@ -1688,6 +1705,23 @@ const DATA={
     {id:'r_sleep_bottle',out:{type:'item',id:'sleep_bottle',n:2},cost:{herb:3,forest_mushroom:1}},
     {id:'r_iron_bow',out:{type:'equip',id:'iron_bow'},cost:{scrap_iron:3,old_bone:2}},
     {id:'r_iron_shuriken',out:{type:'equip',id:'iron_shuriken'},cost:{scrap_iron:3,arrowhead:2}},
+    {id:'r_hunter_shuriken',out:{type:'equip',id:'hunter_shuriken'},cost:{goblin_string:2,scrap_iron:2,goblin_hide:1}},
+    {id:'r_wolf_shuriken',out:{type:'equip',id:'wolf_shuriken'},cost:{wolf_fang:2,wolf_claw:1,scrap_iron:2}},
+    {id:'r_gale_shuriken',out:{type:'equip',id:'gale_shuriken'},cost:{gale_feather:2,gale_talon:1,scrap_iron:2}},
+    {id:'r_frog_shuriken',out:{type:'equip',id:'frog_shuriken'},cost:{toxic_gland:2,swamp_moss:1,leech_skin:1},stage:3},
+    {id:'r_flame_shuriken',out:{type:'equip',id:'flame_shuriken'},cost:{flame_wing:2,blast_sac:1,flame_fang:1},stage:6},
+    {id:'r_hot_shuriken',out:{type:'equip',id:'hot_shuriken'},cost:{hot_stinger:2,flame_fang:1,hard_iron:1},stage:6},
+    {id:'r_ice_shuriken',out:{type:'equip',id:'ice_shuriken'},cost:{ice_sickle:2,frozen_crystal:1,hard_iron:1},stage:7},
+    {id:'r_frost_shuriken',out:{type:'equip',id:'frost_shuriken'},cost:{frost_shell:2,owl_feather:1,owl_gem:1},stage:7},
+    {id:'r_bwolf_shuriken',out:{type:'equip',id:'bwolf_shuriken'},cost:{bwolf_fang:2,dark_bone:2,hard_iron:2},stage:8},
+    {id:'r_goblin_sword',out:{type:'equip',id:'goblin_sword'},cost:{goblin_hide:2,scrap_iron:3,old_bone:1}},
+    {id:'r_lizard_sword',out:{type:'equip',id:'lizard_sword'},cost:{lizard_scale:2,lizard_spine:1,scrap_iron:2}},
+    {id:'r_bone_tachi',out:{type:'equip',id:'bone_tachi'},cost:{old_bone:3,arrowhead:2,scrap_iron:2}},
+    {id:'r_lizard_bow',out:{type:'equip',id:'lizard_bow'},cost:{lizard_spine:2,lizard_scale:1,goblin_string:2}},
+    {id:'r_bone_hammer',out:{type:'equip',id:'bone_hammer'},cost:{old_bone:4,scrap_iron:3}},
+    {id:'r_bone_lance',out:{type:'equip',id:'bone_lance'},cost:{old_bone:3,arrowhead:2,scrap_iron:2}},
+    {id:'r_beast_lance',out:{type:'equip',id:'beast_lance'},cost:{beast_fang:3,beast_hide:1,scrap_iron:2}},
+    {id:'r_mire_lance',out:{type:'equip',id:'mire_lance'},cost:{croc_scale:2,swamp_moss:2,leech_skin:1},stage:3},
     {id:'r_iron_lance',out:{type:'equip',id:'iron_lance'},cost:{scrap_iron:3,arrowhead:1}},
     {id:'r_wolf_gs',out:{type:'equip',id:'wolf_gs'},cost:{wolf_fang:2,wolf_pelt:2,scrap_iron:4}},
     {id:'r_wolf_tachi',out:{type:'equip',id:'wolf_tachi'},cost:{wolf_fang:2,wolf_claw:1,arrowhead:2}},
