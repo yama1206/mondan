@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.24',date:'2026/10/29'};
+const GAME_VERSION={no:'0.25',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -6003,21 +6003,54 @@ const Renderer={
     ctx.rotate(e.facing);
     const body=hurt?'#ffffff':(ph2?pal.rage:pal.body),dark=ph2?pal.rageDark:pal.dark;
     const wag=Math.sin(e.anim*(e.state==='chase'?12:3))*0.3;
-    ctx.save();ctx.rotate(wag);ctx.fillStyle=dark;ctx.beginPath();ctx.ellipse(-r*1.3,0,r*0.6,r*0.2,0,0,TAU);ctx.fill();ctx.restore();
-    ctx.fillStyle=body;ctx.strokeStyle=dark;ctx.lineWidth=3;
-    ctx.beginPath();ctx.ellipse(0,0,r*1.15,r*0.82,0,0,TAU);ctx.fill();ctx.stroke();
-    ctx.strokeStyle=dark;ctx.lineWidth=2;
-    for(let i=-2;i<=1;i++){ctx.beginPath();ctx.moveTo(i*8,-r*0.6);ctx.lineTo(i*8+6,-r*0.2);ctx.stroke();ctx.beginPath();ctx.moveTo(i*8,r*0.6);ctx.lineTo(i*8+6,r*0.2);ctx.stroke();}
+    const belly=hurt?'#ffffff':(ph2?'#e8a080':(pal.belly||'#d8ccb0'));
+    const running=e.state==='chase'||e.state==='dash'||e.state==='charge';
+    const gait=running?Math.sin(e.anim*11):Math.sin(e.anim*2.5)*0.3; // 走っている間は脚を交互に大きく振る
+    ctx.lineCap='round';
+    // 脚（体の下）：対角線の脚どうしが同じ向きに振れる
+    ctx.strokeStyle=dark;ctx.fillStyle=dark;
+    for(const lx of [r*0.5,-r*0.55])for(const sd of [-1,1]){
+      const sw=((lx>0)===(sd<0))?gait:-gait;
+      const fx=lx+sw*r*0.22,fy=sd*r*0.92;
+      ctx.lineWidth=r*0.24;ctx.beginPath();ctx.moveTo(lx,sd*r*0.4);ctx.lineTo(fx,fy);ctx.stroke();
+      ctx.beginPath();ctx.ellipse(fx+r*0.06,fy+sd*r*0.04,r*0.15,r*0.11,0,0,TAU);ctx.fill();
+    }
+    // しっぽ：ふさふさと揺れる（先は明るい色）
+    ctx.strokeStyle=dark;ctx.lineWidth=r*0.34;ctx.beginPath();ctx.moveTo(-r*0.9,0);
+    ctx.quadraticCurveTo(-r*1.45,wag*r*0.9,-r*1.78,wag*r*1.9-r*0.1);ctx.stroke();
+    ctx.fillStyle=belly;ctx.globalAlpha=0.9;ctx.beginPath();ctx.arc(-r*1.76,wag*r*1.9-r*0.1,r*0.13,0,TAU);ctx.fill();ctx.globalAlpha=1; // しっぽの先（明るい色）
+    // 胴体：背中がなだらかで、胸は広く、腰は細い
+    ctx.fillStyle=body;ctx.strokeStyle=dark;ctx.lineWidth=2.5;ctx.lineCap='butt';
+    ctx.beginPath();ctx.moveTo(r*0.75,-r*0.5);ctx.bezierCurveTo(r*0.2,-r*0.78,-r*0.5,-r*0.66,-r*1.0,-r*0.36);
+    ctx.quadraticCurveTo(-r*1.12,0,-r*1.0,r*0.36);ctx.bezierCurveTo(-r*0.5,r*0.66,r*0.2,r*0.78,r*0.75,r*0.5);
+    ctx.quadraticCurveTo(r*0.9,0,r*0.75,-r*0.5);ctx.closePath();ctx.fill();ctx.stroke();
+    // 胸の毛（明るい色）と背中の毛並み
+    ctx.fillStyle=belly;ctx.globalAlpha=0.85;ctx.beginPath();ctx.ellipse(r*0.45,0,r*0.36,r*0.46,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
+    ctx.strokeStyle=dark;ctx.lineWidth=1.8;
+    for(let i=0;i<4;i++){const tx=-r*0.1-i*r*0.3;ctx.beginPath();ctx.moveTo(tx,-r*0.5+i*0.04*r);ctx.lineTo(tx-r*0.14,-r*0.22);ctx.stroke();ctx.beginPath();ctx.moveTo(tx,r*0.5-i*0.04*r);ctx.lineTo(tx-r*0.14,r*0.22);ctx.stroke();}
     if(pal.moss){ // 古森の覇狼：背中の苔と、頭の角
       ctx.fillStyle=pal.moss;for(const [mx,my,mr] of [[-r*0.5,-r*0.2,r*0.28],[-r*0.1,r*0.25,r*0.22],[r*0.3,-r*0.3,r*0.2],[-r*0.75,r*0.2,r*0.18]]){ctx.beginPath();ctx.arc(mx,my,mr,0,TAU);ctx.fill();}
       ctx.strokeStyle='#d8c8a0';ctx.lineWidth=4;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.9,s*r*0.35);ctx.quadraticCurveTo(r*0.5,s*r*1.0,r*0.1,s*r*0.95);ctx.stroke();}
     }
-    ctx.fillStyle=dark;
-    for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.8,s*r*0.25);ctx.lineTo(r*0.65,s*r*0.85);ctx.lineTo(r*1.1,s*r*0.4);ctx.closePath();ctx.fill();}
+    // 首と頭：細い首から、横に広い頭
     ctx.fillStyle=body;ctx.strokeStyle=dark;ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.arc(r*0.95,0,r*0.55,0,TAU);ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.ellipse(r*1.42,0,r*0.32,r*0.24,0,0,TAU);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#1a1410';ctx.beginPath();ctx.arc(r*1.72,0,3,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.ellipse(r*0.98,0,r*0.5,r*0.46,0,0,TAU);ctx.fill();ctx.stroke();
+    // 耳：とがって立っている（内側は明るい色）
+    for(const sd of [-1,1]){
+      ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(r*0.72,sd*r*0.3);ctx.lineTo(r*0.6,sd*r*0.98);ctx.lineTo(r*1.08,sd*r*0.42);ctx.closePath();ctx.fill();
+      ctx.fillStyle=belly;ctx.globalAlpha=0.55;ctx.beginPath();ctx.moveTo(r*0.76,sd*r*0.36);ctx.lineTo(r*0.67,sd*r*0.8);ctx.lineTo(r*1.0,sd*r*0.44);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    }
+    // 鼻先：くさびの形に細くのびる（上が濃く、下の口元が明るい）
+    ctx.fillStyle=body;ctx.strokeStyle=dark;ctx.lineWidth=2.2;
+    ctx.beginPath();ctx.moveTo(r*1.1,-r*0.36);ctx.quadraticCurveTo(r*1.5,-r*0.32,r*1.8,-r*0.08);
+    ctx.quadraticCurveTo(r*1.88,0,r*1.8,r*0.1);ctx.quadraticCurveTo(r*1.5,r*0.32,r*1.1,r*0.36);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=belly;ctx.globalAlpha=0.8;ctx.beginPath();ctx.ellipse(r*1.42,r*0.15,r*0.34,r*0.1,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
+    // ほほの毛（胸と同じ明るい色）
+    ctx.fillStyle=belly;for(const sd of [-1,1]){ctx.beginPath();ctx.ellipse(r*1.0,sd*r*0.34,r*0.24,r*0.16,0,0,TAU);ctx.fill();}
+    // 牙：口を閉じていても、先が少しのぞく
+    ctx.fillStyle=hurt?'#ffffff':'#f8f4e4';
+    for(const sd of [-1,1]){ctx.beginPath();ctx.moveTo(r*1.5,sd*r*0.12);ctx.lineTo(r*1.56,sd*r*0.02+sd*r*0.12);ctx.lineTo(r*1.62,sd*r*0.12);ctx.closePath();ctx.fill();}
+    ctx.fillStyle='#1a1410';ctx.beginPath();ctx.arc(r*1.74,0,3,0,TAU);ctx.fill();
     if(e.state==='sleep'){
       ctx.strokeStyle='#1a1410';ctx.lineWidth=2;
       for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*1.08,s*r*0.22);ctx.lineTo(r*1.25,s*r*0.22);ctx.stroke();}
