@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.25',date:'2026/10/29'};
+const GAME_VERSION={no:'0.26',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -6309,7 +6309,8 @@ const Renderer={
     const behind=sheathed||Math.sin(swordA)<-0.2;
     const wtype=s.weaponType||'sword',wt=DATA.weaponTypes[wtype]||{};
     // チャージ中は武器を構えて後ろに引く。納刀中は背中に背負う
-    if(p.charging&&!p.dead)swordA=p.facing+Math.PI*0.75*(p.swingDir||1);
+    // チャージ中：弓は狙っている方向に構える（ほかの武器は後ろに引く）
+    if(p.charging&&!p.dead)swordA=wtype==='bow'?p.facing:p.facing+Math.PI*0.75*(p.swingDir||1);
     if(sheathed)swordA=p.facing+Math.PI*0.8;
     const lk=(s.look||{}),wl=gearLook(lk.weapon)||GEAR_LOOKS.iron,bl=wl.blade||'#e6ecf8';
     const wg=weaponGeom(wtype,r),wDeco=()=>{for(const k of (wl.w||[]))if(WEAPON_ART[k])WEAPON_ART[k](ctx,wg,wl);};
@@ -6336,9 +6337,15 @@ const Renderer={
         ctx.fillStyle=wl.main;ctx.fillRect(r+12,-10,14,20);
         ctx.fillStyle=rc;ctx.fillRect(r+12,-10,14,3);ctx.fillRect(r+12,7,14,3);
         ctx.strokeStyle=wl.dark;ctx.lineWidth=1.5;ctx.strokeRect(r+12,-10,14,20);wDeco();
-      }else if(wtype==='bow'){ // 弓：しなる弓と弦
-        ctx.strokeStyle=wl===GEAR_LOOKS.iron?'#8a6a40':wl.main;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r+4,0,22,-1.2,1.2);ctx.stroke();
-        ctx.strokeStyle='#e8e0c8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(r+4+22*Math.cos(-1.2),22*Math.sin(-1.2));ctx.lineTo(r+4+22*Math.cos(1.2),22*Math.sin(1.2));ctx.stroke();wDeco();
+      }else if(wtype==='bow'){ // 弓：しなる弓と弦。チャージ中は弦を後ろに引き、矢をつがえる
+        const bx=r+4,tx=bx+22*Math.cos(1.2),ty=22*Math.sin(1.2);
+        const pull=p.charging&&!p.dead&&wt.charge?clamp(p.charge/wt.charge.levels[wt.charge.levels.length-1],0,1):0;
+        const nx=tx-pull*14; // 弦の中央（引くほど後ろへ下がる）
+        ctx.strokeStyle=wl===GEAR_LOOKS.iron?'#8a6a40':wl.main;ctx.lineWidth=3;ctx.beginPath();ctx.arc(bx,0,22,-1.2,1.2);ctx.stroke();
+        ctx.strokeStyle='#e8e0c8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,-ty);ctx.lineTo(nx,0);ctx.lineTo(tx,ty);ctx.stroke();
+        if(pull>0){ctx.strokeStyle='#c8b080';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(nx,0);ctx.lineTo(bx+26,0);ctx.stroke();
+          ctx.fillStyle='#d8d0c0';ctx.beginPath();ctx.moveTo(bx+26,0);ctx.lineTo(bx+21,-3);ctx.lineTo(bx+21,3);ctx.closePath();ctx.fill();}
+        wDeco();
       }else if(wtype==='lance'){ // 槍：突くと柄が前に伸び、戻る（盾は別に描く）
         const k=p.swing>0?1-p.swing/p.swingTotal:1,e=p.swing>0?(k<0.4?k/0.4:Math.max(0,1-(k-0.4)/0.6)):0,L=r+66*(0.6+0.4*e);
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.4,-2,L-22-r*0.4,4);
