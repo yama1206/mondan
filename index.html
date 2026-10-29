@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.51',date:'2026/10/29'};
+const GAME_VERSION={no:'0.52',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -329,7 +329,7 @@ const DATA={
     dual:{ws:'kyodo',name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
-    hammer:{name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
+    hammer:{ws:'gouwan',name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
     lance:{ws:'taunt',name:'ランス',range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
@@ -351,7 +351,8 @@ const DATA={
     kyodo:{name:'狂人化',duration:15,cd:150},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
     taunt:{name:'挑発',duration:15,cd:150},         // ランス：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
     sokusha:{name:'速射',duration:15,cd:150},       // 弓：チャージ速度2倍（威力は変えない）
-    inmitsu:{name:'隠密',duration:15,cd:150},       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
+    inmitsu:{name:'隠密',duration:15,cd:150},
+    gouwan:{name:'剛腕',duration:15,cd:150},       // ハンマー：ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -3122,7 +3123,7 @@ function damageEnemy(w,p,e,mult,src){
   if(wt&&wt.stun&&e.stunMax>0&&!e.dead&&e.state!=='stunned'&&e.state!=='sleep'){
     head=part?!!part.head:frontal;
     if(head){
-      e.stunPts+=wt.stun.base*(src.stunMult||1);
+      e.stunPts+=wt.stun.base*(src.stunMult||1)*(wsActive(p,'gouwan')?2:1);
       if(e.stunPts>=e.stunMax){
         e.stunPts=0;e.stunMax=Math.round(e.stunMax*1.5); // モンハン式：スタンするたびに次は取りにくくなる
         e.state='stunned';e.timer=DATA.enemies[e.type].stunTime||4;e.action=null;
@@ -3224,7 +3225,7 @@ function updatePlayer(w,p,inp,dt){
     let k=1;
     if(p.sheathing)k=Math.min(k,P.sheatheWalk);
     if(p.swing>0)k=Math.min(k,0.6);
-    if(p.charging&&wt.charge)k=Math.min(k,wt.charge.move);   // チャージ中はかなり遅く歩ける
+    if(p.charging&&wt.charge&&!wsActive(p,'gouwan'))k=Math.min(k,wt.charge.move);   // チャージ中はかなり遅く歩ける
     if(p.using)k=Math.min(k,P.itemWalk);                      // アイテム使用中はゆっくり歩ける
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
     if(w.map.tiles[Math.floor(p.y/TILE)*w.map.W+Math.floor(p.x/TILE)]===TILE_PUDDLE)k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
