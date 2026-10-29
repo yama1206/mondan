@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.45',date:'2026/10/29'};
+const GAME_VERSION={no:'0.46',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8811,6 +8811,20 @@ const App={
     }
     this.save();this.goto('clear');
   },
+  /** 公開中のページの版を確かめる。新しければ「今すぐ更新」を出す（キャッシュを避けて取り直す） */
+  async checkUpdate(){
+    const el=document.getElementById('updateMsg');if(!el)return;
+    const show=(html,color)=>{el.innerHTML=html;el.style.color=color||'';};
+    show('確認中…');
+    try{
+      const res=await fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'});
+      const text=await res.text();
+      const m=text.match(/GAME_VERSION=\{no:'([^']+)'/);
+      if(!m){show('確認できませんでした（このファイルでは確認できないことがあります）','#ff8a6a');return;}
+      if(m[1]===GAME_VERSION.no){show(`最新です（ver ${GAME_VERSION.no}）`,'#5fe08a');return;}
+      show(`新しいバージョン ver ${m[1]} があります　<button class="primary" data-act="reloadNow">今すぐ更新</button>`,'#ffd23a');
+    }catch(e){show('確認できませんでした（通信を確かめてください）','#ff8a6a');}
+  },
   /** 画面通知・振動など、ホストでも参加者でも同じように出す演出 */
   eventUI(ev){
     const mine=ev.pid?this.localInputPid(ev.pid):null;
@@ -9135,6 +9149,8 @@ const App={
       case 'settings':this.settingsReturn=this.state;this.goto('settings');break;
       case 'reset':UI.confirm('セーブデータをすべて削除して最初からやり直します。<br><b>この操作は取り消せません。</b>よろしいですか？',()=>this.resetSave());break;
       case 'resume':this.goto('playing');break;
+      case 'checkUpdate':this.checkUpdate();break;
+      case 'reloadNow':location.href=location.pathname+'?v='+Date.now();break; // 別の読み込みとして開き直し（キャッシュを使わない）
       case 'exploreReturn':UI.confirm('探索を終えて帰りますか？<br><small>（この探索で手に入れたものは持ち帰れます）</small>',()=>{const w=this.world;if(w&&w.status==='playing'){w.status='clear';this.checkStatus();}});break;
       case 'retreat':UI.confirm('探索を中断して拠点に戻りますか？<br><small>（入手済みのアイテムは保持されます）</small>',()=>{this.save();this.goto('camp');});break;
       case 'camp':this.save();this.goto('camp');break;
@@ -9392,6 +9408,9 @@ const App={
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
+        <div class="filters" style="margin-top:6px"><button data-act="checkUpdate">更新を確認</button></div>
+        <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
       <div class="setting" style="display:block">スマホのボタンの大きさ（いまは ${Math.round((s.touchSize||1)*100)}%）
         <div class="filters" style="margin-top:6px">${[0.7,0.85,1,1.2,1.4].map(v=>`<button class="${Math.abs((s.touchSize||1)-v)<0.001?'on':''}" data-act="touchSize" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">スマホのボタンの透過度（いまは ${Math.round((s.touchAlpha??0.85)*100)}%）
