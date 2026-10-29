@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.71',date:'2026/10/29'};
+const GAME_VERSION={no:'0.72',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -318,7 +318,7 @@ const DATA={
      itemDelay：アイテム発動時間の増減(秒) charge：長押しチャージ perfect：ギリギリ回避の強化 stun：頭を叩いたときのスタン値
      skill：Qキーのスキル（今は無し。DATA.skills のIDを入れると使える） */
   weaponTypes:{
-    sword:{ws:'medic',name:'片手剣',range:40,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
+    sword:{ws:'medic',name:'片手剣',range:55,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
       marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い'},
     greatsword:{ws:'fudou',name:'大剣',knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
       charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
@@ -326,7 +326,7 @@ const DATA={
     tachi:{ws:'iai',name:'太刀',range:62,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
-    dual:{ws:'kyodo',name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
+    dual:{ws:'kyodo',name:'双剣',range:50,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
     hammer:{ws:'gouwan',name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
@@ -7463,7 +7463,7 @@ const Renderer={
         ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.4+14,-1.8);ctx.quadraticCurveTo(r+30,-5,r+54,-4);ctx.lineTo(r+56,-2);ctx.quadraticCurveTo(r+30,1,r*0.4+14,1.8);ctx.closePath();ctx.fill();wDeco();
       }else if(wtype==='dual'){ // 短い刃を2本。構えているときは向きの左右に開き、攻撃中は向きを挟んで対称に振る
         const blade=()=>{ctx.fillStyle='#6a4520';ctx.fillRect(r*0.5,-1.5,6,3);ctx.fillStyle=rc;ctx.fillRect(r*0.5+5,-4,2,8);
-          ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+7,-2);ctx.lineTo(r+9,-2);ctx.lineTo(r+14,0);ctx.lineTo(r+9,2);ctx.lineTo(r*0.5+7,2);ctx.closePath();ctx.fill();wDeco();};
+          ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+7,-2);ctx.lineTo(r+20,-2);ctx.lineTo(r+30,0);ctx.lineTo(r+20,2);ctx.lineTo(r*0.5+7,2);ctx.closePath();ctx.fill();wDeco();};
         const F=p.facing,sw=p.swing>0||p.charging,a1=sw?swordA:F+0.3,a2=sw?2*F-swordA:F-0.3;
         ctx.restore();ctx.save();ctx.rotate(a1);blade();ctx.restore();ctx.save();ctx.rotate(a2);blade();
       }else if(wtype==='hammer'){ // 柄と大きな頭
@@ -7494,7 +7494,7 @@ const Renderer={
       }else{ // 片手剣
         ctx.fillStyle='#6a4520';ctx.fillRect(r*0.5,-2,7,4);
         ctx.fillStyle=rc;ctx.fillRect(r*0.5+6,-5,3,10);
-        ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+9,-2.5);ctx.lineTo(r+11,-2.5);ctx.lineTo(r+17,0);ctx.lineTo(r+11,2.5);ctx.lineTo(r*0.5+9,2.5);ctx.closePath();ctx.fill();
+        ctx.fillStyle=bl;ctx.beginPath();ctx.moveTo(r*0.5+9,-2.5);ctx.lineTo(r+20,-2.5);ctx.lineTo(r+32,0);ctx.lineTo(r+20,2.5);ctx.lineTo(r*0.5+9,2.5);ctx.closePath();ctx.fill();
         wDeco();
         // 片手剣は小さな盾も持つ
         ctx.restore();ctx.save();ctx.rotate(p.facing-1.4);ctx.fillStyle='#8a6a3a';ctx.beginPath();ctx.arc(r*0.9,0,5,0,TAU);ctx.fill();ctx.strokeStyle=rc;ctx.lineWidth=1.5;ctx.stroke();
