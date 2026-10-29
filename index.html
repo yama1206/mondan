@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.63',date:'2026/10/29'};
+const GAME_VERSION={no:'0.64',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -422,9 +422,9 @@ const DATA={
   },
   // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
-    eel_thunder_tachi:{name:'雷鳴の太刀',slot:'weapon',el:{k:'thunder',v:7},st:{k:'paralysis',chance:0.2},wtype:'tachi',atk:21,crit:10,fixed:[{stat:'crit',v:3}],slots:1},
-    eel_thunder_lance:{name:'雷鳴のランス',slot:'weapon',el:{k:'thunder',v:7},st:{k:'paralysis',chance:0.2},wtype:'lance',atk:19,crit:9,fixed:[{stat:'atkSpd',v:5}],slots:1},
-    eel_thunder_bow:{name:'雷鳴の弓',slot:'weapon',el:{k:'thunder',v:6},st:{k:'paralysis',chance:0.2},wtype:'bow',atk:16,crit:7,fixed:[{stat:'critDmg',v:6}],slots:1},
+    eel_thunder_tachi:{name:'雷鳴の太刀',slot:'weapon',el:{k:'thunder',v:7},st:{k:'paralysis',buildup:20},wtype:'tachi',atk:21,crit:10,fixed:[{stat:'crit',v:3}],slots:1},
+    eel_thunder_lance:{name:'雷鳴のランス',slot:'weapon',el:{k:'thunder',v:7},st:{k:'paralysis',buildup:20},wtype:'lance',atk:19,crit:9,fixed:[{stat:'atkSpd',v:5}],slots:1},
+    eel_thunder_bow:{name:'雷鳴の弓',slot:'weapon',el:{k:'thunder',v:6},st:{k:'paralysis',buildup:20},wtype:'bow',atk:16,crit:7,fixed:[{stat:'critDmg',v:6}],slots:1},
     aq_sword:{name:'蒼流の剣',slot:'weapon',el:{k:'water',v:7},wtype:'sword',atk:18,crit:9,fixed:[{stat:'atkSpd',v:4}],slots:1},
     aq_gs:{name:'蒼流の大剣',slot:'weapon',wtype:'greatsword',atk:24,crit:4,fixed:[{stat:'def',v:4}],slots:2},
     aq_tachi:{name:'蒼流の太刀',slot:'weapon',wtype:'tachi',atk:20,crit:10,fixed:[{stat:'crit',v:3}],slots:1},
@@ -514,7 +514,7 @@ const DATA={
     bone_hammer:{name:'骨の大槌',slot:'weapon',wtype:'hammer',atk:14,crit:1,fixed:[{stat:'def',v:2}]},
     bone_lance:{name:'骨のランス',slot:'weapon',wtype:'lance',atk:13,crit:6,fixed:[{stat:'atkSpd',v:3}]},
     beast_lance:{name:'獣牙のランス',slot:'weapon',wtype:'lance',atk:12,crit:6,slots:1},
-    mire_lance:{name:'沼喰いのランス',slot:'weapon',st:{k:'poison',chance:0.2},wtype:'lance',atk:22,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:1},
+    mire_lance:{name:'沼喰いのランス',slot:'weapon',st:{k:'poison',buildup:20},wtype:'lance',atk:22,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:1},
     wolf_lance:{name:'古狼のランス',slot:'weapon',wtype:'lance',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
     /* ---- ザコ素材の防具（各ステージ2シリーズ）：同じステージのボス装備より一段弱く、一式効果はなし ---- */
     // 草原：獣皮シリーズ（森狼）
@@ -695,16 +695,16 @@ const DATA={
     hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,fixed:[{stat:'moveSpd',v:3}],skills:{atk_up:4,regen:2},slots:2},
     // ---- 毒蟲シリーズ（毒蟲王・沼地）：会心と状態異常耐性 ----
     venom_db:{name:'毒蟲の双剣',slot:'weapon',el:{k:'water',v:10},wtype:'dual',atk:26,crit:15,fixed:[{stat:'atkSpd',v:6}],slots:2},
-    venom_tachi:{name:'毒蟲の太刀',slot:'weapon',st:{k:'poison',chance:0.2},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
-    venom_bow:{name:'毒蟲の弓',slot:'weapon',st:{k:'poison',chance:0.2},wtype:'bow',atk:22,crit:10,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    venom_tachi:{name:'毒蟲の太刀',slot:'weapon',st:{k:'poison',buildup:20},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
+    venom_bow:{name:'毒蟲の弓',slot:'weapon',st:{k:'poison',buildup:20},wtype:'bow',atk:22,crit:10,fixed:[{stat:'atkSpd',v:5}],slots:2},
     venom_helm:{name:'毒蟲の触角兜',slot:'head',def:12,fixed:[{stat:'crit',v:4}],skills:{crit_up:3,status_res:2},slots:2},
     venom_mail:{name:'毒蟲の甲殻',slot:'body',def:16,fixed:[{stat:'maxHp',v:25}],skills:{status_res:4,crit_up:3},slots:2},
     venom_vambrace:{name:'毒蟲の脚肩',slot:'arms',def:11,fixed:[{stat:'atk',v:2}],skills:{crit_up:4,item_speed:2},slots:2},
     venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{status_res:4,item_speed:2},slots:2},
     venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,fixed:[{stat:'moveSpd',v:4}],skills:{item_speed:3,evade:3},slots:2},
     // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
-    mire_hammer:{name:'沼巨人のハンマー',slot:'weapon',st:{k:'poison',chance:0.15},wtype:'hammer',atk:29,crit:0,fixed:[{stat:'maxHp',v:30}],slots:2},
-    mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',chance:0.15},wtype:'greatsword',atk:29,crit:3,fixed:[{stat:'def',v:5}],slots:2},
+    mire_hammer:{name:'沼巨人のハンマー',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:29,crit:0,fixed:[{stat:'maxHp',v:30}],slots:2},
+    mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:29,crit:3,fixed:[{stat:'def',v:5}],slots:2},
     mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,heal_up:2},slots:2},
     mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,fixed:[{stat:'maxHp',v:40}],skills:{charge_up:4,def_up:3},slots:2},
     mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{charge_up:3,atk_up:2},slots:2},
@@ -3338,7 +3338,12 @@ function damageEnemy(w,p,e,mult,src){
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
   if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
-  if(s.inflict&&!e.dead&&RNG.next()<s.inflict.chance)applyStatus(w,e,s.inflict.k); // 武器の状態異常
+  if(s.inflict&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
+    const k=s.inflict.k;e.buildup=e.buildup||{};e.buildThr=e.buildThr||{};
+    const thr=e.buildThr[k]||100;
+    e.buildup[k]=(e.buildup[k]||0)+s.inflict.buildup;
+    if(e.buildup[k]>=thr){e.buildup[k]=0;e.buildThr[k]=thr+50;applyStatus(w,e,k);}
+  }
   // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
   if(!e.boss&&!ed.heavy&&!e.mid){
     if((e.hitAccT||0)<=0)e.hitAcc=0;
