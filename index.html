@@ -185,9 +185,10 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.36',date:'2026/10/29'};
+const GAME_VERSION={no:'0.37',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
+  questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
   player:{radius:12,baseSpeed:185,baseHp:125,baseAtk:10,baseDef:2,baseCrit:5,baseCritDmg:50,
     dodgeSpeed:520,dodgeTime:0.2,dodgeCd:1.0,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
@@ -4427,6 +4428,7 @@ function updateRevive(w,dt){
 function updateWorld(w,dt,inputs){
   if(w.status!=='playing')return;
   w.time+=dt;
+  if(!questById(w.questId).explore&&w.time>=CONFIG.questTimeLimit){w.failReason='time';w.status='gameover';return;}
   w.flowTimer-=dt;if(w.flowTimer<=0){computeFlow(w);w.flowTimer=0.25;}
   const before={};
   for(const id in w.players){const p=w.players[id];before[id]={x:p.x,y:p.y};}
@@ -4873,6 +4875,12 @@ const PLAYER_COLORS=[
   {body:'#2ab8b0',rim:'#a8f4f0',label:'#7fe8e0'}, // 5P：青緑
 ];
 /** プレイヤーの表示名（オンラインでは名前、同じ画面なら 1P/2P） */
+/** 任務の残り時間の表示（自由探索は表示なし）。残り1分を切ると赤くする */
+function questTimeText(w){
+  if(!w||questById(w.questId).explore)return null;
+  const left=Math.max(0,Math.ceil(CONFIG.questTimeLimit-w.time)),mm=Math.floor(left/60),ss=left%60;
+  return {text:`残り ${mm}:${String(ss).padStart(2,'0')}`,warn:left<=60};
+}
 function playerName(p){return (p.info&&p.info.name)||((p.slot+1)+'P');}
 /** 操作デバイスごとのボタン表記 */
 const KEY_LABELS={
@@ -6892,6 +6900,7 @@ const Renderer={
     this.panel(ctx,qx,12,300,106);
     const q=w.quest,st=stageById(w.diff.level);
     ctx.textAlign='left';ctx.fillStyle='#f3d48a';ctx.font=`bold 13px ${FONT}`;ctx.fillText(q.title,qx+12,30);
+    {const tt=questTimeText(w);if(tt){ctx.textAlign='right';ctx.fillStyle=tt.warn?'#ff6b6b':'#cfc7e6';ctx.font=`bold 13px ${FONT}`;ctx.fillText(tt.text,qx+288,30);}}
     // 目標（達成したら緑）
     ctx.font=`bold 13px ${FONT}`;ctx.fillStyle=q.done?'#5fe08a':'#ffffff';
     ctx.fillText('目標：'+questGoalText(q.goal,w.playerCount)+((q.goal.type==='boss'||q.goal.type==='explore')?'':`　${q.progress} / ${q.need}`)+(q.done?'　達成！':''),qx+12,52);
@@ -8705,7 +8714,8 @@ const App={
     const w=this.world;if(!w||!this.inGame)return;
     if(w.status==='gameover'){
       this.inGame=false;this.revertRunGains();this.save();
-      if(Net.role==='host'){Net.flushProfiles();Net.broadcast({t:'end',kind:'gameover'});Net.broadcastLobby();}
+      this.lastFail=w.failReason||'dead';
+      if(Net.role==='host'){Net.flushProfiles();Net.broadcast({t:'end',kind:'gameover',reason:this.lastFail});Net.broadcastLobby();}
       this.goto('gameover');
     }else if(w.status==='clear')this.finishQuest();
   },
@@ -8979,7 +8989,7 @@ const App={
   guestEnd(d){
     this.inGame=false;
     if(d.kind==='clear'){this.lastResult=d.result;this.goto('clear');}
-    else if(d.kind==='gameover')this.goto('gameover');
+    else if(d.kind==='gameover'){this.lastFail=d.reason||'dead';this.goto('gameover');}
     else{this.world=null;UI.notify('ホストがロビーに戻りました','#ffb070',3);this.goto('lobby');}
   },
 
@@ -9363,6 +9373,13 @@ const App={
       <div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div></div>`;
   },
   gameoverHTML(){
+    if(this.lastFail==='time'){
+      const host=Net.role==='host';
+      return `<div class="panel camp"><h2 style="color:#ff6b6b">制限時間切れ……クエスト失敗</h2>
+        <p>${CONFIG.questTimeLimit/60}分以内に任務を達成できなかったため、この探索で手に入れた素材・装備・装飾品・お金は持ち帰れませんでした。</p>
+        <div class="row">${Net.role?(host?'<button class="primary" data-act="netStart">同じメンバーでリトライ</button>':''):'<button class="primary" data-act="retry">同じ依頼をもう一度</button>'}<button data-act="${Net.role?'toLobby':'camp'}">${Net.role?'ロビーに戻る':'拠点に戻る'}</button></div>
+        ${Net.role&&!host?'<p class="small muted">ホストがリトライすると自動で出発します</p>':''}</div>`;
+    }
     if(Net.role){
       const host=Net.role==='host';
       return `<div class="panel camp"><h2 style="color:#ff6b6b">全滅……クエスト失敗</h2>
