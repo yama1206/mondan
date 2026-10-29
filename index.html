@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.46',date:'2026/10/29'};
+const GAME_VERSION={no:'0.47',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1430,7 +1430,7 @@ const DATA={
   stages:[
     // layout：マップの部屋構成（DATA.layouts）。無い場合は従来の固定マップ（buildDungeon）を使う
     {id:1,name:'風渡る草原',desc:'開けた草原と、風に揺れる丈の長い草むら。獣たちの縄張りが点在する、冒険の始まりの地。最奥の「暴角の広場」には、角を持つ巨獣が待ち構えている。',
-      enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'meadow_bull'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'meadow'},
+      enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'meadow_bull'},hp:1.0,atk:1.0,density:0.3,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'meadow'}, // density：魔物の出現数の倍率（1が標準）
     {id:2,name:'緑風の森林',desc:'風が木々を揺らす深い森。さまざまな魔物が潜み、最奥の「古森の広場」には森の主が棲みつく。',
       enemySet:{melee:'goblin',ranged:'archer',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
     {id:3,name:'腐毒の沼地',desc:'毒の霧がたちこめる沼地。足元の泥と、ぬめる水辺に気をつけて。最奥の「沼の中心」には、恐ろしい主が棲みついている。',
@@ -2730,13 +2730,13 @@ function spawnPack(w,m,rect,types,main,count,elite){
   return elite;
 }
 function populateLayout(w,stage,quest,L){
-  const m=w.map,goal=quest.goal,S=stage.enemySet;
+  const m=w.map,goal=quest.goal,S=stage.enemySet,dens=stage.density??1;
   const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&(goal.type==='boss'||goal.type==='explore')));
   for(const rm of rooms){
     let elite=rm.def.elite||0;
     const types=(rm.def.spawn||[]).map(s=>s[0]);
     // 枠ごとに、1割半の確率で3〜4体の群れ（魔物の総数は以前とほぼ同じ程度）
-    for(const [t,a,b] of (rm.def.spawn||[]))if(RNG.next()<0.15)elite=spawnPack(w,m,rm.rect,types,t,randInt(3,4),elite);
+    for(const [t,a,b] of (rm.def.spawn||[]))if(RNG.next()<0.15*dens)elite=spawnPack(w,m,rm.rect,types,t,randInt(3,4),elite);
   }
   // 中ボス：道の部屋のどこかに、その部屋の魔物の大きい版。取り巻きの雑魚も一緒に湧く
   const mains=shuffle(rooms.filter(rm=>rm.kind==='main'));
@@ -2751,7 +2751,7 @@ function populateLayout(w,stage,quest,L){
     }
   }
   // 通路をうろつく魔物
-  for(const c of shuffle(m.corridors.slice()).slice(0,spawnCount(2,4))){
+  for(const c of shuffle(m.corridors.slice()).slice(0,Math.floor(spawnCount(2,4)*dens+RNG.next()))){
     const x=(c.x+0.5)*TILE,y=(c.y+0.5)*TILE;
     if(!circleHitsWall(m,x,y,14)&&!inStartRoom(m,x,y,14))spawnEnemy(w,pick(L.wander),x,y);
   }
