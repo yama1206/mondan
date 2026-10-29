@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.58',date:'2026/10/29'};
+const GAME_VERSION={no:'0.59',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1042,7 +1042,7 @@ const DATA={
       pal:{body:'#4a6a3a',dark:'#1e2e18',rage:'#6a4a20',rageDark:'#3a2010',eye:'#ffe060',rageEye:'#ff4020'}},
     venomKing:{name:'沼地の毒蟲王',ai:'pattern',look:'venomKing',hp:3200,atk:28,def:9,r:36,speed:100,stunMax:140,stunTime:4,color:'#5a3a6a',drops:'venom_king',boss:true,
       pattern:[
-        {k:'swarm',wind:0.7,cd:8,n:2,kind:'leech',max:4},
+        {k:'swarm',wind:0.7,cd:8,n:2,kind:'leech',max:4,st:'poison'},
         {k:'pool',wind:0.9,cd:4.5,dmg:0.9,r:85,life:6,st:'poison'},
         {k:'slam',wind:0.9,cd:4.2,dmg:1.2,r:120},
         {k:'charge',wind:0.7,cd:5.5,dmg:1.3},
@@ -2885,7 +2885,7 @@ function spawnEnemy(w,type,x,y,opt){
     speed:d.speed,state:d.boss?'sleep':'idle',timer:0,cd:rand(0.3,1.2),cd2:rand(0.5,1.5),cd3:rand(1,2),stun:0,facing:rand(0,TAU),atkAngle:0,aggro:false,hurt:0,kx:0,ky:0,
     dead:false,boss:!!d.boss,phase:1,cds:{bite:0,charge:2,slam:3,sweep:1.5,roar:4,orb:2,summon:5},action:null,hitSet:null,chargeLeft:0,chargeChain:0,
     anim:rand(0,10),strafeDir:RNG.next()<0.5?1:-1,strafeT:rand(1,2),aimTime:d.aimTime||0.8,stunPts:0,stunMax:d.stunMax||0,
-    elite:el,summoned:!!opt.summoned,revived:!!opt.revived,baseAtk:atk,baseSpeed:d.speed,empowerT:0,z:0};
+    elite:el,summoned:!!opt.summoned,bossMinion:opt.bossMinion||null,revived:!!opt.revived,baseAtk:atk,baseSpeed:d.speed,empowerT:0,z:0};
   w.enemies.push(e);return e;
 }
 function populate(w,stage,quest){
@@ -3037,6 +3037,8 @@ function wsActive(p,id){return !!(p&&p.ws&&p.ws.id===id&&!p.dead);}
 /* ---------- 被ダメージ・与ダメージ ---------- */
 function hitPlayer(w,p,raw,sx,sy,src,el,st){
   const srcT=src||w._atk,bossSrc=!!((DATA.enemies[srcT]||{}).boss); // ボスの攻撃は技ごとの属性・状態異常だけを使う
+  const mn=w._atkEnt&&w._atkEnt.bossMinion?w._atkEnt.bossMinion:null; // ボスが呼んだ子分：属性なし。状態異常は子分ごとの設定のみ
+  const noFx=bossSrc||!!mn;
   if(p.dead)return false;
   if(p.dodgeInv>0){
     // ジャスト回避：回避の出始めで攻撃をかわすと、回避のクールタイムがリセット（太刀はさらに「見切り」で攻撃力アップ）
@@ -3059,7 +3061,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
   if(p.curseT>0)dmg*=1+DATA.playerStatus.curse.dmgUp/100; // 呪い：受けるダメージが増える
-  {const atkEl=el==='none'?null:(el||(bossSrc?null:((DATA.enemyElem[srcT]||{}).atk)));if(atkEl){const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
+  {const atkEl=el==='none'?null:(el||(noFx?null:((DATA.enemyElem[srcT]||{}).atk)));if(atkEl){const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
   p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
@@ -3073,6 +3075,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   if(p.charging&&!wsActive(p,'fudou')){p.chargeLock=true;p.charging=false;p.charge=0;}
   if(p.hp<=0)downPlayer(w,p);
   else if(st&&st!=='none')inflictPlayer(w,p,st); // 技ごとの状態異常
+  else if(mn){if(mn.st&&mn.st!=='none')inflictPlayer(w,p,mn.st);}
   else if(!bossSrc){const sp=DATA.enemyStatus[srcT];if(sp&&RNG.next()<sp.chance)inflictPlayer(w,p,sp.k);} // 通常の魔物の状態異常（ボスは技ごとに設定）
   return true;
 }
@@ -3799,7 +3802,7 @@ function updateBossPattern(w,e,p,dt){
         e.state='recover';e.timer=0.6;break;
       }
       if(e.action==='swarm'){
-        for(let i=0;i<(mv.n||2);i++){const a=rand(0,TAU);spawnEnemy(w,mv.kind,e.x+Math.cos(a)*(e.r+40),e.y+Math.sin(a)*(e.r+40),{});}
+        for(let i=0;i<(mv.n||2);i++){const a=rand(0,TAU);spawnEnemy(w,mv.kind,e.x+Math.cos(a)*(e.r+40),e.y+Math.sin(a)*(e.r+40),{bossMinion:{st:mv.st||null}});}
         emit(w,{type:'roarWave',x:e.x,y:e.y,r:90});
         e.state='recover';e.timer=0.8;break;
       }
@@ -4410,9 +4413,9 @@ function updateTelegraphs(w,dt){
   for(const t of w.telegraphs){
     t.t+=dt;
     if(t.t>=t.total){
-      if(t.dmg>0){
+      if(t.dmg>0){w._atkEnt=w.enemies.find(e=>e.id===t.owner)||null;
         for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y,(w.enemies.find(e=>e.id===t.owner)||{}).type,t.el,t.st)&&t.slow)slowPlayer(w,p,t.slow);}
-        emit(w,{type:'tgResolve',shape:t.shape,x:t.x,y:t.y,r:t.r,angle:t.angle,arc:t.arc,small:!!t.small});
+        w._atkEnt=null;emit(w,{type:'tgResolve',shape:t.shape,x:t.x,y:t.y,r:t.r,angle:t.angle,arc:t.arc,small:!!t.small});
       }
     }else keep.push(t);
   }
@@ -4572,7 +4575,7 @@ function updateWorld(w,dt,inputs){
   updateRevive(w,dt);
   updateBossRoom(w);
   // w._atk：今動いている魔物の種類（攻撃が当たったときの状態異常に使う）。新しく撃った飛び道具にも覚えさせる
-  for(const e of w.enemies)if(!e.dead){w._atk=e.type;const n0=w.projectiles.length;updateEnemy(w,e,dt);for(let i=n0;i<w.projectiles.length;i++)if(w.projectiles[i].owner==='enemy'&&!w.projectiles[i].src)w.projectiles[i].src=e.type;}
+  for(const e of w.enemies)if(!e.dead){w._atk=e.type;const n0=w.projectiles.length;w._atkEnt=e;updateEnemy(w,e,dt);w._atkEnt=null;for(let i=n0;i<w.projectiles.length;i++)if(w.projectiles[i].owner==='enemy'&&!w.projectiles[i].src)w.projectiles[i].src=e.type;}
   w._atk=null;
   separateBodies(w);
   updateAttacks(w,dt);
