@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.27',date:'2026/10/29'};
+const GAME_VERSION={no:'0.28',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -326,10 +326,13 @@ const DATA={
     lance:{name:'ランス',range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
       frontGuard:{arc:120*Math.PI/180,mult:0.1}, // 盾：いつも向いている方向（前方120°）からの攻撃を90%カット
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。構えている間は向いている方向の攻撃を90%カット（突いている間は盾が効かない）。納刀に1.1秒'},
-    bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,
+    bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
       marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで3段階チャージして射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
+    shuriken:{name:'手裏剣',range:100,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
+      shuriken:{speed:500,shots:2,side:7,weakMult:2.2}, // 手裏剣：速さ（px/秒）、1回に投げる枚数、横にずらす間隔。飛ぶ距離は range（リーチ）。まっすぐ飛ぶ
+      marks:{move:'〇',speed:'〇',power:'△',reach:'△'},feature:'2枚ずつまっすぐ投げる（リーチは短め）。装備中は受けるダメージ1.5倍'},
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -451,6 +454,7 @@ const DATA={
     bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',el:{k:'dragon',v:13},wtype:'hammer',atk:33,crit:4,fixed:[{stat:'def',v:6}],slots:2},
     iron_lance:{name:'鉄のランス',slot:'weapon',wtype:'lance',atk:8,crit:4},
     iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:7,crit:4},
+    iron_shuriken:{name:'鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:7,crit:4},
     wolf_lance:{name:'古狼のランス',slot:'weapon',wtype:'lance',atk:19,crit:8,fixed:[{stat:'atkSpd',v:5}],slots:1},
     /* ---- ザコ素材の防具（各ステージ2シリーズ）：同じステージのボス装備より一段弱く、一式効果はなし ---- */
     // 草原：獣皮シリーズ（森狼）
@@ -1683,6 +1687,7 @@ const DATA={
     {id:'r_para_bottle',out:{type:'item',id:'para_bottle',n:2},cost:{poison_spore:1,herb:2}},
     {id:'r_sleep_bottle',out:{type:'item',id:'sleep_bottle',n:2},cost:{herb:3,forest_mushroom:1}},
     {id:'r_iron_bow',out:{type:'equip',id:'iron_bow'},cost:{scrap_iron:3,old_bone:2}},
+    {id:'r_iron_shuriken',out:{type:'equip',id:'iron_shuriken'},cost:{scrap_iron:3,arrowhead:2}},
     {id:'r_iron_lance',out:{type:'equip',id:'iron_lance'},cost:{scrap_iron:3,arrowhead:1}},
     {id:'r_wolf_gs',out:{type:'equip',id:'wolf_gs'},cost:{wolf_fang:2,wolf_pelt:2,scrap_iron:4}},
     {id:'r_wolf_tachi',out:{type:'equip',id:'wolf_tachi'},cost:{wolf_fang:2,wolf_claw:1,arrowhead:2}},
@@ -2853,7 +2858,7 @@ function hitPlayer(w,p,raw,sx,sy,src){
   if(p.hitInv>0)return false;
   let dmg=raw*(60/(60+p.stats.def));
   // 大剣・ハンマーのチャージ中は被ダメージ半分／弓を装備中は被ダメージ1.5倍
-  {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.bow)dmg*=1.5;else if(p.charging&&cw&&cw.charge)dmg*=0.5;}
+  {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.hurtMult)dmg*=cw.hurtMult;else if(p.charging&&cw&&cw.charge)dmg*=0.5;}
   // ランスの盾：向いている方向からの攻撃は大きく減らす（攻撃元の位置で判定）
   if(p.stats.frontGuard&&!(p.swing>0)&&sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=p.stats.frontGuard.arc/2)dmg*=p.stats.frontGuard.mult;
   if(p.stats.effects.guard)dmg*=0.88;
@@ -2953,7 +2958,7 @@ function damageEnemy(w,p,e,mult,src){
   const frontal=Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=DATA.weaponTypes.hammer.stun.headArc/2;
   const weakPart=!!(part&&part.weak);
   // 部位の倍率。弓の矢がボスの弱点に当たったときは大ダメージ
-  if(part){const bw=(DATA.weaponTypes[s.weaponType]||{}).bow;dmg*=(weakPart&&src.arrow&&bw&&bw.weakMult)?bw.weakMult:(part.mult||1);}
+  if(part){const wd=DATA.weaponTypes[s.weaponType]||{},bw=wd.bow||wd.shuriken;dmg*=(weakPart&&src.arrow&&bw&&bw.weakMult)?bw.weakMult:(part.mult||1);}
   const weakHit=e.boss&&s.weakCrit>0&&(part?weakPart:frontal);
   const crit=RNG.next()*100<s.crit+(weakHit?s.weakCrit:0);
   if(crit)dmg*=1+s.critDmg/100;
@@ -3243,12 +3248,24 @@ function fireArrow(w,p,opt){
   if(coat){coat.shots--;if(coat.shots<=0){p.coat=null;emit(w,{type:'info',pid:p.id,text:'瓶の中身がなくなった'});}}
   emit(w,{type:'swing',pid:p.id,combo:false,level:lv,x:p.x,y:p.y,w:s.weaponType});
 }
+/** 手裏剣：横に並べて2枚（shots）をまっすぐ投げる。飛ぶ距離は武器のリーチ（range） */
+function fireShuriken(w,p,opt){
+  const s=p.stats,wt=DATA.weaponTypes[s.weaponType],sh=wt.shuriken,a=p.facing;
+  const nx=-Math.sin(a),ny=Math.cos(a);
+  for(let i=0;i<sh.shots;i++){
+    const off=(i-(sh.shots-1)/2)*sh.side;
+    w.projectiles.push({id:w.nextId++,kind:'playerShuriken',owner:'player',pid:p.id,x:p.x+Math.cos(a)*16+nx*off,y:p.y+Math.sin(a)*16+ny*off,
+      vx:Math.cos(a)*sh.speed,vy:Math.sin(a)*sh.speed,angle:a,r:7,life:wt.range/sh.speed,hit:new Set(),status:null,mult:(opt&&opt.mult)||1});
+  }
+  emit(w,{type:'swing',pid:p.id,combo:false,level:0,x:p.x,y:p.y,w:s.weaponType});
+}
 function playerAttack(w,p,opt){
   const s=p.stats;
   p.atkTimer=s.attackInterval;
   p.swingTotal=Math.min(s.swingTime,s.attackInterval*0.9);p.swing=p.swingTotal;
   p.swingAngle=p.facing;p.swingDir=-p.swingDir;p.combo++;p.lastLevel=opt.level||0;
   if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].bow){fireArrow(w,p,opt);return;}
+  if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].shuriken){fireShuriken(w,p,opt);return;}
   const third=!!s.effects.combo&&p.combo%3===0;
   w.attacks.push({id:w.nextId++,pid:p.id,angle:p.facing,range:s.range,arc:s.arc,life:s.activeTime,hit:new Set(),tip:s.tip,
     mult:(opt.mult||1)*(third?1.6:1),stunMult:opt.stunMult||1});
@@ -4151,7 +4168,7 @@ function updateProjectiles(w,dt){
         const p=w.players[id];if(p.dead)continue;
         if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src)){if(pr.inflict)inflictPlayer(w,p,pr.inflict);if(pr.slow)slowPlayer(w,p,pr.slow);alive=false;break;}
       }
-    }else if(alive&&pr.kind==='playerArrow'){
+    }else if(alive&&(pr.kind==='playerArrow'||pr.kind==='playerShuriken')){
       const p=w.players[pr.pid];
       if(p)for(const e of w.enemies){
         if(e.dead||e.hidden||pr.hit.has(e.id))continue;
@@ -6339,6 +6356,12 @@ const Renderer={
         ctx.fillStyle=wl.main;ctx.fillRect(r+12,-10,14,20);
         ctx.fillStyle=rc;ctx.fillRect(r+12,-10,14,3);ctx.fillRect(r+12,7,14,3);
         ctx.strokeStyle=wl.dark;ctx.lineWidth=1.5;ctx.strokeRect(r+12,-10,14,20);wDeco();
+      }else if(wtype==='shuriken'){ // 手裏剣：手に1枚構える（投げると飛んでいく）
+        ctx.fillStyle='#303840';ctx.beginPath();ctx.arc(r+6,0,2,0,TAU);ctx.fill();
+        ctx.fillStyle=rc;ctx.beginPath();ctx.arc(r+6,0,2.4,0,TAU);ctx.fill();
+        ctx.fillStyle=bl;ctx.beginPath();
+        for(let k=0;k<4;k++){const a=k*Math.PI/2;ctx.moveTo(r+6+Math.cos(a)*7,Math.sin(a)*7);ctx.lineTo(r+6+Math.cos(a+Math.PI/4)*2.5,Math.sin(a+Math.PI/4)*2.5);ctx.lineTo(r+6+Math.cos(a+Math.PI/2)*0.5,Math.sin(a+Math.PI/2)*0.5);}
+        ctx.closePath();ctx.fill();wDeco();
       }else if(wtype==='bow'){ // 弓：しなる弓と弦。チャージ中は弦を後ろに引き、矢をつがえる
         const bx=r+4,tx=bx+22*Math.cos(1.2),ty=22*Math.sin(1.2);
         const pull=p.charging&&!p.dead&&wt.charge?clamp(p.charge/wt.charge.levels[wt.charge.levels.length-1],0,1):0;
@@ -6588,7 +6611,13 @@ const Renderer={
   },
   drawProjectile(ctx,pr){
     ctx.save();ctx.translate(pr.x,pr.y);ctx.rotate(pr.angle);
-    if(pr.kind==='arrow'||pr.kind==='playerArrow'){
+    if(pr.kind==='playerShuriken'){ // 手裏剣：くるくる回る四つ又の刃
+      ctx.rotate(this.time*22+pr.id);
+      ctx.fillStyle='#c8d2dc';ctx.beginPath();
+      for(let k=0;k<4;k++){const a=k*Math.PI/2;ctx.moveTo(Math.cos(a)*8,Math.sin(a)*8);ctx.lineTo(Math.cos(a+Math.PI/4)*2.5,Math.sin(a+Math.PI/4)*2.5);ctx.lineTo(Math.cos(a+Math.PI/2)*0.5,Math.sin(a+Math.PI/2)*0.5);}
+      ctx.closePath();ctx.fill();
+      ctx.fillStyle='#303840';ctx.beginPath();ctx.arc(0,0,1.8,0,TAU);ctx.fill();
+    }else if(pr.kind==='arrow'||pr.kind==='playerArrow'){
       ctx.strokeStyle='#d8d0b8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(4,0);ctx.stroke();
       ctx.fillStyle='#e8e8f0';ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(2,-4);ctx.lineTo(2,4);ctx.closePath();ctx.fill();
       ctx.fillStyle=pr.status?({poison:'#a8e040',paralysis:'#ffe040',sleep:'#b898ff'})[pr.status]:'#c04040';ctx.fillRect(-14,-3,4,6);
