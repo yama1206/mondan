@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.43',date:'2026/10/29'};
+const GAME_VERSION={no:'0.45',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2381,7 +2381,10 @@ function inStartRoom(map,x,y,r){
 }
 /** そのエンティティがここへは進めないか（壁、または敵にとってのスタート部屋） */
 function cannotEnter(map,e,x,y){
-  return circleHitsWall(map,x,y,e.r)||(e.type!=='player'&&inStartRoom(map,x,y,e.r));
+  if(circleHitsWall(map,x,y,e.r))return true;
+  if(e.type!=='player')return inStartRoom(map,x,y,e.r); // 敵はスタート部屋に入れない
+  // 最初の部屋から出たあとは、プレイヤーも外から部屋へは戻れない（中で動くのは自由）
+  return !!map.startLocked&&inStartRoom(map,x,y,e.r)&&!inStartRoom(map,e.x,e.y,e.r);
 }
 function moveEntity(map,e,dx,dy){
   let blocked=false;
@@ -3434,6 +3437,11 @@ function unstickEnemy(w,e,dt){
   const to=pick||anyPick;
   if(to&&!cannotEnter(w.map,e,to.x,to.y)){e.x=to.x;e.y=to.y;}
 }
+/** 最初の部屋（スタート部屋）にいるあいだは、敵に見つからない。誰かが部屋から出たら以後ずっと解除 */
+function playerHidden(w,p){
+  if(w.leftStart||!w.map.rooms||!w.map.rooms.start)return false;
+  return inStartRoom(w.map,p.x,p.y,p.r);
+}
 function updateEnemy(w,e,dt){
   e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;e.hitAccT=(e.hitAccT||0)-dt;
   // 呪術師の強化が切れたら元に戻す
@@ -3464,7 +3472,7 @@ function updateEnemy(w,e,dt){
   if(e.boss){ENEMY_AI[DATA.enemies[e.type].ai](w,e,p,dt);return;}
   const d=Math.hypot(p.x-e.x,p.y-e.y);
   if(!e.aggro){
-    if(d<CONFIG.enemySight&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){e.aggro=true;alertNearby(w,e);}
+    if(d<CONFIG.enemySight&&!playerHidden(w,p)&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){e.aggro=true;alertNearby(w,e);}
     else return;
   }
   const fn=ENEMY_AI[DATA.enemies[e.type].ai];
@@ -4445,6 +4453,9 @@ function updateWorld(w,dt,inputs){
   for(const id in w.players){const p=w.players[id];before[id]={x:p.x,y:p.y};}
   for(const id in w.players)updatePlayer(w,w.players[id],inputs[id]||EMPTY_INPUT,dt);
   enforceLeash(w,before);
+  // 誰かが最初の部屋から出たら、敵に見つかるようになる
+  if(!w.leftStart)for(const id in w.players){const p=w.players[id];if(!p.dead&&!playerHidden(w,p)){w.leftStart=true;break;}}
+  if(w.leftStart)w.map.startLocked=true; // 一度出たら、最初の部屋には戻れない
   updateRevive(w,dt);
   updateBossRoom(w);
   // w._atk：今動いている魔物の種類（攻撃が当たったときの状態異常に使う）。新しく撃った飛び道具にも覚えさせる
