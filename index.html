@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.41',date:'2026/10/29'};
+const GAME_VERSION={no:'0.42',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3432,7 +3432,7 @@ function unstickEnemy(w,e,dt){
     }
   }
   const to=pick||anyPick;
-  if(to&&!cannotEnter(map,e,to.x,to.y)){e.x=to.x;e.y=to.y;}
+  if(to&&!cannotEnter(w.map,e,to.x,to.y)){e.x=to.x;e.y=to.y;}
 }
 function updateEnemy(w,e,dt){
   e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;e.hitAccT=(e.hitAccT||0)-dt;
@@ -8552,6 +8552,11 @@ const App={
     requestAnimationFrame(t=>this.loop(t));
   },
   loop(now){
+    try{this.frame(now);}
+    catch(e){console.error('フレーム処理で例外',e);} // 1フレームの失敗でゲームの描画を止めない
+    requestAnimationFrame(t=>this.loop(t));
+  },
+  frame(now){
     let dt=(now-this.last)/1000;this.last=now;
     if(!(dt>0))dt=0;if(dt>0.1)dt=0.1;
     Input.pollPads(dt);
@@ -8582,7 +8587,6 @@ const App={
     Renderer.update(dt);
     Renderer.draw(this.world,this.localId,this);
     this.updateSound();
-    requestAnimationFrame(t=>this.loop(t));
   },
   /** BGMの切り替え（ステージ→ボス→怒り）と、聞こえる位置・チャージ音 */
   updateSound(){
