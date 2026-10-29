@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.52',date:'2026/10/29'};
+const GAME_VERSION={no:'0.54',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -488,6 +488,10 @@ const DATA={
     lizard_sword:{name:'大蜥蜴の剣',slot:'weapon',wtype:'sword',atk:16,crit:8,fixed:[{stat:'atkSpd',v:3}],slots:1},
     bone_tachi:{name:'骨の太刀',slot:'weapon',wtype:'tachi',atk:14,crit:8,fixed:[{stat:'critDmg',v:4}]},
     lizard_bow:{name:'大蜥蜴の弓',slot:'weapon',wtype:'bow',atk:13,crit:7,fixed:[{stat:'critDmg',v:4}]},
+    boar_sword:{name:'猪牙の剣',slot:'weapon',el:{k:'thunder',v:8},wtype:'sword',atk:15,crit:4,fixed:[{stat:'atkSpd',v:3}],slots:1},
+    boar_hammer:{name:'猪牙の大槌',slot:'weapon',el:{k:'thunder',v:8},wtype:'hammer',atk:17,crit:1,fixed:[{stat:'def',v:3}],slots:1},
+    sanshou_bow:{name:'大山椒の弓',slot:'weapon',el:{k:'water',v:8},wtype:'bow',atk:13,crit:5,fixed:[{stat:'critDmg',v:6}],slots:1},
+    sanshou_dual:{name:'大山椒の双剣',slot:'weapon',el:{k:'water',v:7},wtype:'dual',atk:12,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
     bone_hammer:{name:'骨の大槌',slot:'weapon',wtype:'hammer',atk:14,crit:1,fixed:[{stat:'def',v:2}]},
     bone_lance:{name:'骨のランス',slot:'weapon',wtype:'lance',atk:13,crit:6,fixed:[{stat:'atkSpd',v:3}]},
     beast_lance:{name:'獣牙のランス',slot:'weapon',wtype:'lance',atk:12,crit:6,slots:1},
@@ -735,6 +739,12 @@ const DATA={
     enchant_orb2:{name:'付与の玉（上質）',color:'#5fd35f',desc:'防具に付与スキルを付ける玉（上質）。ステージ7以降のボス・宝箱・依頼から手に入る。'},
     enchant_orb3:{name:'付与の玉（最上）',color:'#ffb030',desc:'防具に付与スキルを付ける玉（最上）。ステージ8以降のボス・依頼から手に入る。'},
     bull_horn:{name:'暴角獣の角',color:'#f0e6c8',desc:'草原の暴角獣の大きな角。（風渡る草原）'},
+    sanshou_hide:{name:'大山椒魚の皮',color:'#3a6a4a',desc:'ぬめりのある厚い皮。（緑風の森林）'},
+    sanshou_mucus:{name:'大山椒魚の粘液',color:'#8ee0d0',desc:'水のように澄んだ粘液。（緑風の森林）'},
+    rhino_horn:{name:'鎧犀の角',color:'#ece6d0',desc:'草原の鎧犀の硬い角。（風渡る草原）'},
+    rhino_plate:{name:'鎧犀の甲板',color:'#9aa0a8',desc:'背中を覆う分厚い甲板。（風渡る草原）'},
+    boar_tusk:{name:'猪の牙',color:'#f4ecd6',desc:'轟牙の大猪の鋭い牙。（風渡る草原）'},
+    boar_hide:{name:'猪の毛皮',color:'#6a4a34',desc:'硬くて粗い毛皮。（風渡る草原）'},
     bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
     bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
     // ---- 風渡る草原のボス素材 ----
@@ -886,7 +896,7 @@ const DATA={
   },
   enemyElem:{
     goblin:{weak:['fire']},goblin_archer:{weak:['fire']},slime:{atk:'water',weak:['thunder']},forest_wolf:{weak:['fire'],strong:['ice']},
-    meadow_bull:{weak:['thunder','ice']},gale_bird:{atk:'thunder',weak:['ice'],strong:['water']},rock_lizard:{atk:'fire',weak:['water','ice']},
+    meadow_bull:{weak:['thunder','ice']},rhino:{weak:['thunder']},boar:{weak:['ice']},salamander:{weak:['fire'],strong:['water']},gale_bird:{atk:'thunder',weak:['ice'],strong:['water']},rock_lizard:{atk:'fire',weak:['water','ice']},
     archer:{weak:['dragon','fire']},beetle:{weak:['fire'],strong:['water']},mushroom:{weak:['fire']},
     wolf:{weak:['fire'],strong:['ice']},forest_king:{atk:'ice',weak:['fire','thunder']},stag_beetle:{weak:['fire'],strong:['thunder']},
     poison_frog:{atk:'water',weak:['thunder']},leech:{weak:['fire','thunder']},carnivore_plant:{weak:['fire'],strong:['water']},
@@ -931,6 +941,9 @@ const DATA={
     grados:[{id:'head',name:'頭',x:0.7,y:0,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},{id:'armL',name:'腕',x:0.3,y:-1.0,r:0.42,mult:0.9},{id:'armR',name:'腕',x:0.3,y:1.0,r:0.42,mult:0.9}],
     forest_king:'wolf',black_wolf:'wolf',
     meadow_bull:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9}],
+    salamander:[{id:'head',name:'頭',x:1.25,y:0,r:0.5,mult:1.25,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.3,y:0,r:0.5,mult:0.9}],
+    rhino:[{id:'head',name:'頭',x:1.0,y:0,r:0.45,mult:1.25,weak:true,head:true,guard:'dir'},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1,guard:'dir'},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9,guard:'dir'}],
+    boar:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.25,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.42,mult:0.9}],
     gale_bird:[{id:'head',name:'頭',x:0.8,y:0,r:0.36,mult:1.4,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.6,mult:1},
       {id:'wingL',name:'翼',x:0.05,y:-1.25,r:0.55,mult:0.8},{id:'wingR',name:'翼',x:0.05,y:1.25,r:0.55,mult:0.8},{id:'tail',name:'尾羽',x:-1.0,y:0,r:0.35,mult:0.9}],
     rock_lizard:[{id:'head',name:'頭',x:1.3,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.8,mult:0.9},{id:'tail',name:'尻尾',x:-1.4,y:0,r:0.38,mult:1},{id:'tail2',name:'尻尾',x:-1.95,y:0,r:0.3,mult:1}],
@@ -958,6 +971,32 @@ const DATA={
     // ステージ1（風渡る草原）
     meadow_bull:{name:'草原の暴角獣',ai:'bull',hp:1800,atk:23,def:6,r:33,speed:118,stunMax:110,stunTime:4,color:'#9a7a4a',drops:'meadow_bull',boss:true,
       pal:{body:'#9a7a4a',dark:'#5a4428',rage:'#b0583a',rageDark:'#6a2e1c',eye:'#fff0c0',rageEye:'#ff3a2a',horn:'#f0e6c8'}},
+    // 森の強敵：樹海の大山椒魚（長い舌・体をくねらせる体当たり・水属性の粘液）
+    salamander:{name:'樹海の大山椒魚',ai:'pattern',look:'salamander',hp:2800,atk:26,def:7,r:38,speed:95,stunMax:120,stunTime:4,color:'#3a6a4a',drops:'salamander',boss:true,
+      pattern:[
+        {k:'crack',wind:0.9,cd:4.5,dmg:1.1,len:300,width:34,hz:'poison'},
+        {k:'charge',wind:0.7,cd:5,dmg:1.25},
+        {k:'shot',wind:0.7,cd:4,dmg:0.9,n:3,spread:0.6,speed:300,kind:'mucus',el:'water'},
+        {k:'sweep',wind:0.7,cd:3.2,dmg:1.1,r:110,arc:Math.PI*0.6},
+      ],
+      pal:{body:'#3a6a4a',dark:'#1e3a28',rage:'#6a5a2a',rageDark:'#3a2e12',eye:'#ffe060',rageEye:'#ff4030',belly:'#c8d8a0',spot:'#a0c060'}},
+    // 草原の4体目・5体目のボス：鎧犀は正面からの攻撃に強い、猪は突進と土塊を飛ばす
+    rhino:{name:'草原の鎧犀',ai:'pattern',look:'rhino',hp:2300,atk:24,def:12,r:36,speed:105,stunMax:120,stunTime:4,color:'#7a7a80',drops:'rhino',boss:true,
+      guard:{arc:120*Math.PI/180,mult:0.2},turn:1.6,
+      pattern:[
+        {k:'charge',wind:0.8,cd:5,dmg:1.25},
+        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:115,arc:Math.PI*0.6},
+        {k:'slam',wind:0.9,cd:5.5,dmg:1.1,r:125},
+      ],
+      pal:{body:'#7a7a80',dark:'#4a4a52',plate:'#9aa0a8',rage:'#a05a3a',rageDark:'#5a2a18',eye:'#ffe0a0',rageEye:'#ff4030',horn:'#ece6d0'}},
+    boar:{name:'轟牙の大猪',ai:'pattern',look:'boar',hp:2200,atk:23,def:5,r:32,speed:150,stunMax:105,stunTime:4,color:'#6a4a34',drops:'boar',boss:true,
+      pattern:[
+        {k:'charge',wind:0.6,cd:4,dmg:1.3,el:'thunder'},
+        {k:'toss',wind:1.0,cd:5,dmg:1.1,r:70},
+        {k:'burrow',cd:7,dmg:1.2,r:90},
+        {k:'sweep',wind:0.6,cd:3,dmg:1.0,r:110,arc:Math.PI*0.6},
+      ],
+      pal:{body:'#6a4a34',dark:'#3a2818',rage:'#a04a2a',rageDark:'#5a2010',eye:'#ffe8c0',rageEye:'#ff4030',tusk:'#f4ecd6',snout:'#8a6a52',dirt:'#7a5a3a'}},
     // 草原の2体目・3体目のボス（技の並びは pattern。動きは沼地のボスと同じ仕組み）
     gale_bird:{name:'疾風怪鳥ゲイルホーク',ai:'pattern',look:'galeBird',hp:1500,atk:17,def:3,r:28,speed:168,stunMax:100,stunTime:4,color:'#5a8ac0',drops:'gale_bird',boss:true,
       pattern:[
@@ -1359,6 +1398,24 @@ const DATA={
       {type:'deco',chance:0.85},
       {type:'deco',chance:0.45},
     ]},
+    salamander:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'sanshou_hide',chance:1.0,min:2,max:3},
+      {type:'mat',id:'sanshou_mucus',chance:1.0,min:1,max:2},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
+    rhino:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'rhino_horn',chance:1.0,min:1,max:2},
+      {type:'mat',id:'rhino_plate',chance:1.0,min:2,max:3},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
+    boar:{rarityBoost:2.0,rolls:[
+      {type:'mat',id:'boar_tusk',chance:1.0,min:1,max:2},
+      {type:'mat',id:'boar_hide',chance:1.0,min:2,max:3},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
+      {type:'deco',chance:0.7},{type:'deco',chance:0.3},
+    ]},
     gale_bird:{rarityBoost:2.0,rolls:[
       {type:'mat',id:'gale_feather',chance:1.0,min:2,max:3},
       {type:'mat',id:'gale_talon',chance:1.0,min:1,max:2},
@@ -1587,6 +1644,8 @@ const DATA={
     {id:'m1_slime',stage:1,key:true,name:'跳ねる緑の群れ',desc:'草原の浅瀬で増えすぎた緑の粘体を8体倒せ。',goal:{type:'kill',target:'slime',count:8},reward:{gold:180,mats:{slime_gel:2}}},
     {id:'m1_hunt',stage:1,name:'素材集め：草原',desc:'草原の魔物を合わせて15体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:15},reward:{gold:220,mats:{goblin_hide:1,slime_gel:1}}},
     {id:'m1_bird',stage:1,after:'m1_boss',boss:'gale_bird',name:'【強敵】草原の疾風怪鳥',desc:'草原の空を、風をまとった巨大な鳥が飛び回っている。素早い急降下と、扇状に飛ばす羽根に気をつけろ。',goal:{type:'boss'},reward:{gold:900,mats:{gale_feather:2,reinforce_orb:2},decos:1}},
+    {id:'m1_rhino',stage:1,after:'m1_lizard',boss:'rhino',name:'【強敵】草原の鎧犀',desc:'硬い装甲をまとった大型のサイが、草原の道を塞いでいる。正面からの攻撃はほとんど通らない。横や後ろへ回り込め。',goal:{type:'boss'},reward:{gold:1200,mats:{rhino_plate:2,reinforce_orb:2},decos:1}},
+    {id:'m1_boar',stage:1,after:'m1_rhino',boss:'boar',name:'【強敵】轟牙の大猪',desc:'突進で地面を掘り返し、土塊を飛ばす大型のイノシシ。突進の直線に入らないように。',goal:{type:'boss'},reward:{gold:1300,mats:{boar_tusk:2,reinforce_orb:2},decos:1}},
     {id:'m1_lizard',stage:1,after:'m1_bird',boss:'rock_lizard',name:'【強敵】岩肌の大蜥蜴',desc:'草原の岩場に、岩のような鱗の大蜥蜴が棲みついた。噛みつき・尻尾の振り回し・吐き出す岩に注意。',goal:{type:'boss'},reward:{gold:1100,mats:{lizard_scale:2,reinforce_orb:2},decos:1}},
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。12体退治してほしい。',goal:{type:'kill',target:'goblin',count:12},reward:{gold:240,mats:{goblin_hide:2,scrap_iron:1}}},
@@ -1632,6 +1691,7 @@ const DATA={
     {id:'free_n',stage:7,explore:true,name:'【探索】氷雪地帯',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
     {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:1200,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
     {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:1400,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
+    {id:'s2_sanshou',stage:2,after:'s1_rabbit',boss:'salamander',name:'【強敵】樹海の大山椒魚',desc:'湿った森の奥に、長い舌と粘液を操る巨大な両生類が潜んでいる。粘液は水の力を帯びている。',goal:{type:'boss'},reward:{gold:1500,mats:{sanshou_mucus:2,reinforce_orb:2},decos:1}},
     {id:'s1_rabbit',stage:2,after:'s1_stag',boss:'forest_rabbit',name:'【強敵】古森の跳ね兎',desc:'森の奥で、白い毛並みの大きな兎が跳ね回っている。とても素早く、突進の前には足をためる。横へかわして背後から攻めろ。',goal:{type:'boss'},reward:{gold:1600,mats:{rabbit_fur:2,rabbit_tuft:2,reinforce_orb:2},decos:1}},
     {id:'s2_dragon',stage:8,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:2400,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
     // 自由探索（目標なし・報酬なし。好きなときに帰れる）
@@ -1651,6 +1711,9 @@ const DATA={
     beetle:{stage:[2],role:'防御型',desc:'硬い甲殻に覆われた大きな甲虫。正面からの攻撃はほとんど弾いてしまう。',tip:'向きを変えるのが遅い。横や背後に回り込んで攻撃しよう。'},
     mushroom:{stage:[2],role:'範囲妨害型',desc:'近づいた者に毒胞子を浴びせるキノコ。胞子の雲の中にいると少しずつ体力が減る。',tip:'緑の円が出たら離れる。雲が消えてから近づき、一気に倒そう。'},
     forest_king:{stage:[2],role:'ボス',desc:'森林を支配する巨大な狼。突進・前方の薙ぎ払い・周囲への咆哮を使い分ける。',tip:'怒ると突進が何度も続く。帯の向きをよく見て横へ。咆哮は円の外へ。'},
+    salamander:{stage:[2],role:'ボス',desc:'湿った森の奥に棲む巨大な両生類。長い舌で狙い、体をくねらせて突っ込み、水の粘液を飛ばす。',tip:'舌は細く長い直線。粘液は水の塊なので、横へよけながら攻めよう。'},
+    rhino:{stage:[1],role:'ボス',desc:'硬い装甲をまとった大型のサイ。正面からの攻撃にとても強い。',tip:'正面は弾かれやすい。横や後ろから攻めよう。角の突進は直線。'},
+    boar:{stage:[1],role:'ボス',desc:'勢いよく突進し、地面を掘り返して土塊を飛ばす大型のイノシシ。',tip:'突進は直線で速い。掘り返しの後は土塊が飛ぶので、円の外へ。'},
     meadow_bull:{stage:[1],role:'ボス',desc:'草原の主。角で突き、薙ぎ払い、足で大地を踏み鳴らす。',tip:'突進は直線。突進の後は大きな隙がある。踏みつけの円の外へ逃げよう。'},
     wolf:{stage:[2],role:'ボス',desc:'森の最奥に棲みつく古い狼。噛みつき・突進・地面への叩きつけで襲いかかる。',tip:'叩きつけの円は大きい。弱ると怒り、叩きつけの周りにも衝撃が走る。'},
     poison_frog:{stage:[3],role:'跳躍攻撃型',desc:'沼の毒を含んだ蛙。大きく跳ねて飛びかかってくるほか、離れると毒の玉を吐く。毒の玉の威力は低いが、当たると必ず毒になる。',tip:'跳ねる直前に体が沈むので、その瞬間に横へ避けよう。'},
@@ -1955,6 +2018,10 @@ const DATA={
     {id:'r_mire_waist',out:{type:'equip',id:'mire_faulds'},cost:{mire_core:1,swamp_moss:3},stage:3},
     {id:'r_mire_legs',out:{type:'equip',id:'mire_greaves'},cost:{mire_core:1,swamp_moss:2,leech_skin:2},stage:3},
     // 暴角シリーズ（草原の暴角獣）
+    {id:'r_boar_sword',out:{type:'equip',id:'boar_sword'},cost:{boar_tusk:2,boar_hide:1,scrap_iron:3},stage:1},
+    {id:'r_boar_hammer',out:{type:'equip',id:'boar_hammer'},cost:{boar_tusk:2,boar_hide:2,scrap_iron:4},stage:1},
+    {id:'r_sanshou_bow',out:{type:'equip',id:'sanshou_bow'},cost:{sanshou_mucus:2,sanshou_hide:1,goblin_string:1},stage:2},
+    {id:'r_sanshou_dual',out:{type:'equip',id:'sanshou_dual'},cost:{sanshou_hide:2,sanshou_mucus:2,scrap_iron:2},stage:2},
     {id:'r_bull_hammer',out:{type:'equip',id:'bull_hammer'},cost:{bull_horn:2,bull_hide:1,scrap_iron:4}},
     {id:'r_bull_gs',out:{type:'equip',id:'bull_gs'},cost:{bull_horn:2,bull_hide:2,scrap_iron:3}},
     {id:'r_bull_bow',out:{type:'equip',id:'bull_bow'},cost:{bull_horn:2,goblin_string:2,beast_hide:1}},
@@ -2968,7 +3035,7 @@ function inTelegraph(t,x,y,r){
 /** 武器スキル（Qで発動）の効果が今かかっているか */
 function wsActive(p,id){return !!(p&&p.ws&&p.ws.id===id&&!p.dead);}
 /* ---------- 被ダメージ・与ダメージ ---------- */
-function hitPlayer(w,p,raw,sx,sy,src){
+function hitPlayer(w,p,raw,sx,sy,src,el){
   if(p.dead)return false;
   if(p.dodgeInv>0){
     // ジャスト回避：回避の出始めで攻撃をかわすと、回避のクールタイムがリセット（太刀はさらに「見切り」で攻撃力アップ）
@@ -2991,7 +3058,7 @@ function hitPlayer(w,p,raw,sx,sy,src){
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
   if(p.curseT>0)dmg*=1+DATA.playerStatus.curse.dmgUp/100; // 呪い：受けるダメージが増える
-  {const ee=DATA.enemyElem[src||w._atk];if(ee&&ee.atk){const res=clamp(p.stats.elemRes[ee.atk]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
+  {const atkEl=el||((DATA.enemyElem[src||w._atk]||{}).atk);if(atkEl){const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
   p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
@@ -3094,7 +3161,7 @@ function damageEnemy(w,p,e,mult,src){
   dmg*=1+(e.boss?s.bossDmgPct:s.minionDmgPct)/100;
   // 正面からの攻撃に強い魔物（森甲虫）：側面・背後からなら通常どおり
   const ed=DATA.enemies[e.type];let guarded=false;
-  if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&(part?!!part.guard:Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2)){dmg*=ed.guard.mult;guarded=true;}
+  if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&(part&&part.guard!=='dir'?!!part.guard:Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2)){dmg*=ed.guard.mult;guarded=true;}
   dmg=Math.max(1,Math.round(dmg-e.armor*0.5));
   if(ed.physRes)dmg=Math.max(1,Math.round(dmg*ed.physRes)); // 物理に硬い魔物（地底王）
   // 属性ダメージ：防御力で減らず、会心の影響も受けない。モーションの重さ（倍率）の平方根に比例
@@ -3704,7 +3771,7 @@ function updateBossPattern(w,e,p,dt){
           else if(mv.k==='crack'){ // 溶岩の亀裂：直線の帯を予告し、時間差で炎が噴き出す
             addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:mv.len+e.r,width:mv.width,total:wind,dmg:0,owner:e.id});
             for(let i=1;i<=6;i++){const dd=e.r+(mv.len*i)/6;
-              w.hazards.push({id:w.nextId++,kind:'fire',x:e.x+Math.cos(ang)*dd,y:e.y+Math.sin(ang)*dd,r:mv.width*0.5,t:0,life:0.9,tick:0.45,acc:0,dmg:e.atk*mv.dmg*0.5,delay:wind+i*0.05});}
+              w.hazards.push({id:w.nextId++,kind:mv.hz||'fire',x:e.x+Math.cos(ang)*dd,y:e.y+Math.sin(ang)*dd,r:mv.width*0.5,t:0,life:0.9,tick:0.45,acc:0,dmg:e.atk*mv.dmg*0.5,delay:wind+i*0.05});}
           }
         }
       }else{
@@ -3723,7 +3790,7 @@ function updateBossPattern(w,e,p,dt){
         for(let i=0;i<n;i++){
           const a=e.atkAngle+(n===1?0:(i-(n-1)/2)*(mv.spread||0.4)/(n-1));
           w.projectiles.push({id:w.nextId++,kind:mv.kind||'soul',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),
-            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a});
+            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a,el:mv.el});
         }
         emit(w,{type:'shoot',x:e.x,y:e.y});
         e.state='recover';e.timer=0.6;break;
@@ -3741,7 +3808,7 @@ function updateBossPattern(w,e,p,dt){
       const blocked=moveEntity(w.map,e,Math.cos(e.atkAngle)*sp,Math.sin(e.atkAngle)*sp);
       e.chargeLeft-=sp;
       for(const id in w.players){const q=w.players[id];if(q.dead||e.hitSet.has(q.id))continue;
-        if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,dmg,e.x,e.y);}}
+        if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,dmg,e.x,e.y,null,e.curMv&&e.curMv.el);}}
       if(blocked||e.chargeLeft<=0){
         if(blocked)emit(w,{type:'bump',x:e.x,y:e.y});
         e.state='recover';e.timer=blocked?1.1:0.6;
@@ -4316,7 +4383,7 @@ function updateProjectiles(w,dt){
     if(alive&&pr.owner==='enemy'){
       for(const id in w.players){
         const p=w.players[id];if(p.dead)continue;
-        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src)){if(pr.inflict)inflictPlayer(w,p,pr.inflict);if(pr.slow)slowPlayer(w,p,pr.slow);alive=false;break;}
+        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src,pr.el)){if(pr.inflict)inflictPlayer(w,p,pr.inflict);if(pr.slow)slowPlayer(w,p,pr.slow);alive=false;break;}
       }
     }else if(alive&&(pr.kind==='playerArrow'||pr.kind==='playerShuriken')){
       const p=w.players[pr.pid];
@@ -5549,6 +5616,9 @@ const Renderer={
       case 'galeBird':this.drawGaleBird(ctx,e,hurt,ed.pal);break;
       case 'rockLizard':this.drawRockLizard(ctx,e,hurt,ed.pal);break;
       case 'stagBeetle':this.drawStagBeetle(ctx,e,hurt,ed.pal);break;
+      case 'rhino':this.drawRhino(ctx,e,hurt,ed.pal);break;
+      case 'boar':this.drawBoar(ctx,e,hurt,ed.pal);break;
+      case 'salamander':this.drawSalamander(ctx,e,hurt,ed.pal);break;
       case 'bat':this.drawBat(ctx,e,hurt,ed.pal);break;
       case 'rockShell':this.drawRockShell(ctx,e,hurt,ed.pal);break;
       case 'spider':this.drawSpider(ctx,e,hurt,ed.pal);break;
@@ -5710,6 +5780,56 @@ const Renderer={
     ctx.restore();
   },
   /** 大顎クワガタ：つやのある甲殻と、前に突き出た大きな大顎（正面の攻撃を弾く） */
+  drawSalamander(ctx,e,hurt,pal){
+    const r=e.r,rage=e.phase===2,b=hurt?'#ffffff':(rage?pal.rage:pal.body),d=rage?pal.rageDark:pal.dark;
+    ctx.save();ctx.rotate(e.facing);ctx.lineCap='round';
+    // 体をくねらせる：節ごとに横へずらす
+    const seg=[];for(let i=0;i<5;i++){const t=i/4;seg.push({x:-r*0.2-t*r*1.4,y:Math.sin(e.anim*4-i*0.9)*r*0.22*(0.4+t)});}
+    ctx.strokeStyle=d;ctx.lineWidth=r*0.7;ctx.beginPath();ctx.moveTo(r*0.4,0);for(const q of seg)ctx.lineTo(q.x,q.y);ctx.stroke();
+    ctx.strokeStyle=b;ctx.lineWidth=r*0.6;ctx.beginPath();ctx.moveTo(r*0.4,0);for(const q of seg)ctx.lineTo(q.x,q.y);ctx.stroke();
+    // 腹の白さと斑点
+    ctx.fillStyle=pal.spot;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(seg[i].x+r*0.1,seg[i].y-r*0.25,r*0.09,0,TAU);ctx.fill();}
+    // 足（前後2対）
+    ctx.strokeStyle=d;ctx.lineWidth=4;for(const x of [-r*0.1,-r*0.7])for(const s of [-1,1]){const ph=Math.sin(e.anim*5+x)*r*0.1;ctx.beginPath();ctx.moveTo(x,s*r*0.3);ctx.lineTo(x+ph,s*r*0.85);ctx.stroke();}
+    // 大きな頭と目
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(r*0.6,0,r*0.62,r*0.5,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.belly;ctx.beginPath();ctx.ellipse(r*0.7,r*0.2,r*0.42,r*0.22,0,0,TAU);ctx.fill();
+    ctx.fillStyle=rage?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.85,s*r*0.28,r*0.1,0,TAU);ctx.fill();}
+    // 長い舌（攻撃の前ぶれで伸びて見える）
+    if(e.state==='windup'&&e.action==='crack'){ctx.strokeStyle='#e0507a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(r*1.1,0);ctx.lineTo(r*2.6,Math.sin(e.anim*20)*6);ctx.stroke();}
+    ctx.restore();
+  },
+  drawRhino(ctx,e,hurt,pal){
+    const r=e.r,rage=e.phase===2,b=hurt?'#ffffff':(rage?pal.rage:pal.body),d=rage?pal.rageDark:pal.dark;
+    const step=Math.sin(e.anim*5)*r*0.12;
+    ctx.save();ctx.rotate(e.facing);ctx.lineCap='round';
+    ctx.strokeStyle=d;ctx.lineWidth=5;
+    for(const x of [-r*0.5,r*0.35])for(const s of [-1,1]){const ph=s>0?step:-step;ctx.beginPath();ctx.moveTo(x,s*r*0.55);ctx.lineTo(x+ph,s*r*0.95);ctx.stroke();}
+    // 分厚い甲板の胴体
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(-r*0.1,0,r*0.95,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.strokeStyle=pal.plate||d;ctx.lineWidth=2;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(-r*0.4+i*r*0.35,0,r*0.55,-1.1,1.1);ctx.stroke();}
+    // 頭と角
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(r*0.75,0,r*0.4,r*0.4,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.horn;ctx.beginPath();ctx.moveTo(r*1.05,-r*0.12);ctx.lineTo(r*1.6,0);ctx.lineTo(r*1.05,r*0.12);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=rage?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.95,-r*0.2,r*0.09,0,TAU);ctx.fill();
+    ctx.restore();
+  },
+  drawBoar(ctx,e,hurt,pal){
+    const r=e.r,rage=e.phase===2,b=hurt?'#ffffff':(rage?pal.rage:pal.body),d=rage?pal.rageDark:pal.dark;
+    const step=Math.sin(e.anim*8)*r*0.15;
+    ctx.save();ctx.rotate(e.facing);ctx.lineCap='round';
+    ctx.strokeStyle=d;ctx.lineWidth=5;
+    for(const x of [-r*0.55,r*0.4])for(const s of [-1,1]){const ph=s>0?step:-step;ctx.beginPath();ctx.moveTo(x,s*r*0.5);ctx.lineTo(x+ph,s*r*0.9);ctx.stroke();}
+    // 毛並みの胴体と、掘り返した土
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(-r*0.2,0,r*0.9,r*0.65,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.dirt;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(-r*0.7+i*r*0.35,-r*0.55,r*0.12,0,TAU);ctx.fill();}
+    // 頭・鼻先・牙
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(r*0.7,0,r*0.5,r*0.45,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.snout;ctx.beginPath();ctx.ellipse(r*1.12,0,r*0.2,r*0.22,0,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.tusk;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.95,s*r*0.2);ctx.lineTo(r*1.4,s*r*0.32);ctx.lineTo(r*0.95,s*r*0.4);ctx.closePath();ctx.fill();}
+    ctx.fillStyle=rage?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.8,-r*0.25,r*0.09,0,TAU);ctx.fill();
+    ctx.restore();
+  },
   drawStagBeetle(ctx,e,hurt,pal){
     const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
     const pinch=e.state==='windup'&&e.action==='sweep'?0.35:Math.sin(e.anim*3)*0.06;
@@ -6802,6 +6922,9 @@ const Renderer={
       ctx.strokeStyle='#d8d0b8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(4,0);ctx.stroke();
       ctx.fillStyle='#e8e8f0';ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(2,-4);ctx.lineTo(2,4);ctx.closePath();ctx.fill();
       ctx.fillStyle=pr.status?({poison:'#a8e040',paralysis:'#ffe040',sleep:'#b898ff'})[pr.status]:'#c04040';ctx.fillRect(-14,-3,4,6);
+    }else if(pr.kind==='mucus'){ // 大山椒魚の粘液：水属性の塊
+      ctx.fillStyle='rgba(120,210,200,.4)';ctx.beginPath();ctx.arc(0,0,pr.r+3,0,TAU);ctx.fill();
+      ctx.fillStyle='#8ee0d0';ctx.beginPath();ctx.arc(0,0,pr.r,0,TAU);ctx.fill();
     }else if(pr.kind==='soul'){
       ctx.shadowColor='#a070ff';ctx.shadowBlur=16;
       ctx.fillStyle='rgba(150,120,255,.35)';ctx.beginPath();ctx.ellipse(-10,0,14,6,0,0,TAU);ctx.fill();
@@ -7054,7 +7177,7 @@ const Portraits={
     try{
       const d=DATA.enemies[id],c=document.createElement('canvas');c.width=c.height=size;
       const ctx=c.getContext('2d'),look=d.look||d.ai;
-      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='giantWorm'||look==='rockLizard'||look==='stagBeetle'||look==='rabbit'||look==='centipede'||look==='golem'||look==='mole')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
+      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='giantWorm'||look==='rockLizard'||look==='stagBeetle'||look==='rhino'||look==='boar'||look==='salamander'||look==='rabbit'||look==='centipede'||look==='golem'||look==='mole')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
       const sc=size/span;
       ctx.translate(size/2-(look==='dragon'?d.r*0.45*sc:look==='knight'?d.r*0.8*sc:look==='wolf'?d.r*0.15*sc:0),size/2+(look==='ghost'?4*sc:0));ctx.scale(sc,sc);
       const e={id:1,type:id,x:0,y:0,r:d.r,facing:look==='dragon'||look==='wolf'||look==='knight'?0:0.6,state:'chase',anim:1,hurt:0,phase:1,timer:0,z:0,boss:!!d.boss,aimTime:d.aimTime||0.8,atkAngle:0};
