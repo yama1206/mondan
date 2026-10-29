@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.32',date:'2026/10/29'};
+const GAME_VERSION={no:'0.33',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -877,7 +877,7 @@ const DATA={
     hydra:{weak:['thunder','fire']},venomKing:{weak:['fire'],strong:['ice']},mireGiant:{weak:['fire','thunder']},
     water_lizard:{atk:'water',weak:['thunder']},jellyfish:{atk:'thunder',weak:['fire']},piranha:{atk:'water',weak:['thunder']},
     crab:{atk:'water',weak:['thunder'],strong:['fire']},eel:{atk:'thunder',weak:['ice'],strong:['water']},water_spirit:{atk:'water',weak:['thunder','dragon']},
-    aquarios:{atk:'water',weak:['thunder','dragon']},turtle:{atk:'water',weak:['thunder'],strong:['fire']},thunderEel:{atk:'thunder',weak:['ice'],strong:['water']},
+    aquarios:{atk:'water',weak:['thunder','dragon']},turtle:{atk:'water',weak:['thunder'],strong:['fire']},thunderEel:{atk:'thunder',weak:['ice'],strong:['water']},giantWorm:{strong:['thunder'],weak:['fire']},
     hobgoblin:{weak:['fire']},sniper:{weak:['dragon']},skeleton:{weak:['dragon','fire']},wisp:{atk:'ice',weak:['fire','dragon']},
     zombie:{weak:['fire']},cursed_knight:{atk:'dragon',weak:['thunder']},shaman:{atk:'dragon',weak:['fire']},
     black_wolf:{atk:'dragon',weak:['thunder'],strong:['ice']},bone_dragon:{atk:'dragon',weak:['dragon','fire'],strong:['ice']},
@@ -924,6 +924,7 @@ const DATA={
     aquarios:[{id:'head',name:'頭',x:1.05,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.75,mult:1},{id:'tail',name:'尾びれ',x:-1.1,y:0,r:0.4,mult:0.9}],
     turtle:[{id:'head',name:'頭',x:1.15,y:0,r:0.36,mult:1.5,weak:true,head:true},{id:'shell',name:'甲羅',x:-0.05,y:0,r:0.95,mult:0.65}],
     thunderEel:[{id:'head',name:'頭',x:1.0,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.6,mult:1},{id:'tail',name:'尻尾',x:-1.25,y:0,r:0.45,mult:0.9}],
+    giantWorm:[{id:'head',name:'頭',x:1.15,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.8,mult:1},{id:'tail',name:'尻尾',x:-1.1,y:0,r:0.4,mult:0.9}],
     bone_dragon:[{id:'head',name:'頭',x:1.4,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.5,y:0,r:0.42,mult:0.9},
       {id:'wingL',name:'翼',x:0,y:-1.4,r:0.5,mult:0.8},{id:'wingR',name:'翼',x:0,y:1.4,r:0.5,mult:0.8}],
   },
@@ -1034,6 +1035,15 @@ const DATA={
         {k:'swarm',wind:0.8,cd:9,n:2,kind:'eel',max:4},
       ],
       pal:{body:'#3a4ab0',dark:'#1a2060',spark:'#ffe858',rage:'#6a3ab0',rageDark:'#2a1460',eye:'#ffffff',rageEye:'#ff40ff'}},
+    // 水辺の隠しボス（依頼「大蚯蚓」）：ゴムのような体。雷は通りにくい
+    giantWorm:{name:'滝つぼの大蚯蚓',ai:'pattern',look:'giantWorm',hp:2800,atk:28,def:5,r:34,speed:100,stunMax:120,stunTime:4,color:'#b07a8a',drops:'giant_worm',boss:true,
+      pattern:[
+        {k:'burrow',cd:7,dmg:1.3,r:90},
+        {k:'sweep',wind:0.7,cd:3.6,dmg:1.1,r:120,arc:Math.PI*0.7},
+        {k:'charge',wind:0.7,cd:5.5,dmg:1.25},
+        {k:'slam',wind:1.0,cd:5.2,dmg:1.2,r:115},
+      ],
+      pal:{body:'#b07a8a',dark:'#5a3445',ring:'#e0b0c0',rage:'#8a3a6a',rageDark:'#3a1430',eye:'#ffffff',rageEye:'#ff6aa0'}},
     // ステージ5
     hobgoblin:{name:'ホブゴブリン',ai:'goblin',hp:80,atk:15,def:5,r:15,speed:100,color:'#4a7a3a',drops:'hobgoblin',pal:{body:'#4a7a3a',dark:'#1e3a12',ear:'#3a6a28',eye:'#ff9040'}},
     sniper:{name:'スケルトンスナイパー',ai:'archer',hp:55,atk:17,def:2,r:12,speed:85,color:'#a9b3cf',drops:'sniper',arrowSpeed:460,aimTime:0.7,pal:{body:'#a9b3cf',dark:'#4a5270'}},
@@ -1184,6 +1194,9 @@ const DATA={
     thunder_eel:{rarityBoost:2.0,rolls:[
       {type:'mat',id:'thunder_core',chance:1.0,min:1,max:2},{type:'mat',id:'eel_sac',chance:1.0,min:2,max:3},
       {type:'mat',id:'reinforce_orb',chance:0.8,min:1,max:1},{type:'deco',chance:0.7},{type:'deco',chance:0.3}]},
+    giant_worm:{rarityBoost:1.5,rolls:[
+      {type:'mat',id:'eel_sac',chance:1.0,min:1,max:2},{type:'mat',id:'jelly_gel',chance:0.8,min:1,max:1},
+      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},{type:'deco',chance:0.4}]},
     poison_frog:{rarityBoost:1.0,rolls:[
       {type:'mat',id:'toxic_gland',chance:0.7,min:1,max:1},
       {type:'mat',id:'swamp_moss',chance:0.4,min:1,max:1}
@@ -1572,6 +1585,7 @@ const DATA={
     {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:1000,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
     {id:'aq_turtle',stage:4,after:'aq_boss',boss:'turtle',name:'【強敵】滝を背負う大亀',desc:'滝の裏から、水を背負った大きな亀が現れた。',goal:{type:'boss'},reward:{gold:1200,mats:{shell_heart:2,crab_shell:2,reinforce_orb:2},decos:1}},
     {id:'aq_eel',stage:4,after:'aq_turtle',boss:'thunderEel',name:'【強敵】雷鳴の大鰻',desc:'渦の淵で雷が鳴っている。雷を纏う大鰻が目を覚ました。',goal:{type:'boss'},reward:{gold:1400,mats:{thunder_core:2,eel_sac:3,reinforce_orb:3},decos:1}},
+    {id:'aq_worm',stage:4,after:'aq_eel',boss:'giantWorm',name:'【強敵】滝つぼの大蚯蚓',desc:'滝つぼの底の泥から、ゴムのような体の大蚯蚓が這い出した。雷はよく通らない。',goal:{type:'boss'},reward:{gold:1500,mats:{jelly_gel:3,eel_sac:2,reinforce_orb:2},decos:1}},
     {id:'s2_hob',stage:8,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを12体倒せ。',goal:{type:'kill',target:'hobgoblin',count:12},reward:{gold:600,mats:{hard_iron:3}}},
     {id:'s2_sniper',stage:8,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを8体倒せ。',goal:{type:'kill',target:'sniper',count:8},reward:{gold:640,mats:{dark_bone:3}}},
     {id:'s2_boss',stage:8,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:1800,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
@@ -1664,6 +1678,7 @@ const DATA={
     aquarios:{stage:[4],role:'ボス',desc:'滝つぼに棲む蒼い海竜。尾の薙ぎ払い、水の弾、突進、ピラニアの召喚を使う。',tip:'突進は直線。水の弾は扇状に広がるので、間をすり抜けよう。'},
     turtle:{stage:[4],role:'ボス',desc:'滝の水を背負う大きな亀。重い叩きつけ、水の弾、尾の薙ぎ払い、滝守の甲殻獣を呼ぶ。',tip:'叩きつけの後に大きな隙がある。'},
     thunderEel:{stage:[4],role:'ボス',desc:'雷を纏う大きなウナギ。素早い突進と雷の叩きつけ、雷電ウナギを呼ぶ。',tip:'突進の前に体が光る。光ったら直線から離れよう。'},
+    giantWorm:{stage:[4],role:'ボス',desc:'ゴムのような体の大きなミミズ。泥に潜んで不意に飛び出し、体をしならせて薙ぎ払う。雷には強い。',tip:'地中に潜ったら足元に注意。雷の攻撃は効きにくい。'},
     hobgoblin:{stage:[8],role:'近接攻撃型',desc:'ゴブリンより大柄で打たれ強い。墓所の回廊や詰所に現れる。',tip:'一撃が重い。振りかぶりを見てから回避しよう。'},
     sniper:{stage:[8],role:'遠距離攻撃型',desc:'遠くから素早い矢を放つスケルトン。',tip:'矢が速いので、狙いが固まる前に射線から外れよう。'},
     skeleton:{stage:[8],role:'近接攻撃型',desc:'剣を手にした骸骨の兵士。複数で現れ、動ける場所を狭めてくる。',tip:'囲まれないよう、通路に引き込んで1体ずつ相手にしよう。'},
@@ -5427,6 +5442,7 @@ const Renderer={
       case 'aquarios':this.drawAquarios(ctx,e,hurt,ed.pal);break;
       case 'turtle':this.drawTurtle(ctx,e,hurt,ed.pal);break;
       case 'thunderEel':this.drawThunderEel(ctx,e,hurt,ed.pal);break;
+      case 'giantWorm':this.drawGiantWorm(ctx,e,hurt,ed.pal);break;
       case 'galeBird':this.drawGaleBird(ctx,e,hurt,ed.pal);break;
       case 'rockLizard':this.drawRockLizard(ctx,e,hurt,ed.pal);break;
       case 'stagBeetle':this.drawStagBeetle(ctx,e,hurt,ed.pal);break;
@@ -6029,6 +6045,24 @@ const Renderer={
     ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*1.0,-r*0.15,r*0.1,0,TAU);ctx.fill();
     ctx.strokeStyle=pal.spark;ctx.lineWidth=2;
     for(let k=0;k<3;k++){const x=-r*(0.5+k*0.6);ctx.beginPath();ctx.moveTo(x,-r*0.9);ctx.lineTo(x+r*0.15,-r*0.5);ctx.lineTo(x-r*0.05,-r*0.45);ctx.lineTo(x+r*0.1,-r*0.05);ctx.stroke();}
+    ctx.restore();
+  },
+  drawGiantWorm(ctx,e,hurt,pal){
+    const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark,ring=pal.ring;
+    const wob=Math.sin(e.anim*4);
+    ctx.save();ctx.rotate(e.facing);ctx.lineWidth=2;
+    // 体：節のある丸い塊を波打たせて並べる（ゴムのようにつややか）
+    for(let i=7;i>=0;i--){
+      const x=-r*1.5+i*r*0.28,y=Math.sin(e.anim*5+i*0.7)*r*0.22,rad=r*(0.5+0.04*(7-i));
+      ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.ellipse(x,y,rad*0.95,rad*0.8,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.ellipse(x-rad*0.25,y-rad*0.3,rad*0.35,rad*0.18,0,0,TAU);ctx.fill();
+      ctx.strokeStyle=ring;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,rad*0.55,0,TAU);ctx.stroke();ctx.lineWidth=2;
+    }
+    // 頭：丸い頭と、口の輪
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.ellipse(r*0.95,wob*r*0.05,r*0.58,r*0.46,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=d;ctx.beginPath();ctx.ellipse(r*1.42,wob*r*0.05,r*0.14,r*0.2,0,0,TAU);ctx.fill();
+    ctx.strokeStyle=ring;ctx.lineWidth=1.2;for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(r*1.42,wob*r*0.05,r*0.08+k*r*0.04,0,TAU);ctx.stroke();}
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const sd of [-1,1]){ctx.beginPath();ctx.arc(r*1.02,sd*r*0.22,r*0.07,0,TAU);ctx.fill();}
     ctx.restore();
   },
   drawBull(ctx,e,hurt,pal){
@@ -6913,7 +6947,7 @@ const Portraits={
     try{
       const d=DATA.enemies[id],c=document.createElement('canvas');c.width=c.height=size;
       const ctx=c.getContext('2d'),look=d.look||d.ai;
-      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='rockLizard'||look==='stagBeetle'||look==='rabbit'||look==='centipede'||look==='golem'||look==='mole')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
+      const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='giantWorm'||look==='rockLizard'||look==='stagBeetle'||look==='rabbit'||look==='centipede'||look==='golem'||look==='mole')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
       const sc=size/span;
       ctx.translate(size/2-(look==='dragon'?d.r*0.45*sc:look==='knight'?d.r*0.8*sc:look==='wolf'?d.r*0.15*sc:0),size/2+(look==='ghost'?4*sc:0));ctx.scale(sc,sc);
       const e={id:1,type:id,x:0,y:0,r:d.r,facing:look==='dragon'||look==='wolf'||look==='knight'?0:0.6,state:'chase',anim:1,hurt:0,phase:1,timer:0,z:0,boss:!!d.boss,aimTime:d.aimTime||0.8,atkAngle:0};
