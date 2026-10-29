@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.37',date:'2026/10/29'};
+const GAME_VERSION={no:'0.38',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -225,6 +225,8 @@ const CONFIG={
 const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝手紙（モンハンのお守り）
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
 const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
+/** 持っている消耗品のID（ITEM_ORDER の順）。切り替えの輪や表示はこれだけを使う */
+const ownedItemIds=bag=>ITEM_ORDER.filter(id=>(bag[id]||0)>0);
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
 const VOL_SCALE=0.25; // 音量の全体倍率。設定の100%が、ゲーム内の音量の上限（以前の50%の大きさ）
 const SLOT_NAMES={weapon:'武器',head:'頭',body:'胴',arms:'腕',waist:'腰',legs:'脚',charm:'手紙'};
@@ -3158,8 +3160,14 @@ function updatePlayer(w,p,inp,dt){
   if(p.flow>0&&wt.flow){p.flowT-=dt;if(p.flowT<=0){p.flow--;p.flowT=wt.flow.decay;}}
   else if(!wt.flow)p.flow=0;
   // 持ち物の選択（切り替え・番号指定）はいつでもできる
-  if(typeof inp.pick==='number'&&inp.pick>=0&&inp.pick<ITEM_ORDER.length)p.sel=inp.pick;
-  else if(inp.cycle)p.sel=(p.sel+(inp.cycle<0?ITEM_ORDER.length-1:1))%ITEM_ORDER.length;
+  // 持っていない消耗品は選べない（切り替えは持っているものだけを順に回る）
+  if(typeof inp.pick==='number'&&inp.pick>=0&&inp.pick<ITEM_ORDER.length){if((p.bag[ITEM_ORDER[inp.pick]]||0)>0)p.sel=inp.pick;}
+  else if(inp.cycle&&ownedItemIds(p.bag).length){
+    const N=ITEM_ORDER.length;let i=p.sel;
+    for(let k=0;k<N;k++){i=(i+(inp.cycle<0?N-1:1))%N;if((p.bag[ITEM_ORDER[i]]||0)>0){p.sel=i;break;}}
+  }
+  // 選んでいたものを使い切ったら、持っている最初のものに移る
+  if((p.bag[ITEM_ORDER[p.sel]]||0)<=0&&ownedItemIds(p.bag).length)p.sel=ITEM_ORDER.indexOf(ownedItemIds(p.bag)[0]);
   if(p.kx||p.ky){moveEntity(w.map,p,p.kx*dt,p.ky*dt);p.kx*=0.82;p.ky*=0.82;if(Math.abs(p.kx)+Math.abs(p.ky)<5)p.kx=p.ky=0;}
   if(p.paraT>0){ // 麻痺：その場で動けない（向きも変えられない）
     p.paraT-=dt;p.moving=false;p.charging=false;p.charge=0;
@@ -6823,11 +6831,12 @@ const Renderer={
     else if(!p.drawn){wlabel=(wt.name||'')+'（納刀）';wsub='攻撃で抜刀';wcol='#a0c8ff';}
     else if(!p.charging&&!(wt.perfect&&p.buffT>0))wsub=`[${keys.sheathe}]で納刀`;
     const using=p.using;
+    const hasItems=ownedItemIds(bag).length>0;
     const boxes=[
       {key:keys.dodge,label:'回避',cd:p.dodgeCd,max:s.dodgeCd,col:'#7fe0ff'},
       {key:'',label:wlabel,sub:wsub,cd:0,max:1,col:wcol,fill:wfill},
-      {key:keys.heal,label:`${ci.short}×${bag[sel]||0}`,sub:using?'使用中…':(keys.cycle+'で切替'),cd:p.potionCd,max:CONFIG.player.potionCd,col:ci.color,empty:(bag[sel]||0)<=0&&!using,
-        fill:using?using.t/using.total:0},
+      ...(hasItems||using?[{key:keys.heal,label:`${ci.short}×${bag[sel]||0}`,sub:using?'使用中…':(keys.cycle+'で切替'),cd:p.potionCd,max:CONFIG.player.potionCd,col:ci.color,empty:(bag[sel]||0)<=0&&!using,
+        fill:using?using.t/using.total:0}]:[]),
     ];
     if(multi){
       const pc=PLAYER_COLORS[p.slot%PLAYER_COLORS.length];
@@ -6956,13 +6965,14 @@ const Renderer={
   /** 持ち物ホイール（RB長押し）：11種類を円に並べ、右スティックの向きで選ぶ */
   drawItemWheel(ctx,w){
     const wh=Input.wheel;if(!wh||!wh.open)return;
-    const W=this.w,H=this.h,N=ITEM_ORDER.length,cx=W/2,cy=H/2,R=Math.min(W,H)*0.3,ri=R*0.42,step=2*Math.PI/N;
+    const W=this.w,H=this.h,cx=W/2,cy=H/2,R=Math.min(W,H)*0.3,ri=R*0.42;
     const p=w.players[wh.pid]||null,bag=(p&&p.bag)||{};
+    const ids=ownedItemIds(bag),NW=Math.max(1,ids.length),stepW=2*Math.PI/NW;
     ctx.save();
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,0,W,H);
-    for(let i=0;i<N;i++){
-      const id=ITEM_ORDER[i],c=DATA.consumables[id],n=bag[id]||0,on=wh.sel===i,has=n>0;
-      const a0=-Math.PI/2+(i-0.5)*step,a1=a0+step,am=a0+step/2;
+    for(let i=0;i<ids.length;i++){
+      const id=ids[i],c=DATA.consumables[id],n=bag[id]||0,on=wh.sel===i,has=true;
+      const a0=-Math.PI/2+(i-0.5)*stepW,a1=a0+stepW,am=a0+stepW/2;
       ctx.beginPath();ctx.arc(cx,cy,R,a0,a1);ctx.arc(cx,cy,ri,a1,a0,true);ctx.closePath();
       ctx.fillStyle=on?'rgba(255,210,58,.9)':(has?'rgba(30,26,40,.9)':'rgba(30,26,40,.5)');ctx.fill();
       ctx.strokeStyle=c.color;ctx.lineWidth=on?4:2;ctx.stroke();
@@ -6971,7 +6981,7 @@ const Renderer={
       ctx.fillStyle=on?'#1a1420':(has?'#fff':'#777');ctx.font='bold 13px sans-serif';ctx.fillText(c.short||c.name,tx,ty-7);
       ctx.fillStyle=on?'#1a1420':(has?c.color:'#666');ctx.font='12px sans-serif';ctx.fillText('×'+n,tx,ty+9);
     }
-    const sid=ITEM_ORDER[wh.sel!=null?wh.sel:((p&&p.sel)||0)],sc=DATA.consumables[sid];
+    const cur=ITEM_ORDER[(p&&p.sel)||0],sid=(wh.sel!=null&&ids[wh.sel])?ids[wh.sel]:(ids.includes(cur)?cur:ids[0]),sc=DATA.consumables[sid];
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText(sc.name,cx,cy-8);
     ctx.fillStyle='#ccc';ctx.font='13px sans-serif';ctx.fillText('スティックで選び、離すと決定',cx,cy+14);
@@ -7606,6 +7616,11 @@ const Input={
   },
   anyPad(){return this.getPads().length>0;},
   /** このコントローラーで操作するプレイヤー。1人プレイ中はどのコントローラーでも1P */
+  /** ホイールに並べる持ち物（そのプレイヤーが持っている消耗品だけ） */
+  wheelIds(pid){
+    const w=App.world,p=w&&w.players[pid];
+    return ownedItemIds(p?p.bag:{});
+  },
   ownerOf(index){
     if(!this.coop)return 'p1';
     if(this.assign.p1===index)return 'p1';
@@ -7685,16 +7700,16 @@ const Input={
       if(rbHeld&&!S.prev[5]){S.rbT=0;S.rbOpen=false;}
       if(rbHeld){
         S.rbT=(S.rbT||0)+dt;
-        if(!S.rbOpen&&S.rbT>=0.3){S.rbOpen=true;this.wheel={pid:owner,open:true,sel:null};}
-        if(S.rbOpen&&Math.hypot(rx,ry)>0.5){ // 上から時計回りに並ぶ。スティックの向きの枠を選ぶ
-          const N=ITEM_ORDER.length,step=2*Math.PI/N;
+        if(!S.rbOpen&&S.rbT>=0.3&&owner){const ids=this.wheelIds(owner);if(ids.length){S.rbOpen=true;this.wheel={pid:owner,open:true,sel:null,ids};}}
+        if(S.rbOpen&&Math.hypot(rx,ry)>0.5){ // 上から時計回りに並ぶ。スティックの向きの枠を選ぶ（持っている消耗品だけ）
+          const N=Math.max(1,this.wheel.ids.length),step=2*Math.PI/N;
           let a=Math.atan2(ry,rx)+Math.PI/2;a=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
           this.wheel.sel=Math.round(a/step)%N;
         }
       }
       if(!cur[5]&&S.prev[5]){
         if(S.rbOpen){
-          if(this.wheel&&this.wheel.sel!=null&&owner&&this.edges[owner])this.edges[owner].pick=this.wheel.sel;
+          if(this.wheel&&this.wheel.sel!=null&&this.wheel.ids[this.wheel.sel]&&owner&&this.edges[owner])this.edges[owner].pick=ITEM_ORDER.indexOf(this.wheel.ids[this.wheel.sel]);
           this.wheel=null;S.rbOpen=false;
         }else if(owner&&App.state==='playing'&&this.edges[owner]&&(S.rbT||0)<0.3)this.edges[owner].cycle=1;
         S.rbT=0;
