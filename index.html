@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.35',date:'2026/10/29'};
+const GAME_VERSION={no:'0.36',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -3066,7 +3066,7 @@ function damageEnemy(w,p,e,mult,src){
     dmg+=Math.max(0,Math.round(ed));elHit={k:s.elem.k,m:em};
   }
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
-  if(e.boss)addHate(e,p,dmg);
+  if(e.boss){addHate(e,p,dmg);w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
   // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
   if(!e.boss&&!ed.heavy&&!e.mid){
@@ -8751,7 +8751,9 @@ const App={
     }
     for(const pid in this.bossRewards)if(res[pid])for(const l of this.bossRewards[pid])res[pid].rewards.push(this.grantLoot(l,pid));
     w.drops=[];this.bossRewards={};
-    const base={time:w.time,kills:w.quest.killed,total:w.quest.total,chests:w.quest.chests,chestsTotal:w.quest.chestsTotal,questName:q.name,goal:questGoalText(q.goal,w.playerCount),explore:!!q.explore};
+    // ボスへの与ダメージ（全員分・多い順）。参加者の画面にも同じ内容を送る
+    const bossDmg=pids.map(pid=>({name:w.players[pid]?playerName(w.players[pid]):String(pid),dmg:(w.bossDmg&&w.bossDmg[pid])||0})).sort((a,b)=>b.dmg-a.dmg);
+    const base={time:w.time,kills:w.quest.killed,total:w.quest.total,chests:w.quest.chests,chestsTotal:w.quest.chestsTotal,questName:q.name,goal:questGoalText(q.goal,w.playerCount),explore:!!q.explore,bossDmg};
     const mineIds=Net.role?['p1']:pids;
     this.lastResult=Object.assign({},base,{
       rewards:[].concat(...mineIds.map(pid=>res[pid]?res[pid].rewards:[])),
@@ -9377,8 +9379,11 @@ const App={
     const mm=Math.floor(r.time/60),ss=Math.floor(r.time%60);
     const list=r.rewards.map(l=>`<div style="color:${l.color}">◆ ${l.text}</div>`).join('')||'<div class="muted">なし</div>';
     const notes=(r.notes||[]).map(n=>`<div style="color:#ffd23a;font-weight:bold;margin:4px 0">★ ${esc(n)}</div>`).join('');
+    const bd=r.bossDmg||[],bdTotal=bd.reduce((a,b)=>a+b.dmg,0),bdMax=Math.max(1,...bd.map(b=>b.dmg));
+    const bossHtml=bdTotal>0?`<div class="reward-list"><div class="col-t">ボスへの与ダメージ（合計 ${bdTotal}）</div>${bd.map(b=>`<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><span style="min-width:6em">${esc(b.name)}</span><span style="flex:1;background:#0003;border-radius:4px;height:12px;overflow:hidden"><span style="display:block;height:100%;width:${(b.dmg/bdMax*100).toFixed(1)}%;background:#ff8a4c"></span></span><span style="min-width:9em;text-align:right">${b.dmg}（${Math.round(b.dmg/bdTotal*100)}%）</span></div>`).join('')}</div>`:'';
     return `<div class="panel camp"><h2>${r.explore?'探索から帰還！':'クエストクリア！'}</h2><p><b>${esc(r.questName||'')}</b>　${esc(r.goal||'')} 達成</p>
       ${notes}
+      ${bossHtml}
       <div class="campinfo">クリアタイム ${mm}分${String(ss).padStart(2,'0')}秒　撃破 ${r.kills}/${r.total}${r.chestsTotal?`　宝箱 ${r.chests}/${r.chestsTotal}`:''}</div>
       <div class="reward-list"><div class="col-t">依頼の報酬</div>${list}
       <div class="small muted" style="margin-top:6px">探索中に手に入れたもの：${r.count}件（素材・ゴールド・装飾品）</div></div>
