@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.40',date:'2026/10/29'};
+const GAME_VERSION={no:'0.41',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9312,9 +9312,9 @@ const App={
       <div class="inv-meta">${esc(stage.name)}　通常の依頼 ${kd}/${keys.length} 達成${kd>=keys.length?'　<span style="color:#ff8a6a">緊急依頼 出現中！</span>':''}</div>
       <button data-act="boardBack">戻る（Esc）</button></div>
       <div class="inv-body board-body"><div class="col col-mid" data-scroll="board"><div class="col-t">依頼一覧</div>
-        <div class="small muted" style="margin-bottom:6px">${esc(stage.desc)}<br>通常の依頼をすべて達成すると、大ボスの「緊急」依頼が出現します。達成済みの依頼も何度でも受けられます。</div>${rows}</div>
+        ${rows}</div>
       <div class="col col-right" data-scroll="qdetail" style="width:400px">
-        <div class="iname" style="color:${sel.urgent?'#ff8a6a':'#f3d48a'}">${sel.name}</div>
+        <div class="iname" style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="color:${sel.urgent?'#ff8a6a':'#f3d48a'}">${sel.name}</span><span style="white-space:nowrap">${btns}</span></div>
         <div class="isub">ステージ${sel.stage}「${esc(stage.name)}」${sel.explore?'・自由探索':''}${sel.urgent?'・緊急依頼':''}</div>
         <p style="margin:10px 0;line-height:1.7">${esc(questDesc(sel,partySize()))}</p>
         ${sec('目標',`<div class="eff"><b>${questGoalText(sel.goal)}</b></div>`)}
@@ -9322,7 +9322,7 @@ const App={
         ${sel.unlocks?sec('クリアすると',`<div class="eff" style="color:#7fe09a">ステージ${sel.unlocks}「${esc(stageById(sel.unlocks).name)}」が解放</div>`):''}
         ${sec('出現する魔物（図鑑で討伐したものだけ表示）',stageRoster(stage).concat((sel.goal.type==='boss'||sel.explore)?[sel.boss||stage.enemySet.boss]:[]).map(t=>(this.profile.bestiary||{})[t]>0?DATA.enemies[t].name:'？？？').join('、'))}
         <div class="small muted">持ち物：${bagText(p)}（出発前にショップで用意できます）</div>
-        <div class="btnrow">${btns}</div></div></div></div>`;
+        </div></div></div>`;
   },
   onlineHTML(){
     return `<div class="panel camp"><h2>オンライン協力（別々のPC）</h2>
