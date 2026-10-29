@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.60',date:'2026/10/29'};
+const GAME_VERSION={no:'0.61',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -921,6 +921,7 @@ const DATA={
   playerStatus:{
     poison:{name:'毒',color:'#a8e060',time:8,tick:1,pct:0.025},
     paralysis:{name:'麻痺',color:'#ffe040',time:1.6,immune:5},
+    sleep:{name:'睡眠',color:'#b898ff',time:4,immune:4}, // 睡眠：動けない。攻撃を受けると目が覚める
     curse:{name:'呪い',color:'#c070ff',time:10,dmgUp:25},
   },
   // 魔物ごとの「攻撃が当たったときに状態異常にする」設定（chance：かかる確率）
@@ -990,7 +991,7 @@ const DATA={
     giant_bat:{name:'洞窟の大蝙蝠',ai:'pattern',look:'bat',hp:95,atk:18,def:3,r:18,speed:130,color:'#4a3a6a',drops:'giant_bat',
       pattern:[
         {k:'charge',wind:0.5,cd:3.5,dmg:1.1},
-        {k:'shot',wind:0.6,cd:4,n:1,speed:380,dmg:0.9,kind:'soul'},
+        {k:'shot',wind:0.6,cd:4,n:1,speed:380,dmg:0.9,kind:'soul',st:'sleep',stChance:0.5},
         {k:'slam',wind:0.8,cd:6,dmg:0.9,r:110},
       ],
       pal:{body:'#4a3a6a',dark:'#221a36',wing:'#8a7ab8',eye:'#ffe060'}},
@@ -3043,7 +3044,7 @@ function addPlayer(w,id,stats,bag){
     facing:0,atkTimer:0,swing:0,swingTotal:0.2,swingAngle:0,swingDir:1,combo:0,dodgeCd:0,dodgeTime:0,dodgeDir:{x:1,y:0},
     dodgeInv:0,hitInv:0,skillCd:0,bag:Object.assign(emptyBag(),bag||{}),sel:0,potionCd:0,hurt:0,buffs:{},kx:0,ky:0,dead:false,walk:0,moving:false,lastEvade:-9,
     using:null,charging:false,charge:0,buffT:0,dodgeStart:-9,perfectThisDodge:false,drawn:false,sheathing:null,flow:0,flowT:0,
-    slowT:0,slowMult:1,poisoned:0,coat:null,poisonT:0,poisonTick:0,paraT:0,paraImmune:0,curseT:0};
+    slowT:0,slowMult:1,poisoned:0,coat:null,poisonT:0,poisonTick:0,paraT:0,paraImmune:0,sleepT:0,sleepImmune:0,curseT:0};
   w.players[id]=p;return p;
 }
 /** 装備変更時にステータスを差し替える（HP割合ではなく減少量を維持） */
@@ -3180,6 +3181,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   {const atkEl=el==='none'?null:(el||(noFx?null:((DATA.enemyElem[srcT]||{}).atk)));if(atkEl){const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
   p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
+  if(p.sleepT>0){p.sleepT=0;p.sleepImmune=DATA.playerStatus.sleep.immune;} // 睡眠は攻撃を受けると目が覚める
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
   emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false});
   // アイテム使用中に被弾：アイテムは消費して不発。チャージも中断
@@ -3201,10 +3203,11 @@ function inflictPlayer(w,p,k){
   const time=d.time*(1-clamp(p.stats.statusRes||0,0,100)/100);if(time<=0.05)return;
   if(k==='poison'){if(!(p.poisonT>0))p.poisonTick=d.tick;p.poisonT=Math.max(p.poisonT||0,time);}
   else if(k==='paralysis'){if(p.paraT>0||p.paraImmune>0)return;p.paraT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
+  else if(k==='sleep'){if(p.sleepT>0||p.sleepImmune>0)return;p.sleepT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
   else if(k==='curse')p.curseT=Math.max(p.curseT||0,time);
   emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-30,text:d.name+'!',color:d.color});
 }
-function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviveWait;p.out=false;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
+function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviveWait;p.out=false;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.sleepT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
 /** 毒の雲などの継続ダメージ：のけぞらず、無敵時間も発生しない（回避中は受けない） */
 function dotPlayer(w,p,raw,el){
   if(p.dead||p.dodgeInv>0)return;
@@ -3371,7 +3374,7 @@ function updatePlayer(w,p,inp,dt){
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   if(p.slowT>0)p.slowT-=dt;if(p.poisoned>0)p.poisoned-=dt;
-  if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;
+  if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;if(p.sleepImmune>0)p.sleepImmune-=dt;
   if(p.poisonT>0){ // 毒：一定時間ごとに減る（HP1より下がらない）
     const d=DATA.playerStatus.poison;p.poisonT-=dt;p.poisonTick-=dt;
     if(p.poisonTick<=0){p.poisonTick+=d.tick;
@@ -3394,6 +3397,11 @@ function updatePlayer(w,p,inp,dt){
   // 選んでいたものを使い切ったら、持っている最初のものに移る
   if((p.bag[ITEM_ORDER[p.sel]]||0)<=0&&ownedItemIds(p.bag).length)p.sel=ITEM_ORDER.indexOf(ownedItemIds(p.bag)[0]);
   if(p.kx||p.ky){moveEntity(w.map,p,p.kx*dt,p.ky*dt);p.kx*=0.82;p.ky*=0.82;if(Math.abs(p.kx)+Math.abs(p.ky)<5)p.kx=p.ky=0;}
+  if(p.sleepT>0){ // 睡眠：攻撃を受けるまで動けない
+    p.sleepT-=dt;p.moving=false;p.charging=false;p.charge=0;
+    if(p.sleepT<=0)p.sleepImmune=DATA.playerStatus.sleep.immune;
+    return;
+  }
   if(p.paraT>0){ // 麻痺：その場で動けない（向きも変えられない）
     p.paraT-=dt;p.moving=false;p.charging=false;p.charge=0;
     if(p.paraT<=0)p.paraImmune=DATA.playerStatus.paralysis.immune;
@@ -3912,7 +3920,7 @@ function updateBossPattern(w,e,p,dt){
         for(let i=0;i<n;i++){
           const a=e.atkAngle+(n===1?0:(i-(n-1)/2)*(mv.spread||0.4)/(n-1));
           w.projectiles.push({id:w.nextId++,kind:mv.kind||'soul',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),
-            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a,el:mv.el,src:e.type,inflict:mv.st,slow:mv.slow});
+            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a,el:mv.el,src:e.type,inflict:mv.st,inflictChance:mv.stChance,slow:mv.slow});
         }
         emit(w,{type:'shoot',x:e.x,y:e.y});
         e.state='recover';e.timer=0.6;break;
@@ -4505,7 +4513,7 @@ function updateProjectiles(w,dt){
     if(alive&&pr.owner==='enemy'){
       for(const id in w.players){
         const p=w.players[id];if(p.dead)continue;
-        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src,pr.el)){if(pr.inflict)inflictPlayer(w,p,pr.inflict);if(pr.slow)slowPlayer(w,p,pr.slow);alive=false;break;}
+        if(Math.hypot(p.x-pr.x,p.y-pr.y)<p.r+pr.r&&hitPlayer(w,p,pr.dmg,pr.x-pr.vx*0.05,pr.y-pr.vy*0.05,pr.src,pr.el)){if(pr.inflict&&(pr.inflictChance==null||RNG.next()<pr.inflictChance))inflictPlayer(w,p,pr.inflict);if(pr.slow)slowPlayer(w,p,pr.slow);alive=false;break;}
       }
     }else if(alive&&(pr.kind==='playerArrow'||pr.kind==='playerShuriken')){
       const p=w.players[pr.pid];
@@ -7108,7 +7116,7 @@ const Renderer={
     ctx.fillText(`移動 ${s.moveSpd>=0?'+':''}${s.moveSpd}%　回避後無敵 ${s.dodgeIframe.toFixed(2)}秒${s.drainChance?'　吸血 '+s.drainChance+'%':''}`,x+10,y+64);
     ctx.fillStyle='#8a82a2';ctx.font=`11px ${FONT}`;ctx.fillText(DATA.weaponTypes[s.weaponType].name+'：',x+10,y+84);
     ctx.fillStyle=rarColor(s.weaponRarity);ctx.font=`bold 13px ${FONT}`;ctx.fillText(s.weaponName,x+56,y+84);
-    const st=[];if(p.slowT>0)st.push(['鈍足','#9ad8ff']);if(p.poisoned>0||p.poisonT>0)st.push(['毒','#a8e060']);if(p.paraT>0)st.push(['麻痺','#ffe040']);if(p.curseT>0)st.push(['呪い','#c070ff']);
+    const st=[];if(p.slowT>0)st.push(['鈍足','#9ad8ff']);if(p.poisoned>0||p.poisonT>0)st.push(['毒','#a8e060']);if(p.paraT>0)st.push(['麻痺','#ffe040']);if(p.sleepT>0)st.push(['睡眠','#b898ff']);if(p.curseT>0)st.push(['呪い','#c070ff']);
     if(st.length){ctx.textAlign='right';ctx.font=`bold 12px ${FONT}`;let xx=x+300;for(const [t,c] of st.reverse()){ctx.fillStyle=c;ctx.fillText(t,xx,y+84);xx-=ctx.measureText(t).width+8;}ctx.textAlign='left';}
   },
   /** 回避・スキル・回復のクールタイム表示（1人分） */
@@ -8685,7 +8693,7 @@ const Net={
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,ws:p.ws?{id:p.ws.id,t:r1(p.ws.t)}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
-        sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),curseT:r3(p.curseT||0),
+        sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),sleepT:r3(p.sleepT||0),curseT:r3(p.curseT||0),
         dodgeCd:r3(p.dodgeCd),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
