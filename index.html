@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.66',date:'2026/10/29'};
+const GAME_VERSION={no:'0.67',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -419,6 +419,18 @@ const DATA={
       pieces:{head:'mire_helm',body:'mire_mail',arms:'mire_vambrace',waist:'mire_faulds',legs:'mire_greaves'},need:4,apply:s=>{s.maxHp+=50;s.knockRes+=50;}},
     haro:{name:'覇狼シリーズ',bonus:'覇狼の威風',desc:'会心ダメージ+20%、移動速度+6%',
       pieces:{head:'haro_helm',body:'haro_mail',arms:'haro_vambrace',waist:'haro_faulds',legs:'haro_greaves'},need:4,apply:s=>{s.critDmg+=20;s.moveSpd+=6;}},
+    toad:{name:'大蛙王シリーズ',bonus:'大蛙王の跳躍',desc:'最大HP+40、移動速度+3%',
+      pieces:{head:'toad_helm',body:'toad_mail',arms:'toad_vambrace',waist:'toad_faulds',legs:'toad_greaves'},need:4,apply:s=>{s.maxHp+=40;s.moveSpd+=3;}},
+    octo:{name:'大蛸シリーズ',bonus:'深淵の潮流',desc:'水属性の耐性+30、移動速度+4%',
+      pieces:{head:'octo_helm',body:'octo_mail',arms:'octo_vambrace',waist:'octo_faulds',legs:'octo_greaves'},need:4,apply:s=>{s.elemRes.water+=30;s.moveSpd+=4;}},
+    scorp:{name:'晶毒蠍シリーズ',bonus:'晶毒の鋭針',desc:'会心率+8%、会心ダメージ+10%',
+      pieces:{head:'scorp_helm',body:'scorp_mail',arms:'scorp_vambrace',waist:'scorp_faulds',legs:'scorp_greaves'},need:4,apply:s=>{s.crit+=8;s.critDmg+=10;}},
+    serpent:{name:'紅蓮蛇シリーズ',bonus:'紅蓮の鱗',desc:'炎属性の耐性+30、攻撃力+6%',
+      pieces:{head:'serpent_helm',body:'serpent_mail',arms:'serpent_vambrace',waist:'serpent_faulds',legs:'serpent_greaves'},need:4,apply:s=>{s.elemRes.fire+=30;s.atkPct+=6;}},
+    mammoth:{name:'巨象シリーズ',bonus:'巨象の剛体',desc:'吹き飛び-50%、最大HP+50',
+      pieces:{head:'mammoth_helm',body:'mammoth_mail',arms:'mammoth_vambrace',waist:'mammoth_faulds',legs:'mammoth_greaves'},need:4,apply:s=>{s.knockRes+=50;s.maxHp+=50;}},
+    abyss:{name:'冥府蜘蛛シリーズ',bonus:'冥府の糸守り',desc:'冥属性の耐性+30、会心率+5%',
+      pieces:{head:'abyss_helm',body:'abyss_mail',arms:'abyss_vambrace',waist:'abyss_faulds',legs:'abyss_greaves'},need:4,apply:s=>{s.elemRes.mei+=30;s.crit+=5;}},
   },
   // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
@@ -666,6 +678,48 @@ const DATA={
     mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{charge_up:3,atk_up:2},slots:2},
     mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{rescue:3,heal_up:4,charge_up:2},slots:2},
     mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,charge_up:1},slots:2},
+    toad_sword:{name:'大蛙の剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'sword',atk:24,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
+    toad_bow:{name:'大蛙の弓',slot:'weapon',st:{k:'poison',buildup:15},wtype:'bow',atk:22,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
+    octo_tachi:{name:'大蛸の太刀',slot:'weapon',el:{k:'water',v:10},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
+    octo_lance:{name:'大蛸の槍',slot:'weapon',el:{k:'water',v:10},wtype:'lance',atk:24,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
+    scorp_shuriken:{name:'晶毒の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:22,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    scorp_db:{name:'晶毒の双剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'dual',atk:26,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    serpent_gs:{name:'紅蓮の大剣',slot:'weapon',el:{k:'fire',v:10},wtype:'greatsword',atk:30,crit:4,fixed:[{stat:'def',v:5}],slots:2},
+    serpent_hammer:{name:'紅蓮のハンマー',slot:'weapon',el:{k:'fire',v:10},wtype:'hammer',atk:30,crit:0,fixed:[{stat:'maxHp',v:30}],slots:2},
+    mammoth_tachi:{name:'永久凍土の太刀',slot:'weapon',el:{k:'ice',v:10},wtype:'tachi',atk:27,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
+    mammoth_bow:{name:'永久凍土の弓',slot:'weapon',el:{k:'ice',v:10},wtype:'bow',atk:23,crit:10,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    abyss_sword:{name:'冥糸の剣',slot:'weapon',el:{k:'mei',v:10},wtype:'sword',atk:25,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
+    abyss_shuriken:{name:'冥糸の手裏剣',slot:'weapon',el:{k:'mei',v:10},wtype:'shuriken',atk:23,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    toad_helm:{name:'大蛙の兜',slot:'head',def:14,fixed:[{stat:'maxHp',v:15}],skills:{status_res:2},slots:2},
+    toad_mail:{name:'大蛙の皮鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:25}],skills:{status_res:3,def_up:2},slots:2},
+    toad_vambrace:{name:'大蛙の水かき腕',slot:'arms',def:12,fixed:[{stat:'atk',v:2}],skills:{item_speed:2,evade:2},slots:2},
+    toad_faulds:{name:'大蛙の腹当て',slot:'waist',def:12,skills:{status_res:4,heal_up:2},slots:2},
+    toad_greaves:{name:'大蛙の水かき脚',slot:'legs',def:14,fixed:[{stat:'moveSpd',v:3}],skills:{evade:3,item_speed:2},slots:2},
+    octo_helm:{name:'大蛸の頭巾',slot:'head',def:15,fixed:[{stat:'crit',v:4}],skills:{crit_up:3,status_res:2},slots:2},
+    octo_mail:{name:'大蛸の吸盤鎧',slot:'body',def:19,fixed:[{stat:'maxHp',v:30}],skills:{def_up:3,status_res:2},slots:2},
+    octo_vambrace:{name:'大蛸の触腕腕甲',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{crit_up:3,item_speed:2},slots:2},
+    octo_faulds:{name:'大蛸の触腕垂れ',slot:'waist',def:13,skills:{evade:3,heal_up:3},slots:2},
+    octo_greaves:{name:'大蛸の吸盤脚',slot:'legs',def:15,fixed:[{stat:'moveSpd',v:3}],skills:{evade:3,def_up:2},slots:2},
+    scorp_helm:{name:'晶毒蠍の頭殻',slot:'head',def:16,fixed:[{stat:'crit',v:4}],skills:{crit_up:3},slots:2},
+    scorp_mail:{name:'晶毒蠍の甲殻',slot:'body',def:20,fixed:[{stat:'maxHp',v:25}],skills:{status_res:3,def_up:2},slots:2},
+    scorp_vambrace:{name:'晶毒蠍の鋏腕',slot:'arms',def:14,fixed:[{stat:'atk',v:3}],skills:{crit_up:4,atk_up:2},slots:2},
+    scorp_faulds:{name:'晶毒蠍の尾節',slot:'waist',def:14,skills:{status_res:4,item_speed:2},slots:2},
+    scorp_greaves:{name:'晶毒蠍の節脚',slot:'legs',def:16,fixed:[{stat:'critDmg',v:5}],skills:{crit_up:3,evade:2},slots:2},
+    serpent_helm:{name:'紅蓮蛇の牙兜',slot:'head',def:17,fixed:[{stat:'atk',v:2}],skills:{def_up:3},slots:2},
+    serpent_mail:{name:'紅蓮蛇の炎鱗鎧',slot:'body',def:21,fixed:[{stat:'maxHp',v:35}],skills:{def_up:3,heal_up:2},slots:2},
+    serpent_vambrace:{name:'紅蓮蛇の鱗腕',slot:'arms',def:15,fixed:[{stat:'atk',v:3}],skills:{atk_up:3,charge_up:2},slots:2},
+    serpent_faulds:{name:'紅蓮蛇の鱗腰',slot:'waist',def:15,skills:{heal_up:3,charge_up:2},slots:2},
+    serpent_greaves:{name:'紅蓮蛇の鉤爪脚',slot:'legs',def:17,fixed:[{stat:'moveSpd',v:3}],skills:{charge_up:3,evade:2},slots:2},
+    mammoth_helm:{name:'巨象の牙飾り兜',slot:'head',def:18,fixed:[{stat:'maxHp',v:20}],skills:{def_up:3,rescue:2},slots:2},
+    mammoth_mail:{name:'巨象の厚皮鎧',slot:'body',def:23,fixed:[{stat:'maxHp',v:40}],skills:{def_up:4},slots:2},
+    mammoth_vambrace:{name:'巨象の鼻腕',slot:'arms',def:16,fixed:[{stat:'def',v:4}],skills:{def_up:3,atk_up:2},slots:2},
+    mammoth_faulds:{name:'巨象の大腰布',slot:'waist',def:16,skills:{def_up:3,heal_up:3},slots:2},
+    mammoth_greaves:{name:'巨象の円脚',slot:'legs',def:18,fixed:[{stat:'moveSpd',v:2}],skills:{def_up:3,charge_up:2},slots:2},
+    abyss_helm:{name:'冥蜘蛛の八目兜',slot:'head',def:19,fixed:[{stat:'crit',v:4}],skills:{status_res:3,crit_up:2},slots:2},
+    abyss_mail:{name:'冥蜘蛛の糸甲鎧',slot:'body',def:24,fixed:[{stat:'maxHp',v:35}],skills:{status_res:4,def_up:2},slots:2},
+    abyss_vambrace:{name:'冥蜘蛛の脚腕',slot:'arms',def:17,fixed:[{stat:'atk',v:3}],skills:{crit_up:3,item_speed:2},slots:2},
+    abyss_faulds:{name:'冥蜘蛛の糸垂れ',slot:'waist',def:17,skills:{status_res:4,evade:2},slots:2},
+    abyss_greaves:{name:'冥蜘蛛の爪脚',slot:'legs',def:19,fixed:[{stat:'moveSpd',v:4}],skills:{evade:3,crit_up:2},slots:2},
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
     haro_tachi:{name:'覇狼の太刀',slot:'weapon',el:{k:'ice',v:9},wtype:'tachi',atk:23,crit:12,fixed:[{stat:'critDmg',v:10}],slots:2},
     haro_db:{name:'覇狼の双剣',slot:'weapon',el:{k:'ice',v:7},wtype:'dual',atk:21,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
@@ -952,7 +1006,7 @@ const DATA={
       pattern:[
         {k:'burrow',cd:6,dmg:1.0,r:70},
         {k:'charge',wind:0.5,cd:3.5,dmg:0.9},
-        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:60,arc:1.2},
+        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:60,arc:1.2,st:'poison'},
       ],
       pal:{body:'#6a2a3a',dark:'#2e1018',spot:'#d05060',eye:'#ffe0e0'}},
     deep_octopus:{name:'深淵の大蛸',ai:'pattern',look:'jelly',hp:3000,atk:26,def:8,r:36,speed:96,color:'#2a4a7a',drops:'deep_octopus',boss:true,stunMax:130,stunTime:4,
@@ -2091,6 +2145,48 @@ const DATA={
     // 沼巨人シリーズ（腐敗の沼巨人）
     {id:'r_mire_hammer',out:{type:'equip',id:'mire_hammer'},cost:{mire_core:2,swamp_moss:3,croc_scale:2},stage:3},
     {id:'r_mire_gs',out:{type:'equip',id:'mire_gs'},cost:{mire_core:2,croc_scale:2,swamp_moss:2},stage:3},
+    {id:'r_toad_sword',out:{type:'equip',id:'toad_sword'},cost:{toxic_gland:2,swamp_moss:2},stage:3},
+    {id:'r_toad_bow',out:{type:'equip',id:'toad_bow'},cost:{toxic_gland:2,slime_gel:2},stage:3},
+    {id:'r_octo_tachi',out:{type:'equip',id:'octo_tachi'},cost:{slime_gel:2,hard_shell:2},stage:4},
+    {id:'r_octo_lance',out:{type:'equip',id:'octo_lance'},cost:{slime_gel:3,hard_shell:1},stage:4},
+    {id:'r_scorp_shuriken',out:{type:'equip',id:'scorp_shuriken'},cost:{hard_shell:2,poison_spore:2},stage:5},
+    {id:'r_scorp_db',out:{type:'equip',id:'scorp_db'},cost:{hard_shell:3,poison_spore:1},stage:5},
+    {id:'r_serpent_gs',out:{type:'equip',id:'serpent_gs'},cost:{centi_ember:2,centi_shell:2},stage:6},
+    {id:'r_serpent_hammer',out:{type:'equip',id:'serpent_hammer'},cost:{centi_ember:3,centi_shell:1},stage:6},
+    {id:'r_mammoth_tachi',out:{type:'equip',id:'mammoth_tachi'},cost:{beast_hide:2,beast_fang:2},stage:7},
+    {id:'r_mammoth_bow',out:{type:'equip',id:'mammoth_bow'},cost:{beast_fang:3,beast_hide:1},stage:7},
+    {id:'r_abyss_sword',out:{type:'equip',id:'abyss_sword'},cost:{spider_silk:2,curse_powder:2},stage:8},
+    {id:'r_abyss_shuriken',out:{type:'equip',id:'abyss_shuriken'},cost:{spider_silk:3,curse_powder:1},stage:8},
+    {id:'r_toad_helm',out:{type:'equip',id:'toad_helm'},cost:{toxic_gland:2,swamp_moss:2},stage:3},
+    {id:'r_toad_mail',out:{type:'equip',id:'toad_mail'},cost:{toxic_gland:2,slime_gel:2},stage:3},
+    {id:'r_toad_vambrace',out:{type:'equip',id:'toad_vambrace'},cost:{swamp_moss:2,slime_gel:2},stage:3},
+    {id:'r_toad_faulds',out:{type:'equip',id:'toad_faulds'},cost:{toxic_gland:1,swamp_moss:2},stage:3},
+    {id:'r_toad_greaves',out:{type:'equip',id:'toad_greaves'},cost:{slime_gel:2,toxic_gland:2},stage:3},
+    {id:'r_octo_helm',out:{type:'equip',id:'octo_helm'},cost:{slime_gel:2,hard_shell:1},stage:4},
+    {id:'r_octo_mail',out:{type:'equip',id:'octo_mail'},cost:{hard_shell:3,slime_gel:2},stage:4},
+    {id:'r_octo_vambrace',out:{type:'equip',id:'octo_vambrace'},cost:{slime_gel:3,hard_shell:1},stage:4},
+    {id:'r_octo_faulds',out:{type:'equip',id:'octo_faulds'},cost:{hard_shell:2,slime_gel:1},stage:4},
+    {id:'r_octo_greaves',out:{type:'equip',id:'octo_greaves'},cost:{slime_gel:2,hard_shell:2},stage:4},
+    {id:'r_scorp_helm',out:{type:'equip',id:'scorp_helm'},cost:{hard_shell:2,poison_spore:1},stage:5},
+    {id:'r_scorp_mail',out:{type:'equip',id:'scorp_mail'},cost:{hard_shell:3,poison_spore:2},stage:5},
+    {id:'r_scorp_vambrace',out:{type:'equip',id:'scorp_vambrace'},cost:{hard_shell:2,poison_spore:2},stage:5},
+    {id:'r_scorp_faulds',out:{type:'equip',id:'scorp_faulds'},cost:{poison_spore:2,hard_shell:1},stage:5},
+    {id:'r_scorp_greaves',out:{type:'equip',id:'scorp_greaves'},cost:{hard_shell:2,poison_spore:1},stage:5},
+    {id:'r_serpent_helm',out:{type:'equip',id:'serpent_helm'},cost:{centi_ember:2,centi_shell:1},stage:6},
+    {id:'r_serpent_mail',out:{type:'equip',id:'serpent_mail'},cost:{centi_shell:3,centi_ember:2},stage:6},
+    {id:'r_serpent_vambrace',out:{type:'equip',id:'serpent_vambrace'},cost:{centi_ember:2,centi_shell:2},stage:6},
+    {id:'r_serpent_faulds',out:{type:'equip',id:'serpent_faulds'},cost:{centi_ember:1,centi_shell:2},stage:6},
+    {id:'r_serpent_greaves',out:{type:'equip',id:'serpent_greaves'},cost:{centi_shell:2,centi_ember:2},stage:6},
+    {id:'r_mammoth_helm',out:{type:'equip',id:'mammoth_helm'},cost:{beast_hide:2,beast_fang:1},stage:7},
+    {id:'r_mammoth_mail',out:{type:'equip',id:'mammoth_mail'},cost:{beast_hide:3,beast_fang:2},stage:7},
+    {id:'r_mammoth_vambrace',out:{type:'equip',id:'mammoth_vambrace'},cost:{beast_hide:2,beast_fang:2},stage:7},
+    {id:'r_mammoth_faulds',out:{type:'equip',id:'mammoth_faulds'},cost:{beast_fang:2,beast_hide:1},stage:7},
+    {id:'r_mammoth_greaves',out:{type:'equip',id:'mammoth_greaves'},cost:{beast_hide:2,beast_fang:1},stage:7},
+    {id:'r_abyss_helm',out:{type:'equip',id:'abyss_helm'},cost:{spider_silk:2,curse_powder:1},stage:8},
+    {id:'r_abyss_mail',out:{type:'equip',id:'abyss_mail'},cost:{spider_silk:3,curse_powder:2},stage:8},
+    {id:'r_abyss_vambrace',out:{type:'equip',id:'abyss_vambrace'},cost:{spider_silk:2,curse_powder:2},stage:8},
+    {id:'r_abyss_faulds',out:{type:'equip',id:'abyss_faulds'},cost:{curse_powder:2,spider_silk:1},stage:8},
+    {id:'r_abyss_greaves',out:{type:'equip',id:'abyss_greaves'},cost:{spider_silk:2,curse_powder:1},stage:8},
     {id:'r_mire_helm',out:{type:'equip',id:'mire_helm'},cost:{mire_core:1,swamp_moss:2,croc_scale:1},stage:3},
     {id:'r_mire_mail',out:{type:'equip',id:'mire_mail'},cost:{mire_core:1,swamp_moss:3,croc_scale:2},stage:3},
     {id:'r_mire_arms',out:{type:'equip',id:'mire_vambrace'},cost:{mire_core:1,croc_scale:2,leech_skin:1},stage:3},
@@ -4732,6 +4828,12 @@ const GEAR_LOOKS={
   hydra:{w:['snake'],main:'#4a6a3a',dark:'#1e2e18',accent:'#e0e8a0',light:'#7a9a5a',eye:'#ffe060',beast:'hydra',blade:'#c8f0a0'},
   venom:{w:['stinger'],main:'#5a3a6a',dark:'#2a1a34',accent:'#b8e040',light:'#8a5aa0',eye:'#ffe060',beast:'venom',blade:'#d0b0ff'},
   mire:{w:['mud'],main:'#5a6a4a',dark:'#262e1c',accent:'#c8b070',light:'#8a7a4a',moss:'#4a8a3a',eye:'#ffe060',beast:'mire',blade:'#c8b890'},
+  toad:{main:'#4a8a3a',dark:'#22441a',accent:'#f0e070',light:'#8ac060',eye:'#ffe060',beast:'toad',blade:'#b8e090'},
+  octo:{main:'#2a4a7a',dark:'#14243e',accent:'#9ae8ff',light:'#5a8ac0',eye:'#ffe060',beast:'octo',blade:'#a8d8f0'},
+  scorp:{main:'#6a5a8a',dark:'#2e2644',accent:'#c0f0ff',light:'#9a8ac0',eye:'#ff6060',beast:'scorp',blade:'#d0c0f0'},
+  serpent:{main:'#a83a20',dark:'#4a1a0e',accent:'#ffc040',light:'#e0664a',eye:'#ffe060',beast:'serpent',blade:'#ffb070'},
+  mammoth:{main:'#7a8a9a',dark:'#3a4450',accent:'#f0f4ff',light:'#aab8c8',eye:'#2a2a2a',beast:'mammoth',blade:'#d8e8f8'},
+  abyss:{main:'#2a2a3a',dark:'#0e0e18',accent:'#b898ff',light:'#5a5a7a',eye:'#ff70ff',beast:'abyss',blade:'#c8b8ff'},
   haro:{w:['fur','fang'],main:'#5a6a3a',dark:'#2e3a1a',accent:'#fff0b0',light:'#7e9050',orn:'wolf',fur:true,eye:'#a8ff60',blade:'#e8f4b0'},
 };
 function gearLook(id){
@@ -4968,6 +5070,82 @@ const GEAR_ART={
       for(const k of [-1,1]){const w=Math.sin(tm*(moving?10:3)+k)*0.15,a=(sd>0?0:Math.PI)+sd*(k*0.45+w);ctx.beginPath();ctx.moveTo(ax,ay);const mx=ax+Math.cos(a)*r*0.45,my=ay+Math.sin(a)*r*0.45-r*0.15;ctx.lineTo(mx,my);ctx.lineTo(mx+Math.cos(a+sd*0.8)*r*0.35,my+Math.sin(a+sd*0.8)*r*0.35);ctx.stroke();}
       ctx.lineCap='butt';ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(ax,ay-r*0.05,r*0.1,0,TAU);ctx.fill();},
     foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.dark;ctx.beginPath();ctx.moveTo(lx-r*0.2,ly+r*0.12);ctx.lineTo(lx,ly+r*0.42);ctx.lineTo(lx+r*0.2,ly+r*0.12);ctx.closePath();ctx.fill();}
+  },
+  toad:{ // 大蛙：膨らんだ目と白い斑点、水かきの手足
+    head(G,l){const {ctx,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      for(const s of [-1,1]){const ex=hx+fx*hr*0.5+px*s*hr*0.6,ey=hy+fy*hr*0.5+py*s*hr*0.6;
+        ctx.fillStyle=l.main;ctx.beginPath();ctx.arc(ex,ey,hr*0.55,0,TAU);ctx.fill();ctx.stroke();
+        ctx.fillStyle=l.eye;ctx.beginPath();ctx.arc(ex+fx*1,ey+fy*1,hr*0.28,0,TAU);ctx.fill();}
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(hx-fx*hr*0.4,hy-fy*hr*0.4,hr*0.22,0,TAU);ctx.fill();},
+    body(G,l){const {ctx,r,step,fx,fy,px,py}=G;
+      ctx.fillStyle=l.accent;for(const [a,b] of [[0.3,0.4],[-0.2,-0.3],[0.1,0.1],[-0.4,0.25]]){ctx.beginPath();ctx.arc(fx*a*r+px*b*r,fy*a*r+py*b*r+step,r*0.13,0,TAU);ctx.fill();}},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.arc(ax+sd*r*0.25,ay,r*0.22,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;for(const k of [-1,0,1]){ctx.beginPath();ctx.arc(ax+sd*r*0.25+k*r*0.17,ay+r*0.2,r*0.07,0,TAU);ctx.fill();}},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.light;ctx.strokeStyle=l.dark;ctx.lineWidth=1;for(const k of [-1,1]){ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+k*r*0.32,ly+r*0.2);ctx.lineTo(lx+k*r*0.1,ly+r*0.1);ctx.closePath();ctx.fill();}}
+  },
+  octo:{ // 大蛸：頭の袋と垂れる触腕、吸盤の並ぶ触腕の腕
+    head(G,l){const {ctx,fx,fy,px,py,hx,hy,hr,tm}=G;
+      ctx.strokeStyle=l.main;ctx.lineWidth=2;ctx.lineCap='round';
+      for(const s of [-1,-0.4,0.4,1]){const w=Math.sin(tm*3+s)*hr*0.2;ctx.beginPath();ctx.moveTo(hx-fx*hr*0.4+px*s*hr*0.6,hy-fy*hr*0.4+py*s*hr*0.6);
+        ctx.quadraticCurveTo(hx-fx*hr*1.6+px*s*hr*0.9,hy-fy*hr*1.6+py*s*hr*0.9+w,hx-fx*hr*2.2+px*s*(hr*0.8+w),hy-fy*hr*2.2+py*s*(hr*0.8+w));ctx.stroke();}
+      ctx.lineCap='butt';ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(hx,hy,hr*1.05,hr*1.3,Math.atan2(fy,fx)+Math.PI/2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(hx-fx*hr*0.3,hy-fy*hr*0.3,hr*0.45,0,TAU);ctx.fill();
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.4+px*s*hr*0.5,hy+fy*hr*0.4+py*s*hr*0.5,2,0,TAU);ctx.fill();}},
+    body(G,l){const {ctx,r,step,fx,fy,px,py}=G;
+      ctx.fillStyle=l.accent;for(const [a,b] of [[0.3,0.35],[0,-0.3],[-0.3,0.3],[0.2,-0.55]]){ctx.beginPath();ctx.arc(fx*a*r+px*b*r,fy*a*r+py*b*r+step,r*0.1,0,TAU);ctx.fill();}},
+    arm(G,l,sd,ax,ay){const {ctx,r,tm,moving}=G;ctx.strokeStyle=l.main;ctx.lineWidth=r*0.22;ctx.lineCap='round';
+      const w=Math.sin(tm*(moving?8:3))*0.3;ctx.beginPath();ctx.moveTo(ax,ay);ctx.quadraticCurveTo(ax+sd*r*0.6,ay+r*0.5,ax+sd*r*0.3+w*r,ay+r*0.9);ctx.stroke();ctx.lineCap='butt';
+      ctx.fillStyle=l.accent;for(const k of [0.35,0.65]){ctx.beginPath();ctx.arc(ax+sd*r*0.5*k+w*r*k*0.4,ay+r*0.9*k,r*0.06,0,TAU);ctx.fill();}},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.strokeStyle=l.dark;ctx.lineWidth=r*0.14;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(lx,ly);ctx.quadraticCurveTo(lx+r*0.2,ly+r*0.3,lx-r*0.15,ly+r*0.45);ctx.stroke();ctx.lineCap='butt';}
+  },
+  scorp:{ // 晶毒蠍：晶の頭殻と目の柄、節の甲殻、鋏の腕、尖った脚
+    head(G,l){const {ctx,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(hx,hy,hr+1.5,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.accent;for(const s of [-1,1]){const bx=hx-fx*hr*0.4+px*s*hr*0.7,by=hy-fy*hr*0.4+py*s*hr*0.7;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx-fx*hr*1.1+px*s*hr*0.3,by-fy*hr*1.1+py*s*hr*0.3);ctx.lineTo(bx-fx*hr*0.2+px*s*hr*0.5,by-fy*hr*0.2+py*s*hr*0.5);ctx.closePath();ctx.fill();}
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.5+px*s*hr*0.5,hy+fy*hr*0.5+py*s*hr*0.5,2.2,0,TAU);ctx.fill();}},
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;for(const a of [-0.3,0.1,0.5]){ctx.beginPath();ctx.arc(fx*r*0.1,fy*r*0.1+step,r*0.5,f+Math.PI+a-0.2,f+Math.PI+a+0.2);ctx.stroke();}
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(fx*r*0.4+px*r*0.3,fy*r*0.4+py*r*0.3+step,r*0.1,0,TAU);ctx.fill();},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.save();ctx.translate(ax+sd*r*0.25,ay);ctx.rotate(sd>0?-0.3:Math.PI+0.3);
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(r*0.3,0,r*0.34,r*0.2,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.accent;for(const k of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.55,0);ctx.lineTo(r*0.85,k*r*0.2);ctx.lineTo(r*0.5,k*r*0.1);ctx.closePath();ctx.fill();}ctx.restore();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.dark;ctx.beginPath();ctx.moveTo(lx-r*0.2,ly+r*0.12);ctx.lineTo(lx,ly+r*0.42);ctx.lineTo(lx+r*0.2,ly+r*0.12);ctx.closePath();ctx.fill();}
+  },
+  serpent:{ // 紅蓮蛇：牙のある頭巾、炎の鱗の胴、鉤爪の腕
+    head(G,l){const {ctx,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(hx-fx*hr*0.2,hy-fy*hr*0.2,hr*1.3,hr*1.05,Math.atan2(fy,fx),0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.accent;for(const s of [-1,1]){const bx=hx+fx*hr*0.5+px*s*hr*0.55,by=hy+fy*hr*0.5+py*s*hr*0.55;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+fx*hr*0.7,by+fy*hr*0.7);ctx.lineTo(bx+px*s*hr*0.1,by+py*s*hr*0.1);ctx.closePath();ctx.fill();}
+      ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.5+px*s*hr*0.5,hy+fy*hr*0.5+py*s*hr*0.5-hr*0.2,2,0,TAU);ctx.fill();}},
+    body(G,l){const {ctx,r,step,fx,fy,px,py}=G;ctx.strokeStyle=l.accent;ctx.lineWidth=1;
+      for(const [a,b] of [[0.2,0.4],[-0.2,-0.2],[0.2,-0.5],[-0.3,0.4]]){const cx=fx*a*r+px*b*r,cy=fy*a*r+py*b*r+step;ctx.beginPath();ctx.moveTo(cx,cy-r*0.1);ctx.lineTo(cx+r*0.1,cy);ctx.lineTo(cx,cy+r*0.1);ctx.lineTo(cx-r*0.1,cy);ctx.closePath();ctx.stroke();}},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.strokeStyle=l.dark;ctx.lineWidth=2;ctx.beginPath();ctx.arc(ax+sd*r*0.2,ay+r*0.1,r*0.22,0,TAU);ctx.stroke();
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(ax+sd*r*0.2,ay+r*0.1,r*0.07,0,TAU);ctx.fill();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(lx-r*0.15,ly);ctx.lineTo(lx,ly+r*0.3);ctx.lineTo(lx+r*0.15,ly);ctx.closePath();ctx.fill();}
+  },
+  mammoth:{ // 巨象：牙飾りの兜と大きな耳、しわのある厚皮、鼻の腕、丸い足
+    head(G,l){const {ctx,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(hx,hy,hr+1.5,0,TAU);ctx.fill();ctx.stroke();
+      for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(hx+px*s*hr*1.1,hy+py*s*hr*1.1,hr*0.6,hr*0.95,0,0,TAU);ctx.fill();ctx.stroke();}
+      ctx.fillStyle=l.accent;for(const s of [-1,1]){const bx=hx+fx*hr*0.7+px*s*hr*0.5,by=hy+fy*hr*0.7+py*s*hr*0.5;ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+fx*hr*0.9,by+fy*hr*0.9-hr*0.2,bx+fx*hr*1.1+px*s*hr*0.3,by+fy*hr*1.1+py*s*hr*0.3);ctx.lineTo(bx+fx*hr*0.3,by+fy*hr*0.3);ctx.closePath();ctx.fill();}},
+    body(G,l){const {ctx,r,step,fx,fy,px,py}=G;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      for(const a of [-0.4,0,0.4]){ctx.beginPath();ctx.arc(fx*r*0.1+px*a*r,fy*r*0.1+py*a*r+step,r*0.5,0,TAU);ctx.stroke();}},
+    arm(G,l,sd,ax,ay){const {ctx,r,tm,moving}=G;ctx.strokeStyle=l.main;ctx.lineWidth=r*0.3;ctx.lineCap='round';
+      const w=Math.sin(tm*(moving?6:2))*0.2;ctx.beginPath();ctx.moveTo(ax,ay);ctx.quadraticCurveTo(ax+sd*r*0.8,ay+r*0.2,ax+sd*r*0.5,ay+r*0.8+w*r);ctx.stroke();ctx.lineCap='butt';
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(ax+sd*r*0.5,ay+r*0.8+w*r,r*0.14,0,TAU);ctx.fill();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.dark;ctx.beginPath();ctx.ellipse(lx,ly+r*0.12,r*0.22,r*0.14,0,0,TAU);ctx.fill();}
+  },
+  abyss:{ // 冥蜘蛛：八つの目の頭、糸の模様の腹、細い脚の腕、爪の足
+    head(G,l){const {ctx,fx,fy,px,py,hx,hy,hr}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(hx,hy,hr+1.5,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.eye;for(const [a,b] of [[0.5,0.3],[0.5,-0.3],[0.15,0.6],[0.15,-0.6],[0.8,0.15],[0.8,-0.15]]){ctx.beginPath();ctx.arc(hx+fx*hr*a+px*hr*b,hy+fy*hr*a+py*hr*b,1.8,0,TAU);ctx.fill();}},
+    body(G,l){const {ctx,r,step,fx,fy,px,py}=G;ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      ctx.beginPath();ctx.ellipse(-fx*r*0.5,-fy*r*0.5+step,r*0.55,r*0.45,Math.atan2(fy,fx),0,TAU);ctx.fill();ctx.stroke();
+      ctx.strokeStyle=l.accent;ctx.beginPath();ctx.moveTo(-fx*r*0.3+px*r*0.25,-fy*r*0.3+py*r*0.25+step);ctx.lineTo(-fx*r*0.8,-fy*r*0.8+step);ctx.moveTo(-fx*r*0.3-px*r*0.25,-fy*r*0.3-py*r*0.25+step);ctx.lineTo(-fx*r*0.8,-fy*r*0.8+step);ctx.stroke();},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.strokeStyle=l.dark;ctx.lineWidth=1.4;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+sd*r*0.5,ay+r*0.3);ctx.lineTo(ax+sd*r*0.85,ay+r*0.75);ctx.stroke();ctx.lineCap='butt';
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(ax+sd*r*0.85,ay+r*0.75,r*0.07,0,TAU);ctx.fill();},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(lx-r*0.12,ly+r*0.1);ctx.lineTo(lx,ly+r*0.38);ctx.lineTo(lx+r*0.12,ly+r*0.1);ctx.closePath();ctx.fill();}
   },
   mire:{ // 沼巨人：泥のかたまりの頭と光る目、苔と泥の胴、垂れる泥の腰、岩のような肩、大きな泥の足
     head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
