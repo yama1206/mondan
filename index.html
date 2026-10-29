@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.56',date:'2026/10/29'};
+const GAME_VERSION={no:'0.57',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3058,7 +3058,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el){
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
   if(p.curseT>0)dmg*=1+DATA.playerStatus.curse.dmgUp/100; // 呪い：受けるダメージが増える
-  {const atkEl=el||((DATA.enemyElem[src||w._atk]||{}).atk);if(atkEl){const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
+  {const atkEl=el==='none'?null:(el||((DATA.enemyElem[src||w._atk]||{}).atk));if(atkEl){const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
   p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
@@ -3757,16 +3757,16 @@ function updateBossPattern(w,e,p,dt){
         else if(mv.k==='burrow'){e.state='burrow';e.timer=1.3;e.hidden=true;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});}
         else{
           e.state='windup';e.action=mv.k;e.timer=wind;
-          if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
-          else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
+          if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el});
+          else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el});
           else if(mv.k==='pool'){ // 狙った場所に毒の沼（hz指定で炎の溜まりにもなる）：予告のあと、その場に残る
-            addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});
+            addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el});
             w.hazards.push({id:w.nextId++,kind:mv.hz||'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind});
           }
-          else if(mv.k==='toss')addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id}); // 溶岩弾・岩投げ：着弾点を予告
+          else if(mv.k==='toss')addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el}); // 溶岩弾・岩投げ：着弾点を予告
           else if(mv.k==='erupt'){ // 噴出・氷柱：プレイヤーの周りの複数地点を予告（同時に出る）
             for(let i=0;i<mv.n;i++){const a=rand(0,TAU),R=mv.spread*0.45*rand(0.6,1);
-              addTelegraph(w,{shape:'circle',x:p.x+Math.cos(a)*R,y:p.y+Math.sin(a)*R,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id});}
+              addTelegraph(w,{shape:'circle',x:p.x+Math.cos(a)*R,y:p.y+Math.sin(a)*R,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el});}
           }
           else if(mv.k==='crack'){ // 溶岩の亀裂：直線の帯を予告し、時間差で炎が噴き出す
             addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:mv.len+e.r,width:mv.width,total:wind,dmg:0,owner:e.id});
@@ -3822,7 +3822,7 @@ function updateBossPattern(w,e,p,dt){
       const mv=e.curMv||{},R=mv.r||90;
       if(!cannotEnter(w.map,e,p.x,p.y)){e.x=p.x;e.y=p.y;}
       e.hidden=false;
-      addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:R,total:0.5,dmg:e.atk*(mv.dmg||1.4),owner:e.id});
+      addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:R,total:0.5,dmg:e.atk*(mv.dmg||1.4),owner:e.id,el:mv.el});
       emit(w,{type:'roarWave',x:e.x,y:e.y,r:R});
       e.state='recover';e.timer=0.9;
       break;
@@ -4408,7 +4408,7 @@ function updateTelegraphs(w,dt){
     t.t+=dt;
     if(t.t>=t.total){
       if(t.dmg>0){
-        for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y,(w.enemies.find(e=>e.id===t.owner)||{}).type)&&t.slow)slowPlayer(w,p,t.slow);}
+        for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y,(w.enemies.find(e=>e.id===t.owner)||{}).type,t.el)&&t.slow)slowPlayer(w,p,t.slow);}
         emit(w,{type:'tgResolve',shape:t.shape,x:t.x,y:t.y,r:t.r,angle:t.angle,arc:t.arc,small:!!t.small});
       }
     }else keep.push(t);
