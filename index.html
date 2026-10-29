@@ -2,14 +2,16 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>モンスターダンジョンズ</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#0b0a10;color:#e8e6f0;
   font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:14px}
 /* 画面いっぱいの表示は見えている範囲（innerWidth/innerHeight）に合わせる。100vh だとスマホでアドレスバーの分だけ縦に引き伸ばされ、タップの位置がずれる */
-#game{display:block;position:fixed;left:0;top:0;width:100%;height:100%;cursor:crosshair}
+#game{display:block;position:fixed;left:0;top:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+/* iPhoneで指の動きをブラウザのピンチ・スクロール・ダブルタップ拡大に取られないように（取られると指の位置とゲーム上の位置がずれる） */
+html,body{touch-action:none;overscroll-behavior:none;-webkit-touch-callout:none}
 #notify{position:fixed;left:14px;top:104px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:5;max-width:360px}
 .note{background:rgba(14,12,22,.88);border-left:4px solid #888;padding:6px 10px;border-radius:4px;font-size:13px;transition:opacity .5s;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 #overlay,#modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
@@ -97,6 +99,7 @@ body.pad #game{cursor:none}
 #touch{position:fixed;inset:0;display:none;pointer-events:none;z-index:6;-webkit-user-select:none;user-select:none}
 #touch.on{display:block}
 #touch .stick{position:absolute;left:14px;bottom:14px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,235,180,.3);pointer-events:auto;touch-action:none}
+#touch .tb{touch-action:none}
 #touch .knob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:rgba(255,220,140,.35);border:2px solid rgba(255,220,140,.7)}
 #touch .tb{position:absolute;width:68px;height:68px;border-radius:50%;background:rgba(20,16,30,.6);border:2px solid rgba(255,230,160,.45);color:#f3e6c0;font:bold 12px/1.1 sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;pointer-events:auto;touch-action:none}
 #touch .tb.on{background:rgba(255,190,80,.5)}
@@ -185,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.39',date:'2026/10/29'};
+const GAME_VERSION={no:'0.40',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
