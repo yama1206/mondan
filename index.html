@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.38',date:'2026/10/29'};
+const GAME_VERSION={no:'0.39',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9271,9 +9271,9 @@ const App={
       解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
+      <button data-act="inventory">装備・インベントリ</button>
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
-      <button data-act="inventory">装備・インベントリ（I）</button>
       <button data-act="settings">設定</button>
       <button class="danger" data-act="reset">セーブデータをリセット</button></div>
       ${this.howtoHTML()}
@@ -9347,7 +9347,7 @@ const App={
       <div class="menu-col">${host?`<button data-act="board">依頼を選ぶ</button><button class="primary" data-act="netStart">${waiting?'準備中の人がいます（'+waiting+'人）':(list.length>1?'この依頼でみんなで出発':'ひとりで出発（参加を待たずに）')}</button>`:`<button class="primary" data-act="netReady">${myReady?'準備OKを取り消す':'準備OK'}</button>`}
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
-      <button data-act="inventory">装備・インベントリ（I）</button>
+      <button data-act="inventory">装備・インベントリ</button>
       <button data-act="settings">設定</button>
       <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>
       <p class="small muted">${host?'依頼はホストの進行状況から選びます。':'あなたのいつものキャラクターで参加しています。入手したものはあなたのPCに保存されます。'}</p></div>`;
@@ -9357,14 +9357,14 @@ const App={
       const host=Net.role==='host';
       return `<div class="panel camp"><h2>メニュー</h2><p class="small muted">オンライン中はゲームは止まりません</p><div class="menu-col">
         <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
-        <button data-act="inventory">装備・インベントリ（I）</button>
+        <button data-act="inventory">装備・インベントリ</button>
         <button data-act="settings">設定</button>
         ${host&&this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて全員で帰る（持ち帰れる）</button>':''}${host?'<button class="danger" data-act="toLobby">探索を中断して全員でロビーに戻る</button>':''}
         <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>${this.howtoHTML()}</div>`;
     }
     return `<div class="panel camp"><h2>一時停止</h2><div class="menu-col">
       <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
-      <button data-act="inventory">装備・インベントリ（I）</button>
+      <button data-act="inventory">装備・インベントリ</button>
       <button data-act="settings">設定</button>
       ${this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて帰る（持ち帰れる）</button>':'<button class="danger" data-act="retreat">探索を中断して拠点へ戻る</button>'}</div>${this.howtoHTML()}</div>`;
   },
