@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.68',date:'2026/10/29'};
+const GAME_VERSION={no:'0.69',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -690,6 +690,8 @@ const DATA={
     mammoth_bow:{name:'永久凍土の弓',slot:'weapon',el:{k:'ice',v:10},wtype:'bow',atk:23,crit:10,fixed:[{stat:'atkSpd',v:5}],slots:2},
     abyss_sword:{name:'冥糸の剣',slot:'weapon',el:{k:'mei',v:10},wtype:'sword',atk:25,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
     abyss_shuriken:{name:'冥糸の手裏剣',slot:'weapon',el:{k:'mei',v:10},wtype:'shuriken',atk:23,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    gbat_bow:{name:'大蝙蝠の弓',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'bow',atk:22,crit:10,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    gbat_tachi:{name:'大蝙蝠の太刀',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
     toad_helm:{name:'大蛙の兜',slot:'head',def:14,fixed:[{stat:'maxHp',v:15}],skills:{status_res:2},slots:2},
     toad_mail:{name:'大蛙の皮鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:25}],skills:{status_res:3,def_up:2},slots:2},
     toad_vambrace:{name:'大蛙の水かき腕',slot:'arms',def:12,fixed:[{stat:'atk',v:2}],skills:{item_speed:2,evade:2},slots:2},
@@ -2157,6 +2159,8 @@ const DATA={
     {id:'r_mammoth_bow',out:{type:'equip',id:'mammoth_bow'},cost:{beast_fang:3,beast_hide:1},stage:7},
     {id:'r_abyss_sword',out:{type:'equip',id:'abyss_sword'},cost:{spider_silk:2,curse_powder:2},stage:8},
     {id:'r_abyss_shuriken',out:{type:'equip',id:'abyss_shuriken'},cost:{spider_silk:3,curse_powder:1},stage:8},
+    {id:'r_gbat_bow',out:{type:'equip',id:'gbat_bow'},cost:{cave_wing:2,cave_fang:2},stage:5},
+    {id:'r_gbat_tachi',out:{type:'equip',id:'gbat_tachi'},cost:{cave_fang:3,cave_wing:1},stage:5},
     {id:'r_toad_helm',out:{type:'equip',id:'toad_helm'},cost:{toxic_gland:2,swamp_moss:2},stage:3},
     {id:'r_toad_mail',out:{type:'equip',id:'toad_mail'},cost:{toxic_gland:2,slime_gel:2},stage:3},
     {id:'r_toad_vambrace',out:{type:'equip',id:'toad_vambrace'},cost:{swamp_moss:2,slime_gel:2},stage:3},
@@ -4834,6 +4838,7 @@ const GEAR_LOOKS={
   serpent:{main:'#a83a20',dark:'#4a1a0e',accent:'#ffc040',light:'#e0664a',eye:'#ffe060',beast:'serpent',blade:'#ffb070'},
   mammoth:{main:'#7a8a9a',dark:'#3a4450',accent:'#f0f4ff',light:'#aab8c8',eye:'#2a2a2a',beast:'mammoth',blade:'#d8e8f8'},
   abyss:{main:'#2a2a3a',dark:'#0e0e18',accent:'#b898ff',light:'#5a5a7a',eye:'#ff70ff',beast:'abyss',blade:'#c8b8ff'},
+  gbat:{main:'#4a3a6a',dark:'#1e1630',accent:'#ff5070',light:'#7a60a0',eye:'#ff5070',blade:'#e0d8f0'},
   haro:{w:['fur','fang'],main:'#5a6a3a',dark:'#2e3a1a',accent:'#fff0b0',light:'#7e9050',orn:'wolf',fur:true,eye:'#a8ff60',blade:'#e8f4b0'},
 };
 function gearLook(id){
