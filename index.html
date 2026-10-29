@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.33',date:'2026/10/29'};
+const GAME_VERSION={no:'0.34',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -2367,6 +2367,16 @@ function circleHitsWall(map,x,y,r){
   return false;
 }
 /** 壁と衝突しながら移動（軸ごとに判定して壁沿いに滑る）。ぶつかったら true */
+/** スタート部屋：敵（プレイヤー以外）は入れない。プレイヤーは入れる */
+function inStartRoom(map,x,y,r){
+  const R=map.rooms&&map.rooms.start;if(!R)return false;
+  const x0=Math.floor((x-r)/TILE),x1=Math.floor((x+r)/TILE),y0=Math.floor((y-r)/TILE),y1=Math.floor((y+r)/TILE);
+  return x1>=R[0]&&x0<=R[2]&&y1>=R[1]&&y0<=R[3];
+}
+/** そのエンティティがここへは進めないか（壁、または敵にとってのスタート部屋） */
+function cannotEnter(map,e,x,y){
+  return circleHitsWall(map,x,y,e.r)||(e.type!=='player'&&inStartRoom(map,x,y,e.r));
+}
 function moveEntity(map,e,dx,dy){
   let blocked=false;
   const maxStep=Math.max(2,e.r*0.5);
@@ -2374,11 +2384,11 @@ function moveEntity(map,e,dx,dy){
   const sx=dx/steps,sy=dy/steps;
   for(let i=0;i<steps;i++){
     if(sx!==0){
-      if(!circleHitsWall(map,e.x+sx,e.y,e.r))e.x+=sx;
+      if(!cannotEnter(map,e,e.x+sx,e.y))e.x+=sx;
       else if(!(sy===0&&cornerNudge(map,e,sx,0)))blocked=true;
     }
     if(sy!==0){
-      if(!circleHitsWall(map,e.x,e.y+sy,e.r))e.y+=sy;
+      if(!cannotEnter(map,e,e.x,e.y+sy))e.y+=sy;
       else if(!(sx===0&&cornerNudge(map,e,0,sy)))blocked=true;
     }
   }
@@ -2391,10 +2401,10 @@ function cornerNudge(map,e,sx,sy){
   for(let n=1;n<=maxN;n++){
     for(const s of [-1,1]){
       const nx=sy!==0?s*n:0,ny=sx!==0?s*n:0;
-      if(!circleHitsWall(map,e.x+sx+nx,e.y+sy+ny,e.r)){
+      if(!cannotEnter(map,e,e.x+sx+nx,e.y+sy+ny)){
         const mv=Math.min(step,n);
         const ox=Math.sign(nx)*mv,oy=Math.sign(ny)*mv;
-        if(!circleHitsWall(map,e.x+ox,e.y+oy,e.r)){e.x+=ox;e.y+=oy;return true;}
+        if(!cannotEnter(map,e,e.x+ox,e.y+oy)){e.x+=ox;e.y+=oy;return true;}
       }
     }
   }
@@ -2734,7 +2744,7 @@ function populateLayout(w,stage,quest,L){
   // 通路をうろつく魔物
   for(const c of shuffle(m.corridors.slice()).slice(0,spawnCount(2,4))){
     const x=(c.x+0.5)*TILE,y=(c.y+0.5)*TILE;
-    if(!circleHitsWall(m,x,y,14))spawnEnemy(w,pick(L.wander),x,y);
+    if(!circleHitsWall(m,x,y,14)&&!inStartRoom(m,x,y,14))spawnEnemy(w,pick(L.wander),x,y);
   }
   // 討伐依頼は、目標数より少し多く対象が出るようにする（必ず達成できるように）
   if(goal.type==='kill'){
@@ -3388,7 +3398,7 @@ function unstickEnemy(w,e,dt){
     }
   }
   const to=pick||anyPick;
-  if(to){e.x=to.x;e.y=to.y;}
+  if(to&&!cannotEnter(map,e,to.x,to.y)){e.x=to.x;e.y=to.y;}
 }
 function updateEnemy(w,e,dt){
   e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;e.hitAccT=(e.hitAccT||0)-dt;
@@ -3662,7 +3672,7 @@ function updateBossPattern(w,e,p,dt){
       e.timer-=dt;e.hidden=true;
       if(e.timer>0)break;
       const mv=e.curMv||{},R=mv.r||90;
-      if(!circleHitsWall(w.map,p.x,p.y,e.r)){e.x=p.x;e.y=p.y;}
+      if(!cannotEnter(w.map,e,p.x,p.y)){e.x=p.x;e.y=p.y;}
       e.hidden=false;
       addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:R,total:0.5,dmg:e.atk*(mv.dmg||1.4),owner:e.id});
       emit(w,{type:'roarWave',x:e.x,y:e.y,r:R});
