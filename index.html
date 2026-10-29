@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.55',date:'2026/10/29'};
+const GAME_VERSION={no:'0.56',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -452,7 +452,7 @@ const DATA={
     leather_boots:{name:'革の靴',slot:'legs',def:3,skills:{evade:1,move_up:2,gather_up:1}},
     wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,fixed:[{stat:'moveSpd',v:4}],skills:{move_up:6,weakness:2},slots:1},
     // ステージ5：黒狼シリーズ
-    bwolf_sword:{name:'黒狼の剣',slot:'weapon',el:{k:'dragon',v:12},wtype:'sword',atk:31,crit:10,fixed:[{stat:'atkSpd',v:8}],slots:2},
+    bwolf_sword:{name:'黒狼の剣',slot:'weapon',el:{k:'mei',v:12},wtype:'sword',atk:31,crit:10,fixed:[{stat:'atkSpd',v:8}],slots:2},
     bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:14,fixed:[{stat:'crit',v:5}],skills:{boss_hunter:4,crit_dmg:2},slots:2},
     bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:18,fixed:[{stat:'maxHp',v:35}],skills:{atk_up:4,boss_hunter:3},slots:2},
     bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:12,fixed:[{stat:'atk',v:4}],skills:{atk_up:4,crit_dmg:3},slots:2},
@@ -462,16 +462,16 @@ const DATA={
     // 大剣・太刀・ハンマー（鉄→古狼→黒狼）
     iron_gs:{name:'鉄の大剣',slot:'weapon',wtype:'greatsword',atk:10,crit:2},
     wolf_gs:{name:'古狼の大剣',slot:'weapon',el:{k:'thunder',v:8},wtype:'greatsword',atk:20,crit:5,fixed:[{stat:'critDmg',v:10}],slots:1},
-    bwolf_gs:{name:'黒狼の大剣',slot:'weapon',el:{k:'dragon',v:13},wtype:'greatsword',atk:33,crit:6,fixed:[{stat:'critDmg',v:15}],slots:2},
+    bwolf_gs:{name:'黒狼の大剣',slot:'weapon',el:{k:'mei',v:13},wtype:'greatsword',atk:33,crit:6,fixed:[{stat:'critDmg',v:15}],slots:2},
     iron_tachi:{name:'鉄の太刀',slot:'weapon',wtype:'tachi',atk:9,crit:6},
     wolf_tachi:{name:'古狼の太刀',slot:'weapon',el:{k:'thunder',v:7},wtype:'tachi',atk:18,crit:10,fixed:[{stat:'moveSpd',v:4}],slots:1},
-    bwolf_tachi:{name:'黒狼の太刀',slot:'weapon',el:{k:'dragon',v:12},wtype:'tachi',atk:31,crit:12,fixed:[{stat:'crit',v:4}],slots:2},
+    bwolf_tachi:{name:'黒狼の太刀',slot:'weapon',el:{k:'mei',v:12},wtype:'tachi',atk:31,crit:12,fixed:[{stat:'crit',v:4}],slots:2},
     iron_db:{name:'鉄の双剣',slot:'weapon',wtype:'dual',atk:8,crit:8},
     wolf_db:{name:'古狼の双剣',slot:'weapon',el:{k:'thunder',v:6},wtype:'dual',atk:16,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:1},
-    bwolf_db:{name:'黒狼の双剣',slot:'weapon',el:{k:'dragon',v:10},wtype:'dual',atk:28,crit:14,fixed:[{stat:'critDmg',v:10}],slots:2},
+    bwolf_db:{name:'黒狼の双剣',slot:'weapon',el:{k:'mei',v:10},wtype:'dual',atk:28,crit:14,fixed:[{stat:'critDmg',v:10}],slots:2},
     iron_hammer:{name:'鉄のハンマー',slot:'weapon',wtype:'hammer',atk:10,crit:0},
     wolf_hammer:{name:'古狼のハンマー',slot:'weapon',el:{k:'thunder',v:8},wtype:'hammer',atk:20,crit:3,fixed:[{stat:'maxHp',v:20}],slots:1},
-    bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',el:{k:'dragon',v:13},wtype:'hammer',atk:33,crit:4,fixed:[{stat:'def',v:6}],slots:2},
+    bwolf_hammer:{name:'黒狼のハンマー',slot:'weapon',el:{k:'mei',v:13},wtype:'hammer',atk:33,crit:4,fixed:[{stat:'def',v:6}],slots:2},
     iron_lance:{name:'鉄のランス',slot:'weapon',wtype:'lance',atk:8,crit:4},
     iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:7,crit:4},
     iron_shuriken:{name:'鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:7,crit:4},
@@ -483,7 +483,7 @@ const DATA={
     hot_shuriken:{name:'灼熱の手裏剣',slot:'weapon',el:{k:'fire',v:6},wtype:'shuriken',atk:14,crit:8,fixed:[{stat:'moveSpd',v:3}],slots:1},
     ice_shuriken:{name:'氷刃の手裏剣',slot:'weapon',el:{k:'ice',v:7},wtype:'shuriken',atk:15,crit:8,fixed:[{stat:'atkSpd',v:4}],slots:1},
     frost_shuriken:{name:'氷嶺の手裏剣',slot:'weapon',el:{k:'ice',v:6},wtype:'shuriken',atk:16,crit:8,fixed:[{stat:'critDmg',v:5}],slots:1},
-    bwolf_shuriken:{name:'黒狼の手裏剣',slot:'weapon',el:{k:'dragon',v:12},wtype:'shuriken',atk:31,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
+    bwolf_shuriken:{name:'黒狼の手裏剣',slot:'weapon',el:{k:'mei',v:12},wtype:'shuriken',atk:31,crit:10,fixed:[{stat:'atkSpd',v:6}],slots:2},
     iron_blade:{name:'鉄の剣',slot:'weapon',wtype:'sword',atk:9,crit:5},
     lizard_sword:{name:'大蜥蜴の剣',slot:'weapon',el:{k:'fire',v:6},wtype:'sword',atk:16,crit:8,fixed:[{stat:'atkSpd',v:3}],slots:1},
     bone_tachi:{name:'骨の太刀',slot:'weapon',wtype:'tachi',atk:14,crit:8,fixed:[{stat:'critDmg',v:4}]},
@@ -885,32 +885,32 @@ const DATA={
      weak＝弱点属性（1つ目×1.5、2つ目以降×1.25）／strong＝効きにくい属性（×0.5）。攻撃と同じ属性は×0.25 */
   elements:{
     fire:{name:'火',color:'#ff6a3a'},water:{name:'水',color:'#4aa8ff'},thunder:{name:'雷',color:'#ffe040'},
-    ice:{name:'氷',color:'#a8ecff'},dragon:{name:'冥',color:'#a070ff'}, // 冥属性（内部の名前は dragon のまま）
+    ice:{name:'氷',color:'#a8ecff'},mei:{name:'冥',color:'#a070ff'},
   },
   elemShare:0.5,
   seriesRes:{
-    beast:{ice:2,fire:-1},goblin:{fire:1,dragon:-1},beetle:{water:2,fire:-2},bone:{dragon:2,thunder:-1},
+    beast:{ice:2,fire:-1},goblin:{fire:1,mei:-1},beetle:{water:2,fire:-2},bone:{mei:2,thunder:-1},
     croc:{water:3,thunder:-2},frog:{water:2,fire:1,thunder:-1},bull:{fire:1,thunder:-1},gale:{thunder:3,ice:-2},
     lizard:{fire:3,water:-2},wolf:{ice:2,fire:-1},fang:{ice:2,fire:-1},haro:{ice:3,fire:-2},stag:{thunder:2,fire:-2},
-    hydra:{thunder:-1,ice:1},venom:{ice:1,dragon:1,fire:-2},mire:{fire:-2,thunder:1},bwolf:{dragon:3,thunder:-2},
+    hydra:{thunder:-1,ice:1},venom:{ice:1,mei:1,fire:-2},mire:{fire:-2,thunder:1},bwolf:{mei:3,thunder:-2},
   },
   enemyElem:{
     goblin:{weak:['fire']},goblin_archer:{weak:['fire']},slime:{atk:'water',weak:['thunder']},forest_wolf:{weak:['fire'],strong:['ice']},
     meadow_bull:{atk:'fire',weak:['thunder','ice']},rhino:{weak:['thunder']},boar:{weak:['ice']},salamander:{weak:['fire'],strong:['water']},gale_bird:{atk:'thunder',weak:['ice'],strong:['water']},rock_lizard:{atk:'fire',weak:['water','ice']},
-    archer:{weak:['dragon','fire']},beetle:{weak:['fire'],strong:['water']},mushroom:{weak:['fire']},
+    archer:{weak:['mei','fire']},beetle:{weak:['fire'],strong:['water']},mushroom:{weak:['fire']},
     wolf:{atk:'thunder',weak:['fire'],strong:['ice']},forest_king:{atk:'ice',weak:['fire','thunder']},stag_beetle:{weak:['fire'],strong:['thunder']},
     poison_frog:{atk:'water',weak:['thunder']},leech:{weak:['fire','thunder']},carnivore_plant:{weak:['fire'],strong:['water']},
-    bloater:{weak:['fire']},swamp_croc:{atk:'water',weak:['thunder'],strong:['fire']},parasite:{weak:['fire','dragon']},
-    mole:{weak:['fire']},centipede:{atk:'fire',weak:['ice','water']},grados:{weak:['fire','water','thunder','ice','dragon']},
+    bloater:{weak:['fire']},swamp_croc:{atk:'water',weak:['thunder'],strong:['fire']},parasite:{weak:['fire','mei']},
+    mole:{weak:['fire']},centipede:{atk:'fire',weak:['ice','water']},grados:{weak:['fire','water','thunder','ice','mei']},
     lava_giant:{atk:'fire',weak:['water','ice']},volcano_dragon:{atk:'fire',weak:['ice','water']},felgnas:{atk:'fire',weak:['water','ice']},
     ice_deer:{atk:'ice',weak:['fire']},frost_wyvern:{atk:'ice',weak:['fire']},ice_ape:{atk:'ice',weak:['fire']},
     hydra:{atk:'water',weak:['thunder','fire']},venomKing:{weak:['fire'],strong:['ice']},mireGiant:{atk:'water',weak:['fire','thunder']},
     water_lizard:{atk:'water',weak:['thunder']},jellyfish:{atk:'thunder',weak:['fire']},piranha:{atk:'water',weak:['thunder']},
-    crab:{atk:'water',weak:['thunder'],strong:['fire']},eel:{atk:'thunder',weak:['ice'],strong:['water']},water_spirit:{atk:'water',weak:['thunder','dragon']},
-    aquarios:{atk:'water',weak:['thunder','dragon']},turtle:{atk:'water',weak:['thunder'],strong:['fire']},thunderEel:{atk:'thunder',weak:['ice'],strong:['water']},giantWorm:{strong:['thunder'],weak:['fire']},
-    hobgoblin:{weak:['fire']},sniper:{weak:['dragon']},skeleton:{weak:['dragon','fire']},wisp:{atk:'ice',weak:['fire','dragon']},
-    zombie:{weak:['fire']},cursed_knight:{atk:'dragon',weak:['thunder']},shaman:{atk:'dragon',weak:['fire']},
-    black_wolf:{atk:'dragon',weak:['thunder'],strong:['ice']},bone_dragon:{atk:'dragon',weak:['dragon','fire'],strong:['ice']},
+    crab:{atk:'water',weak:['thunder'],strong:['fire']},eel:{atk:'thunder',weak:['ice'],strong:['water']},water_spirit:{atk:'water',weak:['thunder','mei']},
+    aquarios:{atk:'water',weak:['thunder','mei']},turtle:{atk:'water',weak:['thunder'],strong:['fire']},thunderEel:{atk:'thunder',weak:['ice'],strong:['water']},giantWorm:{strong:['thunder'],weak:['fire']},
+    hobgoblin:{weak:['fire']},sniper:{weak:['mei']},skeleton:{weak:['mei','fire']},wisp:{atk:'ice',weak:['fire','mei']},
+    zombie:{weak:['fire']},cursed_knight:{atk:'mei',weak:['thunder']},shaman:{atk:'mei',weak:['fire']},
+    black_wolf:{atk:'mei',weak:['thunder'],strong:['ice']},bone_dragon:{atk:'mei',weak:['mei','fire'],strong:['ice']},
   },
   /* プレイヤーにかかる状態異常。time：秒（防具スキル「状態異常耐性」で短くなる）
      poison：毒（tick 秒ごとに最大HPの pct ずつ減る。毒ではHP1より下がらない。「毒耐性」で減る量が下がる）
@@ -2150,7 +2150,7 @@ function computeStats(profile,override,who){
     effects:{},weaponType:'sword',weaponName:'素手',weaponRarity:0,decoCapped:[],
     atkPct:0,dodgeCdMult:1,itemDelayAdj:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
-    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,dragon:0},
+    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,mei:0},
     dodgeDistPct:0,chargeSpdPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
   const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
