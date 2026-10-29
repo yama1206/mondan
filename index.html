@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.34',date:'2026/10/29'};
+const GAME_VERSION={no:'0.35',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -2840,6 +2840,27 @@ function nearestPlayer(w,e){
   for(const id in w.players){const p=w.players[id];if(p.dead)continue;const d=(p.x-e.x)**2+(p.y-e.y)**2;if(d<bd){bd=d;best=p;}}
   return best;
 }
+/** ボスのヘイト：プレイヤーごとに、与えたダメージ分たまる。時間とともに少しずつ薄れる */
+const HATE_DECAY=0.03; // 毎秒の減衰率
+function addHate(e,p,amount){
+  if(!e.hate)e.hate={};
+  e.hate[p.id]=(e.hate[p.id]||0)+Math.max(0,amount);
+}
+function decayHate(e,dt){
+  if(!e.hate)return;
+  const k=Math.exp(-HATE_DECAY*dt);
+  for(const id in e.hate)e.hate[id]*=k;
+}
+/** ヘイトが最も高い生存プレイヤーを狙う。同点（全員0など）なら近い方 */
+function bossTarget(w,e){
+  const h=e.hate||{};let best=null,bh=-1,bd=Infinity;
+  for(const id in w.players){
+    const p=w.players[id];if(p.dead)continue;
+    const v=h[id]||0,d=(p.x-e.x)**2+(p.y-e.y)**2;
+    if(v>bh||(v===bh&&d<bd)){bh=v;bd=d;best=p;}
+  }
+  return best;
+}
 function computeFlow(w){
   const m=w.map,N=m.W*m.H;
   if(!w.flow)w.flow=new Int32Array(N);
@@ -3045,6 +3066,7 @@ function damageEnemy(w,p,e,mult,src){
     dmg+=Math.max(0,Math.round(ed));elHit={k:s.elem.k,m:em};
   }
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
+  if(e.boss)addHate(e,p,dmg);
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
   // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
   if(!e.boss&&!ed.heavy&&!e.mid){
@@ -3425,7 +3447,8 @@ function updateEnemy(w,e,dt){
     e.facing=e.wanderA;
     return;
   }
-  const p=nearestPlayer(w,e);if(!p)return;
+  if(e.boss)decayHate(e,dt);
+  const p=e.boss?bossTarget(w,e):nearestPlayer(w,e);if(!p)return;
   if(e.boss){ENEMY_AI[DATA.enemies[e.type].ai](w,e,p,dt);return;}
   const d=Math.hypot(p.x-e.x,p.y-e.y);
   if(!e.aggro){
