@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.50',date:'2026/10/29'};
+const GAME_VERSION={no:'0.51',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -318,30 +318,40 @@ const DATA={
      itemDelay：アイテム発動時間の増減(秒) charge：長押しチャージ perfect：ギリギリ回避の強化 stun：頭を叩いたときのスタン値
      skill：Qキーのスキル（今は無し。DATA.skills のIDを入れると使える） */
   weaponTypes:{
-    sword:{name:'片手剣',range:40,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
+    sword:{ws:'medic',name:'片手剣',range:40,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
       marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い'},
-    greatsword:{name:'大剣',knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
+    greatsword:{ws:'fudou',name:'大剣',knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
       charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
       marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）'},
-    tachi:{name:'太刀',range:62,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
+    tachi:{ws:'iai',name:'太刀',range:62,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
-    dual:{name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
+    dual:{ws:'kyodo',name:'双剣',range:35,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
     hammer:{name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
-    lance:{name:'ランス',range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
+    lance:{ws:'taunt',name:'ランス',range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
       frontGuard:{arc:120*Math.PI/180,mult:0.1}, // 盾：いつも向いている方向（前方120°）からの攻撃を90%カット
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。構えている間は向いている方向の攻撃を90%カット（突いている間は盾が効かない）。納刀に1.1秒'},
-    bow:{name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
+    bow:{ws:'sokusha',name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
       marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで3段階チャージして射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
-    shuriken:{name:'手裏剣',range:100,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
+    shuriken:{ws:'inmitsu',name:'手裏剣',range:100,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       shuriken:{speed:500,shots:2,side:7,weakMult:2.2}, // 手裏剣：速さ（px/秒）、1回に投げる枚数、横にずらす間隔。飛ぶ距離は range（リーチ）。まっすぐ飛ぶ
       marks:{move:'〇',speed:'〇',power:'△',reach:'△'},feature:'2枚ずつまっすぐ投げる（リーチは短め）。装備中は受けるダメージ1.5倍'},
+  },
+  // 武器スキル（Qで発動。効果は duration 秒、再使用まで cd 秒）。武器種の ws に ID を入れる
+  weaponSkills:{
+    medic:{name:'医療の心得',duration:15,cd:150},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）
+    fudou:{name:'不動の構え',duration:15,cd:150},   // 大剣：チャージ中の被ダメージ軽減を75%に（通常50%）、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない
+    iai:{name:'居合の極意',duration:15,cd:150},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
+    kyodo:{name:'狂人化',duration:15,cd:150},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
+    taunt:{name:'挑発',duration:15,cd:150},         // ランス：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
+    sokusha:{name:'速射',duration:15,cd:150},       // 弓：チャージ速度2倍（威力は変えない）
+    inmitsu:{name:'隠密',duration:15,cd:150},       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -2127,6 +2137,7 @@ function computeStats(profile,override,who){
   s.dodgeCd=P.dodgeCd*(s.effects.gale?0.7:1)*s.dodgeCdMult;
   s.skill=wt.skill||null;
   s.skillCd=s.skill?DATA.skills[s.skill].cd*(s.effects.skillcd?0.75:1):0;
+  s.ws=wt.ws||null;if(s.ws)s.skillCd=DATA.weaponSkills[s.ws].cd*(s.effects.skillcd?0.75:1);
   s.itemDelayAdj+=(wt.itemDelay||0);
   s.itemDelay=Math.max(P.minItemDelay,DATA.consumables.potion.delay+s.itemDelayAdj); // 表示用（回復薬の発動時間）
   s.perfectAtk=wt.perfect?wt.perfect.atkUp:0;
@@ -2953,12 +2964,14 @@ function inTelegraph(t,x,y,r){
   return false;
 }
 
+/** 武器スキル（Qで発動）の効果が今かかっているか */
+function wsActive(p,id){return !!(p&&p.ws&&p.ws.id===id&&!p.dead);}
 /* ---------- 被ダメージ・与ダメージ ---------- */
 function hitPlayer(w,p,raw,sx,sy,src){
   if(p.dead)return false;
   if(p.dodgeInv>0){
     // ジャスト回避：回避の出始めで攻撃をかわすと、回避のクールタイムがリセット（太刀はさらに「見切り」で攻撃力アップ）
-    const wt=DATA.weaponTypes[p.stats.weaponType],pf=wt&&wt.perfect,jw=pf?pf.window:0.2;
+    const wt=DATA.weaponTypes[p.stats.weaponType],pf=wt&&wt.perfect,jw=(pf?pf.window:0.2)*(wsActive(p,'iai')?1.5:1);
     if(p.dodgeTime>0&&w.time-p.dodgeStart<=jw&&!p.perfectThisDodge){
       p.perfectThisDodge=true;p.dodgeCd=0;
       if(pf){p.buffT=pf.time;emit(w,{type:'perfectDodge',pid:p.id,x:p.x,y:p.y-18});}
@@ -2969,9 +2982,10 @@ function hitPlayer(w,p,raw,sx,sy,src){
   if(p.hitInv>0)return false;
   let dmg=raw*(60/(60+p.stats.def));
   // 大剣・ハンマーのチャージ中は被ダメージ半分／弓を装備中は被ダメージ1.5倍
-  {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.hurtMult)dmg*=cw.hurtMult;else if(p.charging&&cw&&cw.charge)dmg*=0.5;}
+  {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.hurtMult)dmg*=cw.hurtMult;else if(p.charging&&cw&&cw.charge)dmg*=wsActive(p,'fudou')?0.25:0.5;}
   // ランスの盾：向いている方向からの攻撃は大きく減らす（攻撃元の位置で判定）
-  if(p.stats.frontGuard&&!(p.swing>0)&&sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=p.stats.frontGuard.arc/2)dmg*=p.stats.frontGuard.mult;
+  if(wsActive(p,'taunt')&&!(p.swing>0))dmg*=0.1; // 挑発中は全方位90%ガード
+  else if(p.stats.frontGuard&&!(p.swing>0)&&sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=p.stats.frontGuard.arc/2)dmg*=p.stats.frontGuard.mult;
   if(p.stats.effects.guard)dmg*=0.88;
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
@@ -2987,8 +3001,7 @@ function hitPlayer(w,p,raw,sx,sy,src){
     emit(w,{type:'itemUsed',pid:p.id,item:id});emit(w,{type:'itemFail',pid:p.id,x:p.x,y:p.y-26,item:id});
   }
   // チャージ可能な武器はチャージ中に攻撃を受けると中断する（攻撃ボタンを離すまで、また溜め始めない）
-  if(p.charging)p.chargeLock=true;
-  p.charging=false;p.charge=0;
+  if(p.charging&&!wsActive(p,'fudou')){p.chargeLock=true;p.charging=false;p.charge=0;}
   if(p.hp<=0)downPlayer(w,p);
   else{const sp=DATA.enemyStatus[src||w._atk];if(sp&&RNG.next()<sp.chance)inflictPlayer(w,p,sp.k);} // 攻撃した魔物の状態異常
   return true;
@@ -3064,7 +3077,8 @@ function damageEnemy(w,p,e,mult,src){
   const hp_=src.hit||null,part=hp_&&hp_.part; // 当たった部位
   const s=p.stats;let atk=s.atk*(s.power||1);
   if(s.effects.desperate&&p.hp<=s.maxHp*0.3)atk*=1.35;
-  if(p.buffT>0)atk*=1+(s.perfectAtk||0);
+  if(p.buffT>0)atk*=1+(s.perfectAtk||0)*(wsActive(p,'iai')?1.6:1);
+  if(wsActive(p,'kyodo'))atk*=1.1;
   if(p.buffs.atk&&p.buffs.atk.t>0)atk*=1+p.buffs.atk.pct/100;
   {const fw=DATA.weaponTypes[s.weaponType];if(fw&&fw.flow&&p.flow>0)atk*=1+p.flow*fw.flow.pct/100;}
   let dmg=atk*mult*rand(0.92,1.08);
@@ -3090,7 +3104,7 @@ function damageEnemy(w,p,e,mult,src){
     dmg+=Math.max(0,Math.round(ed));elHit={k:s.elem.k,m:em};
   }
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
-  if(e.boss){addHate(e,p,dmg);w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
+  if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
   // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
   if(!e.boss&&!ed.heavy&&!e.mid){
@@ -3165,7 +3179,7 @@ const EMPTY_INPUT={mx:0,my:0,attack:false,dodge:false,skill:false,heal:false,she
 function updatePlayer(w,p,inp,dt){
   if(p.dead){p.using=null;p.charging=false;return;}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
-  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;
+  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   if(p.slowT>0)p.slowT-=dt;if(p.poisoned>0)p.poisoned-=dt;
   if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;
   if(p.poisonT>0){ // 毒：一定時間ごとに減る（HP1より下がらない）
@@ -3198,7 +3212,7 @@ function updatePlayer(w,p,inp,dt){
   if(typeof inp.aim==='number')p.facing=inp.aim;
   if(p.dodgeTime>0){
     p.dodgeTime-=dt;
-    const ds=P.dodgeSpeed*(1+(s.dodgeDistPct||0)/100); // 回避距離アップ（防具スキル）のときだけ伸びる
+    const ds=P.dodgeSpeed*(1+(s.dodgeDistPct||0)/100)*(wsActive(p,'taunt')?1.3:1); // 回避距離アップ（防具スキル）のときだけ伸びる
     moveEntity(w.map,p,p.dodgeDir.x*ds*dt,p.dodgeDir.y*ds*dt);
     return;
   }
@@ -3223,7 +3237,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.using){p.using=null;emit(w,{type:'itemCancel',pid:p.id,x:p.x,y:p.y-26});}
     p.charging=false;p.charge=0;p.sheathing=null; // 納刀動作も中断（抜刀したまま）
     p.dodgeDir=p.moving?{x:mx,y:my}:{x:Math.cos(p.facing),y:Math.sin(p.facing)};
-    p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd;
+    p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd-(wsActive(p,'kyodo')?0.3:0);
     p.dodgeInv=P.dodgeTime+s.dodgeIframe;
     p.dodgeStart=w.time;p.perfectThisDodge=false;
     emit(w,{type:'dodge',x:p.x,y:p.y,pid:p.id});
@@ -3253,16 +3267,16 @@ function updatePlayer(w,p,inp,dt){
   if(p.sheathing||!p.drawn){}
   else if(wt.charge){
     if(p.charging){
-      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100); // チャージ速度（防具スキル）
+      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'sokusha')?2:1); // チャージ速度（防具スキル）
       else{
         const lv=chargeLevel(wt.charge,p.charge);
         p.charging=false;p.charge=0;
-        playerAttack(w,p,{mult:lv?wt.charge.mult[lv-1]:1,stunMult:lv&&wt.charge.stunMult?wt.charge.stunMult[lv-1]:1,level:lv});
+        playerAttack(w,p,{mult:lv?wt.charge.mult[lv-1]*(lv===3&&wsActive(p,'fudou')?1.2:1):1,stunMult:lv&&wt.charge.stunMult?wt.charge.stunMult[lv-1]:1,level:lv});
       }
     }else if(!inp.attack)p.chargeLock=false;
     else if(p.atkTimer<=0&&!p.chargeLock){p.charging=true;p.charge=0;}
   }else if(inp.attack&&p.atkTimer<=0)playerAttack(w,p,{});
-  if(inp.skill&&s.skill&&p.skillCd<=0&&!p.charging)playerSkill(w,p);
+  if(inp.skill&&p.skillCd<=0&&!p.charging){if(s.ws)activateWeaponSkill(w,p);else if(s.skill)playerSkill(w,p);}
   if(inp.heal&&!p.charging){
     const id=ITEM_ORDER[p.sel],c=DATA.consumables[id];
     if((p.bag[id]||0)<=0)emit(w,{type:'info',pid:p.id,text:c.name+'を持っていません'});
@@ -3281,7 +3295,7 @@ function applyItem(w,p,id){
   if(radius)emit(w,{type:'itemArea',x:p.x,y:p.y,r:radius,color:c.color});
   for(const q of targets){
     if(ef.type==='heal'){
-      const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1));
+      const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(wsActive(p,'medic')?1.5:1));
       q.hp=Math.min(q.stats.maxHp,q.hp+hl);
       emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
       if(q.poisonT>0||q.curseT>0){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
@@ -3393,6 +3407,11 @@ function playerAttack(w,p,opt){
   emit(w,{type:'swing',pid:p.id,combo:third,level:opt.level||0,x:p.x,y:p.y,w:s.weaponType});
 }
 /** Qキーのスキル（武器種に skill が設定されているときだけ使える） */
+function activateWeaponSkill(w,p){
+  const s=p.stats,ws=DATA.weaponSkills[s.ws];
+  p.ws={id:s.ws,t:ws.duration};p.skillCd=s.skillCd;
+  emit(w,{type:'info',pid:p.id,text:ws.name+'！（'+ws.duration+'秒）',x:p.x,y:p.y-26});
+}
 function playerSkill(w,p){
   const s=p.stats,sk=DATA.skills[s.skill];if(!sk)return;
   const a=p.facing,sp=sk.speed;
@@ -3453,6 +3472,8 @@ function unstickEnemy(w,e,dt){
   if(to&&!cannotEnter(w.map,e,to.x,to.y)){e.x=to.x;e.y=to.y;}
 }
 /** 最初の部屋（スタート部屋）にいるあいだは、敵に見つからない。誰かが部屋から出たら以後ずっと解除 */
+/** 敵から見つからないか（最初の部屋の隠密、または武器スキル「隠密」） */
+function playerUnseen(w,p){return wsActive(p,'inmitsu')||playerHidden(w,p);}
 function playerHidden(w,p){
   if(w.leftStart||!w.map.rooms||!w.map.rooms.start)return false;
   return inStartRoom(w.map,p.x,p.y,p.r);
@@ -3486,8 +3507,9 @@ function updateEnemy(w,e,dt){
   const p=e.boss?bossTarget(w,e):nearestPlayer(w,e);if(!p)return;
   if(e.boss){ENEMY_AI[DATA.enemies[e.type].ai](w,e,p,dt);return;}
   const d=Math.hypot(p.x-e.x,p.y-e.y);
+  if(!e.boss&&e.aggro&&wsActive(p,'inmitsu'))e.aggro=false; // 隠密：追いかけていた敵も追うのをやめる（ボスは対象外）
   if(!e.aggro){
-    if(d<CONFIG.enemySight&&!playerHidden(w,p)&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){e.aggro=true;alertNearby(w,e);}
+    if(d<CONFIG.enemySight&&!playerUnseen(w,p)&&lineOfSight(w.map,e.x,e.y,p.x,p.y)){e.aggro=true;alertNearby(w,e);}
     else return;
   }
   const fn=ENEMY_AI[DATA.enemies[e.type].ai];
@@ -4446,7 +4468,7 @@ function updateRevive(w,dt){
     if(!p.dead||p.out)continue;
     // 仲間が重なった状態で動かずにいると助け起こせる（動いたり離れたりすると最初から）
     const helper=ps.find(q=>!q.dead&&!q.moving&&!(q.dodgeTime>0)&&Math.hypot(q.x-p.x,q.y-p.y)<CONFIG.coop.reviveRadius);
-    p.reviveNeed=Math.max(1.5,CONFIG.coop.reviveTime-(helper?helper.stats.reviveCut||0:0)); // 防具スキル「救命」で短くなる
+    p.reviveNeed=Math.max(1.5,CONFIG.coop.reviveTime-(helper?helper.stats.reviveCut||0:0)-(helper&&wsActive(helper,'medic')?2:0)); // 片手剣の「医療の心得」で2秒短縮 // 防具スキル「救命」で短くなる
     if(helper)p.revive+=dt;
     else{p.revive=0;p.downT-=dt;} // 助け起こし中は待ち時間が止まる
     if(p.downT<=0){p.out=true;p.revive=0;p.downT=0;emit(w,{type:'playerOut',pid:p.id,x:p.x,y:p.y});continue;} // 力尽きた：もう助け起こせない
@@ -4468,6 +4490,8 @@ function updateWorld(w,dt,inputs){
   for(const id in w.players){const p=w.players[id];before[id]={x:p.x,y:p.y};}
   for(const id in w.players)updatePlayer(w,w.players[id],inputs[id]||EMPTY_INPUT,dt);
   enforceLeash(w,before);
+  // 挑発中のランス使いは、ボスのヘイトが常に高まる
+  for(const id in w.players){const p=w.players[id];if(wsActive(p,'taunt'))for(const e of w.enemies)if(e.boss&&!e.dead)addHate(e,p,dt*60);}
   // 誰かが最初の部屋から出たら、敵に見つかるようになる
   if(!w.leftStart)for(const id in w.players){const p=w.players[id];if(!p.dead&&!playerHidden(w,p)){w.leftStart=true;break;}}
   if(w.leftStart)w.map.startLocked=true; // 一度出たら、最初の部屋には戻れない
@@ -6859,6 +6883,7 @@ const Renderer={
     if(p.sheathing){wlabel='納刀中…';wsub='';wfill=p.sheathing.t/p.sheathing.total;wcol='#a0c8ff';}
     else if(!p.drawn){wlabel=(wt.name||'')+'（納刀）';wsub='攻撃で抜刀';wcol='#a0c8ff';}
     else if(!p.charging&&!(wt.perfect&&p.buffT>0))wsub=`[${keys.sheathe}]で納刀`;
+    if(s.ws){const wsd=DATA.weaponSkills[s.ws];wsub=p.ws?`${wsd.name} 残${Math.ceil(p.ws.t)}秒`:p.skillCd>0?`${wsd.name} 再使用${Math.ceil(p.skillCd)}秒`:`[${keys.skill}]で${wsd.name}`;}
     const using=p.using;
     const hasItems=ownedItemIds(bag).length>0;
     const boxes=[
@@ -8410,7 +8435,7 @@ const Net={
       players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
-        using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
+        using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,ws:p.ws?{id:p.ws.id,t:r1(p.ws.t)}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
         sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),curseT:r3(p.curseT||0),
         dodgeCd:r3(p.dodgeCd),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
