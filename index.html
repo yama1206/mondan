@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.70',date:'2026/10/29'};
+const GAME_VERSION={no:'0.71',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -712,8 +712,8 @@ const DATA={
     mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,charge_up:1},slots:2},
     kama_sword:{name:'大鎌蟷螂の大剣',slot:'weapon',el:{k:'thunder',v:10},wtype:'sword',atk:21,crit:11,fixed:[{stat:'crit',v:2}],slots:2},
     kama_dual:{name:'大鎌蟷螂の雷双剣',slot:'weapon',el:{k:'thunder',v:10},wtype:'dual',atk:21,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
-    armd_hammer:{name:'大アルマジロの殻槌',slot:'weapon',wtype:'hammer',atk:24,crit:0,fixed:[{stat:'crit',v:2}],slots:2},
-    armd_gs:{name:'大アルマジロの甲羅剣',slot:'weapon',wtype:'greatsword',atk:23,crit:3,fixed:[{stat:'crit',v:2}],slots:2},
+    armd_hammer:{name:'大アルマジロの殻槌',slot:'weapon',st:{k:'slow',buildup:15},wtype:'hammer',atk:24,crit:0,fixed:[{stat:'crit',v:2}],slots:2},
+    armd_gs:{name:'大アルマジロの甲羅剣',slot:'weapon',st:{k:'slow',buildup:15},wtype:'greatsword',atk:23,crit:3,fixed:[{stat:'crit',v:2}],slots:2},
     hana_gs:{name:'毒花竜の冥花大剣',slot:'weapon',el:{k:'mei',v:10},wtype:'greatsword',atk:22,crit:4,fixed:[{stat:'crit',v:2}],slots:2},
     hana_bow:{name:'毒花竜の冥花弓',slot:'weapon',el:{k:'mei',v:10},wtype:'bow',atk:21,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
     yado_dual:{name:'巨大ヤドカリの殻双剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'dual',atk:23,crit:13,fixed:[{stat:'atkSpd',v:4}],slots:2},
@@ -728,8 +728,8 @@ const DATA={
     mola_shuriken:{name:'蒼海の鱗手裏剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'shuriken',atk:25,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:2},
     guard_gs:{name:'結晶の大剣',slot:'weapon',el:{k:'thunder',v:10},wtype:'greatsword',atk:27,crit:4,fixed:[{stat:'crit',v:3}],slots:2},
     guard_tachi:{name:'守護の太刀',slot:'weapon',el:{k:'thunder',v:10},wtype:'tachi',atk:27,crit:13,fixed:[{stat:'crit',v:3}],slots:2},
-    ondo_hammer:{name:'轟音の大槌',slot:'weapon',wtype:'hammer',atk:28,crit:0,fixed:[{stat:'crit',v:3}],slots:2},
-    ondo_bow:{name:'地鳴りの弓',slot:'weapon',wtype:'bow',atk:25,crit:11,fixed:[{stat:'atkSpd',v:5}],slots:2},
+    ondo_hammer:{name:'轟音の大槌',slot:'weapon',st:{k:'slow',buildup:15},wtype:'hammer',atk:28,crit:0,fixed:[{stat:'crit',v:3}],slots:2},
+    ondo_bow:{name:'地鳴りの弓',slot:'weapon',st:{k:'slow',buildup:15},wtype:'bow',atk:25,crit:11,fixed:[{stat:'atkSpd',v:5}],slots:2},
     syaku_dual:{name:'灼甲の双剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'dual',atk:29,crit:15,fixed:[{stat:'atkSpd',v:6}],slots:2},
     syaku_hammer:{name:'甲虫の大槌',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:30,crit:0,fixed:[{stat:'crit',v:4}],slots:2},
     phoenix_tachi:{name:'不死鳥の太刀',slot:'weapon',el:{k:'mei',v:10},wtype:'tachi',atk:29,crit:13,fixed:[{stat:'crit',v:4}],slots:2},
@@ -1070,6 +1070,22 @@ const DATA={
     hydra:{thunder:-1,ice:1},venom:{ice:1,mei:1,fire:-2},mire:{fire:-2,thunder:1},bwolf:{mei:3,thunder:-2},
   },
   enemyElem:{
+    kama_mantis:{weak:['fire'],strong:['thunder']},
+    armadillo:{weak:['ice'],strong:['fire']},
+    flower_dragon:{weak:['fire'],strong:['mei']},
+    hermit_crab:{weak:['thunder'],strong:['ice']},
+    mud_whale:{weak:['fire'],strong:['ice']},
+    queen_bee:{weak:['fire'],strong:['thunder']},
+    twin_shark:{weak:['ice'],strong:['mei']},
+    mola_fish:{weak:['thunder'],strong:['water']},
+    crystal_guardian:{weak:['fire'],strong:['thunder']},
+    quake_dragon:{weak:['ice'],strong:['fire']},
+    scarab:{weak:['ice'],strong:['fire']},
+    fire_phoenix:{weak:['ice'],strong:['mei']},
+    ice_bear:{weak:['water'],strong:['ice']},
+    ice_unicorn:{weak:['fire'],strong:['thunder']},
+    headless_knight:{weak:['fire'],strong:['mei']},
+    yomi_samurai:{weak:['thunder'],strong:['water']},
     giant_frog:{weak:['thunder']},bog_leech:{weak:['fire','thunder']},deep_octopus:{weak:['thunder','ice']},giant_bat:{weak:['ice']},crystal_scorpion:{weak:['fire']},
     crimson_serpent:{weak:['ice','water']},fire_griffon:{weak:['water','ice']},eternal_beast:{weak:['fire']},frost_cat:{weak:['fire']},abyss_spider:{weak:['mei','fire']},ghost_moth:{weak:['mei']},grave_rat:{weak:['mei','fire']},
     goblin:{weak:['fire']},goblin_archer:{weak:['fire']},slime:{atk:'water',weak:['thunder']},forest_wolf:{weak:['fire'],strong:['ice']},
@@ -1098,6 +1114,7 @@ const DATA={
     paralysis:{name:'麻痺',color:'#ffe040',time:1.6,immune:5},
     sleep:{name:'睡眠',color:'#b898ff',time:4,immune:4}, // 睡眠：動けない。攻撃を受けると目が覚める
     curse:{name:'呪い',color:'#c070ff',time:10,dmgUp:25},
+    slow:{name:'鈍足',color:'#9ad8ff',time:3,mult:0.6},
   },
   // 魔物ごとの「攻撃が当たったときに状態異常にする」設定（chance：かかる確率）
   enemyStatus:{
@@ -1140,6 +1157,119 @@ const DATA={
       {id:'wingL',name:'翼',x:0,y:-1.4,r:0.5,mult:0.8},{id:'wingR',name:'翼',x:0,y:1.4,r:0.5,mult:0.8}],
   },
   enemies:{
+    kama_mantis:{name:'草原の大鎌蟷螂',ai:'pattern',look:'gen',hp:2400,atk:23,def:6,r:36,speed:112,color:'#6a8a3a',drops:'kama_mantis',boss:true,stunMax:120,stunTime:4,gen:{body:'oval',legs:6,head:'horn',arm:'scythe'},pal:{body:'#6a8a3a',dark:'#34481a',spot:'#c8e070',eye:'#ffe060'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:110,arc:1.5,el:'thunder'},
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
+        {k:'charge',wind:0.7,cd:4.5,dmg:1.2,el:'thunder'},
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:3,spread:0.45,speed:320,el:'thunder'},
+      ]},
+    armadillo:{name:'草原の巨躯アルマジロ',ai:'pattern',look:'gen',hp:2500,atk:22,def:6,r:38,speed:96,color:'#8a7a5a',drops:'armadillo',boss:true,stunMax:130,stunTime:4,gen:{body:'shell',legs:4,head:'round',tail:true},pal:{body:'#8a7a5a',dark:'#4a3e2a',spot:'#d8c8a0',eye:'#ffe060'},
+      pattern:[
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,st:'slow'},
+        {k:'slam',wind:0.9,cd:4.5,dmg:1.1},
+        {k:'shot',wind:0.5,cd:4,dmg:0.7,n:4,spread:0.6,speed:260},
+        {k:'burrow',cd:7,dmg:1.3,r:80},
+      ]},
+    flower_dragon:{name:'古森の毒花竜',ai:'pattern',look:'gen',hp:2700,atk:25,def:7,r:40,speed:100,color:'#7a3a8a',drops:'flower_dragon',boss:true,stunMax:130,stunTime:4,gen:{body:'round',legs:0,head:'petal',arm:'claw',wings:false},pal:{body:'#7a3a8a',dark:'#3a1a44',spot:'#e0a0f0',eye:'#ffe060'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:120,arc:1.4,el:'mei'},
+        {k:'crack',wind:0.8,cd:5,dmg:1.0,len:260,width:50,el:'mei',hz:'poison'},
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:3,spread:0.4,speed:290},
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
+      ]},
+    hermit_crab:{name:'樹海の巨大ヤドカリ',ai:'pattern',look:'gen',hp:2600,atk:24,def:7,r:38,speed:100,color:'#c08a5a',drops:'hermit_crab',boss:true,stunMax:125,stunTime:4,gen:{body:'shell',legs:6,head:'round',arm:'pincer'},pal:{body:'#c08a5a',dark:'#6a4a2a',spot:'#f0d8b0',eye:'#ffe060'},
+      pattern:[
+        {k:'charge',wind:0.7,cd:4.5,dmg:1.1},
+        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:105,arc:1.3,st:'sleep'},
+        {k:'shot',wind:0.5,cd:5,dmg:0.6,n:3,spread:0.5,speed:240,st:'sleep',stChance:0.5},
+        {k:'slam',wind:1.0,cd:5.5,dmg:1.3,r:115},
+      ]},
+    mud_whale:{name:'腐沼の泥鯨',ai:'pattern',look:'gen',hp:2900,atk:27,def:7,r:42,speed:95,color:'#4a5a6a',drops:'mud_whale',boss:true,stunMax:140,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true},pal:{body:'#4a5a6a',dark:'#222c38',spot:'#9ad8ea',eye:'#ffe060'},
+      pattern:[
+        {k:'shot',wind:0.6,cd:3.5,dmg:0.9,n:3,spread:0.6,speed:280,el:'ice'},
+        {k:'sweep',wind:0.7,cd:4,dmg:1.0,r:130,arc:1.4},
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,el:'ice'},
+        {k:'erupt',wind:1.0,cd:5.5,dmg:1.1,n:2,spread:300,r:110,el:'ice'},
+      ]},
+    queen_bee:{name:'毒霧の女王蜂',ai:'pattern',look:'gen',hp:2800,atk:24,def:7,r:34,speed:120,color:'#c8a030',drops:'queen_bee',boss:true,stunMax:110,stunTime:4,gen:{body:'oval',legs:6,head:'antler',wings:true,tail:true},pal:{body:'#c8a030',dark:'#5a4010',spot:'#f0e0a0',eye:'#ff5070'},
+      pattern:[
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.9,n:1,speed:340,st:'poison'},
+        {k:'swarm',wind:0.6,cd:8,kind:'cave_bat',n:2},
+        {k:'charge',wind:0.7,cd:4.5,dmg:1.1,st:'poison'},
+        {k:'pool',wind:1.0,cd:6,dmg:0.7,r:110,life:4,hz:'toxpool',st:'poison'},
+      ]},
+    twin_shark:{name:'深淵の双頭鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.4,el:'mei'},
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'mei'},
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:1,speed:300},
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
+      ]},
+    mola_fish:{name:'蒼海の巨大マンボウ',ai:'pattern',look:'gen',hp:3100,atk:25,def:8,r:44,speed:90,color:'#5a8ab0',drops:'mola_fish',boss:true,stunMax:140,stunTime:4,gen:{body:'round',legs:0,head:'round',fins:true},pal:{body:'#5a8ab0',dark:'#2a4a6a',spot:'#e0f0ff',eye:'#ffe060'},
+      pattern:[
+        {k:'charge',wind:0.9,cd:5,dmg:1.2},
+        {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'},
+        {k:'shot',wind:0.5,cd:4,dmg:0.6,n:3,spread:0.5,speed:260,st:'sleep',stChance:0.6},
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:120},
+      ]},
+    crystal_guardian:{name:'結晶の大守護者',ai:'pattern',look:'gen',hp:3200,atk:27,def:8,r:42,speed:95,color:'#6a5ab0',drops:'crystal_guardian',boss:true,stunMax:145,stunTime:4,gen:{body:'round',legs:0,head:'crystal',arm:'claw'},pal:{body:'#6a5ab0',dark:'#2a2250',spot:'#c0f0ff',eye:'#ffe060'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:115,arc:1.3,el:'thunder'},
+        {k:'shot',wind:0.6,cd:4,dmg:0.9,n:1,speed:380,el:'thunder'},
+        {k:'crack',wind:0.8,cd:5.5,dmg:1.0,len:240,width:46,el:'thunder',hz:'poison'},
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:115},
+      ]},
+    quake_dragon:{name:'地底の轟音竜',ai:'pattern',look:'gen',hp:3300,atk:26,def:8,r:44,speed:98,color:'#7a6a4a',drops:'quake_dragon',boss:true,stunMax:150,stunTime:4,gen:{body:'long',legs:4,head:'horn',tail:true},pal:{body:'#7a6a4a',dark:'#3a3020',spot:'#d8c890',eye:'#ffe060'},
+      pattern:[
+        {k:'erupt',wind:1.0,cd:5,dmg:0.8,n:2,spread:280,r:100,st:'slow'},
+        {k:'crack',wind:0.8,cd:5.5,dmg:0.9,len:240,width:46,st:'slow'},
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2},
+        {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90},
+      ]},
+    scarab:{name:'灼熱の大甲虫',ai:'pattern',look:'gen',hp:3400,atk:29,def:9,r:40,speed:100,color:'#a0402a',drops:'scarab',boss:true,stunMax:140,stunTime:4,gen:{body:'shell',legs:6,head:'horn',arm:'pincer'},pal:{body:'#a0402a',dark:'#4a1a0e',spot:'#ffb070',eye:'#ff6a2a'},
+      pattern:[
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2},
+        {k:'slam',wind:1.0,cd:5,dmg:1.3,r:115},
+        {k:'shot',wind:0.6,cd:4,dmg:0.8,n:3,spread:0.5,speed:300,st:'poison'},
+        {k:'erupt',wind:1.0,cd:5.5,dmg:1.0,n:2,spread:300,r:100},
+      ]},
+    fire_phoenix:{name:'焦土の不死鳥',ai:'pattern',look:'gen',hp:3300,atk:28,def:9,r:40,speed:115,color:'#c05020',drops:'fire_phoenix',boss:true,stunMax:130,stunTime:4,gen:{body:'oval',legs:0,head:'flame',wings:true,tail:true},pal:{body:'#c05020',dark:'#5a1a08',spot:'#ffd080',eye:'#ff70ff'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:120,arc:1.4,el:'mei'},
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'mei'},
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.9,n:1,speed:300,el:'mei'},
+        {k:'swarm',wind:0.6,cd:9,kind:'wisp',n:2},
+      ]},
+    ice_bear:{name:'氷河の大白熊',ai:'pattern',look:'gen',hp:3500,atk:30,def:9,r:44,speed:100,color:'#e8f0f8',drops:'ice_bear',boss:true,stunMax:150,stunTime:4,gen:{body:'round',legs:4,head:'round',arm:'claw'},pal:{body:'#e8f0f8',dark:'#8aa0b8',spot:'#ff8040',eye:'#ff3020'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:115,arc:1.3,el:'fire'},
+        {k:'slam',wind:1.0,cd:5,dmg:1.3,r:115},
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'fire'},
+        {k:'shot',wind:0.6,cd:4.5,dmg:0.9,n:2,spread:0.4,speed:300,el:'fire'},
+      ]},
+    ice_unicorn:{name:'雪原の氷角獣',ai:'pattern',look:'gen',hp:3300,atk:27,def:9,r:40,speed:118,color:'#9ad8ea',drops:'ice_unicorn',boss:true,stunMax:135,stunTime:4,gen:{body:'oval',legs:4,head:'horn',mane:true},pal:{body:'#9ad8ea',dark:'#3a7a9a',spot:'#ffffff',eye:'#ffe060'},
+      pattern:[
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,st:'paralysis'},
+        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:110,arc:1.4,st:'paralysis'},
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:1,speed:340,st:'paralysis'},
+        {k:'erupt',wind:1.0,cd:5.5,dmg:0.9,n:3,spread:260,r:70},
+      ]},
+    headless_knight:{name:'冥府の首狩り騎士',ai:'pattern',look:'gen',hp:3600,atk:28,def:10,r:40,speed:108,color:'#3a3a4a',drops:'headless_knight',boss:true,stunMax:140,stunTime:4,gen:{body:'oval',legs:0,head:'skull',arm:'scythe',cloak:true},pal:{body:'#3a3a4a',dark:'#14141e',spot:'#b898ff',eye:'#ff70ff'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.5,st:'sleep'},
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,st:'sleep'},
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
+        {k:'shot',wind:0.5,cd:4,dmg:0.9,n:1,speed:320},
+        {k:'swarm',wind:0.7,cd:10,kind:'skeleton',n:1},
+      ]},
+    yomi_samurai:{name:'黄泉の怨霊武者',ai:'pattern',look:'gen',hp:3700,atk:28,def:10,r:40,speed:110,color:'#2a4a6a',drops:'yomi_samurai',boss:true,stunMax:145,stunTime:4,gen:{body:'oval',legs:0,head:'mane',arm:'katana',cloak:true},pal:{body:'#2a4a6a',dark:'#10203a',spot:'#9ad8ff',eye:'#ff5070'},
+      pattern:[
+        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.4,el:'water'},
+        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'water'},
+        {k:'shot',wind:0.5,cd:3.5,dmg:0.9,n:3,spread:0.5,speed:320,el:'water'},
+        {k:'swarm',wind:0.7,cd:10,kind:'wisp',n:2},
+      ]},
     giant_frog:{name:'大蛙',ai:'pattern',look:'frog',hp:2200,atk:22,def:6,r:30,speed:112,color:'#4a8a3a',drops:'giant_frog',boss:true,stunMax:110,stunTime:4,
       pattern:[
         {k:'charge',wind:0.6,cd:4.5,dmg:1.0},
@@ -1500,6 +1630,22 @@ const DATA={
   // chance=0〜1 で確率を調整。rarityBoost が大きいほど高レアの装飾品が出やすい。
   // 装備品は報酬に含めず、素材からの製作でだけ手に入る。回復薬も製作かショップで用意する。
   dropTables:{
+    kama_mantis:{rarityBoost:2.0,rolls:[{type:'mat',id:'cave_fang',chance:0.9,min:1,max:2},{type:'mat',id:'crystal_shard',chance:0.5,min:1,max:1}]},
+    armadillo:{rarityBoost:2.0,rolls:[{type:'mat',id:'rock_scale',chance:0.9,min:1,max:2},{type:'mat',id:'hard_shell',chance:0.5,min:1,max:1}]},
+    flower_dragon:{rarityBoost:2.0,rolls:[{type:'mat',id:'spider_silk',chance:0.9,min:1,max:2},{type:'mat',id:'toxic_gland',chance:0.5,min:1,max:1}]},
+    hermit_crab:{rarityBoost:2.0,rolls:[{type:'mat',id:'hard_shell',chance:0.9,min:1,max:2},{type:'mat',id:'swamp_moss',chance:0.5,min:1,max:1}]},
+    mud_whale:{rarityBoost:2.0,rolls:[{type:'mat',id:'mire_core',chance:0.9,min:1,max:2},{type:'mat',id:'slime_gel',chance:0.5,min:1,max:1}]},
+    queen_bee:{rarityBoost:2.0,rolls:[{type:'mat',id:'poison_spore',chance:0.9,min:1,max:2},{type:'mat',id:'toxic_gland',chance:0.5,min:1,max:1}]},
+    twin_shark:{rarityBoost:2.0,rolls:[{type:'mat',id:'hard_shell',chance:0.9,min:1,max:2},{type:'mat',id:'curse_powder',chance:0.5,min:1,max:1}]},
+    mola_fish:{rarityBoost:2.0,rolls:[{type:'mat',id:'slime_gel',chance:0.9,min:1,max:2},{type:'mat',id:'hard_shell',chance:0.5,min:1,max:1}]},
+    crystal_guardian:{rarityBoost:2.0,rolls:[{type:'mat',id:'crystal_shard',chance:0.9,min:1,max:2},{type:'mat',id:'cave_fang',chance:0.5,min:1,max:1}]},
+    quake_dragon:{rarityBoost:2.0,rolls:[{type:'mat',id:'rock_scale',chance:0.9,min:1,max:2},{type:'mat',id:'mire_core',chance:0.5,min:1,max:1}]},
+    scarab:{rarityBoost:2.0,rolls:[{type:'mat',id:'centi_shell',chance:0.9,min:1,max:2},{type:'mat',id:'poison_spore',chance:0.5,min:1,max:1}]},
+    fire_phoenix:{rarityBoost:2.0,rolls:[{type:'mat',id:'spider_silk',chance:0.9,min:1,max:2},{type:'mat',id:'centi_ember',chance:0.5,min:1,max:1}]},
+    ice_bear:{rarityBoost:2.0,rolls:[{type:'mat',id:'beast_hide',chance:0.9,min:1,max:2},{type:'mat',id:'beast_fang',chance:0.5,min:1,max:1}]},
+    ice_unicorn:{rarityBoost:2.0,rolls:[{type:'mat',id:'beast_fang',chance:0.9,min:1,max:2},{type:'mat',id:'crystal_shard',chance:0.5,min:1,max:1}]},
+    headless_knight:{rarityBoost:2.0,rolls:[{type:'mat',id:'soul_shard',chance:0.9,min:1,max:2},{type:'mat',id:'rotten_cloth',chance:0.5,min:1,max:1}]},
+    yomi_samurai:{rarityBoost:2.0,rolls:[{type:'mat',id:'soul_shard',chance:0.9,min:1,max:2},{type:'mat',id:'cursed_iron',chance:0.5,min:1,max:1}]},
     giant_frog:{rarityBoost:2.0,rolls:[{type:'mat',id:'toxic_gland',chance:0.7,min:1,max:1},{type:'mat',id:'swamp_moss',chance:0.4,min:1,max:1}]},
     bog_leech:{rarityBoost:2.0,rolls:[{type:'mat',id:'slime_gel',chance:0.8,min:1,max:1},{type:'mat',id:'poison_spore',chance:0.4,min:1,max:1}]},
     deep_octopus:{rarityBoost:2.0,rolls:[{type:'mat',id:'slime_gel',chance:0.8,min:1,max:2},{type:'mat',id:'hard_shell',chance:0.4,min:1,max:1}]},
@@ -1926,6 +2072,8 @@ const DATA={
     {id:'m1_bird',stage:1,after:'m1_boss',boss:'gale_bird',name:'【強敵】草原の疾風怪鳥',desc:'草原の空を、風をまとった巨大な鳥が飛び回っている。素早い急降下と、扇状に飛ばす羽根に気をつけろ。',goal:{type:'boss'},reward:{gold:900,mats:{gale_feather:2,reinforce_orb:2},decos:1}},
     {id:'m1_rhino',stage:1,after:'m1_lizard',boss:'rhino',name:'【強敵】草原の鎧犀',desc:'硬い装甲をまとった大型のサイが、草原の道を塞いでいる。正面からの攻撃はほとんど通らない。横や後ろへ回り込め。',goal:{type:'boss'},reward:{gold:1200,mats:{rhino_plate:2,reinforce_orb:2},decos:1}},
     {id:'m1_boar',stage:1,after:'m1_rhino',boss:'boar',name:'【強敵】轟牙の大猪',desc:'突進で地面を掘り返し、土塊を飛ばす大型のイノシシ。突進の直線に入らないように。',goal:{type:'boss'},reward:{gold:1300,mats:{boar_tusk:2,reinforce_orb:2},decos:1}},
+    {id:'ex_kama_mantis',stage:1,after:'m1_boar',boss:'kama_mantis',name:'【強敵】草原の大鎌蟷螂',desc:'草原の草むらに潜む大きな蟷螂。大鎌で薙ぎ払い、雷をまとって突進する。',goal:{type:'boss'},reward:{gold:1080,mats:{cave_fang:2,crystal_shard:2}}},
+    {id:'ex_armadillo',stage:1,after:'ex_kama_mantis',boss:'armadillo',name:'【強敵】草原の巨躯アルマジロ',desc:'丸まって転がる大きなアルマジロ。突進は当たると足を鈍らせ、背中の棘を飛ばす。',goal:{type:'boss'},reward:{gold:1080,mats:{rock_scale:2,hard_shell:2}}},
     {id:'m1_lizard',stage:1,after:'m1_bird',boss:'rock_lizard',name:'【強敵】岩肌の大蜥蜴',desc:'草原の岩場に、岩のような鱗の大蜥蜴が棲みついた。噛みつき・尻尾の振り回し・吐き出す岩に注意。',goal:{type:'boss'},reward:{gold:1100,mats:{lizard_scale:2,reinforce_orb:2},decos:1}},
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。12体退治してほしい。',goal:{type:'kill',target:'goblin',count:12},reward:{gold:240,mats:{goblin_hide:2,scrap_iron:1}}},
@@ -1938,12 +2086,16 @@ const DATA={
     {id:'sw_boss',stage:3,urgent:true,unlocks:4,name:'【緊急】多頭竜の沼',desc:'沼の中心に潜む多頭竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:800,mats:{hydra_scale:2,toxic_gland:2,reinforce_orb:2},decos:1}},
     {id:'sw_king',stage:3,after:'sw_boss',boss:'venomKing',name:'【強敵】毒蟲王の巣',desc:'沼の奥の巣に、毒蟲の王が待ち構えている。',goal:{type:'boss'},reward:{gold:1000,mats:{venom_shell:2,toxic_gland:2,reinforce_orb:2},decos:1}},
     {id:'sw_giant',stage:3,after:'sw_king',boss:'mireGiant',name:'【強敵】腐敗の沼巨人',desc:'沼の底から、腐敗した巨人が這い上がってきた。',goal:{type:'boss'},reward:{gold:1200,mats:{mire_core:2,swamp_moss:3,reinforce_orb:3},decos:1}},
+    {id:'ex_mud_whale',stage:3,after:'sw_leech',boss:'mud_whale',name:'【強敵】腐沼の泥鯨',desc:'沼の底に潜む大きな鯨。冷たい潮を吹き、泥の尾で薙ぎ払い、大波を起こして着地する。',goal:{type:'boss'},reward:{gold:1440,mats:{mire_core:2,slime_gel:2}}},
+    {id:'ex_queen_bee',stage:3,after:'ex_mud_whale',boss:'queen_bee',name:'【強敵】毒霧の女王蜂',desc:'毒霧の沼に巣を作る巨大な蜂。毒針を直線に飛ばし、働き蜂を呼び、毒霧の溜まりを作る。',goal:{type:'boss'},reward:{gold:1440,mats:{poison_spore:2,toxic_gland:2}}},
     {id:'sw_toad',stage:3,after:'sw_giant',boss:'giant_frog',name:'【強敵】沼の大蛙',desc:'沼の奥から大きな蛙が跳びだしてきた。着地の衝撃と毒液に注意。',goal:{type:'boss'},reward:{gold:1300,mats:{toxic_gland:2,swamp_moss:2}}},
     {id:'sw_leech',stage:3,after:'sw_toad',boss:'bog_leech',name:'【強敵】沼底の吸血蛭',desc:'沼底に潜む巨大なヒルが、足元から飛び出してくる。吸い付かれると離れにくい。',goal:{type:'boss'},reward:{gold:1400,mats:{slime_gel:2,poison_spore:2}}},
     {id:'aq_lizard',stage:4,key:true,name:'水辺のトカゲ狩り',desc:'川辺を走る水棲トカゲを12体倒せ。',goal:{type:'kill',target:'water_lizard',count:12},reward:{gold:520,mats:{water_scale:2}}},
     {id:'aq_jelly',stage:4,key:true,name:'漂う泡の掃除',desc:'水辺に漂う泡沫クラゲを9体倒せ。',goal:{type:'kill',target:'jellyfish',count:9},reward:{gold:520,mats:{jelly_gel:2}}},
     {id:'aq_hunt',stage:4,name:'素材集め：水辺',desc:'水辺の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:560,mats:{crab_shell:1,eel_sac:1}}},
     {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:1000,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
+    {id:'ex_twin_shark',stage:4,after:'aq_octo',boss:'twin_shark',name:'【強敵】深淵の双頭鮫',desc:'深い淵を泳ぐ二つの頭を持つ鮫。双頭で噛みつき、冥の力をまとって突進する。',goal:{type:'boss'},reward:{gold:1620,mats:{hard_shell:2,curse_powder:2}}},
+    {id:'ex_mola_fish',stage:4,after:'ex_twin_shark',boss:'mola_fish',name:'【強敵】蒼海の巨大マンボウ',desc:'大きな体で海を漂うマンボウ。体当たりの突進のほか、水流を吹き出し、睡眠を誘う鱗粉を撒く。',goal:{type:'boss'},reward:{gold:1620,mats:{slime_gel:2,hard_shell:2}}},
     {id:'aq_turtle',stage:4,after:'aq_boss',boss:'turtle',name:'【強敵】滝を背負う大亀',desc:'滝の裏から、水を背負った大きな亀が現れた。',goal:{type:'boss'},reward:{gold:1200,mats:{shell_heart:2,crab_shell:2,reinforce_orb:2},decos:1}},
     {id:'aq_eel',stage:4,after:'aq_turtle',boss:'thunderEel',name:'【強敵】雷鳴の大鰻',desc:'渦の淵で雷が鳴っている。雷を纏う大鰻が目を覚ました。',goal:{type:'boss'},reward:{gold:1400,mats:{thunder_core:2,eel_sac:3,reinforce_orb:3},decos:1}},
     {id:'aq_worm',stage:4,after:'aq_eel',boss:'giantWorm',name:'【強敵】滝つぼの大蚯蚓',desc:'滝つぼの底の泥から、ゴムのような体の大蚯蚓が這い出した。雷はよく通らない。',goal:{type:'boss'},reward:{gold:1500,mats:{jelly_gel:3,eel_sac:2,reinforce_orb:2},decos:1}},
@@ -1953,6 +2105,8 @@ const DATA={
     {id:'s2_boss',stage:8,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:1800,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
     {id:'s6_bat',stage:5,key:true,name:'洞窟コウモリの掃討',desc:'素早く飛び回り、上空から襲いかかるコウモリを12体倒せ。',goal:{type:'kill',target:'cave_bat',count:12},reward:{gold:760,mats:{cave_fang:3}}},
+    {id:'ex_crystal_guardian',stage:5,after:'cr_scorp',boss:'crystal_guardian',name:'【強敵】結晶の大守護者',desc:'洞窟の結晶を守る巨大な守護者。結晶の腕で薙ぎ払い、雷の光線を放ち、地面に結晶柱を生やす。',goal:{type:'boss'},reward:{gold:1800,mats:{crystal_shard:2,cave_fang:2}}},
+    {id:'ex_quake_dragon',stage:5,after:'ex_crystal_guardian',boss:'quake_dragon',name:'【強敵】地底の轟音竜',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',goal:{type:'boss'},reward:{gold:1800,mats:{rock_scale:2,mire_core:2}}},
     {id:'s6_crystal',stage:5,key:true,name:'輝晶スライムの採取',desc:'結晶をまとったスライムを10体倒し、輝晶の欠片を集めろ。',goal:{type:'kill',target:'crystal_slime',count:10},reward:{gold:720,mats:{crystal_shard:4}}},
     {id:'s6_boss',stage:5,urgent:true,unlocks:6,name:'【緊急】地底王グラドス',desc:'洞窟の最奥で眠っていた地底王が目を覚ました。大きく動きは遅いが、一撃が重い。物理攻撃にはとても硬く、属性の攻撃がよく効く。',goal:{type:'boss'},reward:{gold:2400,mats:{grados_core:1,reinforce_orb:2},decos:2}},
     {id:'s6_mole',stage:5,after:'s6_boss',boss:'mole',name:'【強敵】結晶喰いの土竜',desc:'結晶を食べ尽くす巨大な土竜が、地面の下から奇襲を仕掛けてくる。地中に潜る前の揺れに注意。',goal:{type:'boss'},reward:{gold:1600,mats:{mole_crystal:1,reinforce_orb:2},decos:1}},
@@ -1960,6 +2114,8 @@ const DATA={
     {id:'cr_bat',stage:5,after:'s6_centi',boss:'giant_bat',name:'【強敵】洞窟の大蝙蝠',desc:'洞窟の天井から、巨大な蝙蝠が急降下してくる。直線の音波は睡眠を誘う。',goal:{type:'boss'},reward:{gold:1700,mats:{cave_wing:3,cave_fang:2}}},
     {id:'cr_scorp',stage:5,after:'cr_bat',boss:'crystal_scorpion',name:'【強敵】晶毒の大蠍',desc:'晶石をまとった大蠍が尾の毒針を構えている。毒針の直線に注意。',goal:{type:'boss'},reward:{gold:1800,mats:{hard_shell:3,poison_spore:2}}},
     {id:'free_6',stage:5,explore:true,name:'【探索】晶石の大洞窟',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'ex_scarab',stage:6,after:'v_griffon',boss:'scarab',name:'【強敵】灼熱の大甲虫',desc:'火山の岩場で暮らす大きな甲虫。甲殻を溶岩のように赤く光らせ、毒の吐息を放つ。',goal:{type:'boss'},reward:{gold:1980,mats:{centi_shell:2,poison_spore:2}}},
+    {id:'ex_fire_phoenix',stage:6,after:'ex_scarab',boss:'fire_phoenix',name:'【強敵】焦土の不死鳥',desc:'焦土の空を舞う不死鳥。冥火の翼で薙ぎ払い、急降下し、冥火の球を放つ。',goal:{type:'boss'},reward:{gold:1980,mats:{spider_silk:2,centi_ember:2}}},
     {id:'v_ash',stage:6,key:true,name:'爆炎の甲虫の掃討',desc:'赤く光って爆発する甲虫を10体倒せ。爆発の前に離れること。',goal:{type:'kill',target:'magma_beetle',count:10},reward:{gold:840,mats:{blast_sac:3}}},
     {id:'v_wing',stage:6,key:true,name:'炎翼竜の狩り',desc:'熱風のブレスを吐く炎翼竜を8体倒せ。',goal:{type:'kill',target:'fire_wyvern',count:8},reward:{gold:860,mats:{flame_fang:3}}},
     {id:'v_beast',stage:6,key:true,name:'溶鉄の魔獣の討伐',desc:'溶けた鉄の体を持つ魔獣を8体倒せ。',goal:{type:'kill',target:'molten_beast',count:8},reward:{gold:880,mats:{molten_horn:2}}},
@@ -1967,6 +2123,8 @@ const DATA={
     {id:'v_dragon',stage:6,after:'v_boss',boss:'volcano_dragon',name:'【強敵】炎獄竜ヴォルカノス',desc:'火口の奥で、炎の竜が翼を広げた。炎のブレスと溶岩弾に注意せよ。',goal:{type:'boss'},reward:{gold:1900,mats:{hell_fang:1,reinforce_orb:2},decos:1}},
     {id:'v_felg',stage:6,after:'v_dragon',boss:'felgnas',name:'【強敵】熔鉄の魔獣フェルグナス',desc:'熔鉄をまとった魔獣が突進を繰り返す。残った熔鉄の地面に気をつけろ。',goal:{type:'boss'},reward:{gold:2000,mats:{felg_horn:1,reinforce_orb:2},decos:1}},
     {id:'v_serpent',stage:6,after:'v_felg',boss:'crimson_serpent',name:'【強敵】紅蓮の大蛇',desc:'火山の岩場で、炎をまとった大蛇が身をくねらせている。地を這う炎に注意。',goal:{type:'boss'},reward:{gold:2100,mats:{centi_ember:3,centi_shell:2}}},
+    {id:'ex_ice_bear',stage:7,after:'n_cat',boss:'ice_bear',name:'【強敵】氷河の大白熊',desc:'氷河の上に棲む大きな白熊。爪で薙ぎ払い、叩きつけ、火を吹いて突進する。',goal:{type:'boss'},reward:{gold:2160,mats:{beast_hide:2,beast_fang:2}}},
+    {id:'ex_ice_unicorn',stage:7,after:'ex_ice_bear',boss:'ice_unicorn',name:'【強敵】雪原の氷角獣',desc:'雪原を駆ける氷の角を持つ獣。角の突進と薙ぎ払いで痺れを残し、電撃の直線を放つ。',goal:{type:'boss'},reward:{gold:2160,mats:{beast_fang:2,crystal_shard:2}}},
     {id:'v_griffon',stage:6,after:'v_serpent',boss:'fire_griffon',name:'【強敵】火口の翼獅子',desc:'火口の上空から、翼の獅子が滑空してくる。着地の衝撃と炎に注意せよ。',goal:{type:'boss'},reward:{gold:2200,mats:{centi_ember:3,rock_scale:2}}},
     {id:'free_v',stage:6,explore:true,name:'【探索】灼熱の火山',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
     {id:'n_fox',stage:7,key:true,name:'雪影ギツネの掃討',desc:'素早く動き回る雪影ギツネを10体倒せ。',goal:{type:'kill',target:'snow_fox',count:10},reward:{gold:960,mats:{fox_pelt:3}}},
@@ -1974,11 +2132,15 @@ const DATA={
     {id:'n_seal',stage:7,key:true,name:'凍牙アザラシの討伐',desc:'突進してくるアザラシを8体倒せ。',goal:{type:'kill',target:'ice_seal',count:8},reward:{gold:1000,mats:{seal_fang:3}}},
     {id:'n_boss',stage:7,urgent:true,unlocks:8,name:'【緊急】氷冠の大鹿',desc:'氷の角を持つ大鹿が、雪山の頂で待ち構えている。足元の予告を見て、氷柱を避けろ。',goal:{type:'boss'},reward:{gold:2800,mats:{ice_antler:1,reinforce_orb:2},decos:2}},
     {id:'n_wyv',stage:7,after:'n_boss',boss:'frost_wyvern',name:'【強敵】永冬竜フロストレイン',desc:'雪山の奥で、凍える翼の竜が目を覚ました。冷気のブレスと氷柱に注意せよ。',goal:{type:'boss'},reward:{gold:1900,mats:{frost_fang:1,reinforce_orb:2},decos:1}},
+    {id:'ex_headless_knight',stage:8,after:'g_rat',boss:'headless_knight',name:'【強敵】冥府の首狩り騎士',desc:'首のない騎士が大鎌を振るう。薙ぎ払いと突きで眠らせ、首を狙う斬撃を飛ばし、骸骨兵を呼ぶ。',goal:{type:'boss'},reward:{gold:2340,mats:{soul_shard:2,rotten_cloth:2}}},
+    {id:'ex_yomi_samurai',stage:8,after:'ex_headless_knight',boss:'yomi_samurai',name:'【強敵】黄泉の怨霊武者',desc:'黄泉の淵から這い出た怨霊の武者。水の刃で薙ぎ払い、突進し、怨霊を呼び出す。',goal:{type:'boss'},reward:{gold:2340,mats:{soul_shard:2,cursed_iron:2}}},
     {id:'n_ape',stage:7,after:'n_wyv',boss:'ice_ape',name:'【強敵】氷嶺の剛猿',desc:'氷嶺の主が、仲間の小猿を呼び出す。呼び出しの予備動作を見て、先に小猿を倒せ。',goal:{type:'boss'},reward:{gold:2000,mats:{ice_arm:1,reinforce_orb:2},decos:1}},
     {id:'n_beast',stage:7,after:'n_ape',boss:'eternal_beast',name:'【強敵】永久凍土の巨象',desc:'永久凍土に棲む巨大な象が、牙を構えて突進してくる。冷気の扇に注意。',goal:{type:'boss'},reward:{gold:2600,mats:{beast_hide:3,beast_fang:2}}},
     {id:'n_cat',stage:7,after:'n_beast',boss:'frost_cat',name:'【強敵】白霜の大山猫',desc:'白霜をまとった大山猫が、素早く飛びかかってくる。氷の破片を避けろ。',goal:{type:'boss'},reward:{gold:2500,mats:{beast_fang:3,crystal_shard:2}}},
     {id:'free_n',stage:7,explore:true,name:'【探索】氷雪地帯',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
     {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:1200,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
+    {id:'ex_flower_dragon',stage:2,after:'s2_sanshou',boss:'flower_dragon',name:'【強敵】古森の毒花竜',desc:'古森の奥で花を咲かせる竜。冥の力を帯びた花びらで薙ぎ払い、地面から根を突き出す。',goal:{type:'boss'},reward:{gold:1260,mats:{spider_silk:2,toxic_gland:2}}},
+    {id:'ex_hermit_crab',stage:2,after:'ex_flower_dragon',boss:'hermit_crab',name:'【強敵】樹海の巨大ヤドカリ',desc:'大きな殻を背負ったヤドカリ。殻ごと突進し、大ハサミで挟む。泡を吐いて眠らせることもある。',goal:{type:'boss'},reward:{gold:1260,mats:{hard_shell:2,swamp_moss:2}}},
     {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:1400,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
     {id:'s2_sanshou',stage:2,after:'s1_rabbit',boss:'salamander',name:'【強敵】樹海の大山椒魚',desc:'湿った森の奥に、長い舌と粘液を操る巨大な両生類が潜んでいる。粘液は水の力を帯びている。',goal:{type:'boss'},reward:{gold:1500,mats:{sanshou_mucus:2,reinforce_orb:2},decos:1}},
     {id:'s1_rabbit',stage:2,after:'s1_stag',boss:'forest_rabbit',name:'【強敵】古森の跳ね兎',desc:'森の奥で、白い毛並みの大きな兎が跳ね回っている。とても素早く、突進の前には足をためる。横へかわして背後から攻めろ。',goal:{type:'boss'},reward:{gold:1600,mats:{rabbit_fur:2,rabbit_tuft:2,reinforce_orb:2},decos:1}},
@@ -1995,6 +2157,22 @@ const DATA={
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
   bestiary:{
+    kama_mantis:{stage:[1],role:'ボス',desc:'草原の草むらに潜む大きな蟷螂。大鎌で薙ぎ払い、雷をまとって突進する。',tip:'大鎌の薙ぎ払いは扇形。雷の突進は直線なので、横へ避けよう。'},
+    armadillo:{stage:[1],role:'ボス',desc:'丸まって転がる大きなアルマジロ。突進は当たると足を鈍らせ、背中の棘を飛ばす。',tip:'丸まっている間は突進の前触れ。直線から外れて、突進後の隙を狙おう。'},
+    flower_dragon:{stage:[2],role:'ボス',desc:'古森の奥で花を咲かせる竜。冥の力を帯びた花びらで薙ぎ払い、地面から根を突き出す。',tip:'根は直線の帯になって地面から伸びる。帯の外へ逃げよう。'},
+    hermit_crab:{stage:[2],role:'ボス',desc:'大きな殻を背負ったヤドカリ。殻ごと突進し、大ハサミで挟む。泡を吐いて眠らせることもある。',tip:'泡は睡眠の危険がある。ハサミの薙ぎ払いは大きく避けよう。'},
+    mud_whale:{stage:[3],role:'ボス',desc:'沼の底に潜む大きな鯨。冷たい潮を吹き、泥の尾で薙ぎ払い、大波を起こして着地する。',tip:'潮吹きは扇形の氷。大波は着弾の円を予告する。'},
+    queen_bee:{stage:[3],role:'ボス',desc:'毒霧の沼に巣を作る巨大な蜂。毒針を直線に飛ばし、働き蜂を呼び、毒霧の溜まりを作る。',tip:'毒霧の溜まりは2秒ほど毒が残る。働き蜂は早めに倒そう。'},
+    twin_shark:{stage:[4],role:'ボス',desc:'深い淵を泳ぐ二つの頭を持つ鮫。双頭で噛みつき、冥の力をまとって突進する。',tip:'噛みつきは扇形で、冥属性。突進の直線から外れよう。'},
+    mola_fish:{stage:[4],role:'ボス',desc:'大きな体で海を漂うマンボウ。体当たりの突進のほか、水流を吹き出し、睡眠を誘う鱗粉を撒く。',tip:'鱗粉は扇形に広がる。体当たりは大きな円で予告される。'},
+    crystal_guardian:{stage:[5],role:'ボス',desc:'洞窟の結晶を守る巨大な守護者。結晶の腕で薙ぎ払い、雷の光線を放ち、地面に結晶柱を生やす。',tip:'結晶柱は直線の帯。光線の狙いが固まったら横へ。'},
+    quake_dragon:{stage:[5],role:'ボス',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',tip:'地鳴りは鈍足になる。亀裂の帯の外へ逃げよう。'},
+    scarab:{stage:[6],role:'ボス',desc:'火山の岩場で暮らす大きな甲虫。甲殻を溶岩のように赤く光らせ、毒の吐息を放つ。',tip:'突進の前に甲殻が赤く光る。毒の吐息は扇形。'},
+    fire_phoenix:{stage:[6],role:'ボス',desc:'焦土の空を舞う不死鳥。冥火の翼で薙ぎ払い、急降下し、冥火の球を放つ。',tip:'急降下の直線から外れよう。冥火の球は追いかけてくる。'},
+    ice_bear:{stage:[7],role:'ボス',desc:'氷河の上に棲む大きな白熊。爪で薙ぎ払い、叩きつけ、火を吹いて突進する。',tip:'火を吹く突進は直線。叩きつけの円の外へ。'},
+    ice_unicorn:{stage:[7],role:'ボス',desc:'雪原を駆ける氷の角を持つ獣。角の突進と薙ぎ払いで痺れを残し、電撃の直線を放つ。',tip:'痺れは行動を封じる。突進の直線から必ず外れよう。'},
+    headless_knight:{stage:[8],role:'ボス',desc:'首のない騎士が大鎌を振るう。薙ぎ払いと突きで眠らせ、首を狙う斬撃を飛ばし、骸骨兵を呼ぶ。',tip:'大鎌の薙ぎ払いは眠りを誘う。振り終わりの隙を狙おう。'},
+    yomi_samurai:{stage:[8],role:'ボス',desc:'黄泉の淵から這い出た怨霊の武者。水の刃で薙ぎ払い、突進し、怨霊を呼び出す。',tip:'水の刃は扇状に広がる。怨霊は時間で消えるので、呼ばれたら離れよう。'},
     giant_frog:{stage:[3],role:'ボス',desc:'沼の大きな蛙。跳んで着地の衝撃を広げ、毒液を吐き、舌で払う。',tip:'着地の前に体が縮む。その瞬間に離れよう。毒液は避けるか、解毒を用意しよう。'},
     bog_leech:{stage:[3],role:'ボス',desc:'沼底に潜み、足元から飛び出す吸血ヒル。吸い付かれると毒が続く。',tip:'泥が盛り上がったら要注意。吸い付かれたら素早く振りほどこう。'},
     deep_octopus:{stage:[4],role:'ボス',desc:'深い淵に棲む大蛸。触腕を振るい、地面を突き刺し、水流を四方へ噴き出す。',tip:'触腕の攻撃は間合いが広い。水流は全方向に飛ぶので、移動し続けよう。'},
@@ -3524,6 +3702,7 @@ function inflictPlayer(w,p,k){
   else if(k==='paralysis'){if(p.paraT>0||p.paraImmune>0)return;p.paraT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
   else if(k==='sleep'){if(p.sleepT>0||p.sleepImmune>0)return;p.sleepT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
   else if(k==='curse')p.curseT=Math.max(p.curseT||0,time);
+  else if(k==='slow'){if(!(p.slowT>0))emit(w,{type:'slowed',pid:p.id,x:p.x,y:p.y-26});p.slowT=Math.max(p.slowT||0,time);p.slowMult=d.mult;}
   emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-30,text:d.name+'!',color:d.color});
 }
 function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviveWait;p.out=false;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.sleepT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
@@ -3664,6 +3843,7 @@ function applyStatus(w,e,status){
   if(status==='poison'){e.poisonT=boss?4:6;e.poisonTick=1;e.poisonDmg=Math.max(4,Math.round(e.maxHp*(boss?0.012:0.03)));emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'毒',color:'#a8e040'});}
   else if(status==='paralysis'){e.trapT=boss?2.2:4;e.trapKind='para';emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'麻痺',color:'#ffe040'});}
   else if(status==='sleep'){e.sleepT=boss?4:7;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'睡眠',color:'#b898ff'});}
+  else if(status==='slow'){e.slowT=boss?2.5:5;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'鈍足',color:'#9ad8ff'});}
 }
 function killEnemy(w,e){
   e.dead=true;e.hp=0;
@@ -4002,6 +4182,7 @@ function playerHidden(w,p){
   return inStartRoom(w.map,p.x,p.y,p.r);
 }
 function updateEnemy(w,e,dt){
+  if(e.slowT>0){e.slowT-=dt;dt*=0.5;} // 鈍足：動きも攻撃の準備も半分の速さ
   e.anim+=dt;e.hurt-=dt;e.cd-=dt;e.cd2-=dt;e.cd3-=dt;e.stun-=dt;e.hitAccT=(e.hitAccT||0)-dt;
   // 呪術師の強化が切れたら元に戻す
   if(e.empowerT>0){e.empowerT-=dt;if(e.empowerT<=0){e.atk=e.baseAtk;e.speed=e.baseSpeed;}}
@@ -5095,6 +5276,22 @@ const GEAR_LOOKS={
   mammoth:{main:'#7a8a9a',dark:'#3a4450',accent:'#f0f4ff',light:'#aab8c8',eye:'#2a2a2a',beast:'mammoth',blade:'#d8e8f8'},
   abyss:{main:'#2a2a3a',dark:'#0e0e18',accent:'#b898ff',light:'#5a5a7a',eye:'#ff70ff',beast:'abyss',blade:'#c8b8ff'},
   gbat:{main:'#4a3a6a',dark:'#1e1630',accent:'#ff5070',light:'#7a60a0',eye:'#ff5070',blade:'#e0d8f0'},
+  kama:{main:'#6a8a3a',dark:'#34481a',accent:'#c8e070',light:'#c8e070',eye:'#ffe060',beast:'kama',blade:'#c8e070'},
+  armd:{main:'#8a7a5a',dark:'#4a3e2a',accent:'#d8c8a0',light:'#d8c8a0',eye:'#ffe060',beast:'armd',blade:'#d8c8a0'},
+  hana:{main:'#7a3a8a',dark:'#3a1a44',accent:'#e0a0f0',light:'#e0a0f0',eye:'#ffe060',beast:'hana',blade:'#e0a0f0'},
+  yado:{main:'#c08a5a',dark:'#6a4a2a',accent:'#f0d8b0',light:'#f0d8b0',eye:'#ffe060',beast:'yado',blade:'#f0d8b0'},
+  dorc:{main:'#4a5a6a',dark:'#222c38',accent:'#9ad8ea',light:'#9ad8ea',eye:'#ffe060',beast:'dorc',blade:'#9ad8ea'},
+  hachi:{main:'#c8a030',dark:'#5a4010',accent:'#f0e0a0',light:'#f0e0a0',eye:'#ff5070',beast:'hachi',blade:'#f0e0a0'},
+  shark:{main:'#3a4a6a',dark:'#1a2236',accent:'#c8d8f0',light:'#c8d8f0',eye:'#ff5070',beast:'shark',blade:'#c8d8f0'},
+  mola:{main:'#5a8ab0',dark:'#2a4a6a',accent:'#e0f0ff',light:'#e0f0ff',eye:'#ffe060',beast:'mola',blade:'#e0f0ff'},
+  guard:{main:'#6a5ab0',dark:'#2a2250',accent:'#c0f0ff',light:'#c0f0ff',eye:'#ffe060',beast:'guard',blade:'#c0f0ff'},
+  ondo:{main:'#7a6a4a',dark:'#3a3020',accent:'#d8c890',light:'#d8c890',eye:'#ffe060',beast:'ondo',blade:'#d8c890'},
+  syaku:{main:'#a0402a',dark:'#4a1a0e',accent:'#ffb070',light:'#ffb070',eye:'#ff6a2a',beast:'syaku',blade:'#ffb070'},
+  phoenix:{main:'#c05020',dark:'#5a1a08',accent:'#ffd080',light:'#ffd080',eye:'#ff70ff',beast:'phoenix',blade:'#ffd080'},
+  shiro:{main:'#e8f0f8',dark:'#8aa0b8',accent:'#ff8040',light:'#ff8040',eye:'#ff3020',beast:'shiro',blade:'#ff8040'},
+  tsuno:{main:'#9ad8ea',dark:'#3a7a9a',accent:'#ffffff',light:'#ffffff',eye:'#ffe060',beast:'tsuno',blade:'#ffffff'},
+  kubi:{main:'#3a3a4a',dark:'#14141e',accent:'#b898ff',light:'#b898ff',eye:'#ff70ff',beast:'kubi',blade:'#b898ff'},
+  onry:{main:'#2a4a6a',dark:'#10203a',accent:'#9ad8ff',light:'#9ad8ff',eye:'#ff5070',beast:'onry',blade:'#9ad8ff'},
   haro:{w:['fur','fang'],main:'#5a6a3a',dark:'#2e3a1a',accent:'#fff0b0',light:'#7e9050',orn:'wolf',fur:true,eye:'#a8ff60',blade:'#e8f4b0'},
 };
 function gearLook(id){
@@ -5104,6 +5301,28 @@ function gearLook(id){
 }
 /* ボス装備の見た目（beast ごとの描き方）。部位：head=兜 / body=胴の模様 / waist=腰 / arm=肩（左右それぞれ） / foot=足 / tail=尻尾 / under=体の下に描くもの
    G：描画の情報（ctx, r=体の半径, step=歩きの上下, f=向き, fx/fy=前方向, px/py=右方向, tm=時間, hx/hy/hr=頭の位置と半径） */
+function genArt(kind){ // 生き物の防具の描き方：兜・胴・腕・足に、生き物の特徴（角・甲殻・ひれ・花・水晶・炎・骨など）を付ける
+  return{
+    head(G,l){const {ctx,hx,hy,hr,fx,fy,px,py}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(hx,hy,hr+2,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;ctx.beginPath();ctx.arc(hx-fx*hr*0.3,hy-fy*hr*0.3,hr*0.5,0,TAU);ctx.fill();
+      ctx.fillStyle=l.accent;
+      if(kind==='horn'||kind==='antler'){for(const s of [-1,1]){const bx=hx+px*s*hr*0.7,by=hy+py*s*hr*0.7;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+fx*hr*1.2+px*s*hr*0.3,by+fy*hr*1.2+py*s*hr*0.3);ctx.lineTo(bx+fx*hr*0.3,by+fy*hr*0.3);ctx.closePath();ctx.fill();}}
+      else if(kind==='fin'||kind==='crystal'||kind==='petal'||kind==='flame'){for(const s of [-1,1]){const bx=hx-fx*hr*0.4+px*s*hr*0.7,by=hy-fy*hr*0.4+py*s*hr*0.7;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx-fx*hr*1.1,by-fy*hr*1.1+py*s*hr*0.2);ctx.lineTo(bx-fx*hr*0.2+px*s*hr*0.5,by-fy*hr*0.2+py*s*hr*0.5);ctx.closePath();ctx.fill();}}
+      else if(kind==='skull'){ctx.fillStyle=l.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(hx+fx*hr*0.4+px*s*hr*0.45,hy+fy*hr*0.4+py*s*hr*0.45,hr*0.2,0,TAU);ctx.fill();}}
+      else if(kind==='fur'){ctx.strokeStyle=l.accent;ctx.lineWidth=2;ctx.beginPath();ctx.arc(hx,hy,hr+4,0,TAU);ctx.stroke();}
+      ctx.fillStyle=l.eye;ctx.beginPath();ctx.arc(hx+fx*hr*0.5,hy+fy*hr*0.1,1.8,0,TAU);ctx.fill();},
+    body(G,l){const {ctx,r,step,f,fx,fy,px,py}=G;
+      ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+      if(kind==='shell'){ctx.beginPath();ctx.ellipse(-fx*r*0.3,-fy*r*0.3+step,r*0.72,r*0.52,f+Math.PI,0,TAU);ctx.fill();ctx.stroke();}
+      ctx.fillStyle=l.accent;for(const [a,b] of [[0.3,0.35],[-0.2,-0.3],[0.1,0.1]]){ctx.beginPath();ctx.arc(fx*a*r+px*b*r,fy*a*r+py*b*r+step,r*0.09,0,TAU);ctx.fill();}},
+    arm(G,l,sd,ax,ay){const {ctx,r}=G;ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1;ctx.beginPath();ctx.arc(ax+sd*r*0.25,ay,r*0.22,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.light;if(kind==='horn'||kind==='antler'||kind==='flame'){ctx.beginPath();ctx.moveTo(ax+sd*r*0.4,ay-r*0.1);ctx.lineTo(ax+sd*r*0.62,ay-r*0.3);ctx.lineTo(ax+sd*r*0.35,ay+r*0.05);ctx.fill();}
+      else{ctx.beginPath();ctx.arc(ax+sd*r*0.25,ay+r*0.2,r*0.07,0,TAU);ctx.fill();}},
+    foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.dark;ctx.beginPath();ctx.moveTo(lx-r*0.2,ly+r*0.1);ctx.lineTo(lx,ly+r*0.36);ctx.lineTo(lx+r*0.2,ly+r*0.1);ctx.closePath();ctx.fill();
+      if(kind==='fin'){ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx-r*0.3,ly+r*0.25);ctx.lineTo(lx+r*0.1,ly+r*0.15);ctx.fill();}}
+  };
+}
 const GEAR_ART={
   // ---- ザコ素材の防具の見た目（ボスより控えめ） ----
   beast:{ // 獣皮：小さな耳のついた毛皮のフード、毛皮の襟、毛の巻かれた手足
@@ -5408,6 +5627,22 @@ const GEAR_ART={
       ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(ax+sd*r*0.85,ay+r*0.75,r*0.07,0,TAU);ctx.fill();},
     foot(G,l,lx,ly){const {ctx,r}=G;ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(lx-r*0.12,ly+r*0.1);ctx.lineTo(lx,ly+r*0.38);ctx.lineTo(lx+r*0.12,ly+r*0.1);ctx.closePath();ctx.fill();}
   },
+  kama:genArt('horn'),
+  armd:genArt('shell'),
+  hana:genArt('petal'),
+  yado:genArt('shell'),
+  dorc:genArt('fin'),
+  hachi:genArt('antler'),
+  shark:genArt('fin'),
+  mola:genArt('fin'),
+  guard:genArt('crystal'),
+  ondo:genArt('horn'),
+  syaku:genArt('horn'),
+  phoenix:genArt('flame'),
+  shiro:genArt('fur'),
+  tsuno:genArt('antler'),
+  kubi:genArt('skull'),
+  onry:genArt('flame'),
   mire:{ // 沼巨人：泥のかたまりの頭と光る目、苔と泥の胴、垂れる泥の腰、岩のような肩、大きな泥の足
     head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
       ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;for(let i=0;i<6;i++){const a=f+i/6*TAU+0.3;ctx.beginPath();ctx.arc(hx+Math.cos(a)*hr*0.75,hy+Math.sin(a)*hr*0.75,hr*0.55,0,TAU);ctx.fill();ctx.stroke();}
@@ -6100,7 +6335,7 @@ const Renderer={
       if(e.trapKind==='pit'){ctx.fillStyle='rgba(26,18,10,.85)';ctx.beginPath();ctx.ellipse(0,e.r*0.4,e.r*1.3,e.r*0.8,0,0,TAU);ctx.fill();ctx.translate(rand(-1.5,1.5),0);}
       else{ctx.strokeStyle='#ffe040';ctx.lineWidth=2;for(let i=0;i<3;i++){const a=rand(0,TAU),r0=e.r*0.5,r1=e.r*1.3;ctx.beginPath();ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);ctx.lineTo(Math.cos(a+0.3)*r1*0.8,Math.sin(a+0.3)*r1*0.8);ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);ctx.stroke();}ctx.translate(rand(-1,1),rand(-1,1));}
     }
-    {const st=[];if(e.poisonT>0)st.push(['毒','#a8e040']);if(e.sleepT>0)st.push(['眠','#b898ff']);if(e.trapKind==='para'&&e.trapT>0)st.push(['麻','#ffe040']);
+    {const st=[];if(e.poisonT>0)st.push(['毒','#a8e040']);if(e.sleepT>0)st.push(['眠','#b898ff']);if(e.slowT>0)st.push(['鈍','#9ad8ff']);if(e.trapKind==='para'&&e.trapT>0)st.push(['麻','#ffe040']);
       st.forEach(([t,c],i)=>{ctx.fillStyle=c;ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,-e.r-10+i*14,-e.r-14);});}
     if(e.blindT>0){ctx.fillStyle='#fff6a0';ctx.font=`bold 14px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('？',Math.sin(this.time*5)*6,-e.r-14);}
     if(e.state==='stunned'){ // スタン中：頭上を星が回る
@@ -6183,6 +6418,7 @@ const Renderer={
       case 'iceDeer':this.drawIceDeer(ctx,e,hurt,ed.pal);break;
       case 'frostWyvern':this.drawFrostWyvern(ctx,e,hurt,ed.pal);break;
       case 'iceApe':this.drawIceApe(ctx,e,hurt,ed.pal);break;
+      case 'gen':this.drawGenBoss(ctx,e,hurt,ed);break;
       case 'rabbit':this.drawRabbit(ctx,e,hurt,ed.pal);break;
     }
     ctx.restore();
@@ -6321,6 +6557,43 @@ const Renderer={
     ctx.restore();
   },
   /** 大顎クワガタ：つやのある甲殻と、前に突き出た大きな大顎（正面の攻撃を弾く） */
+  drawGenBoss(ctx,e,hurt,ed){ // 生き物の共通の描き方（胴・脚・頭・飾り・腕の形を、生き物ごとに変える）
+    const pal=ed.pal||{body:'#777',dark:'#333',spot:'#ccc',eye:'#ff0'},T=ed.gen||{},r=e.r,an=e.anim||0;
+    const b=hurt?'#ffffff':pal.body,d=pal.dark;
+    ctx.save();ctx.rotate(e.facing||0);ctx.lineCap='round';ctx.lineJoin='round';
+    if(T.wings){ctx.fillStyle=pal.spot;ctx.globalAlpha=0.75;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(-r*0.2,0);ctx.quadraticCurveTo(-r*0.6,s*r*1.7,-r*1.3,s*(r*1.0+Math.sin(an*5)*r*0.15));ctx.quadraticCurveTo(-r*0.5,s*r*0.6,-r*0.2,0);ctx.fill();}ctx.globalAlpha=1;}
+    if(T.tail){ctx.strokeStyle=d;ctx.lineWidth=r*0.22;ctx.beginPath();ctx.moveTo(-r*0.6,0);ctx.quadraticCurveTo(-r*1.2,Math.sin(an*3)*r*0.5,-r*1.7,Math.sin(an*3+1)*r*0.4);ctx.stroke();}
+    const n=T.legs||0;
+    if(n){ctx.strokeStyle=d;ctx.lineWidth=Math.max(2,r*0.1);for(let i=0;i<n;i++){const sd=i%2?1:-1,x=((i>>1)-(n/2-1)/2)*r*0.55,ph=Math.sin(an*6+i)*r*0.1;ctx.beginPath();ctx.moveTo(x,sd*r*0.5);ctx.lineTo(x+ph,sd*r*1.05);ctx.stroke();}}
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();
+    if(T.body==='round')ctx.arc(0,0,r*0.85,0,TAU);else if(T.body==='long')ctx.ellipse(-r*0.1,0,r*1.05,r*0.62,0,0,TAU);else ctx.ellipse(0,0,r*0.9,r*0.75,0,0,TAU);
+    ctx.fill();ctx.stroke();
+    if(T.body==='shell'){ctx.beginPath();ctx.moveTo(-r*0.7,0);ctx.lineTo(r*0.6,0);ctx.moveTo(0,-r*0.55);ctx.lineTo(0,r*0.55);ctx.stroke();}
+    if(T.cloak){ctx.fillStyle=d;ctx.globalAlpha=0.6;ctx.beginPath();ctx.moveTo(-r*0.4,-r*0.7);ctx.lineTo(-r*1.4+Math.sin(an*3)*r*0.2,0);ctx.lineTo(-r*0.4,r*0.7);ctx.fill();ctx.globalAlpha=1;}
+    ctx.fillStyle=pal.spot;for(const [x,y] of [[-0.2,-0.3],[0.2,0.3],[0.3,-0.1]]){ctx.beginPath();ctx.arc(x*r,y*r,r*0.09,0,TAU);ctx.fill();}
+    const hx=r*0.7;
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.arc(hx,0,r*0.48,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.eye;for(const sd of [-1,1]){ctx.beginPath();ctx.arc(hx+r*0.2,sd*r*0.2,r*0.1,0,TAU);ctx.fill();}
+    ctx.strokeStyle=d;ctx.fillStyle=pal.spot;ctx.lineWidth=2;
+    for(const sd of [-1,1]){
+      if(T.head==='horn'||T.head==='tusk'){ctx.beginPath();ctx.moveTo(hx+r*0.1,sd*r*0.3);ctx.lineTo(hx+r*0.6,sd*r*0.7);ctx.lineTo(hx+r*0.3,sd*r*0.1);ctx.closePath();ctx.fill();}
+      else if(T.head==='antler'){ctx.beginPath();ctx.moveTo(hx-r*0.1,sd*r*0.3);ctx.lineTo(hx-r*0.4,sd*r*1.0);ctx.stroke();ctx.beginPath();ctx.moveTo(hx-r*0.3,sd*r*0.7);ctx.lineTo(hx,sd*r*0.9);ctx.stroke();}
+      else if(T.head==='fin'||T.head==='mane'){ctx.beginPath();ctx.moveTo(hx-r*0.3,sd*r*0.3);ctx.lineTo(hx-r*0.9,sd*r*0.75);ctx.lineTo(hx-r*0.3,sd*r*0.1);ctx.closePath();ctx.fill();}
+      else if(T.head==='petal'){ctx.beginPath();ctx.arc(hx-r*0.1,sd*r*0.8,r*0.22,0,TAU);ctx.fill();}
+      else if(T.head==='crystal'){ctx.beginPath();ctx.moveTo(hx-r*0.2,sd*r*0.4);ctx.lineTo(hx,sd*r*1.0);ctx.lineTo(hx+r*0.15,sd*r*0.4);ctx.closePath();ctx.fill();}
+      else if(T.head==='flame'){ctx.beginPath();ctx.arc(hx-r*0.2,sd*r*0.6+Math.sin(an*8)*r*0.05,r*0.14,0,TAU);ctx.fill();}
+    }
+    const arm=T.arm||'';
+    if(arm){ctx.strokeStyle=d;ctx.lineWidth=2.5;
+      for(const sd of [-1,1]){const ax=r*0.2,ay=sd*r*0.55;
+        if(arm==='scythe'){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+r*0.9,ay+sd*r*0.1);ctx.stroke();ctx.strokeStyle=pal.spot;ctx.beginPath();ctx.moveTo(ax+r*0.9,ay+sd*r*0.1);ctx.quadraticCurveTo(ax+r*1.6,ay-sd*r*0.6,ax+r*1.3,ay-sd*r*0.9);ctx.stroke();ctx.strokeStyle=d;}
+        else if(arm==='katana'){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+r*0.9,ay+sd*r*0.1);ctx.stroke();ctx.strokeStyle=pal.spot;ctx.beginPath();ctx.moveTo(ax+r*0.9,ay+sd*r*0.1);ctx.lineTo(ax+r*1.9,ay+sd*r*0.05);ctx.stroke();ctx.strokeStyle=d;}
+        else if(arm==='pincer'){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+r*0.9,ay+sd*r*0.3);ctx.stroke();ctx.beginPath();ctx.arc(ax+r*1.0,ay+sd*r*0.4,r*0.2,0,TAU);ctx.stroke();}
+        else if(arm==='claw'){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+r*0.8,ay+sd*r*0.2);ctx.lineTo(ax+r*1.1,ay+sd*r*0.45);ctx.stroke();}
+      }
+    }
+    ctx.restore();
+  },
   drawSalamander(ctx,e,hurt,pal){
     const r=e.r,rage=e.phase===2,b=hurt?'#ffffff':(rage?pal.rage:pal.body),d=rage?pal.rageDark:pal.dark;
     ctx.save();ctx.rotate(e.facing);ctx.lineCap='round';
