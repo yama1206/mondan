@@ -32,7 +32,10 @@ button.danger:hover{background:#6e2a3a}
 .menu-col{display:flex;flex-direction:column;gap:8px;min-width:280px;margin:12px 0}
 .menu-col button{padding:11px 14px;font-size:15px}
 .camp{width:min(560px,94vw);text-align:center}
-.gver{position:fixed;top:8px;right:12px;font-size:12px;color:#8a8298;pointer-events:none;z-index:5}
+.gver{position:fixed;top:8px;right:12px;font-size:12px;color:#8a8298;pointer-events:none;z-index:5;text-align:right}
+.gver button{pointer-events:auto;font-size:12px;padding:3px 8px}
+.updbar{margin-top:10px;text-align:center}
+.updbar button{font-size:13px}
 .campinfo{background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px;color:#cfc7e6;line-height:1.7}
 .howto{margin-top:12px;text-align:left;background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px 14px;font-size:13px;line-height:1.8;color:#bdb5d6}
 .howto b{display:inline-block;min-width:110px;color:#f0e6c0}
@@ -188,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.48',date:'2026/10/29'};
+const GAME_VERSION={no:'0.49',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8812,6 +8815,8 @@ const App={
     }
     this.save();this.goto('clear');
   },
+  /** どの画面からでも押せる「更新を確認」（タイトル・拠点・一時停止の中に常に出す） */
+  updateBarHTML(){return `<div class="updbar"><button data-act="checkUpdate">更新を確認</button> <span id="updateMsg" class="small muted"></span></div>`;},
   /** 公開中のページの版を確かめる。新しければ「今すぐ更新」を出す（キャッシュを避けて取り直す） */
   async checkUpdate(){
     const el=document.getElementById('updateMsg');if(!el)return;
@@ -9302,7 +9307,7 @@ const App={
   },
   campHTML(){
     const p=this.profile;
-    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}</div><div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
+    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}</div><div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
       <div class="campinfo">${this.charLine(0)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span><br>
       解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
@@ -9313,6 +9318,7 @@ const App={
       <button data-act="settings">設定</button>
       <button class="danger" data-act="reset">セーブデータをリセット</button></div>
       ${this.howtoHTML()}
+      ${this.updateBarHTML()}
       <p class="small muted" style="margin-top:10px">進行状況はブラウザ（localStorage）に自動保存されます。回復薬は自動では補充されません。出発前に「ショップ」で買うか調合して用意しましょう。</p></div>`;
   },
   lobbyQuestHTML(){
@@ -9396,12 +9402,13 @@ const App={
         <button data-act="inventory">装備・インベントリ</button>
         <button data-act="settings">設定</button>
         ${host&&this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて全員で帰る（持ち帰れる）</button>':''}${host?'<button class="danger" data-act="toLobby">探索を中断して全員でロビーに戻る</button>':''}
-        <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>${this.howtoHTML()}</div>`;
+        <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>${this.updateBarHTML()}${this.howtoHTML()}</div>`;
     }
     return `<div class="panel camp"><h2>一時停止</h2><div class="menu-col">
       <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
       <button data-act="inventory">装備・インベントリ</button>
       <button data-act="settings">設定</button>
+      ${this.updateBarHTML()}
       ${this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて帰る（持ち帰れる）</button>':'<button class="danger" data-act="retreat">探索を中断して拠点へ戻る</button>'}</div>${this.howtoHTML()}</div>`;
   },
   settingsHTML(){
