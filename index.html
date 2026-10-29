@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.29',date:'2026/10/29'};
+const GAME_VERSION={no:'0.30',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -2882,6 +2882,8 @@ function hitPlayer(w,p,raw,sx,sy,src){
     const id=p.using.item;p.using=null;p.bag[id]=Math.max(0,(p.bag[id]||0)-1);
     emit(w,{type:'itemUsed',pid:p.id,item:id});emit(w,{type:'itemFail',pid:p.id,x:p.x,y:p.y-26,item:id});
   }
+  // チャージ可能な武器はチャージ中に攻撃を受けると中断する（攻撃ボタンを離すまで、また溜め始めない）
+  if(p.charging)p.chargeLock=true;
   p.charging=false;p.charge=0;
   if(p.hp<=0)downPlayer(w,p);
   else{const sp=DATA.enemyStatus[src||w._atk];if(sp&&RNG.next()<sp.chance)inflictPlayer(w,p,sp.k);} // 攻撃した魔物の状態異常
@@ -3146,7 +3148,8 @@ function updatePlayer(w,p,inp,dt){
         p.charging=false;p.charge=0;
         playerAttack(w,p,{mult:lv?wt.charge.mult[lv-1]:1,stunMult:lv&&wt.charge.stunMult?wt.charge.stunMult[lv-1]:1,level:lv});
       }
-    }else if(inp.attack&&p.atkTimer<=0){p.charging=true;p.charge=0;}
+    }else if(!inp.attack)p.chargeLock=false;
+    else if(p.atkTimer<=0&&!p.chargeLock){p.charging=true;p.charge=0;}
   }else if(inp.attack&&p.atkTimer<=0)playerAttack(w,p,{});
   if(inp.skill&&s.skill&&p.skillCd<=0&&!p.charging)playerSkill(w,p);
   if(inp.heal&&!p.charging){
