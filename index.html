@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.59',date:'2026/10/29'};
+const GAME_VERSION={no:'0.60',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -895,6 +895,8 @@ const DATA={
     hydra:{thunder:-1,ice:1},venom:{ice:1,mei:1,fire:-2},mire:{fire:-2,thunder:1},bwolf:{mei:3,thunder:-2},
   },
   enemyElem:{
+    giant_frog:{weak:['thunder']},bog_leech:{weak:['fire','thunder']},deep_octopus:{weak:['thunder','ice']},giant_bat:{weak:['ice']},crystal_scorpion:{weak:['fire']},
+    crimson_serpent:{weak:['ice','water']},fire_griffon:{weak:['water','ice']},eternal_beast:{weak:['fire']},frost_cat:{weak:['fire']},abyss_spider:{weak:['mei','fire']},ghost_moth:{weak:['mei']},grave_rat:{weak:['mei','fire']},
     goblin:{weak:['fire']},goblin_archer:{weak:['fire']},slime:{atk:'water',weak:['thunder']},forest_wolf:{weak:['fire'],strong:['ice']},
     meadow_bull:{atk:'fire',weak:['thunder','ice']},rhino:{weak:['thunder']},boar:{weak:['ice']},salamander:{weak:['fire'],strong:['water']},gale_bird:{atk:'thunder',weak:['ice'],strong:['water']},rock_lizard:{atk:'fire',weak:['water','ice']},
     archer:{weak:['mei','fire']},beetle:{weak:['fire'],strong:['water']},mushroom:{weak:['fire']},
@@ -962,6 +964,96 @@ const DATA={
       {id:'wingL',name:'翼',x:0,y:-1.4,r:0.5,mult:0.8},{id:'wingR',name:'翼',x:0,y:1.4,r:0.5,mult:0.8}],
   },
   enemies:{
+    giant_frog:{name:'大蛙',ai:'pattern',look:'frog',hp:105,atk:17,def:4,r:20,speed:112,color:'#4a8a3a',drops:'giant_frog',
+      pattern:[
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.0},
+        {k:'slam',wind:0.9,cd:6,dmg:0.9,r:85},
+        {k:'shot',wind:0.6,cd:4,n:3,spread:0.5,speed:280,dmg:0.7,kind:'mucus',st:'poison'},
+        {k:'sweep',wind:0.5,cd:3,dmg:1.0,r:80,arc:0.9},
+      ],
+      pal:{body:'#4a8a3a',dark:'#23401a',spot:'#c8e070',eye:'#ffe060'}},
+    bog_leech:{name:'沼底の吸血蛭',ai:'pattern',look:'leech',hp:90,atk:16,def:2,r:16,speed:118,color:'#6a2a3a',drops:'bog_leech',
+      pattern:[
+        {k:'burrow',cd:6,dmg:1.0,r:70},
+        {k:'charge',wind:0.5,cd:3.5,dmg:0.9},
+        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:60,arc:1.2,st:'poison'},
+      ],
+      pal:{body:'#6a2a3a',dark:'#2e1018',spot:'#d05060',eye:'#ffe0e0'}},
+    deep_octopus:{name:'深淵の大蛸',ai:'pattern',look:'jelly',hp:150,atk:19,def:6,r:26,speed:96,color:'#2a4a7a',drops:'deep_octopus',
+      pattern:[
+        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:120,arc:2.0},
+        {k:'toss',wind:0.9,cd:5,dmg:1.0,r:70},
+        {k:'slam',wind:0.8,cd:5,dmg:1.0,r:100},
+        {k:'shot',wind:0.8,cd:6,n:6,spread:5.0,speed:260,dmg:0.7,kind:'soul',el:'water'},
+      ],
+      pal:{body:'#2a4a7a',dark:'#101e36',spot:'#70b0e0',eye:'#e0f0ff'}},
+    giant_bat:{name:'洞窟の大蝙蝠',ai:'pattern',look:'bat',hp:95,atk:18,def:3,r:18,speed:130,color:'#4a3a6a',drops:'giant_bat',
+      pattern:[
+        {k:'charge',wind:0.5,cd:3.5,dmg:1.1},
+        {k:'shot',wind:0.6,cd:4,n:1,speed:380,dmg:0.9,kind:'soul'},
+        {k:'slam',wind:0.8,cd:6,dmg:0.9,r:110},
+      ],
+      pal:{body:'#4a3a6a',dark:'#221a36',wing:'#8a7ab8',eye:'#ffe060'}},
+    crystal_scorpion:{name:'晶毒の大蠍',ai:'pattern',look:'scorpion',hp:125,atk:20,def:8,r:20,speed:90,color:'#6a4a8a',drops:'crystal_scorpion',
+      pattern:[
+        {k:'sweep',wind:0.6,cd:3,dmg:1.1,r:75,arc:1.2},
+        {k:'slam',wind:0.9,cd:5,dmg:1.1,r:90},
+        {k:'shot',wind:0.7,cd:4.5,n:1,speed:340,dmg:0.9,kind:'mucus',st:'poison'},
+      ],
+      pal:{body:'#6a4a8a',dark:'#2a1a3a',spot:'#c8a0ff',eye:'#ffe0ff'}},
+    crimson_serpent:{name:'紅蓮の大蛇',ai:'pattern',look:'centipede',hp:140,atk:20,def:6,r:22,speed:105,color:'#a03a1a',drops:'crimson_serpent',
+      pattern:[
+        {k:'shot',wind:0.7,cd:4,n:3,spread:0.5,speed:280,dmg:0.9,kind:'fire',el:'fire'},
+        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:110,arc:2.5},
+        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:300,width:34,el:'fire'},
+      ],
+      pal:{body:'#a03a1a',dark:'#4a1608',spot:'#ff9040',eye:'#ffe060'}},
+    fire_griffon:{name:'火口の翼獅子',ai:'pattern',look:'fireWyvern',hp:160,atk:21,def:7,r:26,speed:115,color:'#c05a20',drops:'fire_griffon',
+      pattern:[
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.1},
+        {k:'slam',wind:0.9,cd:6,dmg:1.0,r:110},
+        {k:'sweep',wind:0.5,cd:2.8,dmg:0.9,r:90,arc:1.4},
+        {k:'shot',wind:0.6,cd:5,n:3,spread:0.4,speed:300,dmg:0.9,kind:'fire',el:'fire'},
+      ],
+      pal:{body:'#c05a20',dark:'#5a2010',wing:'#ffb050',eye:'#fff0a0'}},
+    eternal_beast:{name:'永久凍土の巨獣',ai:'pattern',look:'boar',hp:170,atk:21,def:9,r:28,speed:104,color:'#8aaccc',drops:'eternal_beast',
+      pattern:[
+        {k:'charge',wind:0.7,cd:4.5,dmg:1.2},
+        {k:'slam',wind:0.9,cd:5.5,dmg:1.0,r:100},
+        {k:'sweep',wind:0.8,cd:5,dmg:1.1,r:120,arc:1.8,el:'ice'},
+      ],
+      pal:{body:'#8aaccc',dark:'#3a5a7a',tusk:'#f0f8ff',eye:'#e0f4ff',snout:'#5a7a9a'}},
+    frost_cat:{name:'白霜の大山猫',ai:'pattern',look:'snowFox',hp:110,atk:19,def:4,r:20,speed:140,color:'#d8e8f4',drops:'frost_cat',
+      pattern:[
+        {k:'charge',wind:0.45,cd:3.5,dmg:1.0},
+        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:70,arc:1.6},
+        {k:'charge',wind:0.9,cd:5,dmg:1.2},
+        {k:'shot',wind:0.6,cd:4.5,n:6,spread:5.0,speed:300,dmg:0.7,kind:'shard',el:'ice'},
+      ],
+      pal:{body:'#d8e8f4',dark:'#6a8aa4',spot:'#a0d0f0',eye:'#60b0ff'}},
+    abyss_spider:{name:'冥府の大蜘蛛',ai:'pattern',look:'spider',hp:120,atk:18,def:4,r:20,speed:108,color:'#3a2a4a',drops:'abyss_spider',
+      pattern:[
+        {k:'shot',wind:0.6,cd:4,n:1,speed:300,dmg:0.4,kind:'soul',slow:{time:2.5}},
+        {k:'shot',wind:0.7,cd:6,n:8,spread:6.0,speed:240,dmg:0.5,kind:'soul',slow:{time:1.5}},
+        {k:'charge',wind:0.5,cd:4,dmg:1.1},
+        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:260,width:40,el:'mei',hz:'curse'},
+      ],
+      pal:{body:'#3a2a4a',dark:'#1a1024',spot:'#9a70c0',eye:'#e080ff'}},
+    ghost_moth:{name:'死霊の大蛾',ai:'pattern',look:'ghost',hp:100,atk:18,def:3,r:20,speed:110,color:'#8a8aa8',drops:'ghost_moth',
+      pattern:[
+        {k:'sweep',wind:0.7,cd:3.5,dmg:1.0,r:110,arc:1.6,el:'mei'},
+        {k:'slam',wind:0.8,cd:5.5,dmg:0.9,r:100},
+        {k:'shot',wind:0.8,cd:4.5,n:1,speed:340,dmg:1.0,kind:'soul',el:'mei'},
+      ],
+      pal:{body:'#8a8aa8',dark:'#3a3a52',wing:'#c0c0e0',eye:'#e0e0ff'}},
+    grave_rat:{name:'墓穴の大鼠',ai:'pattern',look:'mole',hp:85,atk:16,def:3,r:17,speed:135,color:'#5a4a3a',drops:'grave_rat',
+      pattern:[
+        {k:'charge',wind:0.5,cd:3.5,dmg:1.0},
+        {k:'sweep',wind:0.5,cd:2.8,dmg:0.9,r:65,arc:1.2},
+        {k:'charge',wind:0.6,cd:5,dmg:1.1},
+        {k:'burrow',cd:6,dmg:1.1,r:75,el:'mei'},
+      ],
+      pal:{body:'#5a4a3a',dark:'#2a2018',spot:'#9a8a7a',eye:'#ff8080'}},
     // ai：行動パターン（goblin=接近して殴る / archer=距離を取って射る / wolf=ボス）。pal：見た目の色
     goblin:{name:'ゴブリン',ai:'goblin',hp:34,atk:9,def:2,r:12,speed:95,color:'#5cae3c',drops:'goblin',pal:{body:'#5cae3c',dark:'#2a5a1a',ear:'#4c9a30',eye:'#ffe040'}},
     archer:{name:'スケルトンアーチャー',ai:'archer',hp:28,atk:11,def:1,r:12,speed:80,color:'#ddd6c0',drops:'archer',pal:{body:'#ddd6c0',dark:'#7a7260'}},
@@ -1232,6 +1324,18 @@ const DATA={
   // chance=0〜1 で確率を調整。rarityBoost が大きいほど高レアの装飾品が出やすい。
   // 装備品は報酬に含めず、素材からの製作でだけ手に入る。回復薬も製作かショップで用意する。
   dropTables:{
+    giant_frog:{rarityBoost:1.0,rolls:[{type:'mat',id:'toxic_gland',chance:0.7,min:1,max:1},{type:'mat',id:'swamp_moss',chance:0.4,min:1,max:1}]},
+    bog_leech:{rarityBoost:1.0,rolls:[{type:'mat',id:'slime_gel',chance:0.8,min:1,max:1},{type:'mat',id:'poison_spore',chance:0.4,min:1,max:1}]},
+    deep_octopus:{rarityBoost:1.3,rolls:[{type:'mat',id:'slime_gel',chance:0.8,min:1,max:2},{type:'mat',id:'hard_shell',chance:0.4,min:1,max:1}]},
+    giant_bat:{rarityBoost:1.2,rolls:[{type:'mat',id:'cave_wing',chance:1.0,min:1,max:2},{type:'mat',id:'cave_fang',chance:0.5,min:1,max:1}]},
+    crystal_scorpion:{rarityBoost:1.3,rolls:[{type:'mat',id:'hard_shell',chance:0.9,min:1,max:2},{type:'mat',id:'poison_spore',chance:0.5,min:1,max:1}]},
+    crimson_serpent:{rarityBoost:1.5,rolls:[{type:'mat',id:'centi_ember',chance:0.8,min:1,max:2},{type:'mat',id:'centi_shell',chance:0.4,min:1,max:1}]},
+    fire_griffon:{rarityBoost:1.6,rolls:[{type:'mat',id:'centi_ember',chance:0.9,min:1,max:2},{type:'mat',id:'rock_scale',chance:0.5,min:1,max:1}]},
+    eternal_beast:{rarityBoost:1.6,rolls:[{type:'mat',id:'beast_hide',chance:0.9,min:1,max:2},{type:'mat',id:'beast_fang',chance:0.5,min:1,max:1}]},
+    frost_cat:{rarityBoost:1.4,rolls:[{type:'mat',id:'beast_fang',chance:0.8,min:1,max:1},{type:'mat',id:'crystal_shard',chance:0.5,min:1,max:1}]},
+    abyss_spider:{rarityBoost:1.4,rolls:[{type:'mat',id:'spider_silk',chance:1.0,min:1,max:2},{type:'mat',id:'curse_powder',chance:0.4,min:1,max:1}]},
+    ghost_moth:{rarityBoost:1.4,rolls:[{type:'mat',id:'soul_shard',chance:0.8,min:1,max:1},{type:'mat',id:'curse_powder',chance:0.5,min:1,max:1}]},
+    grave_rat:{rarityBoost:1.2,rolls:[{type:'mat',id:'rotten_cloth',chance:0.9,min:1,max:2},{type:'mat',id:'cursed_iron',chance:0.4,min:1,max:1}]},
     water_lizard:{rarityBoost:1.0,rolls:[
       {type:'mat',id:'water_scale',chance:0.7,min:1,max:2},{type:'mat',id:'jelly_gel',chance:0.3,min:1,max:1}]},
     jellyfish:{rarityBoost:1.0,rolls:[
@@ -1554,10 +1658,10 @@ const DATA={
       start:{id:'shore',name:'沼のほとり'},
       boss:{id:'arena',name:'沼の中心',spawn:[['leech',1,2],['carnivore_plant',1,1]]},
       main:[
-        {id:'reeds',name:'葦原',spawn:[['poison_frog',2,3],['leech',1,2]]},
+        {id:'reeds',name:'葦原',spawn:[['giant_frog',0,1],['poison_frog',2,3],['leech',1,2]]},
         {id:'pond',name:'濁った池',spawn:[['leech',2,3],['bloater',0,1]]},
         {id:'nest',name:'花食いの群生地',spawn:[['carnivore_plant',2,3]]},
-        {id:'bog',name:'底なしの泥地',spawn:[['swamp_croc',1,2],['bloater',1,2]]},
+        {id:'bog',name:'底なしの泥地',spawn:[['bog_leech',1,2],['swamp_croc',1,2],['bloater',1,2]]},
         {id:'rot',name:'腐った倒木',spawn:[['parasite',2,3],['poison_frog',1,1]]},
       ],
       side:[
@@ -1571,7 +1675,7 @@ const DATA={
         {id:'shallows',name:'浅瀬',spawn:[['water_lizard',2,3],['piranha',1,2]]},
         {id:'rocks2',name:'岩場の渡り',spawn:[['crab',1,2],['water_spirit',1,2]]},
         {id:'falls',name:'滝の裏',spawn:[['eel',1,2],['jellyfish',1,2]]},
-        {id:'whirl',name:'渦の淵',spawn:[['jellyfish',2,3],['eel',1,1]]},
+        {id:'whirl',name:'渦の淵',spawn:[['deep_octopus',1,1],['jellyfish',2,3],['eel',1,1]]},
         {id:'shrine',name:'水没した祠',spawn:[['water_spirit',2,3],['crab',0,1]]},
       ],
       side:[
@@ -1582,11 +1686,11 @@ const DATA={
       start:{id:'entrance',name:'洞窟の入口'},
       boss:{id:'arena',name:'晶洞の底',spawn:[['rock_shell',1,2],['cave_bat',1,2]],obstacle:'pillars'},
       main:[
-        {id:'shaft',name:'狭い縦穴',spawn:[['cave_bat',2,3],['crystal_slime',1,2]]},
+        {id:'shaft',name:'狭い縦穴',spawn:[['giant_bat',1,2],['cave_bat',2,3],['crystal_slime',1,2]]},
         {id:'gallery',name:'結晶の回廊',spawn:[['cave_spider',2,3],['crystal_slime',1,2]],obstacle:'pillars'},
         {id:'grove',name:'鍾乳石の林',spawn:[['rock_shell',2,3],['cave_spider',1,2]],obstacle:'rocks'},
         {id:'vein',name:'輝晶の鉱脈',spawn:[['crystal_slime',2,3],['cave_bat',1,2]]},
-        {id:'lakeside',name:'地底の湖畔',spawn:[['rock_shell',2,3],['cave_spider',1,2],['cave_bat',1,1]]},
+        {id:'lakeside',name:'地底の湖畔',spawn:[['crystal_scorpion',1,2],['rock_shell',2,3],['cave_spider',1,2],['cave_bat',1,1]]},
       ],
       side:[
         {id:'pocket',name:'結晶の袋小路',spawn:[['crystal_slime',0,1]],gather:[3,4]},
@@ -1596,10 +1700,10 @@ const DATA={
       start:{id:'entrance',name:'火山入口'},
       boss:{id:'arena',name:'火口の底',spawn:[['molten_beast',1,2],['fire_wyvern',1,2]],obstacle:'pillars'},
       main:[
-        {id:'lava_road',name:'溶岩の坂道',spawn:[['magma_beetle',2,3],['fire_wyvern',1,2]]},
+        {id:'lava_road',name:'溶岩の坂道',spawn:[['crimson_serpent',1,1],['magma_beetle',2,3],['fire_wyvern',1,2]]},
         {id:'vent',name:'噴気の通路',spawn:[['molten_beast',1,2],['magma_beetle',2,3]]},
         {id:'cinder',name:'灰の広間',spawn:[['scorpion',1,2],['fire_wyvern',1,2]]},
-        {id:'crater',name:'火口の縁',spawn:[['molten_beast',2,3],['scorpion',1,2]]},
+        {id:'crater',name:'火口の縁',spawn:[['fire_griffon',1,1],['molten_beast',2,3],['scorpion',1,2]]},
         {id:'core',name:'灼熱の核室',spawn:[['magma_beetle',2,3],['molten_beast',1,2]]},
       ],
       side:[
@@ -1610,10 +1714,10 @@ const DATA={
       start:{id:'entrance',name:'氷雪入口'},
       boss:{id:'arena',name:'氷嶺',spawn:[['ice_deer',1,1],['snow_monkey',1,2]],obstacle:'pillars'},
       main:[
-        {id:'drift',name:'吹きだまりの道',spawn:[['snow_fox',2,3],['ice_beetle',1,2]]},
+        {id:'drift',name:'吹きだまりの道',spawn:[['eternal_beast',1,1],['snow_fox',2,3],['ice_beetle',1,2]]},
         {id:'icicle',name:'氷柱の回廊',spawn:[['ice_seal',2,3],['snow_owl',1,2]]},
         {id:'cliff',name:'崖道',spawn:[['ice_mantis',2,3],['snow_monkey',1,2]]},
-        {id:'ridge',name:'雪稜',spawn:[['snow_owl',2,3],['ice_seal',1,2]]},
+        {id:'ridge',name:'雪稜',spawn:[['frost_cat',1,2],['snow_owl',2,3],['ice_seal',1,2]]},
         {id:'summit',name:'山頂の平地',spawn:[['ice_mantis',1,2],['snow_fox',1,2]]},
       ],
       side:[
@@ -1624,15 +1728,15 @@ const DATA={
       start:{id:'entrance',name:'墓所の入口'},
       boss:{id:'arena',name:'冥府の祭壇',spawn:[['skeleton',2,3],['archer',1,2],['zombie',1,1]],obstacle:'pillars'},
       main:[
-        {id:'corridor',name:'墓所の回廊',spawn:[['skeleton',3,4],['hobgoblin',0,1]],obstacle:'pillars'},
+        {id:'corridor',name:'墓所の回廊',spawn:[['abyss_spider',1,2],['skeleton',3,4],['hobgoblin',0,1]],obstacle:'pillars'},
         {id:'archers',name:'弓兵の回廊',spawn:[['archer',2,3],['sniper',1,1],['skeleton',1,2]],obstacle:'pillars'},
-        {id:'ghosts',name:'亡霊の間',spawn:[['wisp',3,4],['skeleton',0,1]]},
+        {id:'ghosts',name:'亡霊の間',spawn:[['ghost_moth',1,2],['wisp',3,4],['skeleton',0,1]]},
         {id:'guard',name:'墓守の詰所',spawn:[['zombie',2,3],['hobgoblin',1,1]]},
         {id:'altar',name:'封印の祭壇',spawn:[['shaman',1,1],['skeleton',2,2],['zombie',1,1]],obstacle:'pillars'},
         {id:'knight',name:'騎士の墓室',spawn:[['cursed_knight',1,2],['skeleton',1,1]]},
       ],
       side:[
-        {id:'ossuary',name:'隠し納骨堂',spawn:[['cursed_knight',1,1],['zombie',1,1],['wisp',0,1]],elite:1,chest:2},
+        {id:'ossuary',name:'隠し納骨堂',spawn:[['grave_rat',1,2],['cursed_knight',1,1],['zombie',1,1],['wisp',0,1]],elite:1,chest:2},
       ]},
   },
   /* 依頼（クエスト）
@@ -1703,6 +1807,18 @@ const DATA={
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
   bestiary:{
+    giant_frog:{stage:[3],role:'跳躍・毒液型',desc:'沼の大きな蛙。跳んで着地の衝撃を広げ、毒液を吐き、舌で払う。',tip:'着地の前に体が縮む。その瞬間に離れよう。毒液は避けるか、解毒を用意しよう。'},
+    bog_leech:{stage:[3],role:'吸血・潜伏型',desc:'沼底に潜み、足元から飛び出す吸血ヒル。吸い付かれると毒が続く。',tip:'泥が盛り上がったら要注意。吸い付かれたら素早く振りほどこう。'},
+    deep_octopus:{stage:[4],role:'触腕・水流型',desc:'深い淵に棲む大蛸。触腕を振るい、地面を突き刺し、水流を四方へ噴き出す。',tip:'触腕の攻撃は間合いが広い。水流は全方向に飛ぶので、移動し続けよう。'},
+    giant_bat:{stage:[5],role:'急降下・音波型',desc:'洞窟の天井に棲む大きな蝙蝠。急降下し、音波を直線や円形に放つ。',tip:'上空から襲いかかるので、降下の前兆を見て避けよう。'},
+    crystal_scorpion:{stage:[5],role:'毒針型',desc:'晶石の洞窟に棲む大蠍。鋏で薙ぎ、尾を振り下ろし、毒針を飛ばす。',tip:'毒針は直線に飛ぶ。尾の動きを見て、横へ避けよう。'},
+    crimson_serpent:{stage:[6],role:'炎吐き型',desc:'火山の岩場に棲む大蛇。炎を吐き、身をくねらせて薙ぎ払い、地を這う炎を走らせる。',tip:'地を這う炎は一直線。並ばないように避けよう。'},
+    fire_griffon:{stage:[6],role:'跳躍・滑空型',desc:'火口に棲む翼の獅子。跳躍の着地で衝撃を生み、滑空突進し、炎を吐く。',tip:'滑空の直線から外れて、着地の衝撃は少し離れて受けよう。'},
+    eternal_beast:{stage:[7],role:'突進・冷気型',desc:'永久凍土の巨大な獣。牙で突進し、踏みつけ、冷気の扇を吐く。',tip:'突進の直線から外れ、冷気の扇は角度の外へ逃げよう。'},
+    frost_cat:{stage:[7],role:'俊敏・破片型',desc:'白霜をまとった大きな山猫。素早く飛びかかり、引っかき、氷の破片を飛ばす。',tip:'動きが速いので、飛びかかりの後の隙を狙おう。'},
+    abyss_spider:{stage:[8],role:'糸・妨害型',desc:'冥府の闇に棲む大蜘蛛。糸で動きを鈍らせ、冥の糸を地面から噴き出させる。',tip:'糸に当たると鈍る。複数の糸は広がるので、大きく避けよう。'},
+    ghost_moth:{stage:[8],role:'鱗粉・遠距離型',desc:'冥府に漂う大きな蛾。冥の鱗粉を撒き、羽ばたきで衝撃を生み、遠くへ直線に飛ばす。',tip:'鱗粉は扇状に広がる。羽ばたきの衝撃は近づかずに避けよう。'},
+    grave_rat:{stage:[8],role:'突進・奇襲型',desc:'墓穴に潜む大鼠。素早く突進し、噛みつき、地面から冥の力を帯びて飛び出す。',tip:'地面が盛り上がったら、すぐに離れよう。'},
     goblin:{stage:[1,2],role:'近接攻撃型',desc:'森に住みつく小鬼。群れで近づき、こん棒で殴りかかってくる。この地では剣を持つ「ゴブリン剣士」と呼ばれることも。',tip:'振りかぶる動作（赤い扇形）が見えたら横へ。体力は低いので素早く倒そう。'},
     archer:{stage:[2,8],role:'遠距離攻撃型',desc:'骨の弓兵（骸骨弓兵）。距離を取り、狙いを定めて矢を放つ。',tip:'狙いの線が赤く固まった直後に矢が来る。柱や木を盾にしながら近づこう。'},
     goblin_archer:{stage:[1,2],role:'遠距離攻撃型',desc:'見張り台や野営地に陣取るゴブリンの射手。ほかの魔物と組むと厄介。',tip:'近接の魔物を引きつけつつ、先に弓兵を倒すと楽になる。'},
@@ -3735,7 +3851,7 @@ function updateBossPattern(w,e,p,dt){
   for(const k in e.cds)e.cds[k]-=dt;
   if(e.state==='sleep')return;
   if(e.state==='stunned'){e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
-  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
+  if(e.boss&&e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
     e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;
     w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
     emit(w,{type:'enrage',x:e.x,y:e.y,name:def.name});
@@ -3796,7 +3912,7 @@ function updateBossPattern(w,e,p,dt){
         for(let i=0;i<n;i++){
           const a=e.atkAngle+(n===1?0:(i-(n-1)/2)*(mv.spread||0.4)/(n-1));
           w.projectiles.push({id:w.nextId++,kind:mv.kind||'soul',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),
-            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a,el:mv.el,src:e.type,inflict:mv.st});
+            vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a,el:mv.el,src:e.type,inflict:mv.st,slow:mv.slow});
         }
         emit(w,{type:'shoot',x:e.x,y:e.y});
         e.state='recover';e.timer=0.6;break;
