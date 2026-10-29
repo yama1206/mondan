@@ -185,7 +185,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.28',date:'2026/10/29'};
+const GAME_VERSION={no:'0.29',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
@@ -2005,6 +2005,8 @@ function lootLabel(l){
 
 /** プロフィール（装備・装飾品）から実ステータスを計算する純粋関数。
     override={slot:item} を渡すと「その装備に替えた場合」を計算できる（比較表示用） */
+/** 2Pの最初の石の剣。持ち物には入れず、装備として持っている扱い（石の剣は1Pの最初の1本だけインベントリに入る） */
+const P2_STARTER_SWORD={kind:'equip',uid:null,baseId:'iron_sword',slot:'weapon',rarity:0,atk:10,def:0,crit:5,affixes:[],slots:[],effects:[]};
 function computeStats(profile,override,who){
   const P=CONFIG.player,ch=charOf(profile,who||0);
   const s={maxHp:P.baseHp,atk:P.baseAtk,def:P.baseDef,
@@ -2016,7 +2018,9 @@ function computeStats(profile,override,who){
     dodgeDistPct:0,chargeSpdPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
   const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
-    const item=(override&&Object.prototype.hasOwnProperty.call(override,slot))?override[slot]:Profile.getItem(profile,ch.equipped[slot]);
+    const hasOv=!!override&&Object.prototype.hasOwnProperty.call(override,slot);
+    let item=hasOv?override[slot]:Profile.getItem(profile,ch.equipped[slot]);
+    if(!item&&!hasOv&&slot==='weapon'&&who===1)item=P2_STARTER_SWORD;
     if(!item)continue;
     const base=DATA.equipment[item.baseId];if(!base)continue;
     s.atk+=item.atk||0;s.def+=item.def||0;s.crit+=item.crit||0;
@@ -2125,7 +2129,7 @@ const Profile={
   },
   create(){
     const p=Profile.blank();
-    for(let who=0;who<CHAR_COUNT;who++){Profile.giveStarterWeapon(p,who);Profile.giveStarterCloth(p,who);}
+    for(let who=0;who<CHAR_COUNT;who++){if(who===0)Profile.giveStarterWeapon(p,who);Profile.giveStarterCloth(p,who);}
     Profile.grantStones(p);
     return p;
   },
@@ -2290,9 +2294,12 @@ const Save={
       if(!eq.weapon){
         const w=p.items.find(i=>i.slot==='weapon'&&!Profile.isEquipped(p,i.uid));
         if(w)eq.weapon=w.uid;
-        else{Profile.giveStarterWeapon(p,who);if(!p2src&&who===1)Profile.giveStarterCloth(p,who);}
+        else{if(who===0)Profile.giveStarterWeapon(p,who);if(!p2src&&who===1)Profile.giveStarterCloth(p,who);}
       }
     }
+    // 石の剣は最初に装備している1本だけ。古いデータで増えた余分な石の剣（持ち物に残っているもの）は取り除く
+    p.items=p.items.filter(i=>!(i.baseId==='iron_sword'&&Profile.equippedBy(p,i.uid)<0));
+    if(p.p2&&p.p2.equipped&&!Profile.getItem(p,p.p2.equipped.weapon))p.p2.equipped.weapon=null;
     return p;
   },
   reset(){try{localStorage.removeItem(this.KEY);}catch(e){}},
