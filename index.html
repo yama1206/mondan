@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.42',date:'2026/10/29'};
+const GAME_VERSION={no:'0.43',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -7515,7 +7515,8 @@ const Input={
   touch:{mx:0,my:0,attack:false},
   isTouch:false,touchRoot:null,
   /** 画面の操作は、このPCで操作する人（オンラインの参加者なら自分）に送る */
-  touchPid(){return (typeof Net!=='undefined'&&Net.role==='guest')?Net.myPid:'p1';},
+  // 自分の端末の操作は、ホストでも参加者でも常に 'p1' として読み取る（参加者の sample も 'p1' で呼ぶため。ここを参加者のpidにすると、スマホのスティックやボタンが届かない）
+  touchPid(){return 'p1';},
   touchEdge(k){
     const pid=this.touchPid(),E=this.edges[pid]||(this.edges[pid]=newEdges());
     if(k==='dodge')E.dodge=true;else if(k==='skill')E.skill=true;else if(k==='heal')E.heal=true;
