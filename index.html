@@ -188,7 +188,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.47',date:'2026/10/29'};
+const GAME_VERSION={no:'0.48',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -7801,7 +7801,8 @@ const Input={
       if(isP1&&this.aimMode.p1==='mouse'){const wp=Renderer.screenToWorld(this.mouse.x,this.mouse.y);inp.aim=Math.atan2(wp.y-p.y,wp.x-p.x);}
       else if(this.aimMode[pid]==='pad'&&aim!==null)inp.aim=aim;
       else{
-        if(mx||my)this.lastAim[pid]=Math.atan2(my,mx);
+        // 攻撃を押しているあいだは、移動してもこの向きを変えない（押し始めた向きで攻撃する）
+        if((mx||my)&&!attack)this.lastAim[pid]=Math.atan2(my,mx);
         inp.aim=this.lastAim[pid];
       }
     }
