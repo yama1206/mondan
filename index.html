@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.67',date:'2026/10/29'};
+const GAME_VERSION={no:'0.68',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3403,7 +3403,7 @@ function applyStatus(w,e,status){
   const boss=!!e.boss;
   if(status==='poison'){e.poisonT=boss?4:6;e.poisonTick=1;e.poisonDmg=Math.max(4,Math.round(e.maxHp*(boss?0.012:0.03)));emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'毒',color:'#a8e040'});}
   else if(status==='paralysis'){e.trapT=boss?2.2:4;e.trapKind='para';emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'麻痺',color:'#ffe040'});}
-  else if(status==='sleep'){if(boss)return;e.sleepT=7;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'睡眠',color:'#b898ff'});}
+  else if(status==='sleep'){e.sleepT=boss?4:7;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'睡眠',color:'#b898ff'});}
 }
 function killEnemy(w,e){
   e.dead=true;e.hp=0;
