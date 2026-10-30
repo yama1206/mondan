@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.06',date:'2026/10/30'};
+const GAME_VERSION={no:'1.07',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1417,7 +1417,7 @@ const DATA={
     gale_bird:{name:'疾風怪鳥ゲイルホーク',ai:'pattern',look:'galeBird',hp:1500,atk:17,def:3,r:28,speed:168,stunMax:100,stunTime:4,color:'#5a8ac0',drops:'gale_bird',boss:true,
       pattern:[
         {k:'charge',wind:0.5,cd:3.6,dmg:0.9},
-        {k:'shot',wind:0.5,cd:3.0,dmg:0.6,n:5,spread:1.1,speed:390,kind:'feather'},
+        {k:'shot',wind:0.8,cd:3.0,dmg:0.6,n:3,spread:1.1,speed:240,kind:'feather'},
         {k:'sweep',wind:0.5,cd:2.6,dmg:0.8,r:105,arc:Math.PI*0.9},
         {k:'slam',wind:0.8,cd:6,dmg:0.8,r:140,el:'thunder'},
       ],
@@ -4516,6 +4516,7 @@ function updateBossPattern(w,e,p,dt){
           e.state='windup';e.action=mv.k;e.timer=wind;
           if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
           else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
+          else if(mv.k==='shot'&&mv.kind==='feather')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+200,arc:(mv.spread||0)+0.2,total:wind,dmg:0,owner:e.id,small:true}); // 羽根：飛ばす前に扇の範囲を予告
           else if(mv.k==='pool'){ // 狙った場所に毒の沼（hz指定で炎の溜まりにもなる）：予告のあと、その場に残る
             addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
             w.hazards.push({id:w.nextId++,kind:mv.hz||'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind,el:mv.el,st:mv.st});
