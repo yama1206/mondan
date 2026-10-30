@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.86',date:'2026/10/29'};
+const GAME_VERSION={no:'0.87',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -833,6 +833,14 @@ const DATA={
     toad_sword:{name:'大蛙の剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'sword',atk:24,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
     toad_bow:{name:'大蛙の弓',slot:'weapon',st:{k:'poison',buildup:15},wtype:'bow',atk:22,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
     octo_tachi:{name:'大蛸の太刀',slot:'weapon',el:{k:'water',v:10},wtype:'tachi',atk:26,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
+    ore_sword:{name:'蒼晶の剣',slot:'weapon',wtype:'sword',atk:26,crit:9,slots:2},
+    ore_gs:{name:'黒鉄の大剣',slot:'weapon',wtype:'greatsword',atk:27,crit:5,slots:2},
+    ore_tachi:{name:'蒼晶の太刀',slot:'weapon',wtype:'tachi',atk:27,crit:12,slots:2},
+    ore_dual:{name:'黒鉄の双剣',slot:'weapon',wtype:'dual',atk:26,crit:14,slots:2},
+    ore_hammer:{name:'黒鉄の大槌',slot:'weapon',wtype:'hammer',atk:27,crit:1,slots:2},
+    ore_lance:{name:'蒼晶の槍',slot:'weapon',wtype:'lance',atk:27,crit:9,slots:2},
+    ore_bow:{name:'蒼晶の弓',slot:'weapon',wtype:'bow',atk:26,crit:9,slots:2},
+    ore_shuriken:{name:'黒鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:26,crit:10,slots:2},
     octo_lance:{name:'大蛸の槍',slot:'weapon',el:{k:'water',v:10},wtype:'lance',atk:24,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
     scorp_shuriken:{name:'晶毒の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:22,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:2},
     scorp_db:{name:'晶毒の双剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'dual',atk:26,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
@@ -898,6 +906,8 @@ const DATA={
     // ステージ4：蒼流の水辺
     water_scale:{name:'水棲の鱗',color:'#7ad8c0',desc:'水棲トカゲの青い鱗。（蒼流の水辺）'},
     jelly_gel:{name:'泡沫の膠',color:'#c8e8ff',desc:'クラゲが抱える透明な膠。（蒼流の水辺）'},
+    ore_a:{name:'蒼晶鉱',color:'#7fd0ff',desc:'水を含んで青く光る結晶の鉱石。（蒼流の水辺）'},
+    ore_b:{name:'黒鉄鉱',color:'#5a5a6a',desc:'重く黒光りする鉄の鉱石。（蒼流の水辺）'},
     piranha_tooth:{name:'川牙',color:'#f0e0d0',desc:'ピラニアの鋭い歯。（蒼流の水辺）'},
     crab_shell:{name:'甲殻片',color:'#c08050',desc:'滝守の甲殻獣の硬い殻。（蒼流の水辺）'},
     eel_sac:{name:'雷袋',color:'#ffe858',desc:'雷電ウナギが蓄える電気の袋。（蒼流の水辺）'},
@@ -1803,6 +1813,8 @@ const DATA={
     gather_wood:{rarityBoost:1.0,rolls:[{type:'mat',id:'wood',chance:1.0,min:1,max:2},{type:'mat',id:'herb',chance:0.2,min:1,max:1}]},
     gather_herb:{rarityBoost:1.0,rolls:[{type:'mat',id:'herb',chance:1.0,min:1,max:2}]},
     gather_mush:{rarityBoost:1.0,rolls:[{type:'mat',id:'forest_mushroom',chance:1.0,min:1,max:2},{type:'mat',id:'poison_spore',chance:0.15,min:1,max:1}]},
+    gather_ore_a:{rarityBoost:1.0,rolls:[{type:'mat',id:'ore_a',chance:1.0,min:1,max:2},{type:'mat',id:'ore_b',chance:0.2,min:1,max:1}]},
+    gather_ore_b:{rarityBoost:1.0,rolls:[{type:'mat',id:'ore_b',chance:1.0,min:1,max:2},{type:'mat',id:'ore_a',chance:0.2,min:1,max:1}]},
     // ---- 追加：忘却の地下墓地 ----
     skeleton:{rarityBoost:1.2,one:0.6,rolls:[
       {type:'mat',id:'old_bone',chance:0.75,min:1,max:2},
@@ -2009,7 +2021,7 @@ const DATA={
         {id:'shrine',name:'水没した祠',spawn:[['water_spirit',2,3],['crab',0,1]]},
       ],
       side:[
-        {id:'pool2',name:'澄んだ淵',spawn:[['piranha',0,1]],gather:[3,4]},
+        {id:'pool2',name:'澄んだ淵',spawn:[['piranha',0,1]],gather:[3,4],ore:[2,3]},
         {id:'nest2',name:'雷魚の巣',spawn:[['eel',1,1],['jellyfish',0,1]],elite:1,chest:1},
       ]},
     crystal:{theme:'crystal',obstacle:'rocks',wander:['cave_bat','crystal_slime'],
@@ -2499,6 +2511,14 @@ const DATA={
     {id:'r_octo_helm',out:{type:'equip',id:'octo_helm'},cost:{slime_gel:2,hard_shell:1},stage:4},
     {id:'r_octo_mail',out:{type:'equip',id:'octo_mail'},cost:{hard_shell:3,slime_gel:2},stage:4},
     {id:'r_octo_vambrace',out:{type:'equip',id:'octo_vambrace'},cost:{slime_gel:3,hard_shell:1},stage:4},
+    {id:'r_ore_sword',out:{type:'equip',id:'ore_sword'},cost:{ore_a:2,ore_b:2,crab_shell:2,piranha_tooth:1},stage:4},
+    {id:'r_ore_gs',out:{type:'equip',id:'ore_gs'},cost:{ore_a:2,ore_b:2,crab_shell:3,water_scale:1},stage:4},
+    {id:'r_ore_tachi',out:{type:'equip',id:'ore_tachi'},cost:{ore_a:2,ore_b:2,eel_sac:2,water_scale:1},stage:4},
+    {id:'r_ore_dual',out:{type:'equip',id:'ore_dual'},cost:{ore_a:2,ore_b:2,piranha_tooth:2,jelly_gel:1},stage:4},
+    {id:'r_ore_hammer',out:{type:'equip',id:'ore_hammer'},cost:{ore_a:2,ore_b:2,crab_shell:2,eel_sac:1},stage:4},
+    {id:'r_ore_lance',out:{type:'equip',id:'ore_lance'},cost:{ore_a:2,ore_b:2,eel_sac:2,spirit_essence:1},stage:4},
+    {id:'r_ore_bow',out:{type:'equip',id:'ore_bow'},cost:{ore_a:2,ore_b:2,spirit_essence:2,jelly_gel:1},stage:4},
+    {id:'r_ore_shuriken',out:{type:'equip',id:'ore_shuriken'},cost:{ore_a:2,ore_b:2,piranha_tooth:2,water_scale:1},stage:4},
     {id:'r_octo_faulds',out:{type:'equip',id:'octo_faulds'},cost:{hard_shell:2,slime_gel:1},stage:4},
     {id:'r_octo_greaves',out:{type:'equip',id:'octo_greaves'},cost:{slime_gel:2,hard_shell:2},stage:4},
     {id:'r_scorp_helm',out:{type:'equip',id:'scorp_helm'},cost:{hard_shell:2,poison_spore:1},stage:5},
@@ -3352,6 +3372,10 @@ function buildStageMap(L){
     if(!rm.def.gather)continue;
     const n=randInt(rm.def.gather[0],rm.def.gather[1]);
     for(let i=0;i<n;i++){const p=randomFloor(map,rm.rect,2);if(p)map.gatherSpots.push({x:p.x,y:p.y,kind:pick(['wood','herb','mush'])});}
+    if(rm.def.ore){ // 鉱石の採取ポイント（蒼晶鉱・黒鉄鉱のどちらか）を、普通の採取とは別に置く
+      const k=randInt(rm.def.ore[0],rm.def.ore[1]);
+      for(let i=0;i<k;i++){const p=randomFloor(map,rm.rect,2);if(p)map.gatherSpots.push({x:p.x,y:p.y,kind:pick(['ore_a','ore_b'])});}
+    }
   }
   return map;
 }
@@ -5378,6 +5402,7 @@ function genArt(kind){ // 生き物の防具の描き方：兜・胴・腕・足
       if(kind==='fin'){ctx.fillStyle=l.accent;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx-r*0.3,ly+r*0.25);ctx.lineTo(lx+r*0.1,ly+r*0.15);ctx.fill();}}
   };
 }
+GEAR_LOOKS.ore=Object.assign({},GEAR_LOOKS.iron,{main:'#7fd0ff',blade:'#bfe8ff'});
 const GEAR_ART={
   // ---- ザコ素材の防具の見た目（ボスより控えめ） ----
   beast:{ // 獣皮：小さな耳のついた毛皮のフード、毛皮の襟、毛の巻かれた手足
@@ -7395,7 +7420,12 @@ const Renderer={
   drawGather(ctx,g){
     ctx.save();ctx.translate(g.x,g.y);if(g.used)ctx.globalAlpha=0.35;
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,9,14,5,0,0,TAU);ctx.fill();
-    if(g.kind==='wood'){
+    if(g.kind==='ore_a'||g.kind==='ore_b'){ // 鉱石：結晶の塊、または黒い鉄の塊
+      const oc=g.kind==='ore_a'?['#7fd0ff','#e6f8ff','#2a6a98']:['#5a5a6a','#a8a8b8','#2a2a33'];
+      ctx.fillStyle=oc[2];ctx.beginPath();ctx.ellipse(0,4,12,7,0,0,TAU);ctx.fill();
+      ctx.fillStyle=oc[0];for(const [x,h,wd] of [[-5,14,5],[1,18,6],[7,11,4]]){ctx.beginPath();ctx.moveTo(x-wd,4);ctx.lineTo(x,4-h);ctx.lineTo(x+wd,4);ctx.closePath();ctx.fill();}
+      ctx.fillStyle=oc[1];ctx.beginPath();ctx.moveTo(1,-14);ctx.lineTo(3,-10);ctx.lineTo(0,-10);ctx.closePath();ctx.fill();
+    }else if(g.kind==='wood'){
       ctx.fillStyle='#7a5530';ctx.beginPath();ctx.ellipse(0,2,12,8,0,0,TAU);ctx.fill();ctx.fillRect(-12,2,24,6);
       ctx.fillStyle='#c09060';ctx.beginPath();ctx.ellipse(0,2,10,6,0,0,TAU);ctx.fill();
       ctx.strokeStyle='#8a6038';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,2,6,3.5,0,0,TAU);ctx.stroke();
