@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.99',date:'2026/10/30'};
+const GAME_VERSION={no:'1.00',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1928,6 +1928,7 @@ const DATA={
   // ショップ（拠点・ロビー・装備画面の「ショップ」タブ）。ゴールドで買える
   // stage：そのステージが解放されると並ぶ
   shop:[
+    {id:'free_sword',name:'鉄の剣',desc:'無料。1人につき1度だけ買える（武器の持ち物に入る）',price:0,type:'equip',item:'iron_sword',once:true},
     {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
     {id:'heal_all',name:'癒しの香',desc:'周囲の味方全員のHPを最大HPの30%回復',price:60,type:'item',item:'heal_all'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:75,type:'item',item:'atk_horn'},
@@ -3033,6 +3034,7 @@ const Save={
     const p=Profile.blank();
     p.bag=emptyBag();
     p.stoneGiven=!!d.stoneGiven;p.shurikenGiven=!!d.shurikenGiven;
+    p.shopOnce=(d.shopOnce&&typeof d.shopOnce==='object')?Object.assign({},d.shopOnce):{};
     const legacySwords=d.swordDedup===undefined; // 古いデータだけ、増えた鉄の剣の掃除を1度やる（以降は外した剣を消さない）
     p.swordDedup=true;
     const srcBag=(d.bag&&typeof d.bag==='object')?d.bag:{potion:d.potions|0};
@@ -9249,12 +9251,17 @@ const Ops={
   buy(p,who,a){
     const s=DATA.shop.find(x=>x.id===a.id);if(!s)return {};
     if(s.stage&&QuestRules.stage(p)<s.stage)return {msg:'まだ購入できません',color:'#888'};
-    const n=clamp(Number(a.n)||1,1,10);
+    if(s.once&&(p.shopOnce||{})[s.id])return {msg:`${s.name}は購入済みです`,color:'#888'};
+    const n=s.type==='equip'?1:clamp(Number(a.n)||1,1,10);
     if(s.type==='item'){const c=DATA.consumables[s.item];if((p.bag[s.item]||0)+n>c.max)return {msg:`${c.name}は${c.max}個までしか持てません`,color:'#888'};}
     if((p.gold||0)<s.price*n)return {msg:'ゴールドが足りません',color:'#ff8060'};
     p.gold-=s.price*n;
     let extra='';
-    if(s.type==='item')p.bag[s.item]=(p.bag[s.item]||0)+n;
+    if(s.type==='equip'){
+      const it=Items.createEquipment(s.item,0);it.atk=DATA.equipment[s.item].atk;it.crit=DATA.equipment[s.item].crit;it.affixes=[];it.effects=[];it.slots=[];
+      Profile.addItem(p,it);(p.shopOnce=p.shopOnce||{})[s.id]=1;
+    }
+    else if(s.type==='item')p.bag[s.item]=(p.bag[s.item]||0)+n;
     else if(s.type==='mat'){p.materials[s.mat]=(p.materials[s.mat]||0)+n;(p.matSeen=p.matSeen||{})[s.mat]=1;}
     else if(s.type==='deco'){
       const got=[];
@@ -10669,11 +10676,12 @@ const App={
     const p=this.profile,gold=p.gold||0;
     return `<div class="col full" data-scroll="shop"><div class="col-t">商品</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
-        const btn=n=>{const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
-          return `<button class="${ok?'primary':''}" data-act="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${n}個買う（${s.price*n}G）</button>`;};
+        const done=!!(s.once&&(p.shopOnce||{})[s.id]);
+        const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
+          return `<button class="${ok?'primary':''}" data-act="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${s.type==='equip'?'1本もらう（無料）':n+'個買う（'+s.price*n+'G）'}</button>`;};
         return `<div class="recipe"><div class="rn">${s.name}　<span style="color:#ffd23a">${s.price}G</span></div><div class="muted">${s.desc}</div>
           ${s.type==='item'?`<div>所持 ${p.bag[s.item]||0} / ${DATA.consumables[s.item].max}　発動まで${DATA.consumables[s.item].delay}秒</div>`:s.type==='mat'?`<div>所持 ${p.materials[s.mat]||0}</div>`:''}
-          <div class="btnrow">${s.type==='deco'?btn(1):s.type==='mat'?btn(1)+btn(5):btn(1)+btn(3)}</div></div>`;}).join('')}</div>
+          <div class="btnrow">${s.type==='deco'||s.type==='equip'?btn(1):s.type==='mat'?btn(1)+btn(5):btn(1)+btn(3)}</div></div>`;}).join('')}</div>
       <div class="col-t" style="margin-top:14px">素材を売る（ボス素材ほど高く売れます）</div>
       <div class="recipes">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
         const n=p.materials[id];
