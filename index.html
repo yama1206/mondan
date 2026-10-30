@@ -193,7 +193,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.81',date:'2026/10/29'};
+const GAME_VERSION={no:'0.82',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3440,6 +3440,14 @@ function spawnPack(w,m,rect,types,main,count,elite){
   }
   return elite;
 }
+/** 雑魚を、中心の周りに固まって置く（呼び出し側で2体以上を指定する）。主の種類が多めで、ほかは types から混ざる */
+function spawnHerd(w,m,x,y,types,main,n){
+  for(let i=0;i<n;i++){
+    let tx=x,ty=y;
+    if(i>0){const a=rand(0,TAU),r=rand(14,40),cx=x+Math.cos(a)*r,cy=y+Math.sin(a)*r;if(!circleHitsWall(m,cx,cy,10)){tx=cx;ty=cy;}}
+    spawnEnemy(w,(i===0||RNG.next()<0.7)?main:pick(types),tx,ty);
+  }
+}
 function populateLayout(w,stage,quest,L){
   const m=w.map,goal=quest.goal,S=stage.enemySet,dens=stage.density??1;
   const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&(goal.type==='boss'||goal.type==='explore')));
@@ -3452,9 +3460,12 @@ function populateLayout(w,stage,quest,L){
     for(const [t,a,b] of (rm.def.spawn||[])){
       if(slotBudget<=0)break;
       if(RNG.next()<0.15*dens){
-        const before=w.enemies.length;
-        elite=spawnPack(w,m,rm.rect,types,t,Math.min(randInt(3,4),slotBudget),elite);
-        slotBudget-=w.enemies.length-before;
+        const size=Math.min(randInt(3,4),slotBudget); // 雑魚は必ず2体以上で湧く（残りの上限が1体なら湧かせない）
+        if(size>=2){
+          const before=w.enemies.length;
+          elite=spawnPack(w,m,rm.rect,types,t,size,elite);
+          slotBudget-=w.enemies.length-before;
+        }
       }
     }
   }
@@ -3471,15 +3482,15 @@ function populateLayout(w,stage,quest,L){
     }
   }
   // 通路をうろつく魔物
-  for(const c of shuffle(m.corridors.slice()).slice(0,Math.floor(spawnCount(2,4)*dens+RNG.next()))){
+  for(const c of shuffle(m.corridors.slice()).slice(0,Math.floor(spawnCount(1,2)*dens+RNG.next()))){
     const x=(c.x+0.5)*TILE,y=(c.y+0.5)*TILE;
-    if(!circleHitsWall(m,x,y,14)&&!inStartRoom(m,x,y,14))spawnEnemy(w,pick(L.wander),x,y);
+    if(!circleHitsWall(m,x,y,14)&&!inStartRoom(m,x,y,14))spawnHerd(w,m,x,y,L.wander,pick(L.wander),randInt(2,3));
   }
   // 討伐依頼は、目標数より少し多く対象が出るようにする（必ず達成できるように）
   if(goal.type==='kill'){
     const match=e=>!e.boss&&(goal.target==='any'||e.type===goal.target);
     const want=questNeed(goal,w.playerCount)+2,type=goal.target==='any'?S.melee:goal.target;
-    for(let guard=0;w.enemies.filter(match).length<want&&guard<60;guard++){const p=randomFloor(m,pick(rooms).rect,2);if(p)spawnEnemy(w,type,p.x,p.y);}
+    for(let guard=0;w.enemies.filter(match).length<want&&guard<60;guard++){const p=randomFloor(m,pick(rooms).rect,2);if(p)spawnHerd(w,m,p.x,p.y,[type],type,2);}
   }
   // 宝箱：「必ず置く」部屋から先に、残りは道や寄り道の部屋へ。出現は確率制（宝箱の依頼に必要な数だけは必ず置く）
   const need=goal.type==='chest'?goal.count:0,nChests=Math.max(need,Math.random()<CONFIG.chestChance?1:0),order=[];
