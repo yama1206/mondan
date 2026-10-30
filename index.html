@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.93',date:'2026/10/30'};
+const GAME_VERSION={no:'0.94',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -5901,7 +5901,7 @@ const Renderer={
     this.cv.width=Math.floor(this.w*this.dpr);this.cv.height=Math.floor(this.h*this.dpr);
     this.scale=clamp(Math.min(this.w/960,this.h/600),0.55,2.2);
   },
-  resetForWorld(){this.particles=[];this.floaters=[];this.rings=[];this.shake=0;this.banner=null;this.camInit=false;this.mapCanvas=null;this.mapRef=null;this.explored=null;this.vis=null;},
+  resetForWorld(){this.particles=[];this.floaters=[];this.rings=[];this.shake=0;this.banner=null;this.camInit=false;this.mapCanvas=null;this.mapRef=null;this.explored=null;this.vis=null;this.exVer=0;this.mmCanvas=null;this.mmVer=-1;this.mmRef=null;},
   /* ---------- 視野（フォグ・オブ・ウォー） ----------
      見た目だけの処理なので描画側に置いている。オンライン化時は、サーバーが
      各プレイヤーに視野内の敵だけを送ればチート対策にもなる。 */
@@ -5917,7 +5917,7 @@ const Renderer={
         d+=6;
         const tx=Math.floor((x+c*d)/TILE),ty=Math.floor((y+s*d)/TILE);
         if(tx<0||ty<0||tx>=map.W||ty>=map.H){hit=true;break;}
-        ex[ty*map.W+tx]=1;
+        const ti=ty*map.W+tx;if(!ex[ti]){ex[ti]=1;this.exVer=(this.exVer||0)+1;}
         if(blocksSight(map,tx,ty)){hit=true;break;} // 障害物は透けて見え、壁で止まる
       }
       const dd=hit?Math.min(R,d+10):R; // 壁の表面まで照らす
@@ -5945,6 +5945,42 @@ const Renderer={
       }
     }
     return false;
+  },
+  /** 左下のミニマップ：通ったことのある場所だけ地形が出る。自分・仲間・見つけたボスも点で出す */
+  drawMinimap(ctx,w,hk){
+    const map=w.map;
+    if(!map||!this.explored||this.explored.length!==map.W*map.H)return;
+    const W=map.W,H=map.H;
+    if(!this.mmCanvas)this.mmCanvas=document.createElement('canvas');
+    const mc=this.mmCanvas;
+    if(this.mmVer!==this.exVer||this.mmRef!==this.explored||mc.width!==W||mc.height!==H){
+      mc.width=W;mc.height=H;
+      const g=mc.getContext('2d'),img=g.createImageData(W,H),d=img.data,ex=this.explored;
+      for(let i=0;i<W*H;i++){
+        if(!ex[i])continue; // 未探索は透明（真っ黒のまま）
+        const tx=i%W,ty=(i/W)|0,c=isWall(map,tx,ty)?[62,54,86]:[118,138,108];
+        d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=235;
+      }
+      g.putImageData(img,0,0);
+      this.mmVer=this.exVer;this.mmRef=this.explored;
+    }
+    // 回避の枠（左下）の上に置く。大きさは画面に合わせる
+    const sc=Math.min(300*hk/W,130*hk/H),mw=W*sc,mh=H*sc;
+    const x=12,y=this.h-14-58*hk-10-mh;
+    ctx.save();
+    this.panel(ctx,x-4,y-4,mw+8,mh+8);
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(mc,x,y,mw,mh);
+    const dot=(px,py,col,r)=>{const sx=x+px/TILE*sc,sy=y+py/TILE*sc;ctx.fillStyle=col;ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.beginPath();ctx.arc(sx,sy,r,0,TAU);ctx.fill();ctx.stroke();};
+    const b=bossOf(w);
+    if(b&&b.hp>0&&this.isExplored(w,b.x,b.y))dot(b.x,b.y,'#ff5a5a',3);
+    const all=Object.values(w.players);
+    for(const q of all){
+      if(q.dead)continue;
+      const own=this.focusId?q.id===this.focusId:q===all[0];
+      dot(q.x,q.y,own?'#ffd23a':((PLAYER_COLORS[q.slot%PLAYER_COLORS.length]||{}).body||'#9ad8ff'),own?3.5:3);
+    }
+    ctx.restore();
   },
   isExplored(w,x,y){
     if(!this.explored)return true;
@@ -6272,7 +6308,7 @@ const Renderer={
     const sw=Math.min(Math.ceil(vw)+2,mw-sx),shh=Math.min(Math.ceil(vh)+2,mh-sy);
     if(sw>0&&shh>0)ctx.drawImage(this.mapCanvas,sx,sy,sw,shh,sx,sy,sw,shh);
     const fog=!!app.settings().vision;
-    if(fog)this.updateVision(w);else this.vis=null;
+    this.updateVision(w);if(!fog)this.vis=null; // 探索の記録はミニマップのため常に取る
     const seen=(x,y,r)=>!fog||this.isVisible(w,x,y,r);
     for(const z of (w.hazards||[]))if(!(z.delay>0)&&seen(z.x,z.y,z.r))this.drawHazard(ctx,z);
     for(const t of w.telegraphs)this.drawTelegraph(ctx,t);
@@ -8017,6 +8053,7 @@ const Renderer={
       ctx.restore();
       if(d.skill){ctx.save();ctx.translate(W-12,H-14);ctx.scale(hk,hk);this.drawBox(ctx,p,d.skill,-bw,-bh,bw,bh);ctx.restore();}
     }
+    this.drawMinimap(ctx,w,hk);
     // ボスHPバー
     const b=bossOf(w);
     // ボス：体力は見せず、名前と様子だけを出す
@@ -10528,14 +10565,14 @@ const App={
       const host=Net.role==='host';
       return `<div class="panel camp"><h2>メニュー</h2><p class="small muted">オンライン中はゲームは止まりません</p><div class="menu-col">
         <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
-        <button data-act="inventory">装備・インベントリ</button>
+        
         <button data-act="settings">設定</button>
         ${host&&this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて全員で帰る（持ち帰れる）</button>':''}${host?'<button class="danger" data-act="toLobby">探索を中断して全員でロビーに戻る</button>':''}
         <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>${this.updateBarHTML()}${this.questInfoHTML()}${this.howtoHTML()}</div>`;
     }
     return `<div class="panel camp"><h2>一時停止</h2><div class="menu-col">
       <button class="primary" data-act="resume">ゲームに戻る（Esc）</button>
-      <button data-act="inventory">装備・インベントリ</button>
+      
       <button data-act="settings">設定</button>
       ${this.updateBarHTML()}
       ${this.isExplore()?'<button class="primary" data-act="exploreReturn">探索を終えて帰る（持ち帰れる）</button>':'<button class="danger" data-act="retreat">探索を中断して拠点へ戻る</button>'}</div>${this.questInfoHTML()}${this.howtoHTML()}</div>`;
