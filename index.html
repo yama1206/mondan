@@ -201,7 +201,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.26',date:'2026/10/30'};
+const GAME_VERSION={no:'1.27',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2353,16 +2353,6 @@ const DATA={
     wolf:['wolf_sword','wolf_helm','wolf_mail','wolf_vambrace','wolf_greaves','wolf_lance'],
   },
   recipes:[
-    {id:'c_rabbit',out:{type:'collar',id:'rabbit'},cost:{goblin_hide:1,old_bone:1}},
-    {id:'c_slime',out:{type:'collar',id:'slime'},cost:{goblin_string:1,old_bone:1}},
-    {id:'c_fox',out:{type:'collar',id:'fox'},cost:{goblin_hide:2}},
-    {id:'c_owl',out:{type:'collar',id:'owl'},cost:{goblin_string:2}},
-    {id:'c_bee',out:{type:'collar',id:'bee'},cost:{old_bone:2}},
-    {id:'c_mole',out:{type:'collar',id:'mole'},cost:{scrap_iron:1,old_bone:1}},
-    {id:'c_cat',out:{type:'collar',id:'cat'},cost:{goblin_hide:1,goblin_string:1}},
-    {id:'c_turtle',out:{type:'collar',id:'turtle'},cost:{scrap_iron:2}},
-    {id:'c_wolf',out:{type:'collar',id:'wolf'},cost:{goblin_hide:1,scrap_iron:1}},
-    {id:'c_dragonling',out:{type:'collar',id:'dragonling'},cost:{goblin_string:1,scrap_iron:1}},
     {id:'r_hunter',out:{type:'equip',id:'hunter_sword'},cost:{scrap_iron:2,old_bone:2,goblin_string:1}},
     {id:'r_cap',out:{type:'equip',id:'leather_cap'},cost:{goblin_hide:2,old_bone:1}},
     {id:'r_vest',out:{type:'equip',id:'leather_vest'},cost:{goblin_hide:4}},
@@ -3059,7 +3049,7 @@ const Profile={
     return {materials:{},matSeen:{},items:[],decos:[],equipped:emptyEquip(),
       p2:{equipped:emptyEquip()},
       companions:[{role:'healer',equipped:emptyEquip()},{role:'tank',equipped:emptyEquip()}],
-      coins:0,pets:{},petEssence:0,
+      coins:0,pets:{},looks:{},petEssence:0,
       bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
@@ -3282,7 +3272,9 @@ const Save={
     if(d.pets&&typeof d.pets==='object')for(const id in d.pets)if(PETS.some(x=>x.id===id))p.pets[id]={level:clamp((d.pets[id]&&d.pets[id].level)|0,1,PET_MAX)};
     const eqPet=d.equipped&&d.equipped.pet;
     p.equipped.pet=(eqPet&&p.pets[eqPet])?eqPet:null;
-    const lk=d.equipped&&d.equipped.look;p.equipped.look=(lk&&PETS.some(x=>x.id===lk))?lk:null;
+    p.looks={};
+    if(d.looks&&typeof d.looks==='object')for(const id in d.looks)if(PETS.some(x=>x.id===id))p.looks[id]=true;
+    const lk=d.equipped&&d.equipped.look;p.equipped.look=(lk&&p.looks[lk])?lk:null;
     return p;
   },
   reset(){try{localStorage.removeItem(this.KEY);}catch(e){}},
@@ -9554,10 +9546,15 @@ const Ops={
   gacha(p,who,a){
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
-    const pt=pick(PETS);
-    if(p.pets[pt.id]){p.petEssence=(p.petEssence||0)+1;return {changed:true,msg:`${pt.name}がダブり → 強化素材 +1`,color:'#c06bff'};}
+    const kind=pick(['collar','look']),pt=pick(PETS);
+    if(kind==='look'){
+      if(p.looks[pt.id]){p.petEssence=(p.petEssence||0)+1;return {changed:true,msg:`${pt.name}（見た目）がダブり → 強化素材 +1`,color:'#c06bff'};}
+      p.looks[pt.id]=true;
+      return {changed:true,msg:`${pt.name}（見た目）が仲間になった！`,color:'#5fe08a'};
+    }
+    if(p.pets[pt.id]){p.petEssence=(p.petEssence||0)+1;return {changed:true,msg:`${pt.name}の首輪がダブり → 強化素材 +1`,color:'#c06bff'};}
     p.pets[pt.id]={level:1};
-    return {changed:true,msg:`${pt.name}が仲間になった！`,color:'#5fe08a'};
+    return {changed:true,msg:`${pt.name}の首輪を手に入れた！`,color:'#5fe08a'};
   },
   petEquip(p,who,a){
     if(!p.pets[a.id])return {};
@@ -9565,7 +9562,7 @@ const Ops={
     return {changed:true};
   },
   lookEquip(p,who,a){
-    if(!PETS.some(x=>x.id===a.id))return {};
+    if(!p.looks[a.id])return {};
     p.equipped.look=p.equipped.look===a.id?null:a.id;
     return {changed:true};
   },
@@ -11033,7 +11030,7 @@ const App={
   shopTabHTML(){
     const p=this.profile,gold=p.gold||0;
     const coins=p.coins||0;
-    const gacha=`<div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。出るペットは全10種・レア度なし。同じペットが出たら強化素材になります。</div>
+    const gacha=`<div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。首輪10種とペットの見た目10種から、レア度なしで出ます。同じものが出たら強化素材になります。</div>
       <button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button></div>`;
     return `<div class="col full" data-scroll="shop">${gacha}<div class="col-t">商品</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
@@ -11112,11 +11109,13 @@ const App={
   },
   lookListHTML(){
     const p=this.profile;
-    return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+PETS.map(x=>`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="petSel" data-id="${x.id}"><span class="nm">${x.name}</span>${p.equipped.look===x.id?'<span class="tag">装備中</span>':''}</div>`).join('');
+    const own=PETS.filter(x=>p.looks[x.id]);
+    if(!own.length)return '<div class="muted">まだペットの見た目がありません（ショップのガチャで出ます）</div>';
+    return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="petSel" data-id="${x.id}"><span class="nm">${x.name}</span>${p.equipped.look===x.id?'<span class="tag">装備中</span>':''}</div>`).join('');
   },
   lookDetailHTML(){
     const p=this.profile,id=this.inv.petSel,x=PETS.find(q=>q.id===id);
-    if(!x)return '<div class="muted">見た目を選ぶと詳細が出ます。</div>';
+    if(!x||!p.looks[id])return '<div class="muted">見た目を選ぶと詳細が出ます。</div>';
     const eq=p.equipped.look===id;
     return `<div class="iname">${x.name}（見た目）</div><div class="small muted" style="margin:6px 0">連れ歩くときの姿です。性能には影響しません。</div>
       <button data-act="lookEquip" data-id="${id}">${eq?'見た目を外す':'この見た目にする'}</button>`;
