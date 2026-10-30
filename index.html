@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.16',date:'2026/10/30'};
+const GAME_VERSION={no:'1.17',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2150,7 +2150,7 @@ const DATA={
     {id:'ex_armadillo',stage:1,after:'ex_kama_mantis',boss:'armadillo',name:'【強敵】草原の巨躯アルマジロ',desc:'丸まって転がる大きなアルマジロ。突進は当たると足を鈍らせ、背中の棘を飛ばす。',goal:{type:'boss'},reward:{gold:1080,mats:{rock_scale:2,hard_shell:2}}},
     {id:'m1_lizard',stage:1,after:'m1_bird',boss:'rock_lizard',name:'【強敵】岩肌の大蜥蜴',desc:'草原の岩場に、岩のような鱗の大蜥蜴が棲みついた。噛みつき・尻尾の振り回し・吐き出す岩に注意。',goal:{type:'boss'},reward:{gold:1100,mats:{lizard_scale:2,reinforce_orb:2},decos:1}},
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
-    {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。12体退治してほしい。',goal:{type:'kill',target:'goblin',count:12},reward:{gold:240,mats:{goblin_hide:2,scrap_iron:1}}},
+    {id:'s1_goblin',stage:2,key:true,name:'甲虫狩り',desc:'森甲虫が森で増えすぎている。10体退治してほしい。',goal:{type:'kill',target:'beetle',count:10},reward:{gold:240,mats:{hard_shell:2,scrap_iron:1}}},
     {id:'s1_bug',stage:2,key:true,name:'キノコと虫の退治',desc:'森に増えた毒胞子キノコと森甲虫を、合わせて10体退治してほしい。',goal:{type:'kill',target:'mushbug',count:10},reward:{gold:300,mats:{forest_mushroom:3,old_bone:1}}},
     {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'ゴブリンとスケルトンを合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:320,mats:{goblin_hide:2,old_bone:2}}},
     {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:800,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
