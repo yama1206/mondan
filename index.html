@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.12',date:'2026/10/30'};
+const GAME_VERSION={no:'1.13',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -471,6 +471,20 @@ const DATA={
       pieces:{head:'kubi_head',body:'kubi_body',arms:'kubi_arms',waist:'kubi_waist',legs:'kubi_legs'},need:4,apply:s=>{s.statusRes+=15;s.critDmg+=15;}},
     onry:{name:'怨霊武者シリーズ',bonus:'怨霊の水鏡',desc:'水属性の耐性+30、会心率+5%',
       pieces:{head:'onry_head',body:'onry_body',arms:'onry_arms',waist:'onry_waist',legs:'onry_legs'},need:4,apply:s=>{s.elemRes.water+=30;s.crit+=5;}},
+    rhino:{name:'鎧犀シリーズ',bonus:'鎧犀の甲殻',desc:'防御力+10、受けるダメージ-6%',
+      pieces:{head:'rhino_helm',body:'rhino_mail',arms:'rhino_vambrace',waist:'rhino_faulds',legs:'rhino_greaves'},need:4,apply:s=>{s.def+=10;s.dmgCut+=6;}},
+    boar:{name:'轟牙シリーズ',bonus:'轟牙の突進',desc:'攻撃力+10%、移動速度+4%',
+      pieces:{head:'boar_helm',body:'boar_mail',arms:'boar_vambrace',waist:'boar_faulds',legs:'boar_greaves'},need:4,apply:s=>{s.atkPct+=10;s.moveSpd+=4;}},
+    sanshou:{name:'大山椒魚シリーズ',bonus:'粘膜の守り',desc:'水属性の耐性+30、状態異常耐性+15%',
+      pieces:{head:'sanshou_helm',body:'sanshou_mail',arms:'sanshou_vambrace',waist:'sanshou_faulds',legs:'sanshou_greaves'},need:4,apply:s=>{s.elemRes.water+=30;s.statusRes+=15;}},
+    aqua:{name:'蒼海竜シリーズ',bonus:'蒼海の鰭',desc:'水属性の耐性+30、回避距離+15%',
+      pieces:{head:'aqua_helm',body:'aqua_mail',arms:'aqua_vambrace',waist:'aqua_faulds',legs:'aqua_greaves'},need:4,apply:s=>{s.elemRes.water+=30;s.dodgeDistPct+=15;}},
+    turtle:{name:'水瀑大亀シリーズ',bonus:'大亀の甲羅',desc:'最大HP+60、防御力+8',
+      pieces:{head:'turtle_helm',body:'turtle_mail',arms:'turtle_vambrace',waist:'turtle_faulds',legs:'turtle_greaves'},need:4,apply:s=>{s.maxHp+=60;s.def+=8;}},
+    eel:{name:'雷鳴シリーズ',bonus:'雷鳴の帯電',desc:'雷属性の耐性+30、攻撃力+6%',
+      pieces:{head:'eel_helm',body:'eel_mail',arms:'eel_vambrace',waist:'eel_faulds',legs:'eel_greaves'},need:4,apply:s=>{s.elemRes.thunder+=30;s.atkPct+=6;}},
+    worm:{name:'大蚯蚓シリーズ',bonus:'地を這う粘り',desc:'状態異常耐性+20%、移動速度+3%',
+      pieces:{head:'worm_helm',body:'worm_mail',arms:'worm_vambrace',waist:'worm_faulds',legs:'worm_greaves'},need:4,apply:s=>{s.statusRes+=20;s.moveSpd+=3;}},
   },
   // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
@@ -718,6 +732,41 @@ const DATA={
     mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,fixed:[{stat:'atk',v:3}],skills:{charge_up:3,atk_up:2},slots:2},
     mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:13,skills:{rescue:3,heal_up:4,charge_up:2},slots:2},
     mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{def_up:4,heal_up:2,charge_up:1},slots:2},
+    rhino_helm:{name:'鎧犀の角兜',slot:'head',def:8,fixed:[{stat:'maxHp',v:10}],skills:{def_up:3,flinch_free:2},slots:1},
+    rhino_mail:{name:'鎧犀の甲板鎧',slot:'body',def:11,fixed:[{stat:'maxHp',v:20}],skills:{def_up:4,hp_up:2},slots:1},
+    rhino_vambrace:{name:'鎧犀の甲手',slot:'arms',def:7,fixed:[{stat:'def',v:2}],skills:{def_up:3,atk_up:1},slots:1},
+    rhino_faulds:{name:'鎧犀の腰甲',slot:'waist',def:7,skills:{def_up:3,flinch_free:2},slots:1},
+    rhino_greaves:{name:'鎧犀の脚甲',slot:'legs',def:8,skills:{flinch_free:3,dodge_dist:2},slots:1},
+    boar_helm:{name:'轟牙の猪頭兜',slot:'head',def:7,fixed:[{stat:'atk',v:1}],skills:{atk_up:2,flinch_free:2},slots:1},
+    boar_mail:{name:'轟牙の毛皮鎧',slot:'body',def:10,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,hp_up:3},slots:1},
+    boar_vambrace:{name:'轟牙の牙腕',slot:'arms',def:6,fixed:[{stat:'atk',v:2}],skills:{atk_up:3},slots:1},
+    boar_faulds:{name:'轟牙の腰毛',slot:'waist',def:6,skills:{move_up:2,def_up:2},slots:1},
+    boar_greaves:{name:'轟牙の蹄脚',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{dodge_dist:3,move_up:2},slots:1},
+    sanshou_helm:{name:'大山椒の頭笠',slot:'head',def:7,fixed:[{stat:'maxHp',v:10}],skills:{status_res:2,def_up:2},slots:1},
+    sanshou_mail:{name:'大山椒の粘皮鎧',slot:'body',def:10,fixed:[{stat:'maxHp',v:20}],skills:{status_res:3,def_up:2},slots:1},
+    sanshou_vambrace:{name:'大山椒の水かき腕',slot:'arms',def:6,fixed:[{stat:'atk',v:2}],skills:{item_speed:2,evade:2},slots:1},
+    sanshou_faulds:{name:'大山椒の尾節',slot:'waist',def:6,skills:{status_res:3,heal_up:2},slots:1},
+    sanshou_greaves:{name:'大山椒の吸盤脚',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{evade:2,def_up:2},slots:1},
+    aqua_helm:{name:'蒼海の兜鰭',slot:'head',def:8,fixed:[{stat:'maxHp',v:10}],skills:{crit_up:2,def_up:2},slots:1},
+    aqua_mail:{name:'蒼海の鱗鎧',slot:'body',def:11,fixed:[{stat:'maxHp',v:25}],skills:{def_up:4,heal_up:2},slots:1},
+    aqua_vambrace:{name:'蒼海の鰭腕',slot:'arms',def:7,fixed:[{stat:'atk',v:2}],skills:{evade:2,item_speed:2},slots:1},
+    aqua_faulds:{name:'蒼海の尾鰭腰',slot:'waist',def:7,skills:{heal_up:3,evade:2},slots:1},
+    aqua_greaves:{name:'蒼海の水掻き脚',slot:'legs',def:8,fixed:[{stat:'moveSpd',v:3}],skills:{dodge_dist:3,evade:2},slots:1},
+    turtle_helm:{name:'大亀の甲羅兜',slot:'head',def:9,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,flinch_free:2},slots:1},
+    turtle_mail:{name:'大亀の甲羅鎧',slot:'body',def:13,fixed:[{stat:'maxHp',v:30}],skills:{def_up:5,hp_up:2},slots:1},
+    turtle_vambrace:{name:'大亀の甲手',slot:'arms',def:8,fixed:[{stat:'def',v:2}],skills:{def_up:3,flinch_free:2},slots:1},
+    turtle_faulds:{name:'大亀の甲腰',slot:'waist',def:8,skills:{def_up:3,status_res:2},slots:1},
+    turtle_greaves:{name:'大亀の爪脚',slot:'legs',def:9,skills:{def_up:3,flinch_free:3},slots:1},
+    eel_helm:{name:'雷鰻の兜',slot:'head',def:7,fixed:[{stat:'atk',v:2}],skills:{crit_up:2,def_up:2},slots:1},
+    eel_mail:{name:'雷鰻の帯電鎧',slot:'body',def:9,fixed:[{stat:'maxHp',v:15}],skills:{def_up:3,item_speed:2},slots:1},
+    eel_vambrace:{name:'雷鰻の籠手',slot:'arms',def:6,fixed:[{stat:'atk',v:3}],skills:{atk_up:3,crit_up:2},slots:1},
+    eel_faulds:{name:'雷鰻の腰布',slot:'waist',def:6,skills:{item_speed:3,heal_up:2},slots:1},
+    eel_greaves:{name:'雷鰻の尾脚',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{evade:3,dodge_dist:2},slots:1},
+    worm_helm:{name:'大蚯蚓の頭巾',slot:'head',def:6,fixed:[{stat:'maxHp',v:10}],skills:{status_res:2,evade:2},slots:1},
+    worm_mail:{name:'大蚯蚓の環節鎧',slot:'body',def:9,fixed:[{stat:'maxHp',v:20}],skills:{status_res:3,def_up:2},slots:1},
+    worm_vambrace:{name:'大蚯蚓の腕輪',slot:'arms',def:6,skills:{evade:2,item_speed:2},slots:1},
+    worm_faulds:{name:'大蚯蚓の腰巻',slot:'waist',def:6,skills:{status_res:3,heal_up:2},slots:1},
+    worm_greaves:{name:'大蚯蚓の這い脚',slot:'legs',def:7,fixed:[{stat:'moveSpd',v:3}],skills:{evade:3,status_res:2},slots:1},
     kama_sword:{name:'大鎌蟷螂の大剣',slot:'weapon',el:{k:'thunder',v:10},wtype:'sword',atk:21,crit:11,fixed:[{stat:'crit',v:2}],slots:2},
     kama_dual:{name:'大鎌蟷螂の雷双剣',slot:'weapon',el:{k:'thunder',v:10},wtype:'dual',atk:21,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
     armd_hammer:{name:'大アルマジロの殻槌',slot:'weapon',st:{k:'slow',buildup:15},wtype:'hammer',atk:24,crit:0,fixed:[{stat:'crit',v:2}],slots:2},
@@ -938,6 +987,7 @@ const DATA={
     rhino_plate:{name:'鎧犀の甲板',color:'#9aa0a8',desc:'背中を覆う分厚い甲板。（風渡る草原）'},
     boar_tusk:{name:'猪の牙',color:'#f4ecd6',desc:'轟牙の大猪の鋭い牙。（風渡る草原）'},
     boar_hide:{name:'猪の毛皮',color:'#6a4a34',desc:'硬くて粗い毛皮。（風渡る草原）'},
+    worm_hide:{name:'大蚯蚓の皮',color:'#b07a8a',desc:'しなやかで粘りのある皮。（蒼流の水辺）'},
     bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
     bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
     // ---- 風渡る草原のボス素材 ----
@@ -1698,6 +1748,7 @@ const DATA={
       {type:'mat',id:'thunder_core',chance:1.0,min:1,max:2},{type:'mat',id:'eel_sac',chance:1.0,min:2,max:3},
       {type:'mat',id:'reinforce_orb',chance:0.8,min:1,max:1},{type:'deco',chance:0.7},{type:'deco',chance:0.3}]},
     giant_worm:{rarityBoost:1.5,rolls:[
+      {type:'mat',id:'worm_hide',chance:1.0,min:2,max:3},
       {type:'mat',id:'eel_sac',chance:1.0,min:1,max:2},{type:'mat',id:'jelly_gel',chance:0.8,min:1,max:1},
       {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},{type:'deco',chance:0.4}]},
     poison_frog:{rarityBoost:1.0,rolls:[
@@ -2654,6 +2705,41 @@ const DATA={
     {id:'r_onry_arms',out:{type:'equip',id:'onry_arms'},cost:{rotten_cloth:3,soul_shard:1},stage:8},
     {id:'r_onry_waist',out:{type:'equip',id:'onry_waist'},cost:{soul_shard:2,cursed_iron:1},stage:8},
     {id:'r_onry_legs',out:{type:'equip',id:'onry_legs'},cost:{cursed_iron:2,rotten_cloth:2},stage:8},
+    {id:'r_rhino_helm',out:{type:'equip',id:'rhino_helm'},cost:{rhino_horn:2,rhino_plate:1}},
+    {id:'r_rhino_mail',out:{type:'equip',id:'rhino_mail'},cost:{rhino_plate:3,rhino_horn:1}},
+    {id:'r_rhino_vambrace',out:{type:'equip',id:'rhino_vambrace'},cost:{rhino_plate:2,rhino_horn:1}},
+    {id:'r_rhino_faulds',out:{type:'equip',id:'rhino_faulds'},cost:{rhino_plate:2,rhino_horn:1}},
+    {id:'r_rhino_greaves',out:{type:'equip',id:'rhino_greaves'},cost:{rhino_plate:2,beast_hide:1}},
+    {id:'r_boar_helm',out:{type:'equip',id:'boar_helm'},cost:{boar_tusk:2,boar_hide:1}},
+    {id:'r_boar_mail',out:{type:'equip',id:'boar_mail'},cost:{boar_hide:3,boar_tusk:1}},
+    {id:'r_boar_vambrace',out:{type:'equip',id:'boar_vambrace'},cost:{boar_tusk:2,boar_hide:2}},
+    {id:'r_boar_faulds',out:{type:'equip',id:'boar_faulds'},cost:{boar_hide:2,boar_tusk:1}},
+    {id:'r_boar_greaves',out:{type:'equip',id:'boar_greaves'},cost:{boar_hide:2,boar_tusk:1}},
+    {id:'r_sanshou_helm',out:{type:'equip',id:'sanshou_helm'},cost:{sanshou_hide:2,sanshou_mucus:1}},
+    {id:'r_sanshou_mail',out:{type:'equip',id:'sanshou_mail'},cost:{sanshou_hide:3,sanshou_mucus:2}},
+    {id:'r_sanshou_vambrace',out:{type:'equip',id:'sanshou_vambrace'},cost:{sanshou_mucus:2,sanshou_hide:1}},
+    {id:'r_sanshou_faulds',out:{type:'equip',id:'sanshou_faulds'},cost:{sanshou_hide:2,sanshou_mucus:1}},
+    {id:'r_sanshou_greaves',out:{type:'equip',id:'sanshou_greaves'},cost:{sanshou_hide:2,sanshou_mucus:2}},
+    {id:'r_aqua_helm',out:{type:'equip',id:'aqua_helm'},cost:{aqua_fin:2,water_scale:1}},
+    {id:'r_aqua_mail',out:{type:'equip',id:'aqua_mail'},cost:{water_scale:3,aqua_fin:1}},
+    {id:'r_aqua_vambrace',out:{type:'equip',id:'aqua_vambrace'},cost:{aqua_fin:2,water_scale:1}},
+    {id:'r_aqua_faulds',out:{type:'equip',id:'aqua_faulds'},cost:{water_scale:2,aqua_fin:1}},
+    {id:'r_aqua_greaves',out:{type:'equip',id:'aqua_greaves'},cost:{aqua_fin:2,water_scale:2}},
+    {id:'r_turtle_helm',out:{type:'equip',id:'turtle_helm'},cost:{shell_heart:2,crab_shell:1}},
+    {id:'r_turtle_mail',out:{type:'equip',id:'turtle_mail'},cost:{shell_heart:3,crab_shell:2}},
+    {id:'r_turtle_vambrace',out:{type:'equip',id:'turtle_vambrace'},cost:{crab_shell:2,shell_heart:1}},
+    {id:'r_turtle_faulds',out:{type:'equip',id:'turtle_faulds'},cost:{shell_heart:2,crab_shell:1}},
+    {id:'r_turtle_greaves',out:{type:'equip',id:'turtle_greaves'},cost:{crab_shell:3,shell_heart:1}},
+    {id:'r_eel_helm',out:{type:'equip',id:'eel_helm'},cost:{thunder_core:1,eel_sac:2}},
+    {id:'r_eel_mail',out:{type:'equip',id:'eel_mail'},cost:{eel_sac:3,thunder_core:1}},
+    {id:'r_eel_vambrace',out:{type:'equip',id:'eel_vambrace'},cost:{eel_sac:2}},
+    {id:'r_eel_faulds',out:{type:'equip',id:'eel_faulds'},cost:{eel_sac:3}},
+    {id:'r_eel_greaves',out:{type:'equip',id:'eel_greaves'},cost:{thunder_core:1,eel_sac:2}},
+    {id:'r_worm_helm',out:{type:'equip',id:'worm_helm'},cost:{worm_hide:2,eel_sac:1}},
+    {id:'r_worm_mail',out:{type:'equip',id:'worm_mail'},cost:{worm_hide:3,jelly_gel:1}},
+    {id:'r_worm_vambrace',out:{type:'equip',id:'worm_vambrace'},cost:{worm_hide:2,jelly_gel:1}},
+    {id:'r_worm_faulds',out:{type:'equip',id:'worm_faulds'},cost:{worm_hide:2,eel_sac:1}},
+    {id:'r_worm_greaves',out:{type:'equip',id:'worm_greaves'},cost:{worm_hide:3,eel_sac:1}},
     {id:'r_mire_helm',out:{type:'equip',id:'mire_helm'},cost:{mire_core:1,swamp_moss:2,croc_scale:1},stage:3},
     {id:'r_mire_mail',out:{type:'equip',id:'mire_mail'},cost:{mire_core:1,swamp_moss:3,croc_scale:2},stage:3},
     {id:'r_mire_arms',out:{type:'equip',id:'mire_vambrace'},cost:{mire_core:1,croc_scale:2,leech_skin:1},stage:3},
@@ -3648,7 +3734,10 @@ function addHate(e,p,amount){
   if(!e.hate)e.hate={};
   e.hate[p.id]=(e.hate[p.id]||0)+Math.max(0,amount);
 }
+const HATE_RESET=15; // この秒数ごとに、ヘイトを完全にリセット（一番近い相手を狙い直す）
 function decayHate(e,dt){
+  e.hateT=(e.hateT||0)+dt;
+  if(e.hateT>=HATE_RESET){e.hateT=0;e.hate={};return;}
   if(!e.hate)return;
   const k=Math.exp(-HATE_DECAY*dt);
   for(const id in e.hate)e.hate[id]*=k;
@@ -5428,6 +5517,13 @@ const GEAR_LOOKS={
   tsuno:{main:'#9ad8ea',dark:'#3a7a9a',accent:'#ffffff',light:'#ffffff',eye:'#ffe060',beast:'tsuno',blade:'#ffffff'},
   kubi:{main:'#3a3a4a',dark:'#14141e',accent:'#b898ff',light:'#b898ff',eye:'#ff70ff',beast:'kubi',blade:'#b898ff'},
   onry:{main:'#2a4a6a',dark:'#10203a',accent:'#9ad8ff',light:'#9ad8ff',eye:'#ff5070',beast:'onry',blade:'#9ad8ff'},
+  rhino:{main:'#8a8f96',dark:'#4a4e56',accent:'#ece6d0',light:'#b0b4bc',eye:'#ffe060',beast:'rhino',blade:'#d8dce4'},
+  boar:{main:'#6a4a34',dark:'#3a2818',accent:'#f4ecd6',light:'#8a6a4a',eye:'#ff5a3a',beast:'boar',blade:'#f4ecd6'},
+  sanshou:{main:'#3a6a4a',dark:'#1a3a24',accent:'#8ee0d0',light:'#5a9a70',eye:'#ffe060',beast:'sanshou',blade:'#8ee0d0'},
+  aqua:{main:'#60c0f0',dark:'#2a6aa0',accent:'#e0f4ff',light:'#9ad8f8',eye:'#ffe060',beast:'aqua',blade:'#bfe8ff'},
+  turtle:{main:'#7aa070',dark:'#3a5a34',accent:'#c8e0b0',light:'#9ac088',eye:'#ffe060',beast:'turtle',blade:'#c8e0b0'},
+  eel:{main:'#4a5ac0',dark:'#222a6a',accent:'#ffe858',light:'#7a8ae0',eye:'#ffe040',beast:'eel',blade:'#ffe858'},
+  worm:{main:'#b07a8a',dark:'#5a3a44',accent:'#f0c8d0',light:'#d09aa8',eye:'#ffe060',beast:'worm',blade:'#f0c8d0'},
   haro:{w:['fur','fang'],main:'#5a6a3a',dark:'#2e3a1a',accent:'#fff0b0',light:'#7e9050',orn:'wolf',fur:true,eye:'#a8ff60',blade:'#e8f4b0'},
 };
 function gearLook(id){
@@ -5780,6 +5876,13 @@ const GEAR_ART={
   tsuno:genArt('antler'),
   kubi:genArt('skull'),
   onry:genArt('flame'),
+  rhino:genArt('horn'),
+  boar:genArt('fur'),
+  sanshou:genArt('fin'),
+  aqua:genArt('fin'),
+  turtle:genArt('shell'),
+  eel:genArt('flame'),
+  worm:genArt('antler'),
   mire:{ // 沼巨人：泥のかたまりの頭と光る目、苔と泥の胴、垂れる泥の腰、岩のような肩、大きな泥の足
     head(G,l){const {ctx,f,fx,fy,px,py,hx,hy,hr}=G;
       ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=1.2;for(let i=0;i<6;i++){const a=f+i/6*TAU+0.3;ctx.beginPath();ctx.arc(hx+Math.cos(a)*hr*0.75,hy+Math.sin(a)*hr*0.75,hr*0.55,0,TAU);ctx.fill();ctx.stroke();}
