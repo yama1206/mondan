@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.98',date:'2026/10/30'};
+const GAME_VERSION={no:'0.99',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3033,6 +3033,8 @@ const Save={
     const p=Profile.blank();
     p.bag=emptyBag();
     p.stoneGiven=!!d.stoneGiven;p.shurikenGiven=!!d.shurikenGiven;
+    const legacySwords=d.swordDedup===undefined; // 古いデータだけ、増えた鉄の剣の掃除を1度やる（以降は外した剣を消さない）
+    p.swordDedup=true;
     const srcBag=(d.bag&&typeof d.bag==='object')?d.bag:{potion:d.potions|0};
     for(const id of ITEM_ORDER)p.bag[id]=clamp(srcBag[id]|0,0,DATA.consumables[id].max);
     p.gold=Math.max(0,d.gold|0);
@@ -3088,7 +3090,7 @@ const Save={
       }
     }
     // 石の剣は最初に装備している1本だけ。古いデータで増えた余分な石の剣（持ち物に残っているもの）は取り除く
-    p.items=p.items.filter(i=>!(i.baseId==='iron_sword'&&Profile.equippedBy(p,i.uid)<0));
+    if(legacySwords)p.items=p.items.filter(i=>!(i.baseId==='iron_sword'&&Profile.equippedBy(p,i.uid)<0));
     if(p.p2&&p.p2.equipped&&!Profile.getItem(p,p.p2.equipped.weapon))p.p2.equipped.weapon=null;
     return p;
   },
