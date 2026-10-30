@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.20',date:'2026/10/30'};
+const GAME_VERSION={no:'1.21',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3001,12 +3001,20 @@ function skillPtsText(skills){
    キャラクター固有のデータ（装備中アイテム）は
    1P = プロフィール直下（equipped）、2P = profile.p2 に持つ。 */
 const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null,charm:null});
-function charOf(profile,who){return who===1?profile.p2:profile;}
-const CHAR_COUNT=2;
+/* 仲間（1人プレイの味方AI）：2人まで連れていける。役割は ヒーラー／タンク／アタッカー のうち2つ。
+   仲間は who=2,3 のキャラとして装備を持つ（charOf）。将来の協力プレイでも同じ仕組みを使えるよう、
+   仲間の操作は Companion.decide にまとめ、プレイヤー入力とは別の経路で動かす。 */
+const COMP_ROLES=['healer','tank','attacker'];
+const COMP_ROLE_NAME={healer:'ヒーラー',tank:'タンク',attacker:'アタッカー'};
+const COMP_COUNT=2, COMP_REVIVES=2, COMP_REVIVE_DELAY=3;
+function charOf(profile,who){if(who>=2)return profile.companions[who-2];return who===1?profile.p2:profile;}
+const CHAR_COUNT=2;          // 1P・2P（ローカル）
+const CHAR_ALL=CHAR_COUNT+COMP_COUNT; // 装備を持つキャラの総数（1P・2P・仲間）
 const Profile={
   blank(){
     return {materials:{},matSeen:{},items:[],decos:[],equipped:emptyEquip(),
       p2:{equipped:emptyEquip()},
+      companions:[{role:'healer',equipped:emptyEquip()},{role:'tank',equipped:emptyEquip()}],
       bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
@@ -3015,8 +3023,15 @@ const Profile={
   create(){
     const p=Profile.blank();
     for(let who=0;who<CHAR_COUNT;who++){if(who===0)Profile.giveStarterWeapon(p,who);Profile.giveStarterCloth(p,who);}
+    Profile.grantCompanionStarter(p);
     Profile.grantStones(p);
     return p;
+  },
+  /** 仲間に初期装備を一度だけ渡す（新規作成・古いデータの読み込み時） */
+  grantCompanionStarter(p){
+    if(p.compGiven)return false;
+    for(let who=CHAR_COUNT;who<CHAR_ALL;who++){Profile.giveStarterWeapon(p,who);Profile.giveStarterCloth(p,who);}
+    p.compGiven=true;return true;
   },
   /** 出発前に選べる石の武器（まだ渡していない古いデータにも、一度だけ渡す） */
   grantStones(p){
@@ -3051,7 +3066,9 @@ const Profile={
   },
   /** そのアイテムを装備しているキャラ番号（0=1P,1=2P）。誰も装備していなければ -1 */
   equippedBy(p,uid){
-    return SLOTS.some(s=>p.equipped[s]===uid)?0:-1; // 装備は1Pのみ（2Pの装備は画面に出さない）
+    if(!uid)return -1;
+    for(let who=0;who<CHAR_ALL;who++){const c=charOf(p,who);if(c&&SLOTS.some(s=>c.equipped[s]===uid))return who;}
+    return -1;
   },
   addItem(p,it){it.uid='e'+(p.nextUid++);p.items.push(it);return it;},
   addDeco(p,d){d.uid='d'+(p.nextUid++);p.decos.push(d);return d;},
@@ -3066,7 +3083,7 @@ const Profile={
   decoOwner(p,uid){for(const i of p.items)if(i.slots.includes(uid))return i;return null;},
   isEquipped(p,uid){return Profile.equippedBy(p,uid)>=0;},
   removeItem(p,uid){
-    for(let who=0;who<CHAR_COUNT;who++){const eq=charOf(p,who).equipped;for(const s of SLOTS)if(eq[s]===uid)eq[s]=null;}
+    for(let who=0;who<CHAR_ALL;who++){const eq=charOf(p,who).equipped;for(const s of SLOTS)if(eq[s]===uid)eq[s]=null;}
     p.items=p.items.filter(i=>i.uid!==uid);
   },
   attachDeco(p,itemUid,idx,decoUid){
@@ -3085,7 +3102,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:13,
+  KEY:'kourou_dungeon_save',VERSION:14,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -3117,6 +3134,7 @@ const Save={
   /** バージョン間の移行処理。仕様変更時は migrations[旧バージョン] を追加する */
   migrate(data,v){
     const migrations={
+      13:d=>d, // 13 → 14：仲間（companions）を追加。無ければ sanitize で既定の役割と初期装備を支給
       0:d=>d, // version無しの旧形式 → 1
       1:d=>{d.p2=null;return d;}, // 1 → 2：2Pキャラを追加（sanitizeで初期装備を支給）
       2:d=>{d.guests={};return d;}, // 2 → 3：オンライン参加者のデータ置き場を追加
@@ -3181,6 +3199,18 @@ const Save={
       p.items.push(it);itemIds.add(it.uid);noteUid(it.uid);
     }
     p.nextUid=Math.max(d.nextUid|0,uidNums.length?Math.max(...uidNums)+1:1,1);
+    // 仲間：役割（ヒーラー・タンク・アタッカーから2つ、重複なし）と装備を読み込む。古いデータには初期装備を一度だけ渡す
+    const cmpSrc=Array.isArray(d.companions)?d.companions:[];
+    const roles=Companion.normalizeRoles(cmpSrc);
+    p.companions=roles.map(role=>({role,equipped:emptyEquip()}));
+    p.compGiven=!!d.compGiven;
+    for(let i=0;i<COMP_COUNT;i++){
+      const eq=charOf(p,CHAR_COUNT+i).equipped,src=cmpSrc[i]&&cmpSrc[i].equipped;
+      if(src&&typeof src==='object')for(const s of SLOTS){
+        const it=Profile.getItem(p,src[s]);
+        eq[s]=(it&&it.slot===s&&!Profile.isEquipped(p,it.uid))?it.uid:null;
+      }
+    }
     const p2src=(d.p2&&typeof d.p2==='object')?d.p2:null;
     const srcEquip=[d.equipped,p2src?p2src.equipped:null];
     for(let who=0;who<CHAR_COUNT;who++){
@@ -3199,6 +3229,7 @@ const Save={
     // 石の剣は最初に装備している1本だけ。古いデータで増えた余分な石の剣（持ち物に残っているもの）は取り除く
     if(legacySwords)p.items=p.items.filter(i=>!(i.baseId==='iron_sword'&&Profile.equippedBy(p,i.uid)<0));
     if(p.p2&&p.p2.equipped&&!Profile.getItem(p,p.p2.equipped.weapon))p.p2.equipped.weapon=null;
+    Profile.grantCompanionStarter(p);
     return p;
   },
   reset(){try{localStorage.removeItem(this.KEY);}catch(e){}},
@@ -3897,7 +3928,9 @@ function inflictPlayer(w,p,k){
   else if(k==='slow'){if(!(p.slowT>0))emit(w,{type:'slowed',pid:p.id,x:p.x,y:p.y-26});p.slowT=Math.max(p.slowT||0,time);p.slowMult=d.mult;}
   emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-30,text:d.name+'!',color:d.color});
 }
-function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviveWait;p.out=false;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.sleepT=0;p.curseT=0;emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
+function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviveWait;p.out=false;p.kx=p.ky=0;p.slowT=0;p.poisonT=0;p.paraT=0;p.sleepT=0;p.curseT=0;
+  if(p.ai){p.out=p.ai.revives<=0;p.ai.reviveT=p.out?-1:COMP_REVIVE_DELAY;} // 仲間は残りの自動復活回数があれば少し待って自動で起き上がる
+  emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
 /** 毒の雲などの継続ダメージ：のけぞらず、無敵時間も発生しない（回避中は受けない） */
 function dotPlayer(w,p,raw,el){
   if(p.dead||p.dodgeInv>0)return;
@@ -4072,6 +4105,90 @@ function spawnDrop(w,x,y,loot){
 
 /* ---------- プレイヤー ---------- */
 const EMPTY_INPUT={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,heal:false,sheathe:false};
+/** 仲間AI。仲間の入力はここで作る（プレイヤー入力と同じ形）。
+    協力プレイでも「その仲間を誰が操作するか」を差し替えるだけで使えるよう、world.players の id 単位で動かす。 */
+const Companion={
+  isId(pid){return typeof pid==='string'&&/^c\d+$/.test(pid);},
+  idOf(i){return 'c'+i;},
+  /** 役割を正規化する：不正・重複を除き、必ず COMP_COUNT 人分（異なる役割）にする */
+  normalizeRoles(list){
+    const out=[];
+    for(const c of (list||[]))if(c&&COMP_ROLES.includes(c.role)&&!out.includes(c.role))out.push(c.role);
+    for(const r of COMP_ROLES){if(out.length>=COMP_COUNT)break;if(!out.includes(r))out.push(r);}
+    return out.slice(0,COMP_COUNT);
+  },
+  /** 出撃時に仲間を生成する */
+  spawn(w,profile){
+    for(let i=0;i<COMP_COUNT;i++){
+      const who=CHAR_COUNT+i,role=charOf(profile,who).role||COMP_ROLES[i];
+      const pl=addPlayer(w,Companion.idOf(i),computeStats(profile,null,who),null);
+      pl.info={name:COMP_ROLE_NAME[role]};
+      pl.ai={who,role,revives:COMP_REVIVES,reviveT:-1};
+    }
+  },
+  /** 倒れた仲間の自動復活（毎ステップ） */
+  tick(w,dt){
+    for(const p of Object.values(w.players)){
+      if(!p.ai||!p.dead||p.out||p.ai.reviveT<0)continue;
+      p.ai.reviveT-=dt;
+      if(p.ai.reviveT<=0){
+        p.ai.revives--;p.ai.reviveT=-1;
+        p.dead=false;p.revive=0;p.downT=0;
+        p.hp=Math.max(1,Math.round(p.stats.maxHp*CONFIG.coop.reviveHpRatio));
+        p.hitInv=1.5;p.dodgeTime=0;p.swing=0;
+        emit(w,{type:'revive',pid:p.id,by:'auto',x:p.x,y:p.y});
+      }
+    }
+  },
+  /** 仲間の入力を決める */
+  decide(w,p){
+    const I={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,heal:false,sheathe:false};
+    if(p.dead)return I;
+    const all=Object.values(w.players);
+    const leader=all.find(q=>!q.ai&&!q.dead)||all.find(q=>!q.ai)||p;
+    const foes=(w.enemies||[]).filter(e=>!e.dead&&e.hp>0);
+    const toward=(tx,ty,stop)=>{const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy);return d<=stop?{mx:0,my:0}:{mx:dx/d,my:dy/d};};
+    const role=p.ai.role;
+    const R={healer:{reach:80,leash:260,follow:110},tank:{reach:70,leash:300,follow:90},attacker:{reach:75,leash:460,follow:130}}[role];
+    // 1) 危険な攻撃からは避ける（タンクは受け止める）
+    const threat=(w.telegraphs||[]).find(t=>t.dmg>0&&t.t<t.total&&inTelegraph(t,p.x,p.y,p.r));
+    if(threat&&role!=='tank'&&p.dodgeCd<=0){
+      const dx=p.x-threat.x,dy=p.y-threat.y,d=Math.hypot(dx,dy)||1;
+      I.dodge=true;I.mx=dx/d;I.my=dy/d;return I;
+    }
+    // 2) 倒れた人間がいれば助け起こしに行く（重なって止まると助け起こせる）
+    const downed=all.find(q=>!q.ai&&q.dead&&!q.out);
+    const nearFoe=foes.find(e=>Math.hypot(e.x-p.x,e.y-p.y)<R.reach*2);
+    if(downed&&!nearFoe){
+      const d=Math.hypot(downed.x-p.x,downed.y-p.y);
+      if(d>CONFIG.coop.reviveRadius*0.5)return {...I,...toward(downed.x,downed.y,CONFIG.coop.reviveRadius*0.5)};
+      return I;
+    }
+    // 3) 回復（ヒーラー）：傷ついた味方がいて回復薬があれば使う
+    if(role==='healer'&&!p.using&&p.potionCd<=0){
+      const hurt=all.some(q=>!q.dead&&q.hp<q.stats.maxHp*0.5);
+      const pickId=['heal_all','good_potion','potion'].find(id=>(p.bag[id]||0)>0);
+      if(hurt&&pickId){I.pick=ITEM_ORDER.indexOf(pickId);I.heal=true;}
+    }
+    // 4) 戦闘：指揮者の近くの敵を狙う
+    let foe=null,fd=1e9;
+    for(const e of foes){
+      const d=Math.hypot(e.x-p.x,e.y-p.y);
+      if(Math.hypot(e.x-leader.x,e.y-leader.y)<=R.leash&&d<fd){fd=d;foe=e;}
+    }
+    if(foe){
+      I.aim=Math.atan2(foe.y-p.y,foe.x-p.x);
+      if(fd<=R.reach){I.attack=true;return I;}
+      if(role==='tank'){const m=toward(foe.x,foe.y,R.reach*0.8);I.mx=m.mx;I.my=m.my;return I;}
+      if(role==='attacker'){const m=toward(foe.x,foe.y,R.reach*0.8);I.mx=m.mx;I.my=m.my;return I;}
+      // ヒーラーは敵の近くまで行かず、指揮者の近くで待つ
+    }
+    // 5) 指揮者について行く
+    const ld=Math.hypot(leader.x-p.x,leader.y-p.y);
+    if(ld>R.follow){const m=toward(leader.x,leader.y,R.follow);I.mx=m.mx;I.my=m.my;}
+    return I;
+  },
+};
 // ガード（片手剣・大剣・ランス）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
 const GUARD_CFG={move:0.2};
 /** 幽霊（復活できなくなった後）：普通の歩きより速く動けるが、壁は通れない。攻撃・アイテム・採取・被弾はない */
@@ -5411,7 +5528,7 @@ function updateRevive(w,dt){
   const ps=Object.values(w.players);
   if(ps.length<2)return;
   for(const p of ps){
-    if(!p.dead||p.out)continue;
+    if(!p.dead||p.out||p.ai)continue;
     // 仲間が重なった状態で動かずにいると助け起こせる（動いたり離れたりすると最初から）
     const helper=ps.find(q=>!q.dead&&!q.moving&&!(q.dodgeTime>0)&&Math.hypot(q.x-p.x,q.y-p.y)<CONFIG.coop.reviveRadius);
     p.reviveNeed=Math.max(1.5,CONFIG.coop.reviveTime-(helper?helper.stats.reviveCut||0:0)-(helper&&wsActive(helper,'medic')?2:0)); // 片手剣の「医療の心得」で2秒短縮 // 防具スキル「救命」で短くなる
@@ -5434,7 +5551,8 @@ function updateWorld(w,dt,inputs){
   w.flowTimer-=dt;if(w.flowTimer<=0){computeFlow(w);w.flowTimer=0.25;}
   const before={};
   for(const id in w.players){const p=w.players[id];before[id]={x:p.x,y:p.y};}
-  for(const id in w.players)updatePlayer(w,w.players[id],inputs[id]||EMPTY_INPUT,dt);
+  Companion.tick(w,dt);
+  for(const id in w.players){const p=w.players[id];updatePlayer(w,p,p.ai?Companion.decide(w,p):(inputs[id]||EMPTY_INPUT),dt);}
   // 手裏剣の2枚目以降：少し間をあけて投げる
   if(w.pendingShots&&w.pendingShots.length){
     for(const q of w.pendingShots)q.t-=dt;
@@ -9914,7 +10032,8 @@ const App={
       while(this.acc>=CONFIG.step&&n<6){
         const w=this.world,inputs={};
         for(const pid in w.players){
-          if(Net.role==='host'&&pid!=='p1')inputs[pid]=Net.takeInput(pid);
+          if(Companion.isId(pid))inputs[pid]=EMPTY_INPUT; // 仲間はAIが操作する
+          else if(Net.role==='host'&&pid!=='p1')inputs[pid]=Net.takeInput(pid);
           else inputs[pid]=this.state==='playing'?Input.sample(pid,w.players[pid]):EMPTY_INPUT;
         }
         updateWorld(w,CONFIG.step,inputs);
@@ -9972,13 +10091,15 @@ const App={
      ひとり／同じ画面：全員が this.profile を共有（p1=キャラ0、p2=キャラ1）
      オンラインのホスト：p1=ホスト自身、p2〜p5=各参加者のデータ（いずれもキャラ0） */
   profileFor(pid){
+    if(Companion.isId(pid))return this.profile; // 仲間の装備・持ち物は持ち主（プロフィール）のもの
     if(Net.role==='host'&&pid!=='p1'){const m=Net.member(pid);return m?m.profile:null;}
     return this.profile;
   },
-  whoFor(pid){return Net.role?0:(pid==='p2'?1:0);},
+  whoFor(pid){if(Companion.isId(pid))return CHAR_COUNT+(+pid.slice(1));return Net.role?0:(pid==='p2'?1:0);},
   pidOf(who){return who===1?'p2':'p1';},
   whoOf(pid){return this.whoFor(pid);},
-  playerIds(){return this.world?Object.keys(this.world.players):[];},
+  /** 操作しているプレイヤーのid（仲間は含めない） */
+  playerIds(){return this.world?Object.keys(this.world.players).filter(id=>!Companion.isId(id)):[];},
   /** このPCで操作しているプレイヤーか（通知や振動を出すかどうか） */
   localInputPid(pid){
     if(Net.role==='guest')return pid===Net.myPid?'p1':null;
@@ -10005,7 +10126,7 @@ const App={
   /** 持ち物の数をプロフィールからワールドのキャラに写す（同じ画面の2人は同じ倉庫を共有） */
   syncPotions(pid){
     if(!this.world||this.world.mirror)return;
-    for(const id of this.playerIds()){
+    for(const id of Object.keys(this.world.players)){ // 仲間も含め、持ち物は共有の倉庫から
       if(Net.role==='host'&&pid&&id!==pid)continue;
       const pr=this.profileFor(id);if(pr)this.world.players[id].bag=Object.assign(emptyBag(),pr.bag);
     }
@@ -10021,6 +10142,8 @@ const App={
     if(!QuestRules.available(p,q)){UI.notify('その依頼はまだ受けられません','#ff8060',3);this.goto('board');return;}
     this.world=createWorld({quest:q,players:n,leash:n>1?CONFIG.coop.leash:0});
     for(let who=0;who<n;who++)addPlayer(this.world,this.pidOf(who),computeStats(p,null,who),p.bag);
+    Companion.spawn(this.world,p);
+    this.syncPotions();
     this.beginRun(n);
     if(n>1){
       UI.notify(`1P：${Input.describe('p1')}　／　2P：${Input.describe('p2')}`,'#ffb070',6);
