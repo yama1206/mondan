@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.88',date:'2026/10/29'};
+const GAME_VERSION={no:'0.89',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -833,14 +833,14 @@ const DATA={
     toad_sword:{name:'大蛙の剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'sword',atk:24,crit:12,fixed:[{stat:'atkSpd',v:3}],slots:2},
     toad_bow:{name:'大蛙の弓',slot:'weapon',st:{k:'poison',buildup:15},wtype:'bow',atk:22,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
     octo_tachi:{name:'大蛸の太刀',slot:'weapon',el:{k:'water',v:10},wtype:'tachi',atk:31,crit:12,fixed:[{stat:'crit',v:3}],slots:2},
-    ore_sword:{name:'蒼晶の剣',slot:'weapon',wtype:'sword',atk:26,crit:9,slots:2},
-    ore_gs:{name:'黒鉄の大剣',slot:'weapon',wtype:'greatsword',atk:27,crit:5,slots:2},
-    ore_tachi:{name:'蒼晶の太刀',slot:'weapon',wtype:'tachi',atk:27,crit:12,slots:2},
-    ore_dual:{name:'黒鉄の双剣',slot:'weapon',wtype:'dual',atk:26,crit:14,slots:2},
-    ore_hammer:{name:'黒鉄の大槌',slot:'weapon',wtype:'hammer',atk:27,crit:1,slots:2},
-    ore_lance:{name:'蒼晶の槍',slot:'weapon',wtype:'lance',atk:27,crit:9,slots:2},
-    ore_bow:{name:'蒼晶の弓',slot:'weapon',wtype:'bow',atk:26,crit:9,slots:2},
-    ore_shuriken:{name:'黒鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:26,crit:10,slots:2},
+    ore_sword:{name:'蒼晶の剣',slot:'weapon',wtype:'sword',atk:30,crit:9,slots:2},
+    ore_gs:{name:'黒鉄の大剣',slot:'weapon',wtype:'greatsword',atk:30,crit:5,slots:2},
+    ore_tachi:{name:'蒼晶の太刀',slot:'weapon',wtype:'tachi',atk:30,crit:12,slots:2},
+    ore_dual:{name:'黒鉄の双剣',slot:'weapon',wtype:'dual',atk:30,crit:14,slots:2},
+    ore_hammer:{name:'黒鉄の大槌',slot:'weapon',wtype:'hammer',atk:30,crit:1,slots:2},
+    ore_lance:{name:'蒼晶の槍',slot:'weapon',wtype:'lance',atk:30,crit:9,slots:2},
+    ore_bow:{name:'蒼晶の弓',slot:'weapon',wtype:'bow',atk:30,crit:9,slots:2},
+    ore_shuriken:{name:'黒鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:30,crit:10,slots:2},
     octo_lance:{name:'大蛸の槍',slot:'weapon',el:{k:'water',v:10},wtype:'lance',atk:29,crit:10,fixed:[{stat:'atkSpd',v:4}],slots:2},
     scorp_shuriken:{name:'晶毒の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:26,crit:12,fixed:[{stat:'atkSpd',v:5}],slots:2},
     scorp_db:{name:'晶毒の双剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'dual',atk:31,crit:14,fixed:[{stat:'atkSpd',v:6}],slots:2},
