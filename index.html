@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.00',date:'2026/10/30'};
+const GAME_VERSION={no:'1.01',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10311,7 +10311,11 @@ const App={
         if(was!=='smith'&&Input.uiPad)UI.restoreFocus(UI.padKey({dataset:{act:'smithCat',c:'weapon'}}));
         break;
       case 'bestiary':UI.show(this.bestiaryHTML());break;
-      case 'shop':UI.show(this.shopHTML());break;
+      case 'shop':
+        UI.show(this.shopHTML());
+        // コントローラーで入ったときは、先頭の「装備画面へ」ではなく最初の商品に合わせる（押しっぱなしで装備が開くのを防ぐ）
+        if(was!=='shop'&&Input.uiPad){const el=document.querySelector('.inv-body [data-act="buy"]:not([disabled])')||document.querySelector('[data-act="facilityBack"]');UI.setFocus(el);}
+        break;
       case 'lobby':if(!this.inGame)this.world=null;UI.notes.style.top='';UI.show(this.lobbyHTML());break;
       case 'playing':UI.hide();Input.reset();this.acc=0;break;
       case 'pause':UI.show(this.pauseHTML());break;
