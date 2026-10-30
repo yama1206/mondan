@@ -193,7 +193,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.79',date:'2026/10/29'};
+const GAME_VERSION={no:'0.80',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8591,13 +8591,13 @@ const Input={
         e.preventDefault();b.classList.add('on');
         if(k==='menu'){App.onKey('Escape');return;}
         this.aimMode[this.touchPid()]='pad';
-        if(k==='attack'){this.touch.attack=true;this.touch.sx=e.clientX;this.touch.sy=e.clientY;this.touch.swipeAng=null;b.setPointerCapture(e.pointerId);}
+        if(k==='attack'){this.touch.attack=true;this.touch.sx=e.clientX;this.touch.sy=e.clientY;b.setPointerCapture(e.pointerId);}
         else if(k==='guard'){this.touch.guard=true;b.setPointerCapture(e.pointerId);}
         else this.touchEdge(k);
       });
       // 攻撃ボタンを押したまま指を動かすと、押した位置からの向きで攻撃方向を決める
       if(k==='attack')b.addEventListener('pointermove',e=>{if(!this.touch.attack)return;const dx=e.clientX-this.touch.sx,dy=e.clientY-this.touch.sy;if(Math.hypot(dx,dy)>=18)this.touch.swipeAng=Math.atan2(dy,dx);});
-      const up=()=>{b.classList.remove('on');if(k==='attack'){this.touch.attack=false;this.touch.swipeAng=null;}if(k==='guard')this.touch.guard=false;};
+      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;if(k==='guard')this.touch.guard=false;};
       b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
     });
   },
@@ -8806,7 +8806,7 @@ const Input={
       if(S.aim!==null&&S.aimT>aimT){aim=S.aim;aimT=S.aimT;}
     }
     const holdAim=!!(p&&DATA.weaponTypes[p.stats.weaponType]&&DATA.weaponTypes[p.stats.weaponType].holdAim); // 弓・手裏剣：攻撃を押したまま狙いを変えられる
-    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.attack&&this.touch.swipeAng!=null&&holdAim)aim=this.touch.swipeAng;}
+    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.swipeAng!=null&&holdAim)aim=this.touch.swipeAng;}
     const E=this.edges[pid]||newEdges();
     const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
     if(p){
@@ -8814,7 +8814,8 @@ const Input={
       else if(this.aimMode[pid]==='pad'&&aim!==null)inp.aim=aim;
       else{
         // 攻撃を押しているあいだは、移動してもこの向きを変えない（押し始めた向きで攻撃する）
-        if((mx||my)&&(!attack||holdAim))this.lastAim[pid]=Math.atan2(my,mx);
+        const followMove=holdAim?this.aimMode[pid]==='move':!attack; // 弓・手裏剣は移動では向きを変えない（移動で狙う設定の2Pを除く）
+        if((mx||my)&&followMove)this.lastAim[pid]=Math.atan2(my,mx);
         inp.aim=this.lastAim[pid];
       }
     }
