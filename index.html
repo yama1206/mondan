@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.08',date:'2026/10/30'};
+const GAME_VERSION={no:'1.10',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2090,8 +2090,8 @@ const DATA={
     {id:'m1_goblin',stage:1,key:true,name:'草原の掃討',desc:'草原をうろつく小鬼の群れを9体退治してほしい。',goal:{type:'kill',target:'goblin',count:9},reward:{gold:180,mats:{goblin_hide:2}}},
     {id:'m1_slime',stage:1,key:true,name:'跳ねる緑の群れ',desc:'草原の浅瀬で増えすぎた緑の粘体を8体倒せ。',goal:{type:'kill',target:'slime',count:8},reward:{gold:180,mats:{slime_gel:2}}},
     {id:'m1_hunt',stage:1,name:'素材集め：草原',desc:'草原の魔物を合わせて15体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:15},reward:{gold:220,mats:{goblin_hide:1,slime_gel:1}}},
-    {id:'m1_bird',stage:1,after:'m1_boss',boss:'gale_bird',name:'【強敵】草原の疾風怪鳥',desc:'草原の空を、風をまとった巨大な鳥が飛び回っている。素早い急降下と、扇状に飛ばす羽根に気をつけろ。',goal:{type:'boss'},reward:{gold:900,mats:{gale_feather:2,reinforce_orb:2},decos:1}},
-    {id:'m1_rhino',stage:1,after:'m1_lizard',boss:'rhino',name:'【強敵】草原の鎧犀',desc:'硬い装甲をまとった大型のサイが、草原の道を塞いでいる。正面からの攻撃はほとんど通らない。横や後ろへ回り込め。',goal:{type:'boss'},reward:{gold:1200,mats:{rhino_plate:2,reinforce_orb:2},decos:1}},
+    {id:'m1_bird',stage:1,boss:'gale_bird',name:'【強敵】草原の疾風怪鳥',desc:'草原の空を、風をまとった巨大な鳥が飛び回っている。素早い急降下と、扇状に飛ばす羽根に気をつけろ。',goal:{type:'boss'},reward:{gold:900,mats:{gale_feather:2,reinforce_orb:2},decos:1}},
+    {id:'m1_rhino',stage:1,boss:'rhino',name:'【強敵】草原の鎧犀',desc:'硬い装甲をまとった大型のサイが、草原の道を塞いでいる。正面からの攻撃はほとんど通らない。横や後ろへ回り込め。',goal:{type:'boss'},reward:{gold:1200,mats:{rhino_plate:2,reinforce_orb:2},decos:1}},
     {id:'m1_boar',stage:1,after:'m1_rhino',boss:'boar',name:'【強敵】轟牙の大猪',desc:'突進で地面を掘り返し、土塊を飛ばす大型のイノシシ。突進の直線に入らないように。',goal:{type:'boss'},reward:{gold:1300,mats:{boar_tusk:2,reinforce_orb:2},decos:1}},
     {id:'ex_kama_mantis',stage:1,after:'m1_boar',boss:'kama_mantis',name:'【強敵】草原の大鎌蟷螂',desc:'草原の草むらに潜む大きな蟷螂。大鎌で薙ぎ払い、雷をまとって突進する。',goal:{type:'boss'},reward:{gold:1080,mats:{cave_fang:2,crystal_shard:2}}},
     {id:'ex_armadillo',stage:1,after:'ex_kama_mantis',boss:'armadillo',name:'【強敵】草原の巨躯アルマジロ',desc:'丸まって転がる大きなアルマジロ。突進は当たると足を鈍らせ、背中の棘を飛ばす。',goal:{type:'boss'},reward:{gold:1080,mats:{rock_scale:2,hard_shell:2}}},
@@ -3435,7 +3435,7 @@ function questGoalText(g,np){
 const QuestRules={
   stage(p){return clamp((p.progress&&p.progress.stage)||1,1,maxStageId());},
   done(p,id){return (p.progress&&p.progress.done[id])||0;},
-  keys(stage){return DATA.quests.filter(q=>q.stage===stage&&!q.urgent&&!q.after&&!q.explore);}, // 緊急を出すのに必要な「通常の依頼」
+  keys(stage){return DATA.quests.filter(q=>q.stage===stage&&q.key);}, // 緊急を出すのに必要な「キー依頼」（素材集めは含まない）
   keysDone(p,stage){return this.keys(stage).filter(q=>this.done(p,q.id)>0).length;},
   urgentOpen(p,stage){return this.keysDone(p,stage)>=this.keys(stage).length;},
   available(p,q){return q.stage<=this.stage(p)&&(!q.urgent||this.urgentOpen(p,q.stage))&&(!q.after||this.done(p,q.after)>0);},
@@ -10542,7 +10542,8 @@ const App={
     if(sel.stage!==st||!QuestRules.available(p,sel)){sel=DATA.quests.find(q=>q.stage===st&&QuestRules.available(p,q));if(!online)this.questSel=sel.id;}
     const tabs=DATA.stages.map(s=>s.id<=maxSt?`<button class="tab ${s.id===st?'on':''}" data-act="boardStage" data-s="${s.id}">ステージ${s.id}</button>`:`<button class="tab" disabled>🔒 ステージ${s.id}</button>`).join('');
     const keys=QuestRules.keys(st),kd=QuestRules.keysDone(p,st);
-    const rows=DATA.quests.filter(q=>q.stage===st).map(q=>{
+    // 緊急の依頼は、そのステージの一覧の一番最後に出す（並びは元の順のまま）
+    const rows=DATA.quests.filter(q=>q.stage===st).sort((a,b)=>(a.urgent?1:0)-(b.urgent?1:0)).map(q=>{
       const ok=QuestRules.available(p,q),n=QuestRules.done(p,q.id);
       if(!ok)return ''; // 緊急・強敵は条件を満たすまで一覧に出さない
       if(!ok&&q.after)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">「${esc(questById(q.after).name)}」を達成すると出現</small></span><span class="tag" style="background:#6a3a9a">強敵</span></div>`;
