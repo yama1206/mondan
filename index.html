@@ -45,6 +45,19 @@ button.danger:hover{background:#6e2a3a}
 .inv-panel{width:min(1180px,97vw);height:min(720px,94vh);display:flex;flex-direction:column;padding:14px}
 .inv-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .who-sel{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
+.gfx{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9000;animation:gfxFade 1s ease-out forwards}
+.gfx-in{text-align:center;padding:14px 22px;border-radius:12px;background:rgba(10,8,20,.82);animation:gfxPop .35s ease-out}
+.gfx-r{font-weight:bold;font-size:18px;letter-spacing:.1em}
+.gfx-t{font-size:15px;margin-top:4px}
+.gfx-N .gfx-r{color:#c8c8c8}
+.gfx-R .gfx-in{box-shadow:0 0 18px #5fb0ff}.gfx-R .gfx-r{color:#5fb0ff}
+.gfx-SR{animation-duration:1.8s}.gfx-SR .gfx-in{box-shadow:0 0 28px #ffb040}.gfx-SR .gfx-r{color:#ffb040;font-size:22px}
+.gfx-SSR{animation:gfxFade 2.6s ease-out forwards}
+.gfx-SSR .gfx-in{box-shadow:0 0 36px #ff6ad5;background:linear-gradient(90deg,rgba(255,106,213,.35),rgba(120,200,255,.35),rgba(255,230,120,.35));animation:gfxPop .35s ease-out,gfxShine 1.2s linear infinite}
+.gfx-SSR .gfx-r{color:#fff;font-size:26px}
+@keyframes gfxPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes gfxFade{0%,80%{opacity:1}100%{opacity:0}}
+@keyframes gfxShine{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
 .who-sel button{padding:4px 10px}
 .who-sel button.on{background:#2d8a5a;color:#fff}
 .tabs{display:flex;gap:4px}
@@ -201,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.28',date:'2026/10/30'};
+const GAME_VERSION={no:'1.29',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3029,7 +3042,21 @@ const PETS=[
   {id:'wolf',name:'オオカミ',rar:'R',stat:'atkPct',base:3,fmt:'攻撃力 +{v}%',col:'#90909a'},
   {id:'dragonling',name:'子竜',rar:'SR',stat:'atkPct',base:2,fmt:'攻撃力 +{v}%',col:'#e04a4a'},
 ];
-const RARITY={N:{name:'ノーマル',color:'#c8c8c8',w:60},R:{name:'レア',color:'#5fb0ff',w:30},SR:{name:'スーパーレア',color:'#ffb040',w:10}};
+const RARITY={N:{name:'ノーマル',color:'#c8c8c8',w:60},R:{name:'レア',color:'#5fb0ff',w:30},SR:{name:'スーパーレア',color:'#ffb040',w:10},SSR:{name:'最高レア（ペット）',color:'#ff6ad5'}};
+/* ペットの見た目（最高レア）。連れ歩く姿だけで性能は無い */
+const LOOKS=[
+  {id:'l_dog',name:'犬',col:'#d9a066'},
+  {id:'l_cat',name:'猫',col:'#f0c890'},
+  {id:'l_hedgehog',name:'ハリネズミ',col:'#8a6a4a'},
+  {id:'l_penguin',name:'ペンギン',col:'#2a2a3a'},
+  {id:'l_dragon',name:'チビドラゴン',col:'#e05a7a'},
+  {id:'l_turtle',name:'亀',col:'#4a9a5a'},
+  {id:'l_ghost',name:'小さなオバケ',col:'#eef0ff'},
+  {id:'l_hamster',name:'ハムスター',col:'#f0c070'},
+  {id:'l_bird',name:'小鳥',col:'#60b0ff'},
+];
+/* ガチャ：最初の1回は必ずペット。以後はペット8%、それ以外は首輪（レア度 N60・R30・SR10） */
+const GACHA_PET_RATE=8;
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
 const PET_MAX=1;
 const petValue=(pt,lv)=>pt.base*(1+0.25*((lv||1)-1));
@@ -3139,7 +3166,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:15,
+  KEY:'kourou_dungeon_save',VERSION:16,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -3171,6 +3198,7 @@ const Save={
   /** バージョン間の移行処理。仕様変更時は migrations[旧バージョン] を追加する */
   migrate(data,v){
     const migrations={
+      15:d=>d, // 15 → 16：ペットの見た目（最高レア）を9種に作り直し（旧い見た目は外れる）
       14:d=>d, // 14 → 15：コイン・ペット・強化素材を追加（無ければ sanitize で0）
       13:d=>d, // 13 → 14：仲間（companions）を追加。無ければ sanitize で既定の役割と初期装備を支給
       0:d=>d, // version無しの旧形式 → 1
@@ -3275,7 +3303,8 @@ const Save={
     const eqPet=d.equipped&&d.equipped.pet;
     p.equipped.pet=(eqPet&&p.pets[eqPet])?eqPet:null;
     p.looks={};
-    if(d.looks&&typeof d.looks==='object')for(const id in d.looks)if(PETS.some(x=>x.id===id))p.looks[id]=true;
+    if(d.looks&&typeof d.looks==='object')for(const id in d.looks)if(LOOKS.some(x=>x.id===id))p.looks[id]=true;
+    p.gachaN=Math.max(0,d.gachaN|0);
     const lk=d.equipped&&d.equipped.look;p.equipped.look=(lk&&p.looks[lk])?lk:null;
     return p;
   },
@@ -8012,20 +8041,46 @@ const Renderer={
     const f=p.facing||0,back=p.r*1.5;
     const tx=p.x-Math.cos(f)*back,ty=p.y-Math.sin(f)*back+p.r*0.2;
     pp.x+=(tx-pp.x)*0.15;pp.y+=(ty-pp.y)*0.15;
-    const r=p.r*0.45,lk=PETS.find(x=>x.id===p.petLook);if(!lk)return;
+    const r=p.r*0.45,lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
     const id=lk.id;
     ctx.save();ctx.translate(pp.x,pp.y);
-    ctx.fillStyle=lk.col;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;
-    const tri=(ex,ey,h,w)=>{ctx.beginPath();ctx.moveTo(ex-w,ey);ctx.lineTo(ex,ey-h);ctx.lineTo(ex+w,ey);ctx.closePath();ctx.fill();ctx.stroke();};
-    if(id==='rabbit'){for(const sx of [-1,1]){ctx.beginPath();ctx.ellipse(sx*r*0.4,-r*0.9,r*0.22,r*0.6,0,0,Math.PI*2);ctx.fill();ctx.stroke();}}
-    if(id==='fox'||id==='cat'||id==='wolf'){tri(-r*0.6,-r*0.5,r*0.9,r*0.4);tri(r*0.6,-r*0.5,r*0.9,r*0.4);}
-    if(id==='dragonling'){for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(sx*r*0.6,0);ctx.lineTo(sx*r*1.5,-r*1.0);ctx.lineTo(sx*r*0.4,-r*0.4);ctx.closePath();ctx.fill();ctx.stroke();}}
-    if(id==='bee'){ctx.globalAlpha=0.5;for(const sx of [-1,1]){ctx.beginPath();ctx.ellipse(sx*r*0.6,-r*0.8,r*0.5,r*0.25,sx*0.5,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;}
-    if(id==='turtle'){ctx.beginPath();ctx.arc(0,0,r,Math.PI,0);ctx.fill();ctx.stroke();ctx.fillStyle='#8a6a40';ctx.beginPath();ctx.arc(0,0,r*0.6,Math.PI,0);ctx.fill();}
-    else if(id==='slime'){ctx.globalAlpha=0.85;ctx.beginPath();ctx.ellipse(0,r*0.1,r*1.1,r*0.8,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.globalAlpha=1;}
-    else{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();}
-    if(id!=='turtle'){ctx.fillStyle='#111';ctx.beginPath();ctx.arc(-r*0.35,-r*0.1,r*0.13,0,Math.PI*2);ctx.arc(r*0.35,-r*0.1,r*0.13,0,Math.PI*2);ctx.fill();}
-    if(p.petCollar){const c=PETS.find(x=>x.id===p.petCollar);if(c){ctx.strokeStyle=RARITY[c.rar].color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,r*0.2,r*0.85,Math.PI*0.15,Math.PI*0.85);ctx.stroke();}}
+    const C=lk.col;ctx.fillStyle=C;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;
+    const eyes=(y,sp)=>{ctx.fillStyle='#111';ctx.beginPath();ctx.arc(-r*0.35,y,r*sp,0,Math.PI*2);ctx.arc(r*0.35,y,r*sp,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;};
+    const body=()=>{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();};
+    if(id==='l_dog'){ // 垂れ耳の犬
+      body();ctx.fillStyle='#8a5a30';ctx.beginPath();ctx.ellipse(-r*0.85,-r*0.1,r*0.35,r*0.6,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(r*0.85,-r*0.1,r*0.35,r*0.6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;eyes(-r*0.1,0.13);
+      ctx.fillStyle='#222';ctx.beginPath();ctx.arc(0,r*0.35,r*0.14,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
+    }else if(id==='l_cat'){ // 猫：三角の耳とヒゲ
+      for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(sx*r*0.7,-r*0.4);ctx.lineTo(sx*r*0.85,-r*1.1);ctx.lineTo(sx*r*0.2,-r*0.8);ctx.closePath();ctx.fill();ctx.stroke();}
+      body();eyes(-r*0.1,0.13);ctx.strokeStyle='#333';ctx.lineWidth=1;for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(sx*r*0.5,r*0.2);ctx.lineTo(sx*r*1.1,r*0.1);ctx.stroke();}
+      ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;
+    }else if(id==='l_hedgehog'){ // ハリネズミ：背中のトゲ
+      for(let i=0;i<7;i++){const a=Math.PI*(0.1+i*0.13);ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.6,-Math.sin(a)*r*0.6);ctx.lineTo(Math.cos(a)*r*1.25,-Math.sin(a)*r*1.25);ctx.lineWidth=2.5;ctx.stroke();}
+      ctx.lineWidth=1.5;body();eyes(0,0.11);ctx.fillStyle='#222';ctx.beginPath();ctx.arc(0,r*0.45,r*0.13,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
+    }else if(id==='l_penguin'){ // ペンギン：白いお腹とくちばし
+      body();ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,r*0.2,r*0.6,r*0.7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;eyes(-r*0.2,0.12);
+      ctx.fillStyle='#ffb040';ctx.beginPath();ctx.moveTo(-r*0.2,r*0.2);ctx.lineTo(r*0.2,r*0.2);ctx.lineTo(0,r*0.5);ctx.closePath();ctx.fill();ctx.fillStyle=C;
+    }else if(id==='l_dragon'){ // チビドラゴン：小さな翼としっぽ
+      for(const sx of [-1,1]){ctx.fillStyle='#f8a0b8';ctx.beginPath();ctx.moveTo(sx*r*0.5,-r*0.2);ctx.lineTo(sx*r*1.4,-r*0.9);ctx.lineTo(sx*r*0.8,r*0.1);ctx.closePath();ctx.fill();ctx.stroke();}
+      ctx.fillStyle=C;ctx.beginPath();ctx.moveTo(0,r*0.6);ctx.quadraticCurveTo(r*1.3,r*0.9,r*1.1,r*0.2);ctx.lineWidth=2.5;ctx.stroke();ctx.lineWidth=1.5;
+      body();eyes(-r*0.1,0.13);
+    }else if(id==='l_turtle'){ // 亀：甲羅
+      ctx.beginPath();ctx.ellipse(0,0,r*1.1,r*0.9,0,0,Math.PI*2);ctx.fillStyle='#8a6a40';ctx.fill();ctx.stroke();
+      ctx.fillStyle='#c0a060';ctx.beginPath();ctx.ellipse(0,0,r*0.6,r*0.45,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=C;ctx.beginPath();ctx.arc(0,-r*1.0,r*0.4,0,Math.PI*2);ctx.fill();ctx.stroke();eyes(-r*1.05,0.1);
+    }else if(id==='l_ghost'){ // 小さなオバケ：ゆらゆらの裾
+      ctx.globalAlpha=0.9;ctx.beginPath();ctx.arc(0,-r*0.2,r,Math.PI,0);ctx.lineTo(r,r*0.9);
+      for(let i=0;i<4;i++){ctx.lineTo(r-(i+0.5)*(2*r/4),r*(i%2?0.5:1.1));}
+      ctx.lineTo(-r,r*0.9);ctx.closePath();ctx.fill();ctx.stroke();ctx.globalAlpha=1;eyes(-r*0.2,0.14);
+      ctx.fillStyle='#111';ctx.beginPath();ctx.ellipse(0,r*0.35,r*0.2,r*0.15,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
+    }else if(id==='l_hamster'){ // ハムスター：ほっぺ
+      body();ctx.fillStyle='#f8c8a0';ctx.beginPath();ctx.arc(-r*0.7,r*0.3,r*0.35,0,Math.PI*2);ctx.arc(r*0.7,r*0.3,r*0.35,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
+      ctx.beginPath();ctx.arc(-r*0.5,-r*0.85,r*0.22,0,Math.PI*2);ctx.arc(r*0.5,-r*0.85,r*0.22,0,Math.PI*2);ctx.fill();ctx.stroke();eyes(-r*0.1,0.12);
+    }else if(id==='l_bird'){ // 小鳥：くちばしと羽
+      body();ctx.fillStyle='#ffb040';ctx.beginPath();ctx.moveTo(r*0.6,-r*0.1);ctx.lineTo(r*1.1,r*0.1);ctx.lineTo(r*0.6,r*0.3);ctx.closePath();ctx.fill();ctx.fillStyle=C;
+      ctx.fillStyle='#3a80d0';ctx.beginPath();ctx.ellipse(-r*0.2,r*0.2,r*0.4,r*0.25,-0.3,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;eyes(-r*0.2,0.12);
+    }else{body();}
+    if(p.petCollar){const c=PETS.find(x=>x.id===p.petCollar);if(c){ctx.strokeStyle=RARITY[c.rar].color;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,r*0.2,r*0.85,Math.PI*0.15,Math.PI*0.85);ctx.stroke();}}
     ctx.restore();
   },
   /** プレイヤーの体（装備によって見た目が変わる）。lk＝部位→装備ID */
@@ -9573,20 +9628,20 @@ const Ops={
   gacha(p,who,a){
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
-    const kind=pick(['collar','look']);
-    if(kind==='look'){
-      const pt=pick(PETS);
-      if(p.looks[pt.id]){p.coins=(p.coins||0)+1;return {changed:true,msg:`${pt.name}（見た目）がダブり → コイン +1`,color:'#ffd23a'};}
-      p.looks[pt.id]=true;
-      return {changed:true,msg:`${pt.name}（見た目）が仲間になった！`,color:'#5fe08a'};
+    const first=!p.gachaN;p.gachaN=(p.gachaN||0)+1;
+    if(first||RNG.next()*100<GACHA_PET_RATE){
+      const lk=pick(LOOKS);
+      if(p.looks[lk.id]){p.coins=(p.coins||0)+1;return {changed:true,msg:`${lk.name}（ペット）がダブり → コイン +1`,color:'#ffd23a',fx:{rar:'SSR',text:`${lk.name}（ペット）ダブり → コイン +1`}};}
+      p.looks[lk.id]=true;
+      return {changed:true,msg:`${lk.name}（ペット）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}が仲間になった！`}};
     }
     // 首輪はレア度で抽選してから種類を選ぶ
     let roll=RNG.next()*100,tier='N';
     for(const k of ['N','R','SR']){roll-=RARITY[k].w;if(roll<0){tier=k;break;}}
     const pt=pick(PETS.filter(x=>x.rar===tier));
-    if(p.pets[pt.id]){p.coins=(p.coins||0)+1;return {changed:true,msg:`${RARITY[tier].name}の${pt.name}の首輪がダブり → コイン +1`,color:'#ffd23a'};}
+    if(p.pets[pt.id]){p.coins=(p.coins||0)+1;return {changed:true,msg:`${RARITY[tier].name}の${pt.name}の首輪がダブり → コイン +1`,color:'#ffd23a',fx:{rar:tier,text:`${pt.name}の首輪（ダブり）→ コイン +1`}};}
     p.pets[pt.id]={level:1};
-    return {changed:true,msg:`${RARITY[tier].name}：${pt.name}の首輪を手に入れた！`,color:RARITY[tier].color};
+    return {changed:true,msg:`${RARITY[tier].name}：${pt.name}の首輪を手に入れた！`,color:RARITY[tier].color,fx:{rar:tier,text:`${pt.name}の首輪`}};
   },
   petEquip(p,who,a){
     if(!p.pets[a.id])return {};
@@ -10809,10 +10864,21 @@ const App={
 
   /* ---------- 装備操作 ---------- */
   /** 装備・製作の操作を実行する。オンライン参加者はホストに依頼し、結果のデータが届いたら画面を更新する */
+  /** ガチャの演出。レア度が高いほど大きく・長く出す */
+  gachaFx(rar,text){
+    try{
+      const el=document.createElement('div');
+      el.className='gfx gfx-'+rar;
+      el.innerHTML=`<div class="gfx-in"><div class="gfx-r">${RARITY[rar].name}</div><div class="gfx-t">${esc(text)}</div></div>`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),rar==='SSR'?2600:rar==='SR'?1800:1000);
+    }catch(e){}
+  },
   doOp(act,args){
     if(Net.role==='guest'){Net.send({t:'cmd',act,args});this.refreshPanel();return;}
     const r=Ops[act](this.profile,this.inv.who||0,args)||{};
     if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
+    if(r.fx)this.gachaFx(r.fx.rar,r.fx.text);
     if(r.sel)this.inv.sel=r.sel;
     if(r.cleared&&this.inv.sel===r.cleared)this.inv.sel=null;
     if(r.changed){this.syncPotions(Net.role?'p1':undefined);this.onEquipChanged();}
@@ -11127,18 +11193,18 @@ const App={
   },
   /** 装備画面の「ペット」枠（プレイヤーのみ） */
   petSlotHTML(){
-    const p=this.profile,lk=PETS.find(x=>x.id===p.equipped.look),pt=PETS.find(x=>x.id===p.equipped.pet);
+    const p=this.profile,lk=LOOKS.find(x=>x.id===p.equipped.look),pt=PETS.find(x=>x.id===p.equipped.pet);
     return `<div class="eqslot ${this.inv.filter==='look'?'sel':''}" data-act="filter" data-f="look"><span class="sl">ペット</span>${lk?`<span style="color:#9fe0ff">${lk.name}（見た目）</span>`:'<span class="muted">なし</span>'}</div>`
       +`<div class="eqslot ${this.inv.filter==='pet'?'sel':''}" data-act="filter" data-f="pet"><span class="sl">首輪</span>${pt?`<span style="color:#9fe0ff">${pt.name} Lv${p.pets[pt.id].level}</span>`:'<span class="muted">なし</span>'}</div>`;
   },
   lookListHTML(){
     const p=this.profile;
-    const own=PETS.filter(x=>p.looks[x.id]);
+    const own=LOOKS.filter(x=>p.looks[x.id]);
     if(!own.length)return '<div class="muted">まだペットの見た目がありません（ショップのガチャで出ます）</div>';
     return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="petSel" data-id="${x.id}"><span class="nm">${x.name}</span>${p.equipped.look===x.id?'<span class="tag">装備中</span>':''}</div>`).join('');
   },
   lookDetailHTML(){
-    const p=this.profile,id=this.inv.petSel,x=PETS.find(q=>q.id===id);
+    const p=this.profile,id=this.inv.petSel,x=LOOKS.find(q=>q.id===id);
     if(!x||!p.looks[id])return '<div class="muted">見た目を選ぶと詳細が出ます。</div>';
     const eq=p.equipped.look===id;
     return `<div class="iname">${x.name}（見た目）</div><div class="small muted" style="margin:6px 0">連れ歩くときの姿です。性能には影響しません。</div>
