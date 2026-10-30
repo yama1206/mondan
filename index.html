@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.18',date:'2026/10/30'};
+const GAME_VERSION={no:'1.19',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -988,6 +988,7 @@ const DATA={
     rhino_plate:{name:'鎧犀の甲板',color:'#9aa0a8',desc:'背中を覆う分厚い甲板。（風渡る草原）'},
     boar_tusk:{name:'猪の牙',color:'#f4ecd6',desc:'轟牙の大猪の鋭い牙。（風渡る草原）'},
     boar_hide:{name:'猪の毛皮',color:'#6a4a34',desc:'硬くて粗い毛皮。（風渡る草原）'},
+    queen_jelly:{name:'女王蜂の王乳',color:'#f0d070',desc:'毒霧の女王蜂だけが作る王乳。稀少素材。（毒霧の沼）'},
     worm_hide:{name:'大蚯蚓の皮',color:'#b07a8a',desc:'しなやかで粘りのある皮。（蒼流の水辺）'},
     bull_hide:{name:'暴角獣の革',color:'#9a7a4a',desc:'分厚くて丈夫な革。（風渡る草原）'},
     bwolf_core:{name:'黒狼の宝玉',color:'#b050ff',desc:'黒き古狼の力の源。稀少素材。（ステージ5）'},
@@ -1704,7 +1705,7 @@ const DATA={
     flower_dragon:{rarityBoost:2.0,rolls:[{type:'mat',id:'spider_silk',chance:0.9,min:1,max:2},{type:'mat',id:'toxic_gland',chance:0.5,min:1,max:1}]},
     hermit_crab:{rarityBoost:2.0,rolls:[{type:'mat',id:'hard_shell',chance:0.9,min:1,max:2},{type:'mat',id:'swamp_moss',chance:0.5,min:1,max:1}]},
     mud_whale:{rarityBoost:2.0,rolls:[{type:'mat',id:'mire_core',chance:0.9,min:1,max:2},{type:'mat',id:'slime_gel',chance:0.5,min:1,max:1}]},
-    queen_bee:{rarityBoost:2.0,rolls:[{type:'mat',id:'poison_spore',chance:0.9,min:1,max:2},{type:'mat',id:'toxic_gland',chance:0.5,min:1,max:1}]},
+    queen_bee:{rarityBoost:2.0,rolls:[{type:'mat',id:'queen_jelly',chance:1.0,min:1,max:2},{type:'mat',id:'poison_spore',chance:0.9,min:1,max:2},{type:'mat',id:'toxic_gland',chance:0.5,min:1,max:1}]},
     twin_shark:{rarityBoost:2.0,rolls:[{type:'mat',id:'hard_shell',chance:0.9,min:1,max:2},{type:'mat',id:'curse_powder',chance:0.5,min:1,max:1}]},
     mola_fish:{rarityBoost:2.0,rolls:[{type:'mat',id:'slime_gel',chance:0.9,min:1,max:2},{type:'mat',id:'hard_shell',chance:0.5,min:1,max:1}]},
     crystal_guardian:{rarityBoost:2.0,rolls:[{type:'mat',id:'crystal_shard',chance:0.9,min:1,max:2},{type:'mat',id:'cave_fang',chance:0.5,min:1,max:1}]},
@@ -2605,8 +2606,8 @@ const DATA={
     {id:'r_yado_lance',out:{type:'equip',id:'yado_lance'},cost:{hard_shell:2,croc_scale:1},stage:2},
     {id:'r_dorc_hammer',out:{type:'equip',id:'dorc_hammer'},cost:{mire_core:1,swamp_moss:2},stage:3},
     {id:'r_dorc_lance',out:{type:'equip',id:'dorc_lance'},cost:{slime_gel:2,croc_scale:2},stage:3},
-    {id:'r_hachi_shuriken',out:{type:'equip',id:'hachi_shuriken'},cost:{poison_spore:2,toxic_gland:1},stage:3},
-    {id:'r_hachi_bow',out:{type:'equip',id:'hachi_bow'},cost:{poison_spore:2,slime_gel:1},stage:3},
+    {id:'r_hachi_shuriken',out:{type:'equip',id:'hachi_shuriken'},cost:{queen_jelly:1,poison_spore:2},stage:3},
+    {id:'r_hachi_bow',out:{type:'equip',id:'hachi_bow'},cost:{queen_jelly:1,slime_gel:2},stage:3},
     {id:'r_shark_gs',out:{type:'equip',id:'shark_gs'},cost:{hard_shell:2,curse_powder:2},stage:4},
     {id:'r_shark_dual',out:{type:'equip',id:'shark_dual'},cost:{hard_shell:2,spider_silk:1},stage:4},
     {id:'r_mola_tachi',out:{type:'equip',id:'mola_tachi'},cost:{slime_gel:2,hard_shell:1},stage:4},
@@ -2652,11 +2653,11 @@ const DATA={
     {id:'r_dorc_arms',out:{type:'equip',id:'dorc_arms'},cost:{slime_gel:2,croc_scale:2},stage:3},
     {id:'r_dorc_waist',out:{type:'equip',id:'dorc_waist'},cost:{mire_core:1,slime_gel:2},stage:3},
     {id:'r_dorc_legs',out:{type:'equip',id:'dorc_legs'},cost:{swamp_moss:3,mire_core:1},stage:3},
-    {id:'r_hachi_head',out:{type:'equip',id:'hachi_head'},cost:{poison_spore:2,toxic_gland:1},stage:3},
-    {id:'r_hachi_body',out:{type:'equip',id:'hachi_body'},cost:{poison_spore:3,slime_gel:1},stage:3},
-    {id:'r_hachi_arms',out:{type:'equip',id:'hachi_arms'},cost:{toxic_gland:2,poison_spore:1},stage:3},
-    {id:'r_hachi_waist',out:{type:'equip',id:'hachi_waist'},cost:{poison_spore:2,slime_gel:2},stage:3},
-    {id:'r_hachi_legs',out:{type:'equip',id:'hachi_legs'},cost:{toxic_gland:1,poison_spore:2},stage:3},
+    {id:'r_hachi_head',out:{type:'equip',id:'hachi_head'},cost:{queen_jelly:2,toxic_gland:1},stage:3},
+    {id:'r_hachi_body',out:{type:'equip',id:'hachi_body'},cost:{queen_jelly:2,poison_spore:1,slime_gel:1},stage:3},
+    {id:'r_hachi_arms',out:{type:'equip',id:'hachi_arms'},cost:{queen_jelly:1,toxic_gland:2},stage:3},
+    {id:'r_hachi_waist',out:{type:'equip',id:'hachi_waist'},cost:{queen_jelly:1,slime_gel:2},stage:3},
+    {id:'r_hachi_legs',out:{type:'equip',id:'hachi_legs'},cost:{queen_jelly:1,poison_spore:2},stage:3},
     {id:'r_shark_head',out:{type:'equip',id:'shark_head'},cost:{hard_shell:2,curse_powder:2},stage:4},
     {id:'r_shark_body',out:{type:'equip',id:'shark_body'},cost:{hard_shell:3,spider_silk:1},stage:4},
     {id:'r_shark_arms',out:{type:'equip',id:'shark_arms'},cost:{curse_powder:2,hard_shell:1},stage:4},
