@@ -191,7 +191,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.73',date:'2026/10/29'};
+const GAME_VERSION={no:'0.74',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -213,6 +213,7 @@ const CONFIG={
   enemyAtkMult:1.5, // 敵の攻撃力の全体倍率（ボス・ザコ・中ボス・強化個体すべて。この値を新しい基準にする）
   killQuota:[1,1.3,1.6,1.9,2.2], // 討伐依頼の目標数の倍率（人数ごと）
   spawnRate:0.25, // 部屋や通路に置く魔物の数の倍率（ボス・中ボスは対象外）
+  slotRegularCap:3, // 枠雑魚（部屋の配置枠から出る雑魚）の、1つのフロアでの上限数（中ボスは対象外）
   // 中ボス（ザコの大きい版）：1回の探索に count 体。報酬は bonusRolls 回多く抽選＋ midboss の表
   midBoss:{hp:6,atk:1.55,size:1.6,count:[1,2],bonusRolls:2,exclude:['mushroom','shaman','cursed_knight']},
   chestChance:0.08, // 宝箱はとても珍しい：1回の探索で宝箱が置かれる確率（置かれても1つだけ。中身は豪華）
@@ -3440,11 +3441,20 @@ function spawnPack(w,m,rect,types,main,count,elite){
 function populateLayout(w,stage,quest,L){
   const m=w.map,goal=quest.goal,S=stage.enemySet,dens=stage.density??1;
   const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&(goal.type==='boss'||goal.type==='explore')));
+  // 枠雑魚（部屋の配置枠から出る雑魚）は、1つのフロアで合計3体まで。中ボスとその取り巻きは別扱いで数えない
+  let slotBudget=CONFIG.slotRegularCap;
   for(const rm of rooms){
     let elite=rm.def.elite||0;
     const types=(rm.def.spawn||[]).map(s=>s[0]);
-    // 枠ごとに、1割半の確率で3〜4体の群れ（魔物の総数は以前とほぼ同じ程度）
-    for(const [t,a,b] of (rm.def.spawn||[]))if(RNG.next()<0.15*dens)elite=spawnPack(w,m,rm.rect,types,t,randInt(3,4),elite);
+    // 枠ごとに、1割半の確率で群れ（残りの上限まで）
+    for(const [t,a,b] of (rm.def.spawn||[])){
+      if(slotBudget<=0)break;
+      if(RNG.next()<0.15*dens){
+        const before=w.enemies.length;
+        elite=spawnPack(w,m,rm.rect,types,t,Math.min(randInt(3,4),slotBudget),elite);
+        slotBudget-=w.enemies.length-before;
+      }
+    }
   }
   // 中ボス：道の部屋のどこかに、その部屋の魔物の大きい版。取り巻きの雑魚も一緒に湧く
   const mains=shuffle(rooms.filter(rm=>rm.kind==='main'));
