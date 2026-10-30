@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.15',date:'2026/10/30'};
+const GAME_VERSION={no:'1.16',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -238,7 +238,7 @@ const CONFIG={
 
 const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝手紙（モンハンのお守り）
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
-const ITEM_ORDER=['potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
+const ITEM_ORDER=['potion','good_potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 /** 持っている消耗品のID（ITEM_ORDER の順）。切り替えの輪や表示はこれだけを使う */
 const ownedItemIds=bag=>ITEM_ORDER.filter(id=>(bag[id]||0)>0);
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
@@ -371,6 +371,7 @@ const DATA={
   //             buff（stat＝atk/def、pct＝%、time＝秒、radius＝範囲）
   consumables:{
     potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（毒・呪いも治る）'},
+    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ffa0d0',effect:{type:'heal',ratio:0.6},desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）'},
     heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#7fe09a',effect:{type:'heal',ratio:0.3,radius:220},desc:'周囲の味方全員のHPを最大HPの30%回復（毒・呪いも治る）'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
@@ -1981,6 +1982,7 @@ const DATA={
   shop:[
     {id:'free_sword',name:'鉄の剣',desc:'無料。1人につき1度だけ買える（武器の持ち物に入る）',price:0,type:'equip',item:'iron_sword',once:true},
     {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
+    {id:'good_potion',name:'良い回復薬',desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
     {id:'heal_all',name:'癒しの香',desc:'周囲の味方全員のHPを最大HPの30%回復',price:60,type:'item',item:'heal_all'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:75,type:'item',item:'atk_horn'},
     {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:75,type:'item',item:'def_horn'},
