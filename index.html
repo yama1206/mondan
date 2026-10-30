@@ -112,6 +112,7 @@ body.pad #game{cursor:none}
 #touch .heal{right:128px;bottom:110px}
 #touch .cycle{right:98px;bottom:206px;width:58px;height:58px;font-size:11px}
 #touch .sheathe{right:18px;bottom:214px;width:58px;height:58px;font-size:11px}
+#touch .guard{right:206px;bottom:24px}
 #touch .menu{right:12px;top:12px;width:70px;height:36px;border-radius:10px;font-size:12px}
 body.touch #game{cursor:default}
 #touch{opacity:var(--to,0.85)}
@@ -136,6 +137,7 @@ body.touch-edit #touch .tb,body.touch-edit #touch .stick{pointer-events:auto;out
   #touch .skill{right:var(--r);bottom:calc(var(--b) + var(--u)*1.7)}
   #touch .cycle{right:calc(var(--r) + var(--u)*1.7);bottom:calc(var(--b) + var(--u)*2.2);width:calc(var(--u)*0.85);height:calc(var(--u)*0.85)}
   #touch .sheathe{right:var(--r);bottom:calc(var(--b) + var(--u)*2.9);width:calc(var(--u)*0.85);height:calc(var(--u)*0.85)}
+  #touch .guard{right:calc(var(--r) + var(--u)*2.8);bottom:var(--b)}
   #touch .menu{right:max(8px,env(safe-area-inset-right,0px));top:8px;width:64px;height:32px;border-radius:10px;font-size:12px}
 }
 </style>
@@ -144,7 +146,7 @@ body.touch-edit #touch .tb,body.touch-edit #touch .stick{pointer-events:auto;out
 <canvas id="game"></canvas>
 <div id="touch"><div class="stick"><div class="knob"></div></div>
 <div class="tb atk" data-tk="attack">攻撃</div><div class="tb dodge" data-tk="dodge">回避</div>
-<div class="tb skill" data-tk="skill">スキル</div><div class="tb heal" data-tk="heal">回復</div>
+<div class="tb skill" data-tk="skill">スキル</div><div class="tb heal" data-tk="heal">回復</div><div class="tb guard" data-tk="guard">ガード</div>
 <div class="tb cycle" data-tk="cycle">持ち物</div><div class="tb sheathe" data-tk="sheathe">納刀</div>
 <div class="tb menu" data-tk="menu">メニュー</div></div>
 <div id="rotate"><div><div class="rot-icon">📱</div><p>横向きにしてプレイしてください</p><p class="small">スマホを横にすると、ゲームが始まります</p></div></div>
@@ -191,7 +193,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.75',date:'2026/10/29'};
+const GAME_VERSION={no:'0.76',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -320,11 +322,11 @@ const DATA={
      skill：Qキーのスキル（今は無し。DATA.skills のIDを入れると使える） */
   weaponTypes:{
     // 片手剣：攻撃中以外は、正面（前方120°）からのダメージを30%軽減（frontGuard）
-    sword:{ws:'medic',name:'片手剣',range:55,arc:110*Math.PI/180,frontGuard:{arc:120*Math.PI/180,mult:0.7},interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
-      marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い。攻撃中以外は正面からのダメージ30%軽減'},
-    greatsword:{ws:'fudou',name:'大剣',knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
+    sword:{ws:'medic',name:'片手剣',canGuard:true,range:55,arc:110*Math.PI/180,frontGuard:{arc:120*Math.PI/180,mult:0.7},interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
+      marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い。攻撃中以外は正面からのダメージ30%軽減。ガード長押しで構える（動きは極端に遅い）'},
+    greatsword:{ws:'fudou',name:'大剣',canGuard:true,knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
       charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
-      marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）'},
+      marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）。ガード長押しで構える（動きは極端に遅い）'},
     tachi:{ws:'iai',name:'太刀',range:62,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
@@ -334,9 +336,9 @@ const DATA={
     hammer:{ws:'gouwan',name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
-    lance:{ws:'taunt',name:'ランス',range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
+    lance:{ws:'taunt',name:'ランス',canGuard:true,range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
       frontGuard:{arc:120*Math.PI/180,mult:0.1}, // 盾：いつも向いている方向（前方120°）からの攻撃を90%カット
-      marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。構えている間は向いている方向の攻撃を90%カット（突いている間は盾が効かない）。納刀に1.1秒'},
+      marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。構えている間は向いている方向の攻撃を90%カット（突いている間は盾が効かない）。納刀に1.1秒。ガード長押しで構える（動きは極端に遅い）'},
     bow:{ws:'sokusha',name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
@@ -3680,7 +3682,10 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   // 大剣・ハンマーのチャージ中は被ダメージ半分／弓を装備中は被ダメージ1.5倍
   {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.hurtMult)dmg*=cw.hurtMult;else if(p.charging&&cw&&cw.charge)dmg*=wsActive(p,'fudou')?0.25:0.5;}
   // ランスの盾：向いている方向からの攻撃は大きく減らす（攻撃元の位置で判定）
-  if(wsActive(p,'taunt')&&!(p.swing>0))dmg*=0.1; // 挑発中は全方位90%ガード
+  if(p.guarding){ // ガード中：正面は大きく減らし、横・後ろも少し減らす
+    const fr=sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=GUARD_CFG.arc/2;
+    dmg*=fr?GUARD_CFG.frontMult:GUARD_CFG.sideMult;
+  }else if(wsActive(p,'taunt')&&!(p.swing>0))dmg*=0.1; // 挑発中は全方位90%ガード
   else if(p.stats.frontGuard&&!(p.swing>0)&&sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=p.stats.frontGuard.arc/2)dmg*=p.stats.frontGuard.mult;
   if(p.stats.effects.guard)dmg*=0.88;
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
@@ -3884,8 +3889,11 @@ function spawnDrop(w,x,y,loot){
 }
 
 /* ---------- プレイヤー ---------- */
-const EMPTY_INPUT={mx:0,my:0,attack:false,dodge:false,skill:false,heal:false,sheathe:false};
+const EMPTY_INPUT={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,heal:false,sheathe:false};
+// ガード（片手剣・大剣・ランス）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
+const GUARD_CFG={move:0.2,frontMult:0.4,sideMult:0.7,arc:120*Math.PI/180};
 function updatePlayer(w,p,inp,dt){
+  p.guarding=false;
   if(p.dead){p.using=null;p.charging=false;return;}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
@@ -3930,6 +3938,12 @@ function updatePlayer(w,p,inp,dt){
     moveEntity(w.map,p,p.dodgeDir.x*ds*dt,p.dodgeDir.y*ds*dt);
     return;
   }
+  // ガード：押している間だけ。抜刀していなければ抜く。攻撃・チャージ・アイテム使用中は構えられない
+  if(inp.guard&&wt&&wt.canGuard&&!p.sheathing&&!p.charging&&!p.using){
+    if(!p.drawn){p.drawn=true;emit(w,{type:'draw',pid:p.id,x:p.x,y:p.y});}
+    p.guarding=p.swing<=0;
+  }
+  if(p.guarding)inp={...inp,attack:false};
   let mx=inp.mx||0,my=inp.my||0;
   const len=Math.hypot(mx,my);
   if(len>0){mx/=len;my/=len;} // 斜め移動でも速度は一定
@@ -3940,6 +3954,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.swing>0)k=Math.min(k,0.6);
     if(p.charging&&wt.charge&&!wsActive(p,'gouwan'))k=Math.min(k,wt.charge.move);   // チャージ中はかなり遅く歩ける
     if(p.using)k=Math.min(k,P.itemWalk);                      // アイテム使用中はゆっくり歩ける
+    if(p.guarding)k=Math.min(k,GUARD_CFG.move);                // ガード中はかなり遅い
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
     if(w.map.tiles[Math.floor(p.y/TILE)*w.map.W+Math.floor(p.x/TILE)]===TILE_PUDDLE)k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
     if(w.blizzard&&w.blizzard.on)k*=0.92;                      // 吹雪：わずかに遅くなる（ほかの補正と掛け算で共存、終われば戻る）
@@ -5800,8 +5815,8 @@ function questTimeText(w){
 function playerName(p){return (p.info&&p.info.name)||((p.slot+1)+'P');}
 /** 操作デバイスごとのボタン表記 */
 const KEY_LABELS={
-  kbm:{dodge:'Space',skill:'Q',heal:'E',cycle:'R',sheathe:'F'},
-  pad:{dodge:'A',skill:'Y',heal:'LB',cycle:'RB',sheathe:'Y'},
+  kbm:{dodge:'Space',skill:'Q',heal:'E',cycle:'R',sheathe:'F',guard:'G（右クリック）'},
+  pad:{dodge:'A',skill:'Y',heal:'LB',cycle:'RB',sheathe:'Y',guard:'LT'},
   kb2:{dodge:'右Shift',skill:'/',heal:'.',cycle:',',sheathe:'/'},
 };
 const CONTROL_LINES={
@@ -7418,6 +7433,9 @@ const Renderer={
   drawPlayer(ctx,p){
     const r=p.r,s=p.stats;
     ctx.save();ctx.translate(p.x,p.y);
+    if(p.guarding&&!p.dead){ // ガード中：正面に構えの弧を出す
+      ctx.save();ctx.rotate(p.facing||0);ctx.strokeStyle='rgba(150,220,255,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,r+12,-GUARD_CFG.arc/2,GUARD_CFG.arc/2);ctx.stroke();ctx.restore();
+    }
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,r*0.75,r*1.1,r*0.42,0,0,TAU);ctx.fill();
     if(p.dead){ctx.globalAlpha=0.45;ctx.rotate(Math.PI/2);}
     if(p.hitInv>0&&Math.floor(this.time*20)%2===0)ctx.globalAlpha*=0.35;
@@ -8501,8 +8519,8 @@ const Input={
     });
     window.addEventListener('keyup',e=>{this.keys[e.code]=false;});
     window.addEventListener('mousemove',e=>{this.mouse.x=e.clientX;this.mouse.y=e.clientY;this.onMouse();});
-    cv.addEventListener('mousedown',e=>{if(e.button===0&&!this.isTouch){this.mouse.down=true;this.mouse.x=e.clientX;this.mouse.y=e.clientY;this.onMouse();}});
-    window.addEventListener('mouseup',e=>{if(e.button===0)this.mouse.down=false;});
+    cv.addEventListener('mousedown',e=>{if(e.button===2&&!this.isTouch)this.mouse.rdown=true;if(e.button===0&&!this.isTouch){this.mouse.down=true;this.mouse.x=e.clientX;this.mouse.y=e.clientY;this.onMouse();}});
+    window.addEventListener('mouseup',e=>{if(e.button===0)this.mouse.down=false;if(e.button===2)this.mouse.rdown=false;});
     cv.addEventListener('contextmenu',e=>e.preventDefault());
     // マウスホイールで持ち物を切り替え
     cv.addEventListener('wheel',e=>{if(App.state==='playing'){e.preventDefault();this.edges.p1.cycle=e.deltaY<0?-1:1;}},{passive:false});
@@ -8510,9 +8528,9 @@ const Input={
     window.addEventListener('gamepadconnected',e=>this.onConnect(e.gamepad));
     window.addEventListener('gamepaddisconnected',e=>this.onDisconnect(e.gamepad));
   },
-  reset(){this.keys=Object.create(null);this.mouse.down=false;this.touch.mx=0;this.touch.my=0;this.touch.attack=false;this.consumeEdges();},
+  reset(){this.keys=Object.create(null);this.mouse.down=false;this.mouse.rdown=false;this.touch.mx=0;this.touch.my=0;this.touch.attack=false;this.touch.guard=false;this.consumeEdges();},
   /* ---------- スマホ・タブレット（画面の左にスティック、右にボタン） ---------- */
-  touch:{mx:0,my:0,attack:false},
+  touch:{mx:0,my:0,attack:false,guard:false},
   isTouch:false,touchRoot:null,
   /** 画面の操作は、このPCで操作する人（オンラインの参加者なら自分）に送る */
   // 自分の端末の操作は、ホストでも参加者でも常に 'p1' として読み取る（参加者の sample も 'p1' で呼ぶため。ここを参加者のpidにすると、スマホのスティックやボタンが届かない）
@@ -8575,9 +8593,10 @@ const Input={
         if(k==='menu'){App.onKey('Escape');return;}
         this.aimMode[this.touchPid()]='pad';
         if(k==='attack'){this.touch.attack=true;b.setPointerCapture(e.pointerId);}
+        else if(k==='guard'){this.touch.guard=true;b.setPointerCapture(e.pointerId);}
         else this.touchEdge(k);
       });
-      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;};
+      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;if(k==='guard')this.touch.guard=false;};
       b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
     });
   },
@@ -8718,8 +8737,8 @@ const Input={
         }else if(owner&&App.state==='playing'&&this.edges[owner]&&(S.rbT||0)<0.3)this.edges[owner].cycle=1;
         S.rbT=0;
       }
-      if(S.rbOpen){S.move={x:0,y:0};S.attack=false;}
-      else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];}
+      if(S.rbOpen){S.move={x:0,y:0};S.attack=false;S.guard=false;}
+      else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];S.guard=!!cur[6];}
       // 右スティックで向きを指定。倒していないときは移動方向を向く（攻撃中は向きを維持）
       if(S.rbOpen){/* ホイールを開いている間は向きを変えない */}
       else if(Math.hypot(rx,ry)>0.35){S.aim=Math.atan2(ry,rx);S.aimT=performance.now();}
@@ -8766,11 +8785,12 @@ const Input={
   },
   sample(pid,p){
     const k=this.keys,isP1=pid==='p1',kb2=this.coop&&this.assign.p2===null;
-    let mx=0,my=0,attack=false;
+    let mx=0,my=0,attack=false,guard=false;
     if(isP1){
       mx=(k.KeyD?1:0)-(k.KeyA?1:0);my=(k.KeyS?1:0)-(k.KeyW?1:0);
       if(!kb2&&mx===0&&my===0){mx=(k.ArrowRight?1:0)-(k.ArrowLeft?1:0);my=(k.ArrowDown?1:0)-(k.ArrowUp?1:0);}
       attack=this.mouse.down;
+      guard=!!(k.KeyG||this.mouse.rdown);
     }else if(kb2){
       mx=(k.ArrowRight?1:0)-(k.ArrowLeft?1:0);my=(k.ArrowDown?1:0)-(k.ArrowUp?1:0);
       attack=!!(k.Enter||k.NumpadEnter||k.Numpad0);
@@ -8781,11 +8801,12 @@ const Input={
       const S=this.padState[idx];
       if(mx===0&&my===0&&(S.move.x||S.move.y)){mx=S.move.x;my=S.move.y;} // スティックはアナログ（倒し具合で速度が変わる）
       attack=attack||S.attack;
+      guard=guard||!!S.guard;
       if(S.aim!==null&&S.aimT>aimT){aim=S.aim;aimT=S.aimT;}
     }
-    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;}
+    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;}
     const E=this.edges[pid]||newEdges();
-    const inp={mx,my,attack,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
+    const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
     if(p){
       if(isP1&&this.aimMode.p1==='mouse'){const wp=Renderer.screenToWorld(this.mouse.x,this.mouse.y);inp.aim=Math.atan2(wp.y-p.y,wp.x-p.x);}
       else if(this.aimMode[pid]==='pad'&&aim!==null)inp.aim=aim;
@@ -9338,7 +9359,7 @@ const Net={
     const d=this.inputs[pid];if(!d)return EMPTY_INPUT;
     const e=this.edges[pid]||{};
     const num=v=>clamp(Number(v)||0,-1,1);
-    const r={mx:num(d.mx),my:num(d.my),attack:!!d.attack,dodge:!!e.dodge,skill:!!e.skill,heal:!!e.heal,cycle:e.cycle||0,pick:typeof e.pick==='number'?e.pick:-1,sheathe:!!e.sheathe};
+    const r={mx:num(d.mx),my:num(d.my),attack:!!d.attack,guard:!!d.guard,dodge:!!e.dodge,skill:!!e.skill,heal:!!e.heal,cycle:e.cycle||0,pick:typeof e.pick==='number'?e.pick:-1,sheathe:!!e.sheathe};
     if(typeof d.aim==='number'&&isFinite(d.aim))r.aim=d.aim;
     this.edges[pid]=newEdges();
     return r;
@@ -9515,7 +9536,7 @@ const Net={
       this.sendT=0;
       const me=w.players[this.myPid];
       const inp=(App.state==='playing'&&me&&!me.dead)?Input.sample('p1',me):{mx:0,my:0,attack:false};
-      this.send({t:'i',mx:r3(inp.mx||0),my:r3(inp.my||0),attack:!!inp.attack,aim:typeof inp.aim==='number'?r3(inp.aim):undefined,
+      this.send({t:'i',mx:r3(inp.mx||0),my:r3(inp.my||0),attack:!!inp.attack,guard:!!inp.guard,aim:typeof inp.aim==='number'?r3(inp.aim):undefined,
         dodge:!!inp.dodge,skill:!!inp.skill,heal:!!inp.heal,cycle:inp.cycle|0,pick:typeof inp.pick==='number'?inp.pick:-1,sheathe:!!inp.sheathe});
       Input.consumeEdges();
     }
