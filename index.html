@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.02',date:'2026/10/30'};
+const GAME_VERSION={no:'1.03',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3919,13 +3919,17 @@ function damageEnemy(w,p,e,mult,src){
   if(e.hp<=0)killEnemy(w,e);
 }
 /** 矢の状態異常を付ける（ボスは効きにくい） */
+/** ボスの耐性：同じ種類の状態異常・閃光を受けるたびに効き目が縮む（0.75倍ずつ、下限0.25倍）。ボスごとに数えるので次の戦いではリセット */
+function bossResFactor(e,k){if(!e.boss)return 1;const n=(e.resCount||{})[k]||0;return Math.max(0.25,Math.pow(0.75,n));}
+function bossResHit(e,k){if(!e.boss)return;e.resCount=e.resCount||{};e.resCount[k]=(e.resCount[k]||0)+1;}
 function applyStatus(w,e,status){
   if(e.dead)return;
-  const boss=!!e.boss;
-  if(status==='poison'){e.poisonT=boss?4:6;e.poisonTick=1;e.poisonDmg=Math.max(4,Math.round(e.maxHp*(boss?0.012:0.03)));emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'毒',color:'#a8e040'});}
-  else if(status==='paralysis'){e.trapT=boss?2.2:4;e.trapKind='para';emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'麻痺',color:'#ffe040'});}
-  else if(status==='sleep'){e.sleepT=boss?4:7;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'睡眠',color:'#b898ff'});}
-  else if(status==='slow'){e.slowT=boss?2.5:5;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'鈍足',color:'#9ad8ff'});}
+  const boss=!!e.boss,f=bossResFactor(e,status);
+  bossResHit(e,status);
+  if(status==='poison'){e.poisonT=(boss?4:6)*f;e.poisonTick=1;e.poisonDmg=Math.max(4,Math.round(e.maxHp*(boss?0.012:0.03)));emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'毒',color:'#a8e040'});}
+  else if(status==='paralysis'){e.trapT=(boss?2.2:4)*f;e.trapKind='para';emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'麻痺',color:'#ffe040'});}
+  else if(status==='sleep'){e.sleepT=(boss?4:7)*f;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'睡眠',color:'#b898ff'});}
+  else if(status==='slow'){e.slowT=(boss?2.5:5)*f;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'鈍足',color:'#9ad8ff'});}
 }
 function killEnemy(w,e){
   e.dead=true;e.hp=0;
@@ -4123,7 +4127,7 @@ function applyItem(w,p,id){
     emit(w,{type:'flash',x:p.x,y:p.y,r:ef.radius});
     for(const e of w.enemies){
       if(e.dead||e.state==='sleep'||Math.hypot(e.x-p.x,e.y-p.y)>ef.radius||!lineOfSight(w.map,p.x,p.y,e.x,e.y))continue;
-      e.blindT=e.boss?ef.boss:ef.minion;e.wanderA=rand(0,TAU);
+      e.blindT=(e.boss?ef.boss*bossResFactor(e,'flash'):ef.minion);bossResHit(e,'flash');e.wanderA=rand(0,TAU);
       cancelEnemyAction(w,e);
       emit(w,{type:'blinded',x:e.x,y:e.y-e.r-10});
     }
