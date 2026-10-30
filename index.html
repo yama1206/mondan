@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.07',date:'2026/10/30'};
+const GAME_VERSION={no:'1.08',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1950,7 +1950,7 @@ const DATA={
     {id:1,name:'風渡る草原',desc:'開けた草原と、風に揺れる丈の長い草むら。獣たちの縄張りが点在する、冒険の始まりの地。最奥の「暴角の広場」には、角を持つ巨獣が待ち構えている。',
       enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'meadow_bull'},hp:1.0,atk:1.0,density:0.3,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'meadow'}, // density：魔物の出現数の倍率（1が標準）
     {id:2,name:'緑風の森林',desc:'風が木々を揺らす深い森。さまざまな魔物が潜み、最奥の「古森の広場」には森の主が棲みつく。',
-      enemySet:{melee:'goblin',ranged:'archer',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
+      enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
     {id:3,name:'腐毒の沼地',desc:'毒の霧がたちこめる沼地。足元の泥と、ぬめる水辺に気をつけて。最奥の「沼の中心」には、恐ろしい主が棲みついている。',
       enemySet:{melee:'leech',ranged:'carnivore_plant',boss:'hydra'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'swamp',bgm:'swamp'},
     {id:4,name:'蒼流の水辺',desc:'澄んだ川と、落ちる滝の音が響く水辺。水の底から雷の気配が漂う。最奥の「滝つぼ」には、水底を統べる主が潜んでいる。',
@@ -1988,7 +1988,7 @@ const DATA={
       boss:{id:'arena',name:'古森の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['forest_wolf',1,1]]},
       main:[
         {id:'path',name:'森の小道',spawn:[['goblin',3,4],['slime',0,1]]},
-        {id:'watch',name:'見張り台',spawn:[['goblin_archer',2,2],['archer',1,2],['goblin',1,1]],obstacle:'rocks'},
+        {id:'watch',name:'見張り台',spawn:[['goblin_archer',2,2],['goblin',1,1]],obstacle:'rocks'},
         {id:'trail',name:'獣道',spawn:[['forest_wolf',2,3]]},
         {id:'ruins',name:'苔むした遺跡',spawn:[['beetle',1,2],['slime',1,2],['mushroom',1,2]],obstacle:'pillars'},
         {id:'camp',name:'ゴブリンの野営地',spawn:[['goblin',2,3],['goblin_archer',1,2],['beetle',0,1]],obstacle:'rocks'},
@@ -2067,7 +2067,7 @@ const DATA={
         {id:'hollow',name:'雪の窪地',spawn:[['snow_monkey',0,1]],gather:[3,4]},
         {id:'cave2',name:'氷の洞穴',spawn:[['ice_beetle',1,1],['snow_fox',0,1]],elite:1,chest:1},
       ]},
-    crypt:{theme:'crypt',obstacle:'tombs',wander:['skeleton','wisp'],
+    crypt:{theme:'crypt',obstacle:'tombs',wander:['skeleton','wisp','archer'],
       start:{id:'entrance',name:'墓所の入口'},
       boss:{id:'arena',name:'冥府の祭壇',spawn:[['skeleton',2,3],['archer',1,2],['zombie',1,1]],obstacle:'pillars'},
       main:[
@@ -2098,7 +2098,7 @@ const DATA={
     {id:'m1_lizard',stage:1,after:'m1_bird',boss:'rock_lizard',name:'【強敵】岩肌の大蜥蜴',desc:'草原の岩場に、岩のような鱗の大蜥蜴が棲みついた。噛みつき・尻尾の振り回し・吐き出す岩に注意。',goal:{type:'boss'},reward:{gold:1100,mats:{lizard_scale:2,reinforce_orb:2},decos:1}},
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'ゴブリンの群れ',desc:'森にゴブリンが増えすぎている。12体退治してほしい。',goal:{type:'kill',target:'goblin',count:12},reward:{gold:240,mats:{goblin_hide:2,scrap_iron:1}}},
-    {id:'s1_archer',stage:2,key:true,name:'骨の弓兵',desc:'暗がりから矢を射るスケルトンアーチャーを8体倒せ。',goal:{type:'kill',target:'archer',count:8},reward:{gold:300,mats:{old_bone:3,arrowhead:1}}},
+    {id:'s1_bug',stage:2,key:true,name:'キノコと虫の退治',desc:'森に増えた毒胞子キノコと森甲虫を、合わせて10体退治してほしい。',goal:{type:'kill',target:'mushbug',count:10},reward:{gold:300,mats:{forest_mushroom:3,old_bone:1}}},
     {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'ゴブリンとスケルトンを合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:320,mats:{goblin_hide:2,old_bone:2}}},
     {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:800,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
     {id:'sw_frog',stage:3,key:true,name:'毒沼の討伐',desc:'沼地に潜む毒の蛙を12体倒せ。',goal:{type:'kill',target:'poison_frog',count:12},reward:{gold:360,mats:{toxic_gland:2}}},
@@ -3409,6 +3409,9 @@ function stageRoster(stage){
   return out;
 }
 /** 人数に応じた依頼の目標数（討伐依頼だけ人数で増える） */
+/** 討伐依頼の対象をまとめたもの（例：キノコか虫）。単独の魔物の種類ではなく、いくつかの種類を数える */
+const QUEST_GROUPS={mushbug:{name:'キノコか虫',types:['mushroom','beetle']}};
+function questTypeMatch(g,t){if(g.target==='any')return true;const grp=QUEST_GROUPS[g.target];return grp?grp.types.includes(t):g.target===t;}
 function questNeed(g,np){
   if(g.type!=='kill')return g.count;
   return Math.round(g.count*CONFIG.killQuota[clamp(np||1,1,5)-1]);
@@ -3423,7 +3426,7 @@ function partySize(){return (typeof Net!=='undefined'&&Net.role)?Math.max(1,Net.
 /** 依頼の目標を文章にする */
 function questGoalText(g,np){
   np=np||partySize();
-  if(g.type==='kill')return (g.target==='any'?'魔物':DATA.enemies[g.target].name)+'を'+questNeed(g,np)+'体討伐';
+  if(g.type==='kill')return (g.target==='any'?'魔物':(QUEST_GROUPS[g.target]?QUEST_GROUPS[g.target].name:DATA.enemies[g.target].name))+'を'+questNeed(g,np)+'体討伐';
   if(g.type==='chest')return '宝箱を'+g.count+'個開ける';
   if(g.type==='explore')return '自由に探索（いつでも帰れる）';
   return 'ボスを討伐';
@@ -3532,9 +3535,9 @@ function populateLayout(w,stage,quest,L){
   }
   // 討伐依頼は、目標数より少し多く対象が出るようにする（必ず達成できるように）
   if(goal.type==='kill'){
-    const match=e=>!e.boss&&(goal.target==='any'||e.type===goal.target);
-    const want=questNeed(goal,w.playerCount)+2,type=goal.target==='any'?S.melee:goal.target;
-    for(let guard=0;w.enemies.filter(match).length<want&&guard<60;guard++){const p=randomFloor(m,pick(rooms).rect,2);if(p)spawnHerd(w,m,p.x,p.y,[type],type,2);}
+    const match=e=>!e.boss&&questTypeMatch(goal,e.type);
+    const want=questNeed(goal,w.playerCount)+2,grp=QUEST_GROUPS[goal.target];
+    for(let guard=0;w.enemies.filter(match).length<want&&guard<60;guard++){const type=grp?pick(grp.types):(goal.target==='any'?S.melee:goal.target);const p=randomFloor(m,pick(rooms).rect,2);if(p)spawnHerd(w,m,p.x,p.y,[type],type,2);}
   }
   // 宝箱：「必ず置く」部屋から先に、残りは道や寄り道の部屋へ。出現は確率制（宝箱の依頼に必要な数だけは必ず置く）
   const need=goal.type==='chest'?goal.count:0,nChests=Math.max(need,Math.random()<CONFIG.chestChance?1:0),order=[];
@@ -3598,10 +3601,11 @@ function populate(w,stage,quest){
   for(const [tx,ty] of amb)spawnEnemy(w,RNG.next()<0.3?A:M,(tx+0.5)*TILE,(ty+0.5)*TILE);
   // 討伐依頼は、目標数より少し多く対象が出るようにする（必ず達成できるように）
   if(goal.type==='kill'){
-    const match=e=>!e.boss&&(goal.target==='any'||e.type===goal.target);
-    const want=questNeed(goal,w.playerCount)+2,type=goal.target==='any'?M:goal.target;
+    const match=e=>!e.boss&&questTypeMatch(goal,e.type);
+    const want=questNeed(goal,w.playerCount)+2,grp=QUEST_GROUPS[goal.target];
     const rooms=goal.type!=='boss'?['north','south','hub','boss']:['north','south','hub'];
     for(let guard=0;w.enemies.filter(match).length<want&&guard<40;guard++){
+      const type=grp?pick(grp.types):(goal.target==='any'?M:goal.target);
       const p=randomFloor(m,R[pick(rooms)],2);if(p)spawnEnemy(w,type,p.x,p.y);
     }
   }
@@ -3950,7 +3954,7 @@ function killEnemy(w,e){
     if(!e.summoned&&!e.revived&&!e.mid&&d.ai!=='shaman'){w.corpses.push({x:e.x,y:e.y,type:e.type,elite:e.elite,t:w.time,used:false});if(w.corpses.length>30)w.corpses.shift();}
     if(!e.summoned)w.quest.killed++;
     w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
-    if(g.type==='kill'&&(g.target==='any'||g.target===e.type))questProgress(w,1);
+    if(g.type==='kill'&&questTypeMatch(g,e.type))questProgress(w,1);
   }
 }
 function spawnDrop(w,x,y,loot){
@@ -9157,7 +9161,7 @@ function validateData(){
   }
   for(const q of Q){
     bad(S.some(s=>s.id===q.stage),`依頼「${q.name}」：stage ${q.stage} がありません`);
-    if(q.goal&&q.goal.type==='kill')bad(q.goal.target==='any'||E[q.goal.target],`依頼「${q.name}」：討伐対象「${q.goal.target}」がありません`);
+    if(q.goal&&q.goal.type==='kill')bad(q.goal.target==='any'||QUEST_GROUPS[q.goal.target]||E[q.goal.target],`依頼「${q.name}」：討伐対象「${q.goal.target}」がありません`);
     if(q.boss)bad(E[q.boss],`依頼「${q.name}」：ボス「${q.boss}」がありません`);
     if(q.after)bad(Q.some(x=>x.id===q.after),`依頼「${q.name}」：前提の依頼「${q.after}」がありません`);
     for(const m in ((q.reward||{}).mats||{}))bad(M[m],`依頼「${q.name}」：報酬の素材「${m}」がありません`);
