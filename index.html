@@ -44,6 +44,9 @@ button.danger:hover{background:#6e2a3a}
 .modalbox{width:min(440px,92vw);text-align:center;line-height:1.7}
 .inv-panel{width:min(1180px,97vw);height:min(720px,94vh);display:flex;flex-direction:column;padding:14px}
 .inv-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.who-sel{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
+.who-sel button{padding:4px 10px}
+.who-sel button.on{background:#2d8a5a;color:#fff}
 .tabs{display:flex;gap:4px}
 .tab.on{background:#4a3d6e;border-color:#8a7ac0}
 .inv-meta{flex:1;text-align:right;color:#bdb5d6}
@@ -198,7 +201,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.23',date:'2026/10/30'};
+const GAME_VERSION={no:'1.24',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3007,6 +3010,10 @@ const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs
 const COMP_ROLES=['healer','tank','attacker'];
 const COMP_ROLE_NAME={healer:'ヒーラー',tank:'タンク',attacker:'アタッカー'};
 const COMP_COUNT=2, COMP_REVIVES=2, COMP_REVIVE_DELAY=3;
+/* 仲間の役割は固定：1人目ヒーラー、2人目タンク */
+const COMP_FIXED_ROLES=['healer','tank'];
+/* 仲間が出撃時に毎回持っている消耗品（プレイヤーの持ち物からは減らない） */
+const COMP_KIT={healer:{potion:6,good_potion:2},tank:{potion:4}};
 function charOf(profile,who){if(who>=2)return profile.companions[who-2];return who===1?profile.p2:profile;}
 const CHAR_COUNT=2;          // 1P・2P（ローカル）
 const CHAR_ALL=CHAR_COUNT+COMP_COUNT; // 装備を持つキャラの総数（1P・2P・仲間）
@@ -4110,18 +4117,13 @@ const EMPTY_INPUT={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,he
 const Companion={
   isId(pid){return typeof pid==='string'&&/^c\d+$/.test(pid);},
   idOf(i){return 'c'+i;},
-  /** 役割を正規化する：不正・重複を除き、必ず COMP_COUNT 人分（異なる役割）にする */
-  normalizeRoles(list){
-    const out=[];
-    for(const c of (list||[]))if(c&&COMP_ROLES.includes(c.role)&&!out.includes(c.role))out.push(c.role);
-    for(const r of COMP_ROLES){if(out.length>=COMP_COUNT)break;if(!out.includes(r))out.push(r);}
-    return out.slice(0,COMP_COUNT);
-  },
+  /** 役割は固定（COMP_FIXED_ROLES）。保存データの役割は使わない */
+  normalizeRoles(){return COMP_FIXED_ROLES.slice(0,COMP_COUNT);},
   /** 出撃時に仲間を生成する */
   spawn(w,profile){
     for(let i=0;i<COMP_COUNT;i++){
-      const who=CHAR_COUNT+i,role=charOf(profile,who).role||COMP_ROLES[i];
-      const pl=addPlayer(w,Companion.idOf(i),computeStats(profile,null,who),null);
+      const who=CHAR_COUNT+i,role=COMP_FIXED_ROLES[i];
+      const pl=addPlayer(w,Companion.idOf(i),computeStats(profile,null,who),Object.assign({},COMP_KIT[role]));
       pl.info={name:COMP_ROLE_NAME[role]};
       pl.ai={who,role,revives:COMP_REVIVES,reviveT:-1};
     }
@@ -9470,6 +9472,7 @@ const Ops={
     const it=Profile.getItem(p,a.uid);if(!it)return {};
     const owner=Profile.equippedBy(p,a.uid);
     if(owner===who)return {};
+    if(owner>=0)charOf(p,owner).equipped[it.slot]=null; // 他のキャラが使っていたら付け替える
     charOf(p,who).equipped[it.slot]=it.uid;
     return {changed:true,msg:`<span style="color:${eqColor(it)}">${itemName(it)}</span> を装備しました`,color:eqColor(it)};
   },
@@ -9994,7 +9997,7 @@ function applyBossStyles(){
 }
 const App={
   profile:null,world:null,state:'camp',localId:'p1',returnState:'camp',settingsReturn:'camp',
-  inv:{tab:'equip',filter:'weapon',sel:null,decoPick:null},lastPlayers:1,inGame:false,
+  inv:{tab:'equip',filter:'weapon',sel:null,decoPick:null,who:0},lastPlayers:1,inGame:false,
   questSel:'s1_goblin',boardStage:1,boardFrom:'camp',facilityFrom:'camp',
   sessionLoot:[],sessionCounts:{},dirty:false,saveTimer:0,acc:0,last:0,lastResult:null,
   init(){
@@ -10126,7 +10129,8 @@ const App={
   /** 持ち物の数をプロフィールからワールドのキャラに写す（同じ画面の2人は同じ倉庫を共有） */
   syncPotions(pid){
     if(!this.world||this.world.mirror)return;
-    for(const id of Object.keys(this.world.players)){ // 仲間も含め、持ち物は共有の倉庫から
+    for(const id of Object.keys(this.world.players)){ // 持ち物は共有の倉庫から（仲間は出撃時の決まった持ち物のまま）
+      if(Companion.isId(id))continue;
       if(Net.role==='host'&&pid&&id!==pid)continue;
       const pr=this.profileFor(id);if(pr)this.world.players[id].bag=Object.assign(emptyBag(),pr.bag);
     }
@@ -10342,7 +10346,7 @@ const App={
         case 'gather':this.giveRewards(ev.table,'採取：','gather');break;
         case 'chest':this.giveRewards(ev.table,'宝箱：');break;
         case 'itemUsed':{
-          const pr=this.profileFor(ev.pid);
+          const pr=Companion.isId(ev.pid)?null:this.profileFor(ev.pid); // 仲間の消耗品は仲間自身の持ち物から減る
           if(pr){pr.bag[ev.item]=Math.max(0,(pr.bag[ev.item]||0)-1);this.syncPotions(ev.pid);Net.markProfile(ev.pid);}
           this.dirty=true;out=null;break;
         }
@@ -10642,6 +10646,7 @@ const App={
       case 'backSettings':this.goto(this.settingsReturn);break;
       case 'tab':this.inv.tab=ds.tab;this.inv.decoPick=null;this.renderInventory();break;
       case 'filter':this.inv.filter=ds.f;this.renderInventory();break;
+      case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'bulkMode':this.inv.bulk=!this.inv.bulk;this.inv.bulkSel=[];this.renderInventory();break;
       case 'bulkTog':{const p=this.profile,u=ds.uid;
         if(Profile.equippedBy(p,u)>=0){UI.notify('装備中のものは選べません','#ff8060',2);break;}
@@ -10697,7 +10702,7 @@ const App={
   /** 装備・製作の操作を実行する。オンライン参加者はホストに依頼し、結果のデータが届いたら画面を更新する */
   doOp(act,args){
     if(Net.role==='guest'){Net.send({t:'cmd',act,args});this.refreshPanel();return;}
-    const r=Ops[act](this.profile,0,args)||{};
+    const r=Ops[act](this.profile,this.inv.who||0,args)||{};
     if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
     if(r.sel)this.inv.sel=r.sel;
     if(r.cleared&&this.inv.sel===r.cleared)this.inv.sel=null;
@@ -10707,7 +10712,7 @@ const App={
   },
   onEquipChanged(){
     if(this.world&&!this.world.mirror){
-      for(const pid of this.playerIds())if(this.profileFor(pid)===this.profile)setPlayerStats(this.world,pid,computeStats(this.profile,null,this.whoFor(pid)));
+      for(const pid of Object.keys(this.world.players))if(this.profileFor(pid)===this.profile)setPlayerStats(this.world,pid,computeStats(this.profile,null,this.whoFor(pid)));
     }
     this.save();
   },
@@ -10962,6 +10967,7 @@ const App={
     const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品']];
     const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.decosTabHTML();
     UI.show(`<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
+      ${this.inv.tab==='equip'?this.whoSelectHTML():''}
       <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
       <div class="inv-body ${this.inv.tab==='equip'?'eq-body':''}">${body}</div></div>`);
   },
@@ -11001,8 +11007,14 @@ const App={
     return Profile.equippedBy(this.profile,uid)<0?'':'<span class="tag">装備中</span>';
   },
   ownerSuffix(item){return Profile.equippedBy(this.profile,item.uid)<0?'':'（装備中）';},
+  /** 装備画面で、装備を付ける相手（自分・仲間）を選ぶ */
+  whoSelectHTML(){
+    const p=this.profile,cur=this.inv.who||0;
+    const opts=[[0,'自分（1P）']].concat(p.companions.map((c,i)=>[CHAR_COUNT+i,'仲間：'+COMP_ROLE_NAME[c.role]]));
+    return `<div class="who-sel small">装備する相手：${opts.map(([w,n])=>`<button class="${cur===w?'on':''}" data-act="invWho" data-who="${w}">${n}</button>`).join('')}</div>`;
+  },
   equipTabHTML(){
-    const p=this.profile,who=0,ch=charOf(p,who),st=computeStats(p,null,who),f=this.inv.filter;
+    const p=this.profile,who=this.inv.who||0,ch=charOf(p,who),st=computeStats(p,null,who),f=this.inv.filter;
     const left=`<div class="col col-left" data-scroll="left"><div class="col-t">装備中</div>${SLOTS.map(sl=>{
       const it=Profile.getItem(p,ch.equipped[sl]);
       const sk=it&&sl!=='weapon'?skillPtsText(DATA.equipment[it.baseId].skills):'';
@@ -11031,9 +11043,9 @@ const App={
   /** 装備画面で、まだ装備していない装備品を選んだら「装備しますか？」と性能差を出して確認する */
   askEquip(uid){
     const p=this.profile,it=Profile.getItem(p,uid);if(!it)return;
-    const who=0,owner=Profile.equippedBy(p,uid);
+    const who=this.inv.who||0,owner=Profile.equippedBy(p,uid);
     if(owner===who)return;                       // すでに装備中
-    if(owner>=0&&it.slot==='weapon')return;      // 相手が使っている武器は取れない（詳細欄に表示）
+    if(owner>=0&&owner!==who&&it.slot==='weapon')return; // 相手が使っている武器は取れない（詳細欄に表示）
     const rar=eqRarity(it);
     const cmp=this.compareHTML(computeStats(p,null,who),computeStats(p,{[it.slot]:it},who),true);
     const effs=it.effects.map(e=>`<div class="eff"><b>${DATA.effects[e].name}</b>：${DATA.effects[e].desc}</div>`).join('');
@@ -11067,7 +11079,7 @@ const App={
     return h;
   },
   itemDetailHTML(it){
-    const p=this.profile,base=DATA.equipment[it.baseId],rar=eqRarity(it),who=0;
+    const p=this.profile,base=DATA.equipment[it.baseId],rar=eqRarity(it),who=this.inv.who||0;
     const owner=Profile.equippedBy(p,it.uid),eq=owner===who;
     let h=`<div class="iname" style="color:${rar.color}">${base.name}</div><div class="isub">${rar.name?rar.name+'・':''}${SLOT_NAMES[it.slot]}${base.wtype?'（'+DATA.weaponTypes[base.wtype].name+'）':''}　${this.equipTag(it.uid)}</div>`;
     {const sr=DATA.seriesRes[it.baseId==='fang_king'?'fang':it.baseId.split('_')[0]];
