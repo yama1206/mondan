@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.95',date:'2026/10/30'};
+const GAME_VERSION={no:'0.96',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3954,7 +3954,7 @@ function spawnDrop(w,x,y,loot){
 const EMPTY_INPUT={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,heal:false,sheathe:false};
 // ガード（片手剣・大剣・ランス）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
 const GUARD_CFG={move:0.2};
-/** 幽霊（復活できなくなった後）：壁をすり抜けて普通の歩きより速く動けるが、攻撃・アイテム・採取・被弾はない */
+/** 幽霊（復活できなくなった後）：普通の歩きより速く動けるが、壁は通れない。攻撃・アイテム・採取・被弾はない */
 function updateSpirit(w,p,inp,dt){
   p.guarding=false;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;
   let mx=inp.mx||0,my=inp.my||0;
@@ -3963,8 +3963,7 @@ function updateSpirit(w,p,inp,dt){
   if(!p.moving)return;
   mx/=len;my/=len;
   const spd=p.stats.speed*CONFIG.coop.ghostSpeed;
-  p.x=clamp(p.x+mx*spd*dt,TILE,(w.map.W-1)*TILE);
-  p.y=clamp(p.y+my*spd*dt,TILE,(w.map.H-1)*TILE);
+  moveEntity(w.map,p,mx*spd*dt,my*spd*dt); // 壁にはぶつかる（生きているときと同じ判定）
   p.facing=Math.atan2(my,mx);p.walk+=dt*spd/28;
 }
 function updatePlayer(w,p,inp,dt){
