@@ -214,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.30',date:'2026/10/30'};
+const GAME_VERSION={no:'1.31',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9985,7 +9985,7 @@ const Net={
     this.statT+=1/NET.SNAP_HZ;
     if(this.statT>=2){this.statT=0;full=true;}
     const s={t:'s',time:r1(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
-      players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
+      players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,look:p.petLook||null,collar:p.petCollar||null,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,ws:p.ws?{id:p.ws.id,t:r1(p.ws.t)}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
@@ -10338,6 +10338,7 @@ const App={
       pr.stats.sorties++;
       const pl=addPlayer(this.world,m.pid,computeStats(pr,null,0),pr.bag);
       pl.slot=slotOfPid(m.pid);
+      pl.petLook=pr.equipped.look||null;pl.petCollar=pr.equipped.pet||null; // ペット（見た目）と首輪は他の人にも見せる
     });
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
@@ -10352,6 +10353,7 @@ const App={
     const pr=m.profile;
     const pl=addPlayer(w,m.pid,computeStats(pr,null,0),pr.bag);
     pl.slot=slotOfPid(m.pid);
+    pl.petLook=pr.equipped.look||null;pl.petCollar=pr.equipped.pet||null;
     const h=w.players.p1;if(h){pl.x=h.x;pl.y=h.y;}
     delete Net.statCache[m.pid]; // 他の参加者にも新しいメンバーのステータスを送る
     this.refreshInfo();
