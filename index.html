@@ -193,7 +193,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.77',date:'2026/10/29'};
+const GAME_VERSION={no:'0.78',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -340,7 +340,7 @@ const DATA={
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。ガード長押しで構える（動きは極端に遅く、受けるダメージ80%軽減）。納刀に1.1秒'},
     bow:{ws:'sokusha',name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
-      charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
+      charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.25}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま。チャージ中の移動は遅い
       marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで3段階チャージして射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
     shuriken:{ws:'inmitsu',name:'手裏剣',range:100,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       shuriken:{speed:500,shots:2,side:7,weakMult:2.2}, // 手裏剣：速さ（px/秒）、1回に投げる枚数、横にずらす間隔。飛ぶ距離は range（リーチ）。まっすぐ飛ぶ
@@ -8525,7 +8525,7 @@ const Input={
   },
   reset(){this.keys=Object.create(null);this.mouse.down=false;this.mouse.rdown=false;this.touch.mx=0;this.touch.my=0;this.touch.attack=false;this.touch.guard=false;this.consumeEdges();},
   /* ---------- スマホ・タブレット（画面の左にスティック、右にボタン） ---------- */
-  touch:{mx:0,my:0,attack:false,guard:false},
+  touch:{mx:0,my:0,attack:false,guard:false,swipeAng:null,sx:0,sy:0},
   isTouch:false,touchRoot:null,
   /** 画面の操作は、このPCで操作する人（オンラインの参加者なら自分）に送る */
   // 自分の端末の操作は、ホストでも参加者でも常に 'p1' として読み取る（参加者の sample も 'p1' で呼ぶため。ここを参加者のpidにすると、スマホのスティックやボタンが届かない）
@@ -8587,11 +8587,13 @@ const Input={
         e.preventDefault();b.classList.add('on');
         if(k==='menu'){App.onKey('Escape');return;}
         this.aimMode[this.touchPid()]='pad';
-        if(k==='attack'){this.touch.attack=true;b.setPointerCapture(e.pointerId);}
+        if(k==='attack'){this.touch.attack=true;this.touch.sx=e.clientX;this.touch.sy=e.clientY;this.touch.swipeAng=null;b.setPointerCapture(e.pointerId);}
         else if(k==='guard'){this.touch.guard=true;b.setPointerCapture(e.pointerId);}
         else this.touchEdge(k);
       });
-      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;if(k==='guard')this.touch.guard=false;};
+      // 攻撃ボタンを押したまま指を動かすと、押した位置からの向きで攻撃方向を決める
+      if(k==='attack')b.addEventListener('pointermove',e=>{if(!this.touch.attack)return;const dx=e.clientX-this.touch.sx,dy=e.clientY-this.touch.sy;if(Math.hypot(dx,dy)>=18)this.touch.swipeAng=Math.atan2(dy,dx);});
+      const up=()=>{b.classList.remove('on');if(k==='attack'){this.touch.attack=false;this.touch.swipeAng=null;}if(k==='guard')this.touch.guard=false;};
       b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
     });
   },
@@ -8799,7 +8801,7 @@ const Input={
       guard=guard||!!S.guard;
       if(S.aim!==null&&S.aimT>aimT){aim=S.aim;aimT=S.aimT;}
     }
-    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;}
+    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.attack&&this.touch.swipeAng!=null)aim=this.touch.swipeAng;}
     const E=this.edges[pid]||newEdges();
     const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
     if(p){
