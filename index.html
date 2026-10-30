@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.94',date:'2026/10/30'};
+const GAME_VERSION={no:'0.95',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -227,7 +227,7 @@ const CONFIG={
   pickupRadius:26,magnetRadius:80,
   difficulty:{hpPerClear:0.18,atkPerClear:0.10,maxHp:3.0,maxAtk:2.2},
   // 同じ画面での協力プレイ
-  coop:{hpPerExtraPlayer:0.5,leash:640,reviveRadius:20,reviveTime:5,reviveHpRatio:0.35,reviveWait:30},
+  coop:{hpPerExtraPlayer:0.5,leash:640,reviveRadius:20,reviveTime:5,reviveHpRatio:0.35,reviveWait:30,ghostSpeed:1.6},
   // reviveRadius：倒れた仲間と重なっているとみなす距離／reviveTime：重なって動かずにいる秒数／reviveWait：蘇生を待てる秒数（過ぎると力尽きる）
   // 視野：プレイヤーから radius まで、壁に遮られない範囲だけが見える。
   // radius はスケルトンアーチャーの射程(420)より長くし、見えない敵から一方的に撃たれないようにしている
@@ -3954,8 +3954,22 @@ function spawnDrop(w,x,y,loot){
 const EMPTY_INPUT={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,heal:false,sheathe:false};
 // ガード（片手剣・大剣・ランス）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
 const GUARD_CFG={move:0.2};
+/** 幽霊（復活できなくなった後）：壁をすり抜けて普通の歩きより速く動けるが、攻撃・アイテム・採取・被弾はない */
+function updateSpirit(w,p,inp,dt){
+  p.guarding=false;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;
+  let mx=inp.mx||0,my=inp.my||0;
+  const len=Math.hypot(mx,my);
+  p.moving=len>0;
+  if(!p.moving)return;
+  mx/=len;my/=len;
+  const spd=p.stats.speed*CONFIG.coop.ghostSpeed;
+  p.x=clamp(p.x+mx*spd*dt,TILE,(w.map.W-1)*TILE);
+  p.y=clamp(p.y+my*spd*dt,TILE,(w.map.H-1)*TILE);
+  p.facing=Math.atan2(my,mx);p.walk+=dt*spd/28;
+}
 function updatePlayer(w,p,inp,dt){
   p.guarding=false;
+  if(p.dead&&p.out){updateSpirit(w,p,inp,dt);return;}
   if(p.dead){p.using=null;p.charging=false;return;}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
@@ -5250,7 +5264,7 @@ function enforceLeash(w,before){
   for(const p of ps){
     if(p.dead)continue;
     for(const q of ps){
-      if(q===p)continue;
+      if(q===p||(q.dead&&q.out))continue; // 幽霊は仲間を引っぱらない
       const dx=p.x-q.x,dy=p.y-q.y,d=Math.hypot(dx,dy);
       if(d<=w.leash)continue;
       const b=before[p.id],qb=before[q.id];
@@ -7546,7 +7560,8 @@ const Renderer={
       ctx.save();ctx.strokeStyle='rgba(150,220,255,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,r+12,0,TAU);ctx.stroke();ctx.restore();
     }
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,r*0.75,r*1.1,r*0.42,0,0,TAU);ctx.fill();
-    if(p.dead){ctx.globalAlpha=0.45;ctx.rotate(Math.PI/2);}
+    if(p.dead&&p.out){ctx.globalAlpha=0.35;} // 幽霊：半透明で立ったまま
+    else if(p.dead){ctx.globalAlpha=0.45;ctx.rotate(Math.PI/2);}
     if(p.hitInv>0&&Math.floor(this.time*20)%2===0)ctx.globalAlpha*=0.35;
     if(p.dodgeTime>0)ctx.globalAlpha*=0.6;
     if(p.dodgeInv>0&&!p.dead){ctx.strokeStyle='rgba(120,220,255,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,r+5,0,TAU);ctx.stroke();}
@@ -7849,7 +7864,7 @@ const Renderer={
       ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(nm,p.x,p.y-r-14);
       ctx.fillStyle=pc.label;ctx.fillText(nm,p.x,p.y-r-14);
       if(p.dead){
-        if(p.out){ctx.fillStyle='#ff8080';ctx.font=`bold 11px ${FONT}`;ctx.strokeText('力尽きた',p.x,p.y+r+18);ctx.fillText('力尽きた',p.x,p.y+r+18);}
+        if(p.out){ctx.fillStyle='#ff8080';ctx.font=`bold 11px ${FONT}`;ctx.strokeText('幽霊',p.x,p.y+r+18);ctx.fillText('幽霊',p.x,p.y+r+18);}
         else{
           const need=p.reviveNeed||CONFIG.coop.reviveTime,k=clamp(p.revive/need,0,1),left=Math.ceil(p.downT||0);
           ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5;ctx.beginPath();ctx.arc(p.x,p.y,r+10,0,TAU);ctx.stroke();
@@ -7928,7 +7943,7 @@ const Renderer={
       ctx.fillStyle=p.dead?'#555':(hk>0.5?'#46c46a':(hk>0.25?'#e0b030':'#e04848'));ctx.fillRect(bx,by,bw*hk,18);
       ctx.strokeStyle='rgba(255,255,255,.3)';ctx.strokeRect(bx,by,bw,18);
       ctx.fillStyle='#fff';ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';
-      ctx.fillText(p.dead?'戦闘不能':`HP ${Math.ceil(p.hp)} / ${s.maxHp}`,bx+bw/2,by+9);
+      ctx.fillText(p.dead?(p.out?'幽霊':'戦闘不能'):`HP ${Math.ceil(p.hp)} / ${s.maxHp}`,bx+bw/2,by+9);
       if(sts.length){ctx.textAlign='left';ctx.font=`bold 12px ${FONT}`;let xx=x+10;for(const [t,c] of sts){ctx.fillStyle=c;ctx.fillText(t,xx,y+46);xx+=ctx.measureText(t).width+10;}}
       return;
     }
@@ -7941,7 +7956,7 @@ const Renderer={
     ctx.fillStyle=p.dead?'#555':(hk>0.5?'#46c46a':(hk>0.25?'#e0b030':'#e04848'));ctx.fillRect(bx,y+10,bw*hk,18);
     ctx.strokeStyle='rgba(255,255,255,.3)';ctx.strokeRect(bx,y+10,bw,18);
     ctx.fillStyle='#fff';ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';
-    ctx.fillText(p.dead?'戦闘不能':`HP ${Math.ceil(p.hp)} / ${s.maxHp}`,bx+bw/2,y+19);
+    ctx.fillText(p.dead?(p.out?'幽霊':'戦闘不能'):`HP ${Math.ceil(p.hp)} / ${s.maxHp}`,bx+bw/2,y+19);
     ctx.textAlign='left';ctx.fillStyle='#cfc7e6';ctx.font=`12px ${FONT}`;
     ctx.fillText(`攻撃 ${s.atk}  防御 ${s.def}  会心 ${s.crit}%  ${(1/s.attackInterval).toFixed(1)}回/秒`,x+10,y+46);
     ctx.fillStyle='#8a82a2';ctx.font=`11px ${FONT}`;
@@ -8017,7 +8032,7 @@ const Renderer={
     ctx.fillStyle='#8a82a2';ctx.font=`10px ${FONT}`;ctx.fillText('攻'+s.atk+' 防'+s.def,x+10,y+26);
     ctx.fillStyle='#3a1d22';ctx.fillRect(x+90,y+11,120,12);
     ctx.fillStyle=p.dead?'#555':(k>0.5?'#46c46a':(k>0.25?'#e0b030':'#e04848'));ctx.fillRect(x+90,y+11,120*k,12);
-    ctx.fillStyle='#fff';ctx.font=`bold 10px ${FONT}`;ctx.textAlign='center';ctx.fillText(p.dead?'戦闘不能':Math.ceil(p.hp)+'/'+s.maxHp,x+150,y+17);
+    ctx.fillStyle='#fff';ctx.font=`bold 10px ${FONT}`;ctx.textAlign='center';ctx.fillText(p.dead?(p.out?'幽霊':'戦闘不能'):Math.ceil(p.hp)+'/'+s.maxHp,x+150,y+17);
   },
   drawHUD(w,app){
     const ctx=this.ctx,W=this.w,H=this.h,settings=app.settings();
@@ -9671,7 +9686,7 @@ const Net={
     if(this.sendT>=1/NET.INPUT_HZ){
       this.sendT=0;
       const me=w.players[this.myPid];
-      const inp=(App.state==='playing'&&me&&!me.dead)?Input.sample('p1',me):{mx:0,my:0,attack:false};
+      const inp=(App.state==='playing'&&me&&(!me.dead||me.out))?Input.sample('p1',me):{mx:0,my:0,attack:false};
       this.send({t:'i',mx:r3(inp.mx||0),my:r3(inp.my||0),attack:!!inp.attack,guard:!!inp.guard,aim:typeof inp.aim==='number'?r3(inp.aim):undefined,
         dodge:!!inp.dodge,skill:!!inp.skill,heal:!!inp.heal,cycle:inp.cycle|0,pick:typeof inp.pick==='number'?inp.pick:-1,sheathe:!!inp.sheathe});
       Input.consumeEdges();
