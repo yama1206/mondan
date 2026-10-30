@@ -201,7 +201,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.24',date:'2026/10/30'};
+const GAME_VERSION={no:'1.25',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2962,6 +2962,7 @@ function computeStats(profile,override,who){
   s.perfectAtk=wt.perfect?wt.perfect.atkUp:0;
   s.healMult=(s.effects.medic?1.4:1)*(1+s.healPct/100);
   s.potionHeal=Math.round(s.maxHp*DATA.consumables.potion.effect.ratio*s.healMult);
+  applyPet(s,profile,who);
   return s;
 }
 
@@ -3003,7 +3004,7 @@ function skillPtsText(skills){
    素材・装備品・装飾品・回復薬は「パーティ共有の倉庫」。
    キャラクター固有のデータ（装備中アイテム）は
    1P = プロフィール直下（equipped）、2P = profile.p2 に持つ。 */
-const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null,charm:null});
+const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null,charm:null,pet:null}); // pet はプレイヤーのみ使う（SLOTS には入れない）
 /* 仲間（1人プレイの味方AI）：2人まで連れていける。役割は ヒーラー／タンク／アタッカー のうち2つ。
    仲間は who=2,3 のキャラとして装備を持つ（charOf）。将来の協力プレイでも同じ仕組みを使えるよう、
    仲間の操作は Companion.decide にまとめ、プレイヤー入力とは別の経路で動かす。 */
@@ -3014,6 +3015,32 @@ const COMP_COUNT=2, COMP_REVIVES=2, COMP_REVIVE_DELAY=3;
 const COMP_FIXED_ROLES=['healer','tank'];
 /* 仲間が出撃時に毎回持っている消耗品（プレイヤーの持ち物からは減らない） */
 const COMP_KIT={healer:{potion:6,good_potion:2},tank:{potion:4}};
+/* ペット：ガチャで出る（全10種・レア度なし）。プレイヤーだけがペット枠に1匹はめられる。
+   効果はマルチプレイで連れ歩いているときだけ乗る。stat：maxHpPct／atkPct／potionHealPct（％）、他は加算値 */
+const PETS=[
+  {id:'rabbit',name:'ウサギ',stat:'moveSpd',base:3,fmt:'移動速度 +{v}%'},
+  {id:'slime',name:'スライム',stat:'maxHpPct',base:3,fmt:'最大HP +{v}%'},
+  {id:'fox',name:'キツネ',stat:'crit',base:2,fmt:'会心率 +{v}%'},
+  {id:'owl',name:'フクロウ',stat:'critDmg',base:5,fmt:'会心ダメージ +{v}%'},
+  {id:'bee',name:'ミツバチ',stat:'potionHealPct',base:5,fmt:'回復薬の回復量 +{v}%'},
+  {id:'mole',name:'モグラ',stat:'def',base:2,fmt:'防御力 +{v}'},
+  {id:'cat',name:'ネコ',stat:'dodgeIframe',base:0.03,fmt:'回避後無敵 +{v}秒'},
+  {id:'turtle',name:'カメ',stat:'def',base:3,fmt:'防御力 +{v}'},
+  {id:'wolf',name:'オオカミ',stat:'atkPct',base:3,fmt:'攻撃力 +{v}%'},
+  {id:'dragonling',name:'子竜',stat:'atkPct',base:2,fmt:'攻撃力 +{v}%'},
+];
+const PET_MAX=5;
+const petValue=(pt,lv)=>pt.base*(1+0.25*(lv-1));
+function applyPet(s,profile,who){
+  if(who||!Net.role)return; // 仲間のペットは無し。ペットの効果はマルチプレイのみ
+  const id=profile.equipped&&profile.equipped.pet;if(!id||!profile.pets[id])return;
+  const pt=PETS.find(x=>x.id===id);if(!pt)return;
+  const v=petValue(pt,profile.pets[id].level);
+  if(pt.stat==='maxHpPct')s.maxHp=Math.round(s.maxHp*(1+v/100));
+  else if(pt.stat==='atkPct')s.atk=Math.round(s.atk*(1+v/100));
+  else if(pt.stat==='potionHealPct')s.potionHeal=Math.round(s.potionHeal*(1+v/100));
+  else s[pt.stat]=(s[pt.stat]||0)+v;
+}
 function charOf(profile,who){if(who>=2)return profile.companions[who-2];return who===1?profile.p2:profile;}
 const CHAR_COUNT=2;          // 1P・2P（ローカル）
 const CHAR_ALL=CHAR_COUNT+COMP_COUNT; // 装備を持つキャラの総数（1P・2P・仲間）
@@ -3022,6 +3049,7 @@ const Profile={
     return {materials:{},matSeen:{},items:[],decos:[],equipped:emptyEquip(),
       p2:{equipped:emptyEquip()},
       companions:[{role:'healer',equipped:emptyEquip()},{role:'tank',equipped:emptyEquip()}],
+      coins:0,pets:{},petEssence:0,
       bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
@@ -3109,7 +3137,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:14,
+  KEY:'kourou_dungeon_save',VERSION:15,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -3141,6 +3169,7 @@ const Save={
   /** バージョン間の移行処理。仕様変更時は migrations[旧バージョン] を追加する */
   migrate(data,v){
     const migrations={
+      14:d=>d, // 14 → 15：コイン・ペット・強化素材を追加（無ければ sanitize で0）
       13:d=>d, // 13 → 14：仲間（companions）を追加。無ければ sanitize で既定の役割と初期装備を支給
       0:d=>d, // version無しの旧形式 → 1
       1:d=>{d.p2=null;return d;}, // 1 → 2：2Pキャラを追加（sanitizeで初期装備を支給）
@@ -3237,6 +3266,12 @@ const Save={
     if(legacySwords)p.items=p.items.filter(i=>!(i.baseId==='iron_sword'&&Profile.equippedBy(p,i.uid)<0));
     if(p.p2&&p.p2.equipped&&!Profile.getItem(p,p.p2.equipped.weapon))p.p2.equipped.weapon=null;
     Profile.grantCompanionStarter(p);
+    // コイン・ペット
+    p.coins=Math.max(0,d.coins|0);p.petEssence=Math.max(0,d.petEssence|0);
+    p.pets={};
+    if(d.pets&&typeof d.pets==='object')for(const id in d.pets)if(PETS.some(x=>x.id===id))p.pets[id]={level:clamp((d.pets[id]&&d.pets[id].level)|0,1,PET_MAX)};
+    const eqPet=d.equipped&&d.equipped.pet;
+    p.equipped.pet=(eqPet&&p.pets[eqPet])?eqPet:null;
     return p;
   },
   reset(){try{localStorage.removeItem(this.KEY);}catch(e){}},
@@ -9505,6 +9540,27 @@ const Ops={
     Profile.attachDeco(p,a.uid,Number(a.idx)|0,a.deco||null);
     return {changed:true};
   },
+  gacha(p,who,a){
+    if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
+    p.coins-=3;
+    const pt=pick(PETS);
+    if(p.pets[pt.id]){p.petEssence=(p.petEssence||0)+1;return {changed:true,msg:`${pt.name}がダブり → 強化素材 +1`,color:'#c06bff'};}
+    p.pets[pt.id]={level:1};
+    return {changed:true,msg:`${pt.name}が仲間になった！`,color:'#5fe08a'};
+  },
+  petEquip(p,who,a){
+    if(!p.pets[a.id])return {};
+    p.equipped.pet=p.equipped.pet===a.id?null:a.id;
+    return {changed:true};
+  },
+  petUp(p,who,a){
+    const h=p.pets[a.id];if(!h)return {};
+    if(h.level>=PET_MAX)return {msg:'これ以上強化できません',color:'#888'};
+    const cost=h.level;
+    if((p.petEssence||0)<cost)return {msg:`強化素材が足りません（${cost}個必要）`,color:'#ff8060'};
+    p.petEssence-=cost;h.level++;
+    return {changed:true,msg:`${PETS.find(x=>x.id===a.id).name}を Lv${h.level} に強化しました`,color:'#c06bff'};
+  },
   buy(p,who,a){
     const s=DATA.shop.find(x=>x.id===a.id);if(!s)return {};
     if(s.stage&&QuestRules.stage(p)<s.stage)return {msg:'まだ購入できません',color:'#888'};
@@ -10160,7 +10216,7 @@ const App={
     Renderer.resetForWorld();
     Renderer.focusId=Net.role?(Net.role==='guest'?Net.myPid:'p1'):null;
     this.placeNotes(n);
-    this.sessionLoot=[];this.sessionCounts={};this.bossRewards={};this.runGains={};this.lostCount=0;
+    this.sessionLoot=[];this.sessionCounts={};this.bossRewards={};this.runGains={};this.runCoins={};this.lostCount=0;
     Items.lootStage=this.world?this.world.stageId:1;
     this.inGame=true;
     this.refreshInfo();
@@ -10219,6 +10275,8 @@ const App={
   /** 全滅したとき：この探索で手に入れた素材・装備・装飾品・お金を取り消す（ひとりでもマルチでも。誰かが生き残ってクリアすれば全員持ち帰れる） */
   revertRunGains(){
     let n=0;
+    for(const pid in (this.runCoins||{})){const pr=this.profileFor(pid)||this.profile;if(pr)pr.coins=Math.max(0,(pr.coins||0)-this.runCoins[pid]);}
+    this.runCoins={};
     for(const pid in (this.runGains||{})){
       const g=this.runGains[pid],p=this.profileFor(pid)||this.profile;if(!p)continue;
       for(const k in g.mats){const v=Math.min(g.mats[k],p.materials[k]||0);p.materials[k]=(p.materials[k]||0)-v;if(p.materials[k]<=0)delete p.materials[k];n+=v;}
@@ -10403,7 +10461,12 @@ const App={
   },
   /** ボス報酬はその場で抽選し、クリア画面でまとめて渡す（プレイヤーごとに個別抽選） */
   rollBossRewards(table){
-    for(const pid of this.rewardReceivers())this.bossRewards[pid]=Items.rollLoot(table,this.skillStatsFor(pid).rareBonus);
+    for(const pid of this.rewardReceivers()){
+      this.bossRewards[pid]=Items.rollLoot(table,this.skillStatsFor(pid).rareBonus);
+      const pr=this.profileFor(pid);
+      if(pr){pr.coins=(pr.coins||0)+1;(this.runCoins=this.runCoins||{})[pid]=((this.runCoins||{})[pid]||0)+1;Net.markProfile(pid);}
+      if(this.localInputPid(pid)||!Net.role)UI.notify('ボスを倒した！ コインを1つ獲得','#ffd23a',2.5);
+    }
   },
   /** 報酬に関わる防具スキル（採取強化・レア素材率アップ）の値。
       オンラインは参加者それぞれのスキル、同じ画面の2人は倉庫が共有なので2人のうち高い方 */
@@ -10647,6 +10710,10 @@ const App={
       case 'tab':this.inv.tab=ds.tab;this.inv.decoPick=null;this.renderInventory();break;
       case 'filter':this.inv.filter=ds.f;this.renderInventory();break;
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
+      case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
+      case 'gacha':this.doOp('gacha',{});break;
+      case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
+      case 'petUp':this.doOp('petUp',{id:ds.id});break;
       case 'bulkMode':this.inv.bulk=!this.inv.bulk;this.inv.bulkSel=[];this.renderInventory();break;
       case 'bulkTog':{const p=this.profile,u=ds.uid;
         if(Profile.equippedBy(p,u)>=0){UI.notify('装備中のものは選べません','#ff8060',2);break;}
@@ -10944,7 +11011,10 @@ const App={
   },
   shopTabHTML(){
     const p=this.profile,gold=p.gold||0;
-    return `<div class="col full" data-scroll="shop"><div class="col-t">商品</div>
+    const coins=p.coins||0;
+    const gacha=`<div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。出るペットは全10種・レア度なし。同じペットが出たら強化素材になります。</div>
+      <button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button></div>`;
+    return `<div class="col full" data-scroll="shop">${gacha}<div class="col-t">商品</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
@@ -11013,31 +11083,51 @@ const App={
     const opts=[[0,'自分（1P）']].concat(p.companions.map((c,i)=>[CHAR_COUNT+i,'仲間：'+COMP_ROLE_NAME[c.role]]));
     return `<div class="who-sel small">装備する相手：${opts.map(([w,n])=>`<button class="${cur===w?'on':''}" data-act="invWho" data-who="${w}">${n}</button>`).join('')}</div>`;
   },
+  /** 装備画面の「ペット」枠（プレイヤーのみ） */
+  petSlotHTML(){
+    const p=this.profile,pt=PETS.find(x=>x.id===p.equipped.pet);
+    return `<div class="eqslot ${this.inv.filter==='pet'?'sel':''}" data-act="filter" data-f="pet"><span class="sl">ペット</span>${pt?`<span style="color:#9fe0ff">${pt.name} Lv${p.pets[pt.id].level}</span>`:'<span class="muted">なし</span>'}</div>`;
+  },
+  petListHTML(){
+    const p=this.profile,own=PETS.filter(x=>p.pets[x.id]);
+    if(!own.length)return '<div class="muted">まだペットがいません（ショップのガチャで出ます）</div>';
+    return `<div class="small muted" style="margin-bottom:6px">強化素材 ${p.petEssence||0}個</div>`+own.map(x=>`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="petSel" data-id="${x.id}"><span class="nm">${x.name}</span><small>Lv${p.pets[x.id].level}</small>${p.equipped.pet===x.id?'<span class="tag">装備中</span>':''}</div>`).join('');
+  },
+  petDetailHTML(){
+    const p=this.profile,id=this.inv.petSel,x=PETS.find(q=>q.id===id);
+    if(!x||!p.pets[id])return '<div class="muted">ペットを選ぶと詳細が出ます。</div>';
+    const lv=p.pets[id].level,eq=p.equipped.pet===id,cost=lv;
+    return `<div class="iname">${x.name}</div><div class="isub">Lv${lv} / ${PET_MAX}　${eq?'<span class="tag">装備中</span>':''}</div>
+      <div class="eff">${x.fmt.replace('{v}',petValue(x,lv).toFixed(x.stat==='dodgeIframe'?2:1))}　（マルチプレイで連れ歩くと効果）</div>
+      ${lv<PET_MAX?`<div class="small muted">次のLv：${x.fmt.replace('{v}',petValue(x,lv+1).toFixed(x.stat==='dodgeIframe'?2:1))}</div>`:''}
+      <div style="margin-top:8px"><button data-act="petEquip" data-id="${id}">${eq?'枠から外す':'ペット枠にはめる'}</button>
+      <button data-act="petUp" data-id="${id}" ${lv<PET_MAX?'':'disabled'}>強化（素材 ${cost}個）</button></div>`;
+  },
   equipTabHTML(){
-    const p=this.profile,who=this.inv.who||0,ch=charOf(p,who),st=computeStats(p,null,who),f=this.inv.filter;
+    const p=this.profile,who=this.inv.who||0,ch=charOf(p,who),st=computeStats(p,null,who),f=(who!==0&&this.inv.filter==='pet')?'weapon':this.inv.filter;
     const left=`<div class="col col-left" data-scroll="left"><div class="col-t">装備中</div>${SLOTS.map(sl=>{
       const it=Profile.getItem(p,ch.equipped[sl]);
       const sk=it&&sl!=='weapon'?skillPtsText(DATA.equipment[it.baseId].skills):'';
       return it?`<div class="eqslot ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}"><span class="sl">${SLOT_NAMES[sl]}</span><span style="color:${eqColor(it)}">${itemName(it)}</span><small class="muted">${slotDots(it)}</small>${sk?`<div class="small" style="width:100%;color:#9ad8ff;padding-left:2.6em">${sk}</div>`:''}</div>`
         :`<div class="eqslot" data-act="filter" data-f="${sl}"><span class="sl">${SLOT_NAMES[sl]}</span><span class="muted">なし</span></div>`;
-    }).join('')}<div class="col-t">ステータス</div>${this.statsBlockHTML(st)}</div>`;
+    }).join('')}${who===0?this.petSlotHTML():''}<div class="col-t">ステータス</div>${this.statsBlockHTML(st)}</div>`;
     const order={weapon:0,head:1,body:2,arms:3,waist:4,legs:5};
-    const items=p.items.filter(i=>f==='all'||i.slot===f).sort((a,b)=>{
+    const items=(f==='pet'?[]:p.items.filter(i=>f==='all'||i.slot===f)).sort((a,b)=>{
       const rank=u=>{const o=Profile.equippedBy(p,u);return o===who?0:(o<0?1:2);};
       const ea=rank(a.uid),eb=rank(b.uid);
       return ea-eb||order[a.slot]-order[b.slot]||b.rarity-a.rarity||(b.atk+b.def)-(a.atk+a.def);
     });
     const bulk=!!this.inv.bulk,bsel=this.inv.bulkSel||[];
-    const filters=SLOTS.map(s=>[s,SLOT_NAMES[s]]);
+    const filters=SLOTS.map(s=>[s,SLOT_NAMES[s]]).concat(who===0?[['pet','ペット']]:[]);
     const mid=`<div class="col col-mid" data-scroll="mid"><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>
       <div class="small muted" style="margin-bottom:6px">所持装備 ${p.items.length}件　◇=空きスロット ◆=装飾品</div>
       ${this.bulkBarHTML(bulk)}${items.map(it=>`<div class="itemrow ${bulk?(bsel.includes(it.uid)?'sel':''):(it.uid===this.inv.sel?'sel':'')}" data-act="${bulk?'bulkTog':'selItem'}" data-uid="${it.uid}">${bulk?`<span class="bx">${bsel.includes(it.uid)?'☑':'☐'}</span>`:''}
         <span class="sl">${SLOT_NAMES[it.slot]}</span><span class="nm" style="color:${eqColor(it)}">${itemName(it)}</span>
         ${it.effects.length?'<span title="特殊効果あり" style="color:#ffcf6a">★</span>':''}
         <small>${it.slot==='weapon'?'攻'+it.atk+' 会'+it.crit+'%':it.slot==='charm'?skillPtsText(it.skills||{}):'防'+it.def}</small><small class="muted">${slotDots(it)}</small>
-        ${this.equipTag(it.uid)}</div>`).join('')||'<div class="muted">該当する装備がありません</div>'}</div>`;
+        ${this.equipTag(it.uid)}</div>`).join('')||(f==='pet'?this.petListHTML():'<div class="muted">該当する装備がありません</div>')}</div>`;
     const sel=Profile.getItem(p,this.inv.sel);
-    const right=`<div class="col col-right" data-scroll="right">${this.inv.decoPick?this.decoPickHTML():(sel?this.itemDetailHTML(sel):'<div class="muted">装備を選択すると詳細と性能比較が表示されます。</div>')}</div>`;
+    const right=`<div class="col col-right" data-scroll="right">${this.inv.decoPick?this.decoPickHTML():f==='pet'?this.petDetailHTML():(sel?this.itemDetailHTML(sel):'<div class="muted">装備を選択すると詳細と性能比較が表示されます。</div>')}</div>`;
     return left+mid+right;
   },
   /** 装備画面で、まだ装備していない装備品を選んだら「装備しますか？」と性能差を出して確認する */
