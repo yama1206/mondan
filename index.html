@@ -193,7 +193,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.76',date:'2026/10/29'};
+const GAME_VERSION={no:'0.77',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -321,12 +321,12 @@ const DATA={
      itemDelay：アイテム発動時間の増減(秒) charge：長押しチャージ perfect：ギリギリ回避の強化 stun：頭を叩いたときのスタン値
      skill：Qキーのスキル（今は無し。DATA.skills のIDを入れると使える） */
   weaponTypes:{
-    // 片手剣：攻撃中以外は、正面（前方120°）からのダメージを30%軽減（frontGuard）
-    sword:{ws:'medic',name:'片手剣',canGuard:true,range:55,arc:110*Math.PI/180,frontGuard:{arc:120*Math.PI/180,mult:0.7},interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
-      marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い。攻撃中以外は正面からのダメージ30%軽減。ガード長押しで構える（動きは極端に遅い）'},
-    greatsword:{ws:'fudou',name:'大剣',canGuard:true,knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
+    // 片手剣：ガード中の軽減率は35%
+    sword:{ws:'medic',name:'片手剣',guard:{mult:0.65},range:55,arc:110*Math.PI/180,interval:0.36,active:0.10,power:0.9,move:1.12,swing:0.2,itemDelay:-1.0,sheathe:0.3,
+      marks:{move:'◎',speed:'〇',power:'△',reach:'△'},feature:'アイテムの発動が1秒早い。ガード長押しで構える（動きは極端に遅く、受けるダメージ35%軽減）'},
+    greatsword:{ws:'fudou',name:'大剣',guard:{mult:0.5},knockback:true,range:70,arc:130*Math.PI/180,interval:0.9,active:0.12,power:1.0,move:0.82,swing:0.3,sheathe:1.1,
       charge:{levels:[0.55,1.1,1.65],mult:[1.6,2.8,4.8],move:0.22}, // 3段階まで。溜めすぎても3段階の威力のまま
-      marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）。ガード長押しで構える（動きは極端に遅い）'},
+      marks:{move:'△',speed:'△',power:'◎',reach:'〇'},feature:'攻撃長押しで3段階チャージ（溜めすぎても3段階の威力のまま）。ガード長押しで構える（動きは極端に遅く、受けるダメージ50%軽減）'},
     tachi:{ws:'iai',name:'太刀',range:62,arc:100*Math.PI/180,interval:0.46,active:0.10,power:1.05,move:1.0,swing:0.22,sheathe:0.6,
       perfect:{window:0.2,atkUp:0.25,time:8},
       marks:{move:'〇',speed:'〇',power:'〇',reach:'〇'},feature:'ギリギリで回避すると8秒間 攻撃力+25%'},
@@ -336,9 +336,8 @@ const DATA={
     hammer:{ws:'gouwan',name:'ハンマー',knockback:true,range:65,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.25,1.5],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
-    lance:{ws:'taunt',name:'ランス',canGuard:true,range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
-      frontGuard:{arc:120*Math.PI/180,mult:0.1}, // 盾：いつも向いている方向（前方120°）からの攻撃を90%カット
-      marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。構えている間は向いている方向の攻撃を90%カット（突いている間は盾が効かない）。納刀に1.1秒。ガード長押しで構える（動きは極端に遅い）'},
+    lance:{ws:'taunt',name:'ランス',guard:{mult:0.2},range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
+      marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。ガード長押しで構える（動きは極端に遅く、受けるダメージ80%軽減）。納刀に1.1秒'},
     bow:{ws:'sokusha',name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.5}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま
@@ -2819,7 +2818,7 @@ function computeStats(profile,override,who){
   s.sheathSpeed=P.baseSpeed*(1+s.moveSpd/100)*DATA.weaponTypes.sword.move; // 納刀中は片手剣と同じ速さ
   s.sheatheTime=wt.sheathe||0.5;
   s.attackInterval=wt.interval/(1+s.atkSpd/100);
-  s.range=wt.range;s.arc=wt.arc;s.activeTime=wt.active;s.power=wt.power;s.swingTime=wt.swing||0.22;s.tip=wt.tip||null;s.frontGuard=wt.frontGuard||null;
+  s.range=wt.range;s.arc=wt.arc;s.activeTime=wt.active;s.power=wt.power;s.swingTime=wt.swing||0.22;s.tip=wt.tip||null;
   s.dodgeCd=P.dodgeCd*(s.effects.gale?0.7:1)*s.dodgeCdMult;
   s.skill=wt.skill||null;
   s.skillCd=s.skill?DATA.skills[s.skill].cd*(s.effects.skillcd?0.75:1):0;
@@ -3682,11 +3681,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   // 大剣・ハンマーのチャージ中は被ダメージ半分／弓を装備中は被ダメージ1.5倍
   {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.hurtMult)dmg*=cw.hurtMult;else if(p.charging&&cw&&cw.charge)dmg*=wsActive(p,'fudou')?0.25:0.5;}
   // ランスの盾：向いている方向からの攻撃は大きく減らす（攻撃元の位置で判定）
-  if(p.guarding){ // ガード中：正面は大きく減らし、横・後ろも少し減らす
-    const fr=sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=GUARD_CFG.arc/2;
-    dmg*=fr?GUARD_CFG.frontMult:GUARD_CFG.sideMult;
-  }else if(wsActive(p,'taunt')&&!(p.swing>0))dmg*=0.1; // 挑発中は全方位90%ガード
-  else if(p.stats.frontGuard&&!(p.swing>0)&&sx!=null&&sy!=null&&Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),p.facing||0))<=p.stats.frontGuard.arc/2)dmg*=p.stats.frontGuard.mult;
+  if(p.guarding){const gw=DATA.weaponTypes[p.stats.weaponType];if(gw&&gw.guard)dmg*=gw.guard.mult;} // ガード中：武器ごとの軽減率（全方向）
   if(p.stats.effects.guard)dmg*=0.88;
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
@@ -3891,7 +3886,7 @@ function spawnDrop(w,x,y,loot){
 /* ---------- プレイヤー ---------- */
 const EMPTY_INPUT={mx:0,my:0,attack:false,guard:false,dodge:false,skill:false,heal:false,sheathe:false};
 // ガード（片手剣・大剣・ランス）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
-const GUARD_CFG={move:0.2,frontMult:0.4,sideMult:0.7,arc:120*Math.PI/180};
+const GUARD_CFG={move:0.2};
 function updatePlayer(w,p,inp,dt){
   p.guarding=false;
   if(p.dead){p.using=null;p.charging=false;return;}
@@ -3939,7 +3934,7 @@ function updatePlayer(w,p,inp,dt){
     return;
   }
   // ガード：押している間だけ。抜刀していなければ抜く。攻撃・チャージ・アイテム使用中は構えられない
-  if(inp.guard&&wt&&wt.canGuard&&!p.sheathing&&!p.charging&&!p.using){
+  if(inp.guard&&wt&&wt.guard&&!p.sheathing&&!p.charging&&!p.using){
     if(!p.drawn){p.drawn=true;emit(w,{type:'draw',pid:p.id,x:p.x,y:p.y});}
     p.guarding=p.swing<=0;
   }
@@ -7433,8 +7428,8 @@ const Renderer={
   drawPlayer(ctx,p){
     const r=p.r,s=p.stats;
     ctx.save();ctx.translate(p.x,p.y);
-    if(p.guarding&&!p.dead){ // ガード中：正面に構えの弧を出す
-      ctx.save();ctx.rotate(p.facing||0);ctx.strokeStyle='rgba(150,220,255,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,r+12,-GUARD_CFG.arc/2,GUARD_CFG.arc/2);ctx.stroke();ctx.restore();
+    if(p.guarding&&!p.dead){ // ガード中：周りに構えの輪を出す
+      ctx.save();ctx.strokeStyle='rgba(150,220,255,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,r+12,0,TAU);ctx.stroke();ctx.restore();
     }
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,r*0.75,r*1.1,r*0.42,0,0,TAU);ctx.fill();
     if(p.dead){ctx.globalAlpha=0.45;ctx.rotate(Math.PI/2);}
