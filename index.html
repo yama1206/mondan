@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.91',date:'2026/10/29'};
+const GAME_VERSION={no:'0.92',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2914,13 +2914,24 @@ const Profile={
   },
   /** 出発前に選べる石の武器（まだ渡していない古いデータにも、一度だけ渡す） */
   grantStones(p){
-    if(p.stoneGiven)return false;
-    for(const id of ['stone_db','stone_gs','stone_tachi','stone_hammer','stone_bow','stone_lance','iron_shuriken']){
-      const it=Items.createEquipment(id,0);
-      it.atk=DATA.equipment[id].atk;it.crit=DATA.equipment[id].crit;it.affixes=[];it.effects=[];it.slots=[];
-      Profile.addItem(p,it);
+    let changed=false;
+    if(!p.stoneGiven){ // 鉄の武器（もとは石の武器）6種
+      for(const id of ['stone_db','stone_gs','stone_tachi','stone_hammer','stone_bow','stone_lance']){
+        const it=Items.createEquipment(id,0);
+        it.atk=DATA.equipment[id].atk;it.crit=DATA.equipment[id].crit;it.affixes=[];it.effects=[];it.slots=[];
+        Profile.addItem(p,it);
+      }
+      p.stoneGiven=true;changed=true;
     }
-    p.stoneGiven=true;return true;
+    if(!p.shurikenGiven){ // 鉄の手裏剣：石の武器をもらい済みのデータにも一度だけ渡す
+      if(!p.items.some(i=>i.baseId==='iron_shuriken')){
+        const it=Items.createEquipment('iron_shuriken',0);
+        it.atk=DATA.equipment.iron_shuriken.atk;it.crit=DATA.equipment.iron_shuriken.crit;it.affixes=[];it.effects=[];it.slots=[];
+        Profile.addItem(p,it);
+      }
+      p.shurikenGiven=true;changed=true;
+    }
+    return changed;
   },
   giveStarterWeapon(p,who){
     const sw=Items.createEquipment('iron_sword',0);
@@ -3021,7 +3032,7 @@ const Save={
   sanitize(d){
     const p=Profile.blank();
     p.bag=emptyBag();
-    p.stoneGiven=!!d.stoneGiven;
+    p.stoneGiven=!!d.stoneGiven;p.shurikenGiven=!!d.shurikenGiven;
     const srcBag=(d.bag&&typeof d.bag==='object')?d.bag:{potion:d.potions|0};
     for(const id of ITEM_ORDER)p.bag[id]=clamp(srcBag[id]|0,0,DATA.consumables[id].max);
     p.gold=Math.max(0,d.gold|0);
