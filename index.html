@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.89',date:'2026/10/29'};
+const GAME_VERSION={no:'0.90',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3860,6 +3860,8 @@ function damageEnemy(w,p,e,mult,src){
     dmg+=Math.max(0,Math.round(ed));elHit={k:s.elem.k,m:em};
   }
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
+  // ザコ敵は体力が半分以下になると怯んで、少しの間動きが止まる（ボス・中ボスは対象外）
+  if(!e.boss&&!e.mid&&!e.halfFlinched&&e.hp>0&&e.hp<=e.maxHp*0.5){e.halfFlinched=true;e.flinchT=0.45;e.action=null;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'怯み',color:'#ffd27a'});}
   if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
   if(s.inflict&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
@@ -4266,6 +4268,7 @@ function updateEnemy(w,e,dt){
   // 呪術師の強化が切れたら元に戻す
   if(e.empowerT>0){e.empowerT-=dt;if(e.empowerT<=0){e.atk=e.baseAtk;e.speed=e.baseSpeed;}}
   if(e.kx||e.ky){moveEntity(w.map,e,e.kx*dt,e.ky*dt);e.kx*=0.82;e.ky*=0.82;if(Math.abs(e.kx)+Math.abs(e.ky)<5)e.kx=e.ky=0;}
+  if(e.flinchT>0){e.flinchT-=dt;return;} // 怯み：少しの間、動きも攻撃も止まる
   // ボスが弱ってきたら知らせる（体力は見えないので、これが目安）
   if(e.boss&&!e.weakNoticed&&e.hp<=e.maxHp*0.2){e.weakNoticed=true;emit(w,{type:'bossWeak',x:e.x,y:e.y,name:DATA.enemies[e.type].name});}
   // 罠にかかっている間は動けない
