@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.04',date:'2026/10/30'};
+const GAME_VERSION={no:'1.05',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -347,7 +347,7 @@ const DATA={
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.25}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま。チャージ中の移動は遅い
       marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで狙いを決め、3段階チャージして離すと射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
-    shuriken:{ws:'inmitsu',name:'手裏剣',holdAim:true,holdFire:true,range:200,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
+    shuriken:{ws:'inmitsu',name:'手裏剣',holdAim:true,holdFire:true,range:200,arc:0,interval:0.8,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       shuriken:{speed:500,shots:2,side:7,gap:0.12,weakMult:2.2}, // 手裏剣：速さ（px/秒）、1回に投げる枚数、横にずらす間隔。飛ぶ距離は range（リーチ）。まっすぐ飛ぶ
       marks:{move:'〇',speed:'〇',power:'△',reach:'〇'},feature:'攻撃を押している間は狙いながら、2枚ずつシュッ…シュッと投げ続ける（リーチは長め）。装備中は受けるダメージ1.5倍'},
   },
