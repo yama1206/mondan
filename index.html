@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.96',date:'2026/10/30'};
+const GAME_VERSION={no:'0.97',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2769,7 +2769,7 @@ function bagText(p){
 }
 function rarColor(r){return DATA.rarities[r].color;}
 /** 装備の色と名前：レア度の概念はなし（手紙だけレア度の色）。 */
-function eqColor(it){return it.slot==='charm'?eqColor(it):'#e6e6e6';}
+function eqColor(it){return it.slot==='charm'?rarColor(it.rarity):'#e6e6e6';} // 手紙はレア度の色（自分を呼ぶと無限に再帰していた）
 function eqRarity(it){return it.slot==='charm'?DATA.rarities[it.rarity]:{name:'',color:'#e6e6e6'};}
 function lootLabel(l){
   if(l.type==='mat')return {text:`${DATA.materials[l.id].name} ×${l.n}`,color:DATA.materials[l.id].color};
