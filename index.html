@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.01',date:'2026/10/30'};
+const GAME_VERSION={no:'1.02',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8012,7 +8012,7 @@ const Renderer={
       dodge:{id:'dodge',key:keys.dodge,label:'回避',cd:p.dodgeCd,max:s.dodgeCd,col:'#7fe0ff'},
       weapon:{key:'',label:wlabel,sub:wsub,cd:0,max:1,col:wcol,fill:wfill},
       heal:(hasItems||using)?{key:keys.heal,label:`${ci.short}×${bag[sel]||0}`,sub:using?'使用中…':(keys.cycle+'で切替'),cd:p.potionCd,max:CONFIG.player.potionCd,col:ci.color,empty:(bag[sel]||0)<=0&&!using,fill:using?using.t/using.total:0}:null,
-      skill:wsd?{key:'',label:wsd.name,sub:'',cd:p.skillCd,max:wsd.cd,col:p.ws?'#a8ff8a':'#ffd23a',fill:p.ws?clamp(p.ws.t/wsd.duration,0,1):0,nameOnly:true}:null,
+      skill:wsd?{key:keys.skill,label:wsd.name,sub:'',cd:p.skillCd,max:wsd.cd,col:p.ws?'#a8ff8a':'#ffd23a',fill:p.ws?clamp(p.ws.t/wsd.duration,0,1):0}:null, // キー（例：[Y]）を下に出して、何を押せば発動するか分かるようにする
     };
   },
   /** 枠1つの描画（名前・キー・クールタイム・効果時間） */
