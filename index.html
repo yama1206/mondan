@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.83',date:'2026/10/29'};
+const GAME_VERSION={no:'0.84',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2110,7 +2110,7 @@ const DATA={
     {id:'aq_octo',stage:4,after:'aq_worm',boss:'deep_octopus',name:'【強敵】深淵の大蛸',desc:'深い淵から、無数の触腕を持つ大蛸が現れた。水流の噴射に注意せよ。',goal:{type:'boss'},reward:{gold:1600,mats:{slime_gel:3,hard_shell:2}}},
     {id:'s2_hob',stage:8,key:true,name:'ホブゴブリン討伐',desc:'墓地に巣食う屈強なホブゴブリンを12体倒せ。',goal:{type:'kill',target:'hobgoblin',count:12},reward:{gold:600,mats:{hard_iron:3}}},
     {id:'s2_sniper',stage:8,key:true,name:'狙撃手の掃討',desc:'遠くから正確に射抜くスケルトンスナイパーを8体倒せ。',goal:{type:'kill',target:'sniper',count:8},reward:{gold:640,mats:{dark_bone:3}}},
-    {id:'s2_boss',stage:8,urgent:true,name:'【緊急】黒き古狼',desc:'墓地の奥に潜む黒き古狼を討て。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:1800,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
+    {id:'s2_boss',stage:8,urgent:true,boss:'yomi_samurai',name:'【緊急】黄泉の怨霊武者',desc:'墓地の奥で、黄泉の怨霊武者が目を覚ました。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:1800,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
     {id:'s6_bat',stage:5,key:true,name:'洞窟コウモリの掃討',desc:'素早く飛び回り、上空から襲いかかるコウモリを12体倒せ。',goal:{type:'kill',target:'cave_bat',count:12},reward:{gold:760,mats:{cave_fang:3}}},
     {id:'ex_crystal_guardian',stage:5,after:'cr_scorp',boss:'crystal_guardian',name:'【強敵】結晶の大守護者',desc:'洞窟の結晶を守る巨大な守護者。結晶の腕で薙ぎ払い、雷の光線を放ち、地面に結晶柱を生やす。',goal:{type:'boss'},reward:{gold:1800,mats:{crystal_shard:2,cave_fang:2}}},
@@ -2127,7 +2127,7 @@ const DATA={
     {id:'v_ash',stage:6,key:true,name:'爆炎の甲虫の掃討',desc:'赤く光って爆発する甲虫を10体倒せ。爆発の前に離れること。',goal:{type:'kill',target:'magma_beetle',count:10},reward:{gold:840,mats:{blast_sac:3}}},
     {id:'v_wing',stage:6,key:true,name:'炎翼竜の狩り',desc:'熱風のブレスを吐く炎翼竜を8体倒せ。',goal:{type:'kill',target:'fire_wyvern',count:8},reward:{gold:860,mats:{flame_fang:3}}},
     {id:'v_beast',stage:6,key:true,name:'溶鉄の魔獣の討伐',desc:'溶けた鉄の体を持つ魔獣を8体倒せ。',goal:{type:'kill',target:'molten_beast',count:8},reward:{gold:880,mats:{molten_horn:2}}},
-    {id:'v_boss',stage:6,urgent:true,unlocks:7,name:'【緊急】溶岩の巨人',desc:'火口の底で、溶岩の巨人が立ち上がった。動きは遅いが一撃が重い。振り下ろしの前に大きく離れろ。',goal:{type:'boss'},reward:{gold:2600,mats:{rock_core:1,reinforce_orb:2},decos:2}},
+    {id:'v_boss',stage:6,urgent:true,unlocks:7,boss:'volcano_dragon',name:'【緊急】炎獄竜ヴォルカノス',desc:'火口の底で、炎獄竜ヴォルカノスが目を覚ました。炎をまとって地を這い、羽ばたいて襲いかかる。',goal:{type:'boss'},reward:{gold:2600,mats:{rock_core:1,reinforce_orb:2},decos:2}},
     {id:'v_dragon',stage:6,after:'v_boss',boss:'volcano_dragon',name:'【強敵】炎獄竜ヴォルカノス',desc:'火口の奥で、炎の竜が翼を広げた。炎のブレスと溶岩弾に注意せよ。',goal:{type:'boss'},reward:{gold:1900,mats:{hell_fang:1,reinforce_orb:2},decos:1}},
     {id:'v_felg',stage:6,after:'v_dragon',boss:'felgnas',name:'【強敵】熔鉄の魔獣フェルグナス',desc:'熔鉄をまとった魔獣が突進を繰り返す。残った熔鉄の地面に気をつけろ。',goal:{type:'boss'},reward:{gold:2000,mats:{felg_horn:1,reinforce_orb:2},decos:1}},
     {id:'v_serpent',stage:6,after:'v_felg',boss:'crimson_serpent',name:'【強敵】紅蓮の大蛇',desc:'火山の岩場で、炎をまとった大蛇が身をくねらせている。地を這う炎に注意。',goal:{type:'boss'},reward:{gold:2100,mats:{centi_ember:3,centi_shell:2}}},
@@ -2138,7 +2138,7 @@ const DATA={
     {id:'n_fox',stage:7,key:true,name:'雪影ギツネの掃討',desc:'素早く動き回る雪影ギツネを10体倒せ。',goal:{type:'kill',target:'snow_fox',count:10},reward:{gold:960,mats:{fox_pelt:3}}},
     {id:'n_owl',stage:7,key:true,name:'吹雪フクロウの撃墜',desc:'氷の弾を放つフクロウを9体倒せ。',goal:{type:'kill',target:'snow_owl',count:9},reward:{gold:960,mats:{owl_feather:3}}},
     {id:'n_seal',stage:7,key:true,name:'凍牙アザラシの討伐',desc:'突進してくるアザラシを8体倒せ。',goal:{type:'kill',target:'ice_seal',count:8},reward:{gold:1000,mats:{seal_fang:3}}},
-    {id:'n_boss',stage:7,urgent:true,unlocks:8,name:'【緊急】氷冠の大鹿',desc:'氷の角を持つ大鹿が、雪山の頂で待ち構えている。足元の予告を見て、氷柱を避けろ。',goal:{type:'boss'},reward:{gold:2800,mats:{ice_antler:1,reinforce_orb:2},decos:2}},
+    {id:'n_boss',stage:7,urgent:true,unlocks:8,boss:'ice_ape',name:'【緊急】氷嶺の剛猿',desc:'雪山の頂で、氷嶺の剛猿が拳を振り上げている。足元の予告を見て、氷柱を避けろ。',goal:{type:'boss'},reward:{gold:2800,mats:{ice_antler:1,reinforce_orb:2},decos:2}},
     {id:'n_wyv',stage:7,after:'n_boss',boss:'frost_wyvern',name:'【強敵】永冬竜フロストレイン',desc:'雪山の奥で、凍える翼の竜が目を覚ました。冷気のブレスと氷柱に注意せよ。',goal:{type:'boss'},reward:{gold:1900,mats:{frost_fang:1,reinforce_orb:2},decos:1}},
     {id:'ex_headless_knight',stage:8,after:'g_rat',boss:'headless_knight',name:'【強敵】冥府の首狩り騎士',desc:'首のない騎士が大鎌を振るう。薙ぎ払いと突きで眠らせ、首を狙う斬撃を飛ばし、骸骨兵を呼ぶ。',goal:{type:'boss'},reward:{gold:2340,mats:{soul_shard:2,rotten_cloth:2}}},
     {id:'ex_yomi_samurai',stage:8,after:'ex_headless_knight',boss:'yomi_samurai',name:'【強敵】黄泉の怨霊武者',desc:'黄泉の淵から這い出た怨霊の武者。水の刃で薙ぎ払い、突進し、怨霊を呼び出す。',goal:{type:'boss'},reward:{gold:2340,mats:{soul_shard:2,cursed_iron:2}}},
@@ -3506,7 +3506,7 @@ function populateLayout(w,stage,quest,L){
     const p=randomFloor(m,rm.rect,1);if(p)w.chests.push({id:w.nextId++,x:p.x,y:p.y,opened:false,table:stage.chest});
   }
   for(const g of m.gatherSpots)w.gathers.push({id:w.nextId++,x:g.x,y:g.y,kind:g.kind,used:false,table:'gather_'+g.kind});
-  if(goal.type==='boss'||goal.type==='explore'){const boss=spawnEnemy(w,w.quest.bossType,m.bossSpot.x,m.bossSpot.y);w.bossId=boss.id;} // 自由探索にも主がいる（倒しても探索は続く）
+  if(goal.type==='boss'||goal.type==='explore'){const boss=spawnEnemy(w,w.quest.bossType,m.bossSpot.x,m.bossSpot.y,quest.urgent?{urgentStage:quest.stage}:{});w.bossId=boss.id;} // 自由探索にも主がいる（倒しても探索は続く）
   w.quest.total=w.enemies.filter(e=>!e.boss).length;
   w.quest.chestsTotal=w.chests.length;
 }
@@ -3517,13 +3517,27 @@ function questProgress(w,n){
   emit(w,{type:'questProgress',progress:q.progress,need:q.need});
   if(q.progress>=q.need){q.done=true;w.clearTimer=2.4;emit(w,{type:'questComplete'});}
 }
+/** 緊急依頼のボス：同じステージのほかのボスより強くする（HP・攻撃・防御が、ほかのボスの最大値の1.15倍以上になるように掛ける倍率） */
+const URGENT_MARGIN=1.15;
+function urgentBossBoost(type,stageNo){
+  const d=DATA.enemies[type],st=DATA.stages[stageNo-1],one={hp:1,atk:1,def:1};
+  if(!d||!st)return one;
+  const ids=new Set(DATA.quests.filter(q=>q.stage===stageNo&&q.boss).map(q=>q.boss));
+  if(st.enemySet&&st.enemySet.boss)ids.add(st.enemySet.boss);
+  ids.delete(type);
+  let mh=0,ma=0,md=0;
+  for(const id of ids){const o=DATA.enemies[id];if(!o)continue;mh=Math.max(mh,o.hp);ma=Math.max(ma,o.atk);md=Math.max(md,o.def||0);}
+  const f=(need,own)=>own>0?Math.max(1,need*URGENT_MARGIN/own):1;
+  return {hp:f(mh,d.hp),atk:f(ma,d.atk),def:md>0?f(md,d.def||0):1};
+}
 function spawnEnemy(w,type,x,y,opt){
   opt=opt||{};
   const d=DATA.enemies[type],E=CONFIG.elite,M=CONFIG.midBoss,mid=!!opt.mid&&!d.boss,el=!!opt.elite&&!d.boss&&!mid;
+  const ub=d.boss&&opt.urgentStage?urgentBossBoost(type,opt.urgentStage):{hp:1,atk:1,def:1};
   const partyMul=d.boss?(CONFIG.bossHpByParty[Math.max(1,Math.min(5,w.playerCount||1))]||1)*CONFIG.bossBoost.hp:1;
   const mult=d.boss?partyMul:CONFIG.minionHp*(el?E.hp:mid?M.hp:1);
-  const hp=Math.round(d.hp*w.diff.hp*mult),atk=d.atk*w.diff.atk*(el?E.atk:mid?M.atk:1)*(d.boss?CONFIG.bossBoost.atk:CONFIG.minionBoost.atk)*CONFIG.enemyAtkMult;
-  const e={id:w.nextId++,type,x,y,r:el?Math.round(d.r*E.size):mid?Math.round(d.r*M.size):d.boss?Math.round(d.r*CONFIG.bossScale.size):d.r,hp,maxHp:hp,atk,armor:d.def,mid,
+  const hp=Math.round(d.hp*ub.hp*w.diff.hp*mult),atk=d.atk*ub.atk*w.diff.atk*(el?E.atk:mid?M.atk:1)*(d.boss?CONFIG.bossBoost.atk:CONFIG.minionBoost.atk)*CONFIG.enemyAtkMult;
+  const e={id:w.nextId++,type,x,y,r:el?Math.round(d.r*E.size):mid?Math.round(d.r*M.size):d.boss?Math.round(d.r*CONFIG.bossScale.size):d.r,hp,maxHp:hp,atk,armor:d.def*ub.def,mid,
     speed:d.speed,state:d.boss?'sleep':'idle',timer:0,cd:rand(0.3,1.2),cd2:rand(0.5,1.5),cd3:rand(1,2),stun:0,facing:rand(0,TAU),atkAngle:0,aggro:false,hurt:0,kx:0,ky:0,
     dead:false,boss:!!d.boss,phase:1,cds:{bite:0,charge:2,slam:3,sweep:1.5,roar:4,orb:2,summon:5},action:null,hitSet:null,chargeLeft:0,chargeChain:0,
     anim:rand(0,10),strafeDir:RNG.next()<0.5?1:-1,strafeT:rand(1,2),aimTime:d.aimTime||0.8,stunPts:0,stunMax:d.stunMax||0,
