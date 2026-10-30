@@ -214,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.29',date:'2026/10/30'};
+const GAME_VERSION={no:'1.30',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9629,9 +9629,10 @@ const Ops={
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
     const first=!p.gachaN;p.gachaN=(p.gachaN||0)+1;
-    if(first||RNG.next()*100<GACHA_PET_RATE){
-      const lk=pick(LOOKS);
-      if(p.looks[lk.id]){p.coins=(p.coins||0)+1;return {changed:true,msg:`${lk.name}（ペット）がダブり → コイン +1`,color:'#ffd23a',fx:{rar:'SSR',text:`${lk.name}（ペット）ダブり → コイン +1`}};}
+    // ペットの見た目は一度手に入れたら以後は出ない（まだ持っていないものからだけ出る）
+    const rest=LOOKS.filter(x=>!p.looks[x.id]);
+    if(rest.length&&(first||RNG.next()*100<GACHA_PET_RATE)){
+      const lk=pick(rest);
       p.looks[lk.id]=true;
       return {changed:true,msg:`${lk.name}（ペット）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}が仲間になった！`}};
     }
@@ -11120,7 +11121,7 @@ const App={
   shopTabHTML(){
     const p=this.profile,gold=p.gold||0;
     const coins=p.coins||0;
-    const gacha=`<div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。首輪（レア度あり）とペットの見た目から出ます。同じものが出たらコイン1枚に戻ります。</div>
+    const gacha=`<div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。首輪（レア度あり）とペットの見た目から出ます。ペットは一度出ると以後は出ません。首輪のダブりはコイン1枚に戻ります。</div>
       <button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button></div>`;
     return `<div class="col full" data-scroll="shop">${gacha}<div class="col-t">商品</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
