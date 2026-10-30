@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.13',date:'2026/10/30'};
+const GAME_VERSION={no:'1.14',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1455,11 +1455,11 @@ const DATA={
         {k:'slam',wind:0.9,cd:5.5,dmg:1.1,r:125},
       ],
       pal:{body:'#7a7a80',dark:'#4a4a52',plate:'#9aa0a8',rage:'#a05a3a',rageDark:'#5a2a18',eye:'#ffe0a0',rageEye:'#ff4030',horn:'#ece6d0'}},
-    boar:{name:'轟牙の大猪',ai:'pattern',look:'boar',hp:2200,atk:23,def:5,r:32,speed:150,stunMax:105,stunTime:4,color:'#6a4a34',drops:'boar',boss:true,
+    boar:{name:'轟牙の大猪',ai:'pattern',look:'boar',hp:1980,atk:23,def:5,r:32,speed:150,stunMax:105,stunTime:4,color:'#6a4a34',drops:'boar',boss:true,
       pattern:[
         {k:'charge',wind:0.6,cd:4,dmg:1.3,el:'thunder'},
         {k:'toss',wind:1.0,cd:5,dmg:1.1,r:70},
-        {k:'burrow',cd:7,dmg:1.2,r:90},
+        {k:'burrow',wind:1.2,cd:12,dmg:1.2,r:90},
         {k:'sweep',wind:0.6,cd:3,dmg:1.0,r:110,arc:Math.PI*0.6},
       ],
       pal:{body:'#6a4a34',dark:'#3a2818',rage:'#a04a2a',rageDark:'#5a2010',eye:'#ffe8c0',rageEye:'#ff4030',tusk:'#f4ecd6',snout:'#8a6a52',dirt:'#7a5a3a'}},
@@ -4607,6 +4607,7 @@ function updateBossPattern(w,e,p,dt){
         const mv=pat[pick],wind=mv.wind*(ph2?0.8:1);
         e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc;e.curMv=mv;e.atkAngle=ang;
         if(mv.k==='charge')startCharge(w,e,ang,wind,false);
+        else if(mv.k==='burrow'&&mv.wind){e.state='windup';e.action='burrow';e.timer=mv.wind*(ph2?0.8:1);} // 潜る前の溜め（その間は見えて、攻撃も届く）
         else if(mv.k==='burrow'){e.state='burrow';e.timer=1.3;e.hidden=true;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});}
         else{
           e.state='windup';e.action=mv.k;e.timer=wind;
@@ -4639,6 +4640,7 @@ function updateBossPattern(w,e,p,dt){
       const mv=e.curMv||{};
       if(e.action==='sweep'||e.action==='pool'||e.action==='toss'||e.action==='erupt'||e.action==='crack'){e.state='recover';e.timer=(0.6)+BOSS_REST_OF(e);break;}
       if(e.action==='slam'){e.state='recover';e.timer=(0.7)+BOSS_REST_OF(e);emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});break;}
+      if(e.action==='burrow'){e.state='burrow';e.timer=1.3;e.hidden=true;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});break;}
       if(e.action==='shot'){
         const n=mv.n||1,sp=mv.speed||300;
         for(let i=0;i<n;i++){
