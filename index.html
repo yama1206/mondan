@@ -198,7 +198,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.21',date:'2026/10/30'};
+const GAME_VERSION={no:'1.22',date:'2026/10/30'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -6169,12 +6169,12 @@ function playerName(p){return (p.info&&p.info.name)||((p.slot+1)+'P');}
 /** 操作デバイスごとのボタン表記 */
 const KEY_LABELS={
   kbm:{dodge:'Space',skill:'Q',heal:'E',cycle:'R',sheathe:'F',guard:'G（右クリック）'},
-  pad:{dodge:'A',skill:'Y',heal:'LB',cycle:'RB',sheathe:'Y',guard:'LT'},
+  pad:{dodge:'A',skill:'LT（L2）',heal:'LB',cycle:'RB',sheathe:'Y',guard:'B'},
   kb2:{dodge:'右Shift',skill:'/',heal:'.',cycle:',',sheathe:'/'},
 };
 const CONTROL_LINES={
   kbm:['WASD：移動　マウス：向き　F：納刀','左クリック：抜刀・攻撃（大剣・ハンマーは長押しでチャージ）　Space：回避','E：持ち物を使う　R／ホイール：切替　1〜8：選択'],
-  pad:['左スティック：移動　右スティック：向き　Y：納刀','RT / X：抜刀・攻撃（長押しでチャージ）　A：回避','LB：持ち物を使う　RB：切替'],
+  pad:['左スティック：移動　右スティック：向き　Y：納刀　LT（L2）：スキル','RT / X：抜刀・攻撃（長押しでチャージ）　A：回避　B：ガード（押し続ける）','LB：持ち物を使う　RB：切替'],
   kb2:['矢印キー：移動（移動方向を向く）　/：納刀','Enter：抜刀・攻撃（長押しでチャージ）　右Shift：回避','.：持ち物を使う　,：切替'],
 };
 const Renderer={
@@ -9158,7 +9158,7 @@ const Input={
         S.rbT=0;
       }
       if(S.rbOpen){S.move={x:0,y:0};S.attack=false;S.guard=false;}
-      else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];S.guard=!!cur[6];}
+      else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];S.guard=!!cur[1];} // ガードは B / ○ を押し続ける（LT はスキル）
       // 右スティックで向きを指定。倒していないときは移動方向を向く（攻撃中は向きを維持）
       if(S.rbOpen){/* ホイールを開いている間は向きを変えない */}
       else if(Math.hypot(rx,ry)>0.35){S.aim=Math.atan2(ry,rx);S.aimT=performance.now();}
@@ -10539,7 +10539,8 @@ const App={
       if(!pid)return;                               // 割り当てのないコントローラー
       const E=Input.edges[pid];
       if(i===0)E.dodge=true;                        // A / ×：回避
-      else if(i===3){E.sheathe=true;E.skill=true;}  // Y / △：納刀（スキルのある武器ならスキルも）
+      else if(i===3)E.sheathe=true;                 // Y / △：納刀
+      else if(i===6)E.skill=true;                   // LT / L2：スキル（納刀とは別のボタン）
       // RB / R1：持ち物の切り替え（短く押す＝次へ、長く押す＝ホイール。Input.pollPads で判定）
       else if(i===4)E.heal=true;                    // LB / L1：持ち物を使う
       return;                                        // RT / X は攻撃（押しっぱなし判定は sample で行う）
