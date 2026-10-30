@@ -193,7 +193,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'0.78',date:'2026/10/29'};
+const GAME_VERSION={no:'0.79',date:'2026/10/29'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -338,13 +338,13 @@ const DATA={
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
     lance:{ws:'taunt',name:'ランス',guard:{mult:0.2},range:78,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。ガード長押しで構える（動きは極端に遅く、受けるダメージ80%軽減）。納刀に1.1秒'},
-    bow:{ws:'sokusha',name:'弓',range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
+    bow:{ws:'sokusha',name:'弓',holdAim:true,range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
       charge:{levels:[0.35,0.8,1.3],mult:[1.4,2.3,3.3],move:0.25}, // 長押しで3段階チャージして離すと射る。溜めすぎても3段階の威力のまま。チャージ中の移動は遅い
-      marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで3段階チャージして射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
-    shuriken:{ws:'inmitsu',name:'手裏剣',range:100,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
+      marks:{move:'〇',speed:'△',power:'△',reach:'◎'},feature:'長押しで狙いを決め、3段階チャージして離すと射る（溜めすぎても3段階の威力のまま）。瓶で矢に毒・麻痺・睡眠を付けられる'},
+    shuriken:{ws:'inmitsu',name:'手裏剣',holdAim:true,holdFire:true,range:100,arc:0,interval:0.5,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       shuriken:{speed:500,shots:2,side:7,weakMult:2.2}, // 手裏剣：速さ（px/秒）、1回に投げる枚数、横にずらす間隔。飛ぶ距離は range（リーチ）。まっすぐ飛ぶ
-      marks:{move:'〇',speed:'〇',power:'△',reach:'△'},feature:'2枚ずつまっすぐ投げる（リーチは短め）。装備中は受けるダメージ1.5倍'},
+      marks:{move:'〇',speed:'〇',power:'△',reach:'△'},feature:'長押しで狙いを決め、離すと2枚ずつまっすぐ投げる（リーチは短め）。装備中は受けるダメージ1.5倍'},
   },
   // 武器スキル（Qで発動。効果は duration 秒、再使用まで cd 秒）。武器種の ws に ID を入れる
   weaponSkills:{
@@ -3988,7 +3988,11 @@ function updatePlayer(w,p,inp,dt){
   // 納刀中に攻撃ボタン：抜刀してそのまま攻撃（チャージ武器はチャージ開始）
   if(!p.drawn&&!p.sheathing&&inp.attack&&p.atkTimer<=0){p.drawn=true;emit(w,{type:'draw',pid:p.id,x:p.x,y:p.y});}
   // 攻撃：チャージできる武器は「押している間ためて、離したら振る」
-  if(p.sheathing||!p.drawn){}
+  if(p.sheathing||!p.drawn){p.aiming=false;}
+  else if(wt.holdFire){ // 手裏剣：押している間は狙い、離したときに投げる
+    if(inp.attack)p.aiming=true;
+    else if(p.aiming){p.aiming=false;if(p.atkTimer<=0)playerAttack(w,p,{});}
+  }
   else if(wt.charge){
     if(p.charging){
       if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'sokusha')?2:1); // チャージ速度（防具スキル）
@@ -8801,7 +8805,8 @@ const Input={
       guard=guard||!!S.guard;
       if(S.aim!==null&&S.aimT>aimT){aim=S.aim;aimT=S.aimT;}
     }
-    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.attack&&this.touch.swipeAng!=null)aim=this.touch.swipeAng;}
+    const holdAim=!!(p&&DATA.weaponTypes[p.stats.weaponType]&&DATA.weaponTypes[p.stats.weaponType].holdAim); // 弓・手裏剣：攻撃を押したまま狙いを変えられる
+    if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.attack&&this.touch.swipeAng!=null&&holdAim)aim=this.touch.swipeAng;}
     const E=this.edges[pid]||newEdges();
     const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
     if(p){
@@ -8809,7 +8814,7 @@ const Input={
       else if(this.aimMode[pid]==='pad'&&aim!==null)inp.aim=aim;
       else{
         // 攻撃を押しているあいだは、移動してもこの向きを変えない（押し始めた向きで攻撃する）
-        if((mx||my)&&!attack)this.lastAim[pid]=Math.atan2(my,mx);
+        if((mx||my)&&(!attack||holdAim))this.lastAim[pid]=Math.atan2(my,mx);
         inp.aim=this.lastAim[pid];
       }
     }
