@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.9.3',date:'2026/10/31'};
+const GAME_VERSION={no:'1.10.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -746,6 +746,7 @@ const DATA={
     rabbit_greaves:{name:'跳ね足の脚甲',slot:'legs',def:7,skills:{dodge_dist:5,hp_up:1},slots:1},
     stag_gs:{name:'大顎の大剣',slot:'weapon',wtype:'greatsword',atk:29,crit:5,slots:2},
     stag_hammer:{name:'大顎の槌',slot:'weapon',el:{k:'ice',v:12},wtype:'hammer',atk:29,crit:3,slots:2},
+    stag_shuriken:{name:'大顎の手裏剣',slot:'weapon',el:{k:'ice',v:6},wtype:'shuriken',atk:20,crit:9,slots:1},
     stag_db:{name:'大顎の双剣',slot:'weapon',wtype:'dual',atk:25,crit:13,slots:2},
     stag_helm:{name:'大顎の兜',slot:'head',def:12,skills:{flinch_free:6,rescue:2},slots:2},
     stag_mail:{name:'大顎の甲殻',slot:'body',def:16,skills:{dmg_cut:3,weakness:4},slots:2},
@@ -2626,6 +2627,7 @@ const DATA={
     // 大顎シリーズ（大顎クワガタ）
     {id:'r_stag_gs',out:{type:'equip',id:'stag_gs'},cost:{stag_mandible:2,stag_shell:2,scrap_iron:3}},
     {id:'r_stag_hammer',out:{type:'equip',id:'stag_hammer'},cost:{stag_shell:3,stag_mandible:1,wood:3}},
+    {id:'r_stag_shuriken',out:{type:'equip',id:'stag_shuriken'},cost:{stag_mandible:2,stag_shell:1,scrap_iron:2}},
     {id:'r_stag_db',out:{type:'equip',id:'stag_db'},cost:{stag_mandible:2,beast_fang:2,hard_shell:1}},
     {id:'r_stag_helm',out:{type:'equip',id:'stag_helm'},cost:{stag_shell:2,stag_mandible:1,hard_shell:2}},
     {id:'r_stag_mail',out:{type:'equip',id:'stag_mail'},cost:{stag_shell:3,hard_shell:2}},
