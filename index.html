@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.45',date:'2026/10/31'};
+const GAME_VERSION={no:'1.46',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11589,7 +11589,7 @@ const App={
     const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div><div class="small" style="margin-bottom:8px;color:#7fe09a">頭・胴・腕・腰・脚のうち4部位を同じシリーズでそろえると一式効果が発動：${Object.values(DATA.armorSets).filter(s=>Object.values(s.pieces).some(pc=>DATA.recipes.some(r=>r.out.id===pc&&this.recipeKnown(r)))).map(s=>`${s.name}「${s.bonus}」${s.desc}`).join('／')||'（ボスの素材を手に入れると、そのシリーズの防具と一式効果がここに並びます）'}</div>`:'';
     const reinf=cat==='reinforce'?this.reinforceHTML()+this.enchantHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
-      `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${reinf}${this.recipeListHTML(match).replace('class="col full" data-scroll="craft"','')}</div>`);
+      `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${reinf}${this.recipeListHTML(match,cat==='weapon'||cat==='armor').replace('class="col full" data-scroll="craft"','')}</div>`);
   },
   /** 防具の強化：持っている防具ごとに、強化段階と必要な強化玉・お金、強化ボタン */
   enchantHTML(){
@@ -11685,10 +11685,13 @@ const App={
     const p=this.profile;
     return (!r.stage||QuestRules.stage(p)>=r.stage)&&Object.keys(r.cost).every(k=>(p.materials[k]||0)>0||(p.matSeen&&p.matSeen[k]));
   },
-  recipeListHTML(filter){
+  recipeListHTML(filter,sortEquip){
     const p=this.profile;
     const known=r=>this.recipeKnown(r);
-    return `<div class="col full" data-scroll="craft"><div class="recipes">${DATA.recipes.filter(r=>(!r.stage||QuestRules.stage(p)>=r.stage)&&known(r)&&filter(r)).map(r=>{
+    const list=DATA.recipes.filter(r=>(!r.stage||QuestRules.stage(p)>=r.stage)&&known(r)&&filter(r));
+    // 武器は攻撃力の高い順、防具は防御力の高い順（鍛冶屋の武器・防具の画面）
+    if(sortEquip){const key=r=>{const b=DATA.equipment[r.out.id];return b.slot==='weapon'?(b.atk||0):(b.def||0);};list.sort((a,b)=>key(b)-key(a));}
+    return `<div class="col full" data-scroll="craft"><div class="recipes">${list.map(r=>{
       let name,info='';
       if(r.out.type==='equip'){
         const b=DATA.equipment[r.out.id];name=b.name;
