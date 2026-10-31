@@ -239,7 +239,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.8',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.9',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -419,9 +419,9 @@ const DATA={
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
     // 狩りの道具（effect.type：flash＝閃光 / place＝足元に設置）
     flash:{name:'閃光玉',short:'閃光玉',delay:0.6,max:3,color:'#fff6a0',effect:{type:'flash',radius:360,boss:7,minion:5},desc:'周りの敵の目をくらませる（ボス7秒・雑魚5秒）。その間は追ってこない'},
-    pit_trap:{name:'落とし穴',short:'落とし穴',delay:2.0,max:1,color:'#b08a5a',effect:{type:'place',kind:'pit',arm:1.0,r:26,boss:6,minion:4},desc:'足元に設置。踏んだ敵を足止めする（ボス6秒・雑魚4秒）'},
-    shock_trap:{name:'シビレ罠',short:'シビレ罠',delay:2.0,max:1,color:'#ffe040',effect:{type:'place',kind:'shock',arm:1.0,r:26,area:70,boss:4,minion:5},desc:'足元に設置。踏むと周りの敵をまとめてしびれさせる（ボス4秒・雑魚5秒）'},
-    bomb:{name:'大タル爆弾',short:'大タル爆弾',delay:1.5,max:2,color:'#ff5a3a',effect:{type:'place',kind:'bomb',fuse:3.0,r:14,area:110,dmg:150},desc:'足元に設置。3秒後に爆発して周りの敵に大ダメージ（味方は吹き飛ぶだけ）'},
+    pit_trap:{name:'落とし穴',short:'落とし穴',delay:3.0,max:1,color:'#b08a5a',effect:{type:'place',kind:'pit',arm:1.0,r:26,boss:6,minion:4},desc:'足元に設置。踏んだ敵を足止めする（ボス6秒・雑魚4秒）'},
+    shock_trap:{name:'シビレ罠',short:'シビレ罠',delay:3.0,max:1,color:'#ffe040',effect:{type:'place',kind:'shock',arm:1.0,r:26,area:70,boss:4,minion:5},desc:'足元に設置。踏むと周りの敵をまとめてしびれさせる（ボス4秒・雑魚5秒）'},
+    bomb:{name:'大タル爆弾',short:'大タル爆弾',delay:1.5,max:2,color:'#ff5a3a',effect:{type:'place',kind:'bomb',fuse:3.0,r:14,area:110,dmg:150},desc:'足元に設置。設置してから3秒後に爆発して周りの敵に大ダメージ（味方は吹き飛ぶだけ）'},
     // 状態異常の瓶：使うと、次の矢3本に状態異常を付ける（矢が当たると効果）
     poison_bottle:{name:'毒の瓶',short:'毒瓶',delay:1.0,max:5,color:'#a8e040',effect:{type:'coat',status:'poison',shots:3},desc:'次の矢3本に毒を付ける（当たった敵の体力が少しずつ減る）'},
     para_bottle:{name:'麻痺の瓶',short:'麻痺瓶',delay:1.0,max:5,color:'#ffe040',effect:{type:'coat',status:'paralysis',shots:3},desc:'次の矢3本に麻痺を付ける（当たった敵は動けなくなる。ボスは短い）'},
@@ -2068,10 +2068,10 @@ const DATA={
   shop:[
     {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
     {id:'good_potion',name:'良い回復薬',desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
-    {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:60,type:'item',item:'heal_all'},
-    {id:'antidote',name:'解毒薬',desc:'毒・麻痺・睡眠・呪いを解除する',price:25,type:'item',item:'antidote'},
-    {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:75,type:'item',item:'atk_horn'},
-    {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:75,type:'item',item:'def_horn'},
+    {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:100,type:'item',item:'heal_all'},
+    {id:'antidote',name:'解毒薬',desc:'毒・麻痺・睡眠・呪いを解除する',price:20,type:'item',item:'antidote'},
+    {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:100,type:'item',item:'atk_horn'},
+    {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:100,type:'item',item:'def_horn'},
     {id:'flash',name:'閃光玉',desc:'周りの敵の目をくらませる',price:40,type:'item',item:'flash'},
     {id:'pit_trap',name:'落とし穴',desc:'踏んだ敵を足止めする罠',price:100,type:'item',item:'pit_trap'},
     {id:'shock_trap',name:'シビレ罠',desc:'踏むと周りの敵をしびれさせる罠',price:110,type:'item',item:'shock_trap'},
@@ -11954,7 +11954,7 @@ const App={
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
           return `<button class="${ok?'primary':''}" data-act="cartAdd" data-kind="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${s.type==='equip'?'カートに入れる（無料）':'カートに'+n+'個（'+s.price*n+'G）'}</button>`;};
         return `<div class="recipe"><div class="rn">${s.name}　<span style="color:#ffd23a">${s.price}G</span></div><div class="muted">${s.desc}</div>
-          ${s.type==='item'?`<div>所持 ${p.bag[s.item]||0} / ${DATA.consumables[s.item].max}　発動まで${DATA.consumables[s.item].delay}秒</div>`:s.type==='mat'?`<div>所持 ${p.materials[s.mat]||0}</div>`:''}
+          ${s.type==='item'?`<div>所持 ${p.bag[s.item]||0} / ${DATA.consumables[s.item].max}　${DATA.consumables[s.item].effect.type==='place'?'設置まで':'発動まで'}${DATA.consumables[s.item].delay}秒</div>`:s.type==='mat'?`<div>所持 ${p.materials[s.mat]||0}</div>`:''}
           <div class="btnrow">${s.type==='deco'||s.type==='equip'?btn(1):s.type==='mat'?btn(1)+btn(5):btn(1)+btn(3)}</div></div>`;}).join('')}</div>
       </div>`;
   },
@@ -12217,7 +12217,7 @@ const App={
   itemsTabHTML(){
     const p=this.profile;
     return `<div class="col full" data-scroll="items"><div class="col-t">所有アイテム（戦闘で使う消耗品）</div><div class="grid-mats">${ITEM_ORDER.map(id=>{const c=DATA.consumables[id],n=p.bag[id]||0;
-      return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${c.color};color:${c.color}"></span>${c.name}<b>×${n} / ${c.max}</b><div class="small muted">${c.desc}。使ってから${c.delay}秒で発動</div></div>`;}).join('')}</div>
+      return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${c.color};color:${c.color}"></span>${c.name}<b>×${n} / ${c.max}</b><div class="small muted">${c.desc}。使ってから${c.delay}秒で${c.effect.type==='place'?'設置':'発動'}</div></div>`;}).join('')}</div>
     <div class="small muted" style="margin-top:6px">素材は「素材」タブで確認できます</div></div>`;
   },
   matsTabHTML(){
@@ -12228,7 +12228,7 @@ const App={
       return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${m.color};color:${m.color}"></span>${m.name}<b>×${n}</b><div class="small muted">${m.desc}</div></div>`;
     }).join('')}</div><div class="col-t" style="margin-top:14px">消耗品</div>
     <div class="grid-mats">${ITEM_ORDER.map(id=>{const c=DATA.consumables[id],n=p.bag[id]||0;
-      return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${c.color};color:${c.color}"></span>${c.name}<b>×${n} / ${c.max}</b><div class="small muted">${c.desc}。使ってから${c.delay}秒で発動</div></div>`;}).join('')}</div>
+      return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${c.color};color:${c.color}"></span>${c.name}<b>×${n} / ${c.max}</b><div class="small muted">${c.desc}。使ってから${c.delay}秒で${c.effect.type==='place'?'設置':'発動'}</div></div>`;}).join('')}</div>
     <div class="small muted" style="margin-top:6px">E（コントローラーLB）で選んでいる持ち物を使用、R／マウスホイール（RB）で切り替え、1〜8キーで直接選択</div></div>`;
   },
   decosTabHTML(){
