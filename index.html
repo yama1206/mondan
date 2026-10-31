@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.84',date:'2026/10/31'};
+const GAME_VERSION={no:'1.85',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11162,6 +11162,7 @@ const App={
       case 'gacha10':this.gachaRoll10();break;
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
+      case 'gachaTab':this.gachaSub=ds.t;this.refreshPanel();break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookSel':this.inv.lookAsk=ds.id;this.inv.petSel=ds.id;this.renderInventory();break;
       case 'lookAskNo':this.inv.lookAsk=null;this.renderInventory();break;
@@ -11538,8 +11539,14 @@ const App={
       <div class="small" style="margin:6px 0">選択中 ${sel.length}/${DECO_GACHA.need}</div><div class="btnrow" style="flex-wrap:wrap">${chips}</div>
       <div class="btnrow"><button class="${sel.length===DECO_GACHA.need?'primary':''}" data-act="decoGacha" ${sel.length===DECO_GACHA.need?'':'disabled'}>${DECO_GACHA.need}個使って回す</button></div></div>`;
     const letter=letters+deco;
-    return `<div class="recipes"><div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットは見た目と色の組み合わせがかぶるとコイン1枚。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
-      <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>${letter}</div>`;
+    // ガチャはタブごとに分けて、選んだものだけを広く出す
+    const sub=this.gachaSub||'pet';
+    const tabs=[['pet','ペット＆首輪'],['letter','手紙'],['deco','装飾品']];
+    const tabBar=`<div class="filters">${tabs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="gachaTab" data-t="${k}">${n}</button>`).join('')}</div>`;
+    const petCard=`<div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットは見た目と色の組み合わせがかぶるとコイン1枚。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
+      <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
+    const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:`<div class="recipes">${petCard}</div>`;
+    return `${tabBar}${body}`;
   },
   shopBuyHTML(){
     const p=this.profile,gold=p.gold||0;
