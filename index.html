@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.60',date:'2026/10/31'};
+const GAME_VERSION={no:'1.61',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8583,7 +8583,7 @@ const Renderer={
   /** 持ち物ホイール（RB長押し）：11種類を円に並べ、右スティックの向きで選ぶ */
   drawItemWheel(ctx,w){
     const wh=Input.wheel;if(!wh||!wh.open)return;
-    const W=this.w,H=this.h,cx=W/2,cy=H/2,R=Math.min(W,H)*0.3,ri=R*0.42;
+    const W=this.w,H=this.h,cx=W/2,cy=H/2,R=Math.min(W,H)*0.2,ri=R*0.42;
     const p=w.players[wh.pid]||null,bag=(p&&p.bag)||{};
     const ids=ownedItemIds(bag),NW=Math.max(1,ids.length),stepW=2*Math.PI/NW;
     ctx.save();
@@ -8601,8 +8601,8 @@ const Renderer={
     }
     const cur=ITEM_ORDER[(p&&p.sel)||0],sid=(wh.sel!=null&&ids[wh.sel])?ids[wh.sel]:(ids.includes(cur)?cur:ids[0]),sc=DATA.consumables[sid];
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText(sc.name,cx,cy-8);
-    ctx.fillStyle='#ccc';ctx.font='13px sans-serif';ctx.fillText('スティックで選び、離すと決定',cx,cy+14);
+    ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText(sc.name,cx,cy-6);
+    ctx.fillStyle='#ccc';ctx.font='11px sans-serif';ctx.fillText('右スティックで選び、離すと決定',cx,cy+10);
     ctx.restore();
   },
 };
@@ -9406,7 +9406,7 @@ const Input={
         }else if(owner&&App.state==='playing'&&this.edges[owner]&&(S.rbT||0)<0.3)this.edges[owner].cycle=1;
         S.rbT=0;
       }
-      if(S.rbOpen){S.move={x:0,y:0};S.attack=false;S.guard=false;}
+      if(S.rbOpen){S.move={x:lx,y:ly};S.attack=false;S.guard=false;} // ホイールを開いていても左スティックで移動できる
       else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];S.guard=!!cur[6];} // ガードは LT / L2 を押し続ける
       // 右スティックで向きを指定。倒していないときは移動方向を向く（攻撃中は向きを維持）
       if(S.rbOpen){/* ホイールを開いている間は向きを変えない */}
