@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.51',date:'2026/10/31'};
+const GAME_VERSION={no:'1.52',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8503,7 +8503,9 @@ const Renderer={
     const all=Object.values(w.players).sort((a,b)=>a.slot-b.slot);
     const me=this.focusId?w.players[this.focusId]:null;
     // オンラインでは自分のパネル・スキル枠だけを大きく表示する
-    const ps=me?[me]:all,multi=all.length>1;
+    // 仲間（AI）の回避・武器・回復の枠は出さない。下の枠は人間のプレイヤーだけで決める
+    const humans=all.filter(q=>!q.ai),ps=me?[me]:all,multi=humans.length>1;
+    const hb=me?[me]:(humans.length?humans:all);
     if(ps.some(p=>!p.dead&&p.hp<p.stats.maxHp*0.3)){
       const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.7);
       g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(160,0,0,${0.25+0.12*Math.sin(this.time*6)})`);
@@ -8518,13 +8520,13 @@ const Renderer={
     if(me)all.filter(p=>p!==me).forEach((p,i)=>this.drawMiniPanel(ctx,0,108+i*40,p));
     ctx.restore();
     // 下：左＝回避、中央＝武器の状態・回復、右＝スキル名（1人プレイ）。複数人は従来どおり一列
-    if(ps.length>1){
-      const bw=84,bh=50,gw=bw*3+16,sp=30,total=gw*ps.length+sp*(ps.length-1);
+    if(hb.length>1){
+      const bw=84,bh=50,gw=bw*3+16,sp=30,total=gw*hb.length+sp*(hb.length-1);
       ctx.save();ctx.translate(W/2,H-14);ctx.scale(hk,hk);
-      ps.forEach((p,i)=>this.drawSkillBoxes(ctx,p,-total/2+i*(gw+sp),-bh,bw,bh,KEY_LABELS[Input.deviceOf(p.id)],true));
+      hb.forEach((p,i)=>this.drawSkillBoxes(ctx,p,-total/2+i*(gw+sp),-bh,bw,bh,KEY_LABELS[Input.deviceOf(p.id)],true));
       ctx.restore();
     }else{
-      const p=ps[0],bw=104,bh=58,d=this.boxData(p,KEY_LABELS[Input.deviceOf(me?'p1':p.id)],false);
+      const p=hb[0],bw=104,bh=58,d=this.boxData(p,KEY_LABELS[Input.deviceOf(me?'p1':p.id)],false);
       ctx.save();ctx.translate(12,H-14);ctx.scale(hk,hk);this.drawBox(ctx,p,d.dodge,0,-bh,bw,bh);ctx.restore();
       const mid=d.heal?[d.weapon,d.heal]:[d.weapon],total=mid.length*bw+(mid.length-1)*8;
       ctx.save();ctx.translate(W/2,H-14);ctx.scale(hk,hk);
