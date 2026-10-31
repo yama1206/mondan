@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.8.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.9.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11482,7 +11482,7 @@ const App={
       case 'online':UI.show(this.onlineHTML());break;
       case 'board':UI.show(this.boardHTML());break;
       case 'smith':
-        if(was!=='smith'){this.smithCat='weapon';this.smithSub='all';} // 入るたびに武器から
+        if(was!=='smith'){this.smithCat='weapon';this.smithSub='all';this.smithSkillF=null;} // 入るたびに武器から
         UI.show(this.smithHTML());
         if(was!=='smith'&&Input.uiPad)UI.restoreFocus(UI.padKey({dataset:{act:'smithCat',c:'weapon'}}));
         break;
@@ -11536,6 +11536,7 @@ const App={
       case 'bestiaryBack':this.goto(this.bestiaryFrom||'camp');break;
       case 'smithCat':this.smithCat=ds.c;this.smithSub='all';this.goto('smith');break;
       case 'smithSub':this.smithSub=ds.s;this.goto('smith');break;
+      case 'smithSkill':this.smithSkillF=(this.smithSkillF===ds.s)?null:ds.s;this.goto('smith');break;
       case 'reinforce':this.doOp('reinforce',{uid:ds.uid});break;
       case 'enchant':this.doOp('enchant',{uid:ds.uid,t:Number(ds.t)});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
@@ -12388,12 +12389,18 @@ const App={
     const availR=r=>(!r.stage||QuestRules.stage(this.profile)>=r.stage)&&this.recipeKnown(r);
     const availEq=DATA.recipes.filter(r=>r.out.type==='equip'&&availR(r)).map(r=>r.out.id);
     const partTabs=SLOT_ORDER_ARMOR().map(k=>['slot:'+k,SLOT_NAMES[k]]);
-    const setTabs=Object.keys(DATA.armorSets).filter(k=>availEq.some(id=>seriesOf(id)===k)).map(k=>['set:'+k,`${DATA.armorSets[k].name}「${DATA.armorSets[k].bonus}」`]);
-    if(availEq.some(id=>DATA.equipment[id].slot!=='weapon'&&!seriesOf(id)))setTabs.push(['misc','その他']);
+    // シリーズに属する防具が作れるシリーズだけ（「シリーズ」タブを開くと、その中の絞り込みとして出す）
+    const setKeys=Object.keys(DATA.armorSets).filter(k=>availEq.some(id=>seriesOf(id)===k));
+    const hasMisc=availEq.some(id=>DATA.equipment[id].slot!=='weapon'&&DATA.equipment[id].slot!=='charm'&&!seriesOf(id));
     const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
-      :cat==='armor'?[...partTabs,...setTabs]:[];
+      :cat==='armor'?[...partTabs,['series','シリーズ'],...(hasMisc?[['misc','その他']]:[])]:[];
     let sub=this.smithSub||'all';
-    if(cat==='armor'&&!subs.some(([k])=>k===sub))sub=subs[0][0];
+    const armorSubOk=k=>subs.some(([x])=>x===k)||k==='series'||(k.startsWith('set:')&&setKeys.includes(k.slice(4)));
+    if(cat==='armor'&&!armorSubOk(sub))sub=subs[0][0];
+    const inSeries=cat==='armor'&&(sub==='series'||sub.startsWith('set:'));
+    // 防具のスキルで絞り込み（作れる防具が持つスキルだけ出す）
+    const skillKeys=[...new Set(availEq.filter(id=>DATA.equipment[id].slot!=='weapon'&&DATA.equipment[id].slot!=='charm').flatMap(id=>Object.keys(DATA.equipment[id].skills||{})))];
+    let skillF=cat==='armor'&&skillKeys.includes(this.smithSkillF)?this.smithSkillF:null;
     const match=r=>{
       if(cat==='reinforce')return false; // 強化の画面にはレシピを出さない
       if(cat==='item')return r.out.type==='item';
@@ -12402,12 +12409,19 @@ const App={
       const b=DATA.equipment[r.out.id];
       if(cat==='weapon')return b.slot==='weapon'&&(sub==='all'||b.wtype===sub);
       if(b.slot==='weapon'||b.slot==='charm')return false;
+      if(skillF&&!((b.skills||{})[skillF]>0))return false;
       if(sub.startsWith('slot:'))return b.slot===sub.slice(5);
       const se=seriesOf(r.out.id);
-      return sub==='misc'?!se:se===sub.slice(4);
+      if(sub==='series')return !!se;
+      if(sub==='misc')return !se;
+      return se===sub.slice(4);
     };
     const catTabs=`<div class="tabs" style="margin-bottom:6px">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="smithCat" data-c="${k}">${n}</button>`).join('')}</div>`;
-    const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
+    const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${(sub===k||(k==='series'&&inSeries))?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
+    // シリーズを開いたとき：すべてのシリーズ防具、または選んだシリーズの防具だけを見る
+    const seriesRow=inSeries?`<div class="filters" style="margin-bottom:8px">${[['series','すべてのシリーズ'],...setKeys.map(k=>['set:'+k,DATA.armorSets[k].name])].map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
+    // 防具のスキルで絞り込み：押したスキルで絞り、もう一度押すと解除
+    const skillRow=cat==='armor'&&skillKeys.length?`<div class="filters" style="margin-bottom:8px"><span class="small" style="margin-right:6px">スキルで絞込</span>${skillKeys.map(k=>`<button class="${skillF===k?'on':''}" data-act="smithSkill" data-s="${k}">${DATA.armorSkills[k]?DATA.armorSkills[k].name:k}</button>`).join('')}</div>`:'';
     const wt=DATA.weaponTypes[sub];
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
     const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div>`:'';
@@ -12415,7 +12429,7 @@ const App={
     const setDetail=cat==='armor'&&sub.startsWith('set:')&&DATA.armorSets[sub.slice(4)]?(()=>{const S=DATA.armorSets[sub.slice(4)];return `<div class="small" style="margin-bottom:8px;color:#7fe09a">一式効果（頭・胴・腕・腰・脚のうち4部位をそろえると発動）：${S.name}「${S.bonus}」${S.desc}</div>`;})():'';
     const reinf=cat==='reinforce'?this.reinforceHTML()+this.enchantHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
-      `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${wtInfo}${setInfo}${setDetail}${reinf}${this.recipeListHTML(match,cat==='weapon'||cat==='armor').replace('class="col full" data-scroll="craft"','')}</div>`);
+      `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${seriesRow}${skillRow}${wtInfo}${setInfo}${setDetail}${reinf}${this.recipeListHTML(match,cat==='weapon'||cat==='armor').replace('class="col full" data-scroll="craft"','')}</div>`);
   },
   /** 防具の強化：持っている防具ごとに、強化段階と必要な強化玉・お金、強化ボタン */
   enchantHTML(){
