@@ -104,6 +104,7 @@ button.danger:hover{background:#6e2a3a}
 .recipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
 .recipe{background:#191524;border:1px solid #2e2840;border-radius:8px;padding:10px;font-size:13px;line-height:1.6}
 .recipe .rn{font-weight:bold;font-size:15px}
+.recipe.made{opacity:0.45;filter:grayscale(0.6)}
 /* ショップの商品一覧：カードを小さくして多く見せる */
 .shop-items{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
 .shop-items .recipe{padding:6px 8px;font-size:12px;line-height:1.45}
@@ -241,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.6.3',date:'2026/10/31'};
+const GAME_VERSION={no:'1.7.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -413,8 +414,8 @@ const DATA={
   // effect.type：heal（ratio＝最大HPに対する回復割合、radius があれば範囲内の味方全員）
   //             buff（stat＝atk/def、pct＝%、time＝秒、radius＝範囲）
   consumables:{
-    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（半分はその場、残りは1秒後）。片手剣の医療の心得中は近くの味方にも半分'},
-    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.6},desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）'},
+    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復。片手剣の医療の心得中は近くの味方にも半分'},
+    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.6,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（毒・呪いも治る）'},
     heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#ffb6d6',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
     antidote:{name:'解毒薬',short:'解毒薬',delay:1.0,max:5,color:'#9ff0d0',effect:{type:'cure'},desc:'毒・麻痺・睡眠・呪いを解除する。状態異常になったときに出る「解毒薬を使う」からは、すぐ使える'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
@@ -2068,8 +2069,8 @@ const DATA={
   // ショップ（拠点・ロビー・装備画面の「ショップ」タブ）。ゴールドで買える
   // stage：そのステージが解放されると並ぶ
   shop:[
-    {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
-    {id:'good_potion',name:'良い回復薬',desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
+    {id:'potion',name:'回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
+    {id:'good_potion',name:'良い回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
     {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:100,type:'item',item:'heal_all'},
     {id:'antidote',name:'解毒薬',desc:'毒・麻痺・睡眠・呪いを解除する',price:20,type:'item',item:'antidote'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:100,type:'item',item:'atk_horn'},
@@ -4234,8 +4235,8 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,hitEl});
   // アイテム使用中に被弾：アイテムは消費して不発。チャージも中断
   if(p.using){
-    const id=p.using.item;p.using=null;p.bag[id]=Math.max(0,(p.bag[id]||0)-1);
-    emit(w,{type:'itemUsed',pid:p.id,item:id});emit(w,{type:'itemFail',pid:p.id,x:p.x,y:p.y-26,item:id});
+    const id=p.using.item;p.using=null;
+    if(!DRIP_ITEMS.includes(id)){p.bag[id]=Math.max(0,(p.bag[id]||0)-1);emit(w,{type:'itemUsed',pid:p.id,item:id});emit(w,{type:'itemFail',pid:p.id,x:p.x,y:p.y-26,item:id});}
   }
   // チャージ可能な武器はチャージ中に攻撃を受けると中断する（攻撃ボタンを離すまで、また溜め始めない）
   if(p.charging&&!wsActive(p,'fudou')){p.chargeLock=true;p.charging=false;p.charge=0;}
@@ -4537,13 +4538,19 @@ function updateSpirit(w,p,inp,dt){
 function updatePlayer(w,p,inp,dt){
   p.guarding=false;
   if(p.dead&&p.out){updateSpirit(w,p,inp,dt);return;}
-  if(p.dead){p.using=null;p.charging=false;p.pendingHeals=null;return;}
+  if(p.dead){p.using=null;p.charging=false;p.drip=null;return;}
   // 解毒薬の即時使用（状態異常の表示から押したとき）：麻痺・睡眠中でも使える
   if(inp.cure&&(p.bag.antidote||0)>0&&cureStatus(w,p)){p.bag.antidote--;emit(w,{type:'itemUsed',pid:p.id,item:'antidote'});}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
-  if(p.pendingHeals&&p.pendingHeals.length){for(const h of p.pendingHeals)h.t-=dt;const due=p.pendingHeals.filter(h=>h.t<=0);p.pendingHeals=p.pendingHeals.filter(h=>h.t>0);for(const h of due){p.hp=Math.min(p.stats.maxHp,p.hp+h.amt);emit(w,{type:'heal',x:p.x,y:p.y-20,amount:h.amt});}}
+  // 回復薬・良い回復薬：飲み始めてから3秒かけてジワジワ回復する
+  if(p.drip){const dr=p.drip;dr.t+=dt;
+    const target=Math.round(dr.left*Math.min(1,dr.t/dr.total)),add=target-dr.done;
+    if(add>0){dr.done=target;p.hp=Math.min(s.maxHp,p.hp+add);dr.pend+=add;}
+    dr.emitT+=dt;
+    if(dr.pend>0&&(dr.emitT>=0.5||dr.t>=dr.total)){emit(w,{type:'heal',x:p.x,y:p.y-20,amount:dr.pend});dr.pend=0;dr.emitT=0;}
+    if(dr.t>=dr.total)p.drip=null;}
   if(p.slowT>0)p.slowT-=dt;if(p.poisoned>0)p.poisoned-=dt;
   if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;if(p.sleepImmune>0)p.sleepImmune-=dt;
   if(p.poisonT>0){ // 毒：一定時間ごとに減る（HP1より下がらない）
@@ -4610,7 +4617,7 @@ function updatePlayer(w,p,inp,dt){
   }
   // 回避：アイテム使用（消費なし）とチャージを中断する
   if(inp.dodge&&p.dodgeCd<=0){
-    if(p.using){p.using=null;emit(w,{type:'itemCancel',pid:p.id,x:p.x,y:p.y-26});}
+    if(p.using){const cid=p.using.item;p.using=null;if(!DRIP_ITEMS.includes(cid))emit(w,{type:'itemCancel',pid:p.id,x:p.x,y:p.y-26});}
     p.charging=false;p.charge=0;p.sheathing=null; // 納刀動作も中断（抜刀したまま）
     p.dodgeDir=p.moving?{x:mx,y:my}:{x:Math.cos(p.facing),y:Math.sin(p.facing)};
     p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd-(wsActive(p,'kyodo')?0.3:0);
@@ -4624,9 +4631,7 @@ function updatePlayer(w,p,inp,dt){
     p.using.t+=dt;
     if(p.using.t>=p.using.total){
       const id=p.using.item;p.using=null;p.potionCd=P.potionCd;
-      p.bag[id]=Math.max(0,(p.bag[id]||0)-1);
-      applyItem(w,p,id);
-      emit(w,{type:'itemUsed',pid:p.id,item:id});
+      if(!DRIP_ITEMS.includes(id)){p.bag[id]=Math.max(0,(p.bag[id]||0)-1);applyItem(w,p,id);emit(w,{type:'itemUsed',pid:p.id,item:id});}
     }
     return;
   }
@@ -4665,6 +4670,7 @@ function updatePlayer(w,p,inp,dt){
     else if(p.potionCd<=0){
       p.using={item:id,t:0,total:Math.max(P.minItemDelay,c.delay+s.itemDelayAdj)};
       emit(w,{type:'itemStart',pid:p.id,x:p.x,y:p.y,item:id});
+      if(DRIP_ITEMS.includes(id))startDrip(w,p,id);
     }
   }
 }
@@ -4676,6 +4682,19 @@ function cureStatus(w,p){
   return true;
 }
 /** アイテムの効果を出す（範囲付きなら範囲内の生きている味方全員） */
+/** 回復薬・良い回復薬：飲み始めた瞬間に消費し、3秒かけて回復する（状態異常の回復と医療の分配も使い始めに行う） */
+const DRIP_ITEMS=['potion','good_potion'];
+function startDrip(w,p,id){
+  const ef=DATA.consumables[id].effect;
+  const medic=wsActive(p,'medic');
+  const hl=Math.round(p.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(medic?1.5:1));
+  p.bag[id]=Math.max(0,(p.bag[id]||0)-1);
+  emit(w,{type:'itemUsed',pid:p.id,item:id});
+  p.drip={left:hl,total:ef.drip||3,t:0,done:0,pend:0,emitT:0};
+  if(id!=='potion'&&(p.poisonT>0||p.curseT>0)){p.poisonT=0;p.curseT=0;emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+  // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
+  if(id==='potion'&&medic){const share=Math.round(hl/2);for(const id2 in w.players){const a=w.players[id2];if(a===p||a.dead||Math.hypot(a.x-p.x,a.y-p.y)>220)continue;a.hp=Math.min(a.stats.maxHp,a.hp+share);emit(w,{type:'heal',x:a.x,y:a.y-20,amount:share});}}
+}
 function applyItem(w,p,id){
   const c=DATA.consumables[id],ef=c.effect,ip=1+(p.stats.itemPowerPct||0)/100;
   const radius=ef.radius&&ef.type!=='flash'?ef.radius*ip:ef.radius; // アイテム使用強化：角笛・香の範囲（閃光玉は対象外）
@@ -4684,12 +4703,8 @@ function applyItem(w,p,id){
   for(const q of targets){
     if(ef.type==='heal'){
       const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(wsActive(p,'medic')?1.5:1));
-      // 回復薬・良い回復薬は半分をその場で、残り半分を1秒後に回復する
-      const split=!radius&&(id==='potion'||id==='good_potion');
-      const now=split?Math.floor(hl/2):hl;
-      q.hp=Math.min(q.stats.maxHp,q.hp+now);
-      emit(w,{type:'heal',x:q.x,y:q.y-20,amount:now});
-      if(split&&hl-now>0)(q.pendingHeals=q.pendingHeals||[]).push({t:1,amt:hl-now});
+      q.hp=Math.min(q.stats.maxHp,q.hp+hl);
+      emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
       // 回復薬は状態異常を治さない（解毒薬の役目）。良い回復薬・癒しの香は治す
       if(id!=='potion'&&(q.poisonT>0||q.curseT>0)){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
       // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
@@ -12519,7 +12534,9 @@ const App={
     const known=r=>this.recipeKnown(r);
     const list=DATA.recipes.filter(r=>(!r.stage||QuestRules.stage(p)>=r.stage)&&known(r)&&filter(r));
     // 武器は攻撃力の高い順、防具は防御力の高い順（鍛冶屋の武器・防具の画面）
-    if(sortEquip){const key=r=>{const b=DATA.equipment[r.out.id];return b.slot==='weapon'?(b.atk||0):(b.def||0);};list.sort((a,b)=>key(b)-key(a));}
+    // 制作済み（持っている）武器・防具は暗くして、一番下にまとめる
+    const made=r=>r.out.type==='equip'&&p.items.some(i=>i.baseId===r.out.id);
+    if(sortEquip){const key=r=>{const b=DATA.equipment[r.out.id];return b.slot==='weapon'?(b.atk||0):(b.def||0);};list.sort((a,b)=>(made(a)-made(b))||(key(b)-key(a)));}
     return `<div class="col full" data-scroll="craft"><div class="recipes">${list.map(r=>{
       let name,info='';
       if(r.out.type==='equip'){
@@ -12539,7 +12556,8 @@ const App={
       const gold=craftGold(r),can=Profile.hasMats(p,r.cost)&&(p.gold||0)>=gold&&!(r.out.type==='item'&&(p.bag[r.out.id]||0)>=DATA.consumables[r.out.id].max);
       const cost=Object.keys(r.cost).map(k=>{const have=p.materials[k]||0;return `<span class="${have>=r.cost[k]?'ok':'ng'}">${DATA.materials[k].name} ${have}/${r.cost[k]}</span>`;}).join('');
       const goldTxt=gold?`<span class="${(p.gold||0)>=gold?'ok':'ng'}">${gold}G</span>`:'';
-      return `<div class="recipe"><div class="rn">${name}</div><div class="muted">${info}</div><div class="cost">${cost}${goldTxt}</div>
+      const dim=sortEquip&&made(r);
+      return `<div class="recipe${dim?' made':''}"><div class="rn">${name}</div><div class="muted">${info}</div><div class="cost">${cost}${goldTxt}</div>
         <div class="btnrow"><button class="${can?'primary':''}" data-act="craft" data-id="${r.id}" ${can?'':'disabled'}>${r.out.type==='item'?'調合する':'製作する'}</button></div></div>`;
     }).join('')}</div></div>`;
   },
