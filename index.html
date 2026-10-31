@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.0.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.0.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -404,7 +404,7 @@ const DATA={
   //             buff（stat＝atk/def、pct＝%、time＝秒、radius＝範囲）
   consumables:{
     potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（半分はその場、残りは1秒後）。片手剣の医療の心得中は近くの味方にも半分'},
-    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ffa0d0',effect:{type:'heal',ratio:0.6},desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）'},
+    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.6},desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）'},
     heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#ffb6d6',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
     antidote:{name:'解毒薬',short:'解毒薬',delay:1.0,max:5,color:'#9ff0d0',effect:{type:'cure'},desc:'毒・麻痺・睡眠・呪いを解除する。状態異常になったときに出る「解毒薬を使う」からは、すぐ使える'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
