@@ -104,6 +104,10 @@ button.danger:hover{background:#6e2a3a}
 .shop-items .recipe{padding:6px 8px;font-size:12px;line-height:1.45}
 .shop-items .recipe .rn{font-size:13px}
 .shop-items .recipe button{padding:3px 6px;font-size:12px}
+.sell-list{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:4px}
+.sell-list .recipe{padding:4px 6px;font-size:12px;line-height:1.35}
+.sell-list .recipe .rn{font-size:12px}
+.sell-list .recipe button{padding:2px 5px;font-size:11px}
 .cost span{display:inline-block;margin-right:10px}
 .reward-list{text-align:left;background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px 14px;max-height:280px;overflow:auto;line-height:1.8;margin-top:10px}
 .setting{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2a2438;cursor:pointer}
@@ -226,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.89',date:'2026/10/31'};
+const GAME_VERSION={no:'1.90',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11627,10 +11631,10 @@ const App={
   shopSellHTML(){
     const p=this.profile;
     return `<div class="col-t">素材を売る（ボス素材ほど高く売れます）</div>
-      <div class="recipes">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
+      <div class="recipes sell-list">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
         const n=p.materials[id];
         return `<div class="recipe"><div class="rn">${DATA.materials[id].name}　<span style="color:#ffd23a">${matSellPrice(id)}G</span>　<small class="muted">所持 ${n}</small></div>
-          <div class="btnrow"><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="1">1個をカートへ</button><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="all">全部をカートへ（${matSellPrice(id)*n}G）</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
+          <div class="btnrow"><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="10">10個カートへ</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
 </div>`;
   },
   renderInventory(){
