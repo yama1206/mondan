@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.42',date:'2026/10/31'};
+const GAME_VERSION={no:'1.43',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4255,6 +4255,8 @@ const Companion={
       const dx=p.x-threat.x,dy=p.y-threat.y,d=Math.hypot(dx,dy)||1;
       I.dodge=true;I.mx=dx/d;I.my=dy/d;return I;
     }
+    // タンク：危ない攻撃は受け止める（ガードボタンを押し続ける）
+    if(threat&&role==='tank'){I.guard=true;I.aim=Math.atan2(threat.y-p.y,threat.x-p.x);return I;}
     // 2) 倒れた人間がいれば助け起こしに行く（重なって止まると助け起こせる）
     const downed=all.find(q=>!q.ai&&q.dead&&!q.out);
     const nearFoe=foes.find(e=>Math.hypot(e.x-p.x,e.y-p.y)<R.reach*2);
@@ -4263,12 +4265,15 @@ const Companion={
       if(d>CONFIG.coop.reviveRadius*0.5)return {...I,...toward(downed.x,downed.y,CONFIG.coop.reviveRadius*0.5)};
       return I;
     }
-    // 3) 回復（ヒーラー）：傷ついた味方がいて回復薬があれば使う
-    if(role==='healer'&&!p.using&&p.potionCd<=0){
-      const hurt=all.some(q=>!q.dead&&q.hp<q.stats.maxHp*0.5);
+    // 3) 回復：ヒーラーは傷ついた味方を、タンクは自分か味方が危ないときに回復薬を使う
+    const needHeal=role==='healer'
+      ?all.some(q=>!q.dead&&q.hp<q.stats.maxHp*0.5)
+      :role==='tank'&&all.some(q=>!q.dead&&q.hp<q.stats.maxHp*(q===p?0.5:0.35));
+    if(needHeal&&!p.using&&p.potionCd<=0){
       const pickId=['heal_all','good_potion','potion'].find(id=>(p.bag[id]||0)>0);
-      if(hurt&&pickId){I.pick=ITEM_ORDER.indexOf(pickId);I.heal=true;}
+      if(pickId){I.pick=ITEM_ORDER.indexOf(pickId);I.heal=true;return I;}
     }
+    const hurtNow=all.some(q=>!q.dead&&q.hp<q.stats.maxHp*0.5);
     // 4) 戦闘：指揮者の近くの敵を狙う
     let foe=null,fd=1e9;
     for(const e of foes){
@@ -4278,6 +4283,8 @@ const Companion={
     if(foe){
       I.aim=Math.atan2(foe.y-p.y,foe.x-p.x);
       if(fd<=R.reach){I.attack=true;return I;}
+      // ヒーラーは時々だけ攻撃する（味方が傷ついていない時、数秒おきに少しの間だけ）
+      if(role==='healer'&&!hurtNow&&fd<=R.reach*1.6&&((w.time||0)%5)<1.5){I.attack=true;return I;}
       if(role==='tank'){const m=toward(foe.x,foe.y,R.reach*0.8);I.mx=m.mx;I.my=m.my;return I;}
       if(role==='attacker'){const m=toward(foe.x,foe.y,R.reach*0.8);I.mx=m.mx;I.my=m.my;return I;}
       // ヒーラーは敵の近くまで行かず、指揮者の近くで待つ
