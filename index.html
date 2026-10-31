@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.96',date:'2026/10/31'};
+const GAME_VERSION={no:'1.98',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2204,12 +2204,11 @@ const DATA={
   },
   /* 依頼（クエスト）
      goal.type：kill（target を count 体）／chest（宝箱を count 個）／boss（ボス討伐）
-     緊急依頼（urgent）は、同じステージの通常の依頼（緊急・強敵・探索以外）をすべて達成すると出現する（key は昔の名残）
+     雑魚の依頼（討伐の依頼）を2つ達成すると、同じステージの強敵ボスに挑める。強敵ボスをすべて倒すと緊急依頼が出現する
      unlocks：クリアすると解放されるステージ */
   quests:[
     {id:'m1_goblin',stage:1,key:true,name:'草原の掃討',desc:'草原をうろつく小鬼の群れを9体退治してほしい。',goal:{type:'kill',target:'goblin',count:9},reward:{gold:180,mats:{goblin_hide:2}}},
     {id:'m1_slime',stage:1,key:true,name:'跳ねる緑の群れ',desc:'草原の浅瀬で増えすぎた緑の粘体を8体倒せ。',goal:{type:'kill',target:'slime',count:8},reward:{gold:180,mats:{slime_gel:2}}},
-    {id:'m1_hunt',stage:1,name:'素材集め：草原',desc:'草原の魔物を合わせて15体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:15},reward:{gold:220,mats:{goblin_hide:1,slime_gel:1}}},
     {id:'m1_bird',stage:1,boss:'gale_bird',name:'【強敵】草原の疾風怪鳥',desc:'草原の空を、風をまとった巨大な鳥が飛び回っている。素早い急降下と、扇状に飛ばす羽根に気をつけろ。',goal:{type:'boss'},reward:{gold:900,mats:{gale_feather:2,reinforce_orb:2},decos:1}},
     {id:'m1_rhino',stage:1,boss:'rhino',name:'【強敵】草原の鎧犀',desc:'硬い装甲をまとった大型のサイが、草原の道を塞いでいる。正面からの攻撃はほとんど通らない。横や後ろへ回り込め。',goal:{type:'boss'},reward:{gold:1200,mats:{rhino_plate:2,reinforce_orb:2},decos:1}},
     {id:'m1_boar',stage:1,after:'m1_rhino',boss:'boar',name:'【強敵】轟牙の大猪',desc:'突進で地面を掘り返し、土塊を飛ばす大型のイノシシ。突進の直線に入らないように。',goal:{type:'boss'},reward:{gold:1300,mats:{boar_tusk:2,reinforce_orb:2},decos:1}},
@@ -2219,11 +2218,9 @@ const DATA={
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'甲虫狩り',desc:'森甲虫が森で増えすぎている。10体退治してほしい。',goal:{type:'kill',target:'beetle',count:10},reward:{gold:240,mats:{hard_shell:2,scrap_iron:1}}},
     {id:'s1_bug',stage:2,key:true,name:'キノコと虫の退治',desc:'森に増えた毒胞子キノコと森甲虫を、合わせて10体退治してほしい。',goal:{type:'kill',target:'mushbug',count:10},reward:{gold:300,mats:{forest_mushroom:3,old_bone:1}}},
-    {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'森の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:320,mats:{goblin_hide:2,old_bone:2}}},
     {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:800,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
     {id:'sw_frog',stage:3,key:true,name:'毒沼の討伐',desc:'沼地に潜む毒の蛙を12体倒せ。',goal:{type:'kill',target:'poison_frog',count:12},reward:{gold:360,mats:{toxic_gland:2}}},
     {id:'sw_plant',stage:3,key:true,name:'花食いの刈り取り',desc:'沼地に根を張る食虫の花を8体刈り取れ。',goal:{type:'kill',target:'carnivore_plant',count:8},reward:{gold:360,mats:{swamp_moss:2}}},
-    {id:'sw_hunt',stage:3,name:'素材集め：沼地',desc:'沼地の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:400,mats:{leech_skin:1,croc_scale:1}}},
     {id:'sw_boss',stage:3,urgent:true,unlocks:4,name:'【緊急】多頭竜の沼',desc:'沼の中心に潜む多頭竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:800,mats:{hydra_scale:2,toxic_gland:2,reinforce_orb:2},decos:1}},
     {id:'sw_king',stage:3,after:'sw_boss',boss:'venomKing',name:'【強敵】毒蟲王の巣',desc:'沼の奥の巣に、毒蟲の王が待ち構えている。',goal:{type:'boss'},reward:{gold:1000,mats:{venom_shell:2,toxic_gland:2,reinforce_orb:2},decos:1}},
     {id:'sw_giant',stage:3,after:'sw_king',boss:'mireGiant',name:'【強敵】腐敗の沼巨人',desc:'沼の底から、腐敗した巨人が這い上がってきた。',goal:{type:'boss'},reward:{gold:1200,mats:{mire_core:2,swamp_moss:3,reinforce_orb:3},decos:1}},
@@ -2233,7 +2230,6 @@ const DATA={
     {id:'sw_leech',stage:3,after:'sw_toad',boss:'bog_leech',name:'【強敵】沼底の吸血蛭',desc:'沼底に潜む巨大なヒルが、足元から飛び出してくる。吸い付かれると離れにくい。',goal:{type:'boss'},reward:{gold:1400,mats:{slime_gel:2,poison_spore:2}}},
     {id:'aq_lizard',stage:4,key:true,name:'水辺のトカゲ狩り',desc:'川辺を走る水棲トカゲを12体倒せ。',goal:{type:'kill',target:'water_lizard',count:12},reward:{gold:520,mats:{water_scale:2}}},
     {id:'aq_jelly',stage:4,key:true,name:'漂う泡の掃除',desc:'水辺に漂う泡沫クラゲを9体倒せ。',goal:{type:'kill',target:'jellyfish',count:9},reward:{gold:520,mats:{jelly_gel:2}}},
-    {id:'aq_hunt',stage:4,name:'素材集め：水辺',desc:'水辺の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:560,mats:{crab_shell:1,eel_sac:1}}},
     {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:1000,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
     {id:'ex_twin_shark',stage:4,after:'aq_octo',boss:'twin_shark',name:'【強敵】深淵の双頭鮫',desc:'深い淵を泳ぐ二つの頭を持つ鮫。双頭で噛みつき、冥の力をまとって突進する。',goal:{type:'boss'},reward:{gold:1620,mats:{hard_shell:2,curse_powder:2}}},
     {id:'ex_mola_fish',stage:4,after:'ex_twin_shark',boss:'mola_fish',name:'【強敵】蒼海の巨大マンボウ',desc:'大きな体で海を漂うマンボウ。体当たりの突進のほか、水流を吹き出し、睡眠を誘う鱗粉を撒く。',goal:{type:'boss'},reward:{gold:1620,mats:{slime_gel:2,hard_shell:2}}},
@@ -2289,6 +2285,33 @@ const DATA={
     {id:'g_spider',stage:8,after:'s2_dragon',boss:'abyss_spider',name:'【強敵】冥府の大蜘蛛',desc:'冥府の闇から、大蜘蛛が糸を吐き出してくる。糸に絡まると動きが鈍る。',goal:{type:'boss'},reward:{gold:2700,mats:{spider_silk:3,curse_powder:2}}},
     {id:'g_moth',stage:8,after:'g_spider',boss:'ghost_moth',name:'【強敵】死霊の大蛾',desc:'亡霊の間を漂う大蛾が、鱗粉をまき散らす。鱗粉は眠気を誘う。',goal:{type:'boss'},reward:{gold:2800,mats:{soul_shard:2,curse_powder:2}}},
     {id:'g_rat',stage:8,after:'g_moth',boss:'grave_rat',name:'【強敵】墓穴の大鼠',desc:'墓穴の奥から大鼠が飛び出してくる。地面の盛り上がりに注意。',goal:{type:'boss'},reward:{gold:2900,mats:{rotten_cloth:3,cursed_iron:1}}},
+    {id:'min_1_wild_boar',stage:1,name:'ワイルドボアの討伐',desc:'ワイルドボアを10体倒せ。',goal:{type:'kill',target:'wild_boar',count:10},reward:{gold:240,mats:{boar_hide:2}}},
+    {id:'min_1_field_rat',stage:1,name:'フィールドラットの討伐',desc:'フィールドラットを10体倒せ。',goal:{type:'kill',target:'field_rat',count:10},reward:{gold:240,mats:{herb:2}}},
+    {id:'min_1_goblin_archer',stage:1,name:'ゴブリン弓兵の討伐',desc:'ゴブリン弓兵を10体倒せ。',goal:{type:'kill',target:'goblin_archer',count:10},reward:{gold:240,mats:{goblin_string:2}}},
+    {id:'min_2_forest_wolf',stage:2,name:'森狼の討伐',desc:'森狼を10体倒せ。',goal:{type:'kill',target:'forest_wolf',count:10},reward:{gold:300,mats:{beast_hide:2}}},
+    {id:'min_2_mushroom',stage:2,name:'毒胞子キノコの討伐',desc:'毒胞子キノコを10体倒せ。',goal:{type:'kill',target:'mushroom',count:10},reward:{gold:300,mats:{poison_spore:2}}},
+    {id:'min_2_hanayari',stage:2,name:'ハナヤリの討伐',desc:'ハナヤリを10体倒せ。',goal:{type:'kill',target:'hanayari',count:10},reward:{gold:300,mats:{hana_petal:2}}},
+    {id:'min_2_mahibana',stage:2,name:'マヒバナの討伐',desc:'マヒバナを10体倒せ。',goal:{type:'kill',target:'mahibana',count:10},reward:{gold:300,mats:{herb:2}}},
+    {id:'min_3_leech',stage:3,name:'血吸いヒルの討伐',desc:'血吸いヒルを10体倒せ。',goal:{type:'kill',target:'leech',count:10},reward:{gold:300,mats:{leech_skin:2}}},
+    {id:'min_3_bloater',stage:3,name:'腐沼の膨張体の討伐',desc:'腐沼の膨張体を10体倒せ。',goal:{type:'kill',target:'bloater',count:10},reward:{gold:300,mats:{poison_sac:2}}},
+    {id:'min_3_swamp_croc',stage:3,name:'沼喰いワニの討伐',desc:'沼喰いワニを10体倒せ。',goal:{type:'kill',target:'swamp_croc',count:10},reward:{gold:300,mats:{croc_scale:2}}},
+    {id:'min_3_parasite',stage:3,name:'腐菌の寄生体の討伐',desc:'腐菌の寄生体を10体倒せ。',goal:{type:'kill',target:'parasite',count:10},reward:{gold:300,mats:{parasite_core:2}}},
+    {id:'min_4_piranha',stage:4,name:'川牙ピラニアの討伐',desc:'川牙ピラニアを10体倒せ。',goal:{type:'kill',target:'piranha',count:10},reward:{gold:360,mats:{piranha_tooth:2}}},
+    {id:'min_4_water_spirit',stage:4,name:'水霊の討伐',desc:'水霊を10体倒せ。',goal:{type:'kill',target:'water_spirit',count:10},reward:{gold:360,mats:{spirit_essence:2}}},
+    {id:'min_4_crab',stage:4,name:'滝守の甲殻獣の討伐',desc:'滝守の甲殻獣を10体倒せ。',goal:{type:'kill',target:'crab',count:10},reward:{gold:360,mats:{crab_shell:2}}},
+    {id:'min_4_eel',stage:4,name:'雷電ウナギの討伐',desc:'雷電ウナギを10体倒せ。',goal:{type:'kill',target:'eel',count:10},reward:{gold:360,mats:{eel_sac:2}}},
+    {id:'min_5_rock_shell',stage:5,name:'岩殻トカゲの討伐',desc:'岩殻トカゲを10体倒せ。',goal:{type:'kill',target:'rock_shell',count:10},reward:{gold:650,mats:{rock_scale:2}}},
+    {id:'min_5_cave_spider',stage:5,name:'鍾乳蜘蛛の討伐',desc:'鍾乳蜘蛛を10体倒せ。',goal:{type:'kill',target:'cave_spider',count:10},reward:{gold:650,mats:{spider_silk:2}}},
+    {id:'min_6_scorpion',stage:6,name:'火口の大蠍の討伐',desc:'火口の大蠍を10体倒せ。',goal:{type:'kill',target:'scorpion',count:10},reward:{gold:750,mats:{crater_shell:2}}},
+    {id:'min_7_snow_monkey',stage:7,name:'雪山の小猿の討伐',desc:'雪山の小猿を10体倒せ。',goal:{type:'kill',target:'snow_monkey',count:10},reward:{gold:750,mats:{snow_monkey_fur:2}}},
+    {id:'min_7_ice_beetle',stage:7,name:'氷晶甲虫の討伐',desc:'氷晶甲虫を10体倒せ。',goal:{type:'kill',target:'ice_beetle',count:10},reward:{gold:750,mats:{ice_shell:2}}},
+    {id:'min_7_ice_mantis',stage:7,name:'氷刃カマキリの討伐',desc:'氷刃カマキリを10体倒せ。',goal:{type:'kill',target:'ice_mantis',count:10},reward:{gold:750,mats:{ice_sickle:2}}},
+    {id:'min_8_skeleton',stage:8,name:'骸骨兵の討伐',desc:'骸骨兵を10体倒せ。',goal:{type:'kill',target:'skeleton',count:10},reward:{gold:600,mats:{old_bone:2}}},
+    {id:'min_8_wisp',stage:8,name:'迷い霊の討伐',desc:'迷い霊を10体倒せ。',goal:{type:'kill',target:'wisp',count:10},reward:{gold:600,mats:{soul_shard:2}}},
+    {id:'min_8_archer',stage:8,name:'スケルトンアーチャーの討伐',desc:'スケルトンアーチャーを10体倒せ。',goal:{type:'kill',target:'archer',count:10},reward:{gold:600,mats:{old_bone:2}}},
+    {id:'min_8_zombie',stage:8,name:'墓守ゾンビの討伐',desc:'墓守ゾンビを10体倒せ。',goal:{type:'kill',target:'zombie',count:10},reward:{gold:600,mats:{rotten_cloth:2}}},
+    {id:'min_8_shaman',stage:8,name:'墓地の呪術師の討伐',desc:'墓地の呪術師を10体倒せ。',goal:{type:'kill',target:'shaman',count:10},reward:{gold:600,mats:{curse_powder:2}}},
+    {id:'min_8_cursed_knight',stage:8,name:'呪われた騎士の討伐',desc:'呪われた騎士を10体倒せ。',goal:{type:'kill',target:'cursed_knight',count:10},reward:{gold:600,mats:{cursed_iron:2}}},
     // 自由探索（目標なし・報酬なし。好きなときに帰れる）
     {id:'free_1',stage:1,explore:true,name:'【探索】風渡る草原',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
     {id:'free_2',stage:2,explore:true,name:'【探索】緑風の森林',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
@@ -3755,22 +3778,23 @@ function questGoalText(g,np){
 const QuestRules={
   stage(p){return clamp((p.progress&&p.progress.stage)||1,1,maxStageId());},
   done(p,id){return (p.progress&&p.progress.done[id])||0;},
-  keys(stage){return DATA.quests.filter(q=>q.stage===stage&&q.key);}, // 緊急を出すのに必要な「キー依頼」（素材集めは含まない）
-  keysDone(p,stage){return this.keys(stage).filter(q=>this.done(p,q.id)>0).length;},
-  /** 雑魚を倒す依頼（キー依頼）をすべて達成したか */
-  keysOpen(p,stage){return this.keysDone(p,stage)>=this.keys(stage).length;},
-  /** 強敵（緊急以外のボス依頼）。雑魚の依頼をすべて達成すると出る */
+  /** 雑魚の依頼：そのステージの討伐依頼（緊急・強敵・探索以外） */
+  minions(stage){return DATA.quests.filter(q=>q.stage===stage&&q.goal&&q.goal.type==='kill'&&!q.urgent&&!q.explore);},
+  minionsDone(p,stage){return this.minions(stage).filter(q=>this.done(p,q.id)>0).length;},
+  /** 雑魚の依頼を2つ達成すると、強敵ボスに挑める */
+  minionsOpen(p,stage){return this.minionsDone(p,stage)>=2;},
+  /** 強敵（緊急以外のボス依頼）。雑魚の依頼を2つ達成すると挑める */
   strong(q){return q.goal.type==='boss'&&!q.urgent;},
-  /** 緊急依頼は、雑魚の依頼→強敵ボスをすべて達成した後に出る */
-  urgentOpen(p,stage){return this.keysOpen(p,stage)&&DATA.quests.filter(q=>q.stage===stage&&this.strong(q)).every(q=>this.done(p,q.id)>0);},
+  /** 緊急依頼は、そのステージの強敵ボスをすべて倒すと出る */
+  urgentOpen(p,stage){const st=DATA.quests.filter(q=>q.stage===stage&&this.strong(q));return st.length>0&&st.every(q=>this.done(p,q.id)>0);},
   available(p,q){
     if(q.stage>this.stage(p))return false;
     if(q.urgent)return this.urgentOpen(p,q.stage);
-    if(this.strong(q)&&!this.keysOpen(p,q.stage))return false;
+    if(this.strong(q)&&!this.minionsOpen(p,q.stage))return false;
     if(!q.after)return true;
     // 前提が緊急ボスの強敵は、雑魚の依頼をすべて達成すれば出る（緊急の達成は待たない）
     const pre=questById(q.after);
-    if(pre&&pre.urgent)return this.keysOpen(p,q.stage)||this.done(p,q.after)>0;
+    if(pre&&pre.urgent)return this.minionsOpen(p,q.stage)||this.done(p,q.after)>0;
     return this.done(p,q.after)>0;
   },
   rewardText(q){
@@ -10823,8 +10847,9 @@ const App={
       for(const l of list)res[pid].rewards.push(this.grantLoot(l,pid));
       // 進行の記録とステージ解放
       const pr=this.profileFor(pid),pg=pr.progress||(pr.progress={stage:1,done:{}});
-      const keysBefore=QuestRules.urgentOpen(pr,q.stage);
+      const keysBefore=QuestRules.urgentOpen(pr,q.stage),minBefore=QuestRules.minionsOpen(pr,q.stage);
       pg.done[q.id]=(pg.done[q.id]||0)+1;
+      if(!minBefore&&QuestRules.minionsOpen(pr,q.stage))res[pid].notes.push('雑魚の依頼を2つ達成！ 強敵ボスに挑めるようになりました');
       pr.stats.clears++;
       if(!keysBefore&&QuestRules.urgentOpen(pr,q.stage)){const u=DATA.quests.find(x=>x.stage===q.stage&&x.urgent);if(u)res[pid].notes.push(`緊急依頼「${u.name}」が出現しました！`);}
       if(pg.done[q.id]===1)for(const nq of DATA.quests.filter(x=>x.after===q.id))res[pid].notes.push(`強敵依頼「${nq.name}」が出現しました！`);
@@ -11481,14 +11506,14 @@ const App={
     let sel=questById(this.questSel);
     if(sel.stage!==st||!QuestRules.available(p,sel)){sel=DATA.quests.find(q=>q.stage===st&&QuestRules.available(p,q));if(!online)this.questSel=sel.id;}
     const tabs=DATA.stages.map(s=>s.id<=maxSt?`<button class="tab ${s.id===st?'on':''}" data-act="boardStage" data-s="${s.id}">ステージ${s.id}</button>`:`<button class="tab" disabled>🔒 ステージ${s.id}</button>`).join('');
-    const keys=QuestRules.keys(st),kd=QuestRules.keysDone(p,st);
+    const mins=QuestRules.minions(st),md=QuestRules.minionsDone(p,st),mOpen=QuestRules.minionsOpen(p,st);
     const urgentNow=QuestRules.urgentOpen(p,st);
     // 緊急の依頼は、そのステージの一覧の一番最後に出す（並びは元の順のまま）
     const rows=DATA.quests.filter(q=>q.stage===st).sort((a,b)=>(a.urgent?1:0)-(b.urgent?1:0)).map(q=>{
       const ok=QuestRules.available(p,q),n=QuestRules.done(p,q.id);
       if(!ok)return ''; // 緊急・強敵は条件を満たすまで一覧に出さない
       if(!ok&&q.after)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">「${esc(questById(q.after).name)}」を達成すると出現</small></span><span class="tag" style="background:#6a3a9a">強敵</span></div>`;
-      if(!ok)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">キー依頼をすべて達成すると出現</small></span><span class="tag" style="background:#8a2a2a">緊急</span></div>`;
+      if(!ok)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">${q.urgent?'強敵ボスをすべて倒すと出現':'雑魚の依頼を2つ達成すると出現'}</small></span><span class="tag" style="background:#8a2a2a">緊急</span></div>`;
       return `<div class="itemrow ${q.id===sel.id?'sel':''}" data-act="pickQuest" data-id="${q.id}">
         <span class="nm" style="color:${q.urgent?'#ff8a6a':q.after?'#d0a0ff':'#f0ead8'}">${q.name}</span>
         ${q.explore?'<span class="tag" style="background:#2a7a9a">探索</span>':''}${q.urgent?'<span class="tag" style="background:#c03030">緊急</span>':''}${q.after?'<span class="tag" style="background:#6a3a9a">強敵</span>':''}
@@ -11497,7 +11522,7 @@ const App={
       ?`<button class="primary" data-act="chooseQuest" data-id="${sel.id}">この依頼に決める</button>`
       :`<button class="primary" data-act="start" data-n="1">出発する</button>`;
     return `<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs}</div>
-      <div class="inv-meta">${esc(stage.name)}　通常の依頼 ${kd}/${keys.length} 達成${urgentNow?'　<span style="color:#ff8a6a">緊急依頼 出現中！</span>':''}</div>
+      <div class="inv-meta">${esc(stage.name)}　雑魚の依頼 ${md}/${mins.length} 達成${mOpen?'（強敵に挑戦可）':'（2つで強敵に挑戦可）'}${urgentNow?'　<span style="color:#ff8a6a">緊急依頼 出現中！</span>':''}</div>
       <button data-act="boardBack">戻る（Esc）</button></div>
       <div class="inv-body board-body"><div class="col col-mid" data-scroll="board"><div class="col-t">依頼一覧</div>
         ${online?'<button class="primary" data-act="chooseQuest" data-id="training" style="width:100%;margin-bottom:8px">🏋 訓練場（報酬なし・時間制限なし・みんなで試せる）</button>':''}${rows}</div>
