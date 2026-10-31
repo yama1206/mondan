@@ -239,7 +239,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.5',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.6',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -12242,7 +12242,7 @@ const App={
   facilityHTML(title,sub,body){
     const p=this.profile;
     return `<div class="panel inv-panel"><div class="inv-top"><button data-act="facilityBack">戻る（Esc）</button><h2 style="margin:0">${title}</h2>
-      <div class="inv-meta">所持金 <span style="color:#ffd23a">${p.gold||0}G</span>　${bagText(p)}</div>
+      <div class="inv-meta">所持金 <span style="color:#ffd23a">${p.gold||0}G</span></div>
       <button data-act="inventory">装備画面へ</button></div>
       <div class="small muted" style="margin:-4px 0 8px">${sub}</div>
       <div class="inv-body">${body}</div></div>`;
