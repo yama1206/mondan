@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.95',date:'2026/10/31'};
+const GAME_VERSION={no:'1.96',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -6452,8 +6452,8 @@ function questTimeText(w){
 function playerName(p){return (p.info&&p.info.name)||((p.slot+1)+'P');}
 /** 操作デバイスごとのボタン表記 */
 const KEY_LABELS={
-  kbm:{dodge:'Space',skill:'Q',heal:'E',cycle:'R',sheathe:'F',guard:'G（右クリック）',cure:'T'},
-  pad:{dodge:'A',skill:'B',heal:'LB',cycle:'RB',sheathe:'Y',guard:'LT（L2）',cure:'X'},
+  kbm:{dodge:'Space',skill:'Q',heal:'E',cycle:'R',sheathe:'F',guard:'G（右クリック）'},
+  pad:{dodge:'A',skill:'B',heal:'LB',cycle:'RB',sheathe:'Y',guard:'LT（L2）'},
   kb2:{dodge:'右Shift',skill:'/',heal:'.',cycle:',',sheathe:'/'},
 };
 const CONTROL_LINES={
@@ -6948,7 +6948,7 @@ const Renderer={
     ctx.restore();
   },
   /** 設置物：落とし穴・シビレ罠・大タル爆弾 */
-  /** 状態異常の画面効果：発生の瞬間は強く光って状態名を出し、続いている間は画面の縁を状態の色で染める */
+  /** 状態異常の画面効果：発生の瞬間は状態の色で一度光り、続いている間は画面の縁を状態の色で染める */
   drawStatusFx(ctx,W,H){
     const v=this.statusView||{},fx=this.statusFx,t=this.time||0;
     const kinds=[['poison','#8cff4a'],['para','#ffe040'],['sleep','#8a7cff'],['curse','#c070ff']].filter(([k])=>v[k]);
@@ -6965,9 +6965,6 @@ const Renderer={
       if(k<1){
         const a=1-k;
         ctx.fillStyle=hexA(fx.color,0.45*a);ctx.fillRect(0,0,W,H);
-        ctx.globalAlpha=clamp(a*1.4,0,1);ctx.font=`bold 22px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText(fx.text,W/2,H*0.28);
-        ctx.fillStyle=fx.color;ctx.fillText(fx.text,W/2,H*0.28);ctx.globalAlpha=1;
       }else this.statusFx=null;
     }
   },
@@ -9626,7 +9623,6 @@ const Input={
     if(code==='Space')E1.dodge=true;
     else if(code==='KeyQ')E1.skill=true;
     else if(code==='KeyE')E1.heal=true;
-    else if(code==='KeyT')E1.cure=true;
     else if(code==='KeyR')E1.cycle=1;
     else if(code==='KeyF')E1.sheathe=true;
     else if(kb2&&code==='Slash')E2.sheathe=true;
@@ -11083,7 +11079,7 @@ const App={
   showCurePop(){
     let el=document.getElementById('curePop');
     if(!el){
-      el=document.createElement('button');el.id='curePop';el.textContent='解毒薬を使う（T / X）';
+      el=document.createElement('button');el.id='curePop';el.textContent='解毒薬を使う';
       el.style.cssText='position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:60;padding:3px 10px;font-size:12px;border-radius:12px;border:1px solid #9ff0d0;background:rgba(16,36,32,.9);color:#c8fff0;display:none;touch-action:manipulation';
       el.onclick=()=>{this.hideCurePop();const e=this.edges[this.myPid]||(this.edges[this.myPid]=newEdges());e.cure=true;};
       document.body.appendChild(el);
@@ -11160,7 +11156,6 @@ const App={
       else if(i===1)E.skill=true;                   // B / ○：スキル（納刀とは別のボタン）
       // RB / R1：持ち物の切り替え（短く押す＝次へ、長く押す＝ホイール。Input.pollPads で判定）
       else if(i===4)E.heal=true;                    // LB / L1：持ち物を使う
-      else if(i===2)E.cure=true;                    // X / □：解毒薬
       return;                                        // RT / X は攻撃（押しっぱなし判定は sample で行う）
     }
     if(i===okB)UI.padClick();
