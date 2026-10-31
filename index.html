@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.100',date:'2026/10/31'};
+const GAME_VERSION={no:'1.101',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11776,9 +11776,9 @@ const App={
     if(!['equip','mats','decos'].includes(tab))this.inv.tab='equip';
     const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品']];
     const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.decosTabHTML();
-    UI.show(`<div class="panel inv-panel"><div class="inv-top"><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
+    UI.show(`<div class="panel inv-panel"><div class="inv-top"><button data-act="back">閉じる（I / Esc）</button><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
       ${this.inv.tab==='equip'?this.whoSelectHTML():''}
-      <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div><button data-act="back">閉じる（I / Esc）</button></div>
+      <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div></div>
       <div class="inv-body ${this.inv.tab==='equip'?'eq-body':''}">${body}</div></div>`);
   },
   statsBlockHTML(st){
@@ -12024,9 +12024,9 @@ const App={
   /** 施設（鍛冶屋・ショップ）の共通の枠 */
   facilityHTML(title,sub,body){
     const p=this.profile;
-    return `<div class="panel inv-panel"><div class="inv-top"><h2 style="margin:0">${title}</h2>
+    return `<div class="panel inv-panel"><div class="inv-top"><button data-act="facilityBack">戻る（Esc）</button><h2 style="margin:0">${title}</h2>
       <div class="inv-meta">所持金 <span style="color:#ffd23a">${p.gold||0}G</span>　${bagText(p)}</div>
-      <button data-act="inventory">装備画面へ</button><button data-act="facilityBack">戻る（Esc）</button></div>
+      <button data-act="inventory">装備画面へ</button></div>
       <div class="small muted" style="margin:-4px 0 8px">${sub}</div>
       <div class="inv-body">${body}</div></div>`;
   },
