@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.57',date:'2026/10/31'};
+const GAME_VERSION={no:'1.58',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11326,9 +11326,10 @@ const App={
   },
   shopBuyHTML(){
     const p=this.profile,gold=p.gold||0;
-    const gift=`<div class="recipe"><div class="rn">コインのプレゼント　<span style="color:#ffd23a">0G</span></div><div class="muted">コインを30枚もらえます。1人1回だけ。${p.coinGiftGiven?'（受け取り済み）':''}</div>
-      <div class="btnrow"><button class="${p.coinGiftGiven?'':'primary'}" data-act="coinGift" ${p.coinGiftGiven?'disabled':''}>${p.coinGiftGiven?'受け取り済み':'30コインを受け取る（0G）'}</button></div></div>`;
-    return `<div class="col-t">商品</div><div class="recipes">${gift}</div>
+    // 受け取ったらプレゼントは表示から消える
+    const gift=p.coinGiftGiven?'':`<div class="recipe"><div class="rn">コインのプレゼント　<span style="color:#ffd23a">0G</span></div><div class="muted">コインを30枚もらえます。1人1回だけ。</div>
+      <div class="btnrow"><button class="primary" data-act="coinGift">30コインを受け取る（0G）</button></div></div>`;
+    return `<div class="col-t">商品</div><div class="recipes">${gift||'<div class="muted">いまのところ商品はありません</div>'}</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
