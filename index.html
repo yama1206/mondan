@@ -241,7 +241,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.13',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.14',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10119,6 +10119,18 @@ const Ops={
     return {changed:true,msg:`10連：${rs.length}回回した（${names}）`,color:RARITY[best.rar].color,
       fx:{rar:best.rar,text:`10連結果（${rs.length}回）：${names}`,look:(rs.find(f=>f.look)||{}).look,lookV:(rs.find(f=>f.look)||{}).lookV}};
   },
+  /** 首輪ガチャの10連（10コイン）。1回ずつ首輪ガチャと同じ抽選 */
+  collarGacha10(p,who,a){
+    if((p.coins||0)<10)return {msg:'コインが足りません（10連は10コイン必要）',color:'#ff8060'};
+    const rs=[];
+    for(let i=0;i<10&&(p.coins||0)>=1;i++){const r=Ops.collarGacha(p,who,a)||{};if(r.fx)rs.push(r.fx);}
+    if(!rs.length)return {msg:'コインが足りません（10連は10コイン必要）',color:'#ff8060'};
+    const rank={N:0,R:1,SR:2,SSR:3};
+    const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
+    const names=rs.map(f=>f.text).join(' ／ ');
+    return {changed:true,msg:`首輪10連：${rs.length}回回した（${names}）`,color:RARITY[best.rar].color,
+      fx:{rar:best.rar,text:`首輪10連結果（${rs.length}回）：${names}`}};
+  },
   /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出はペットと同じ3段階の表示） */
   letterPull(p,cap){
     const tier=Items.rollLetterTier(1,cap);
@@ -11481,6 +11493,7 @@ const App={
       case 'decoSort':this.inv.decoSort=ds.s;this.renderInventory();break;
       case 'gachaTab':this.gachaSub=ds.t;this.refreshPanel();break;
       case 'collarGacha':this.doOp('collarGacha',{});break;
+      case 'collarGacha10':this.doOp('collarGacha10',{});break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookSel':this.inv.lookAsk=ds.id;this.inv.petSel=ds.id;this.renderInventory();break;
       case 'lookAskNo':this.inv.lookAsk=null;this.renderInventory();break;
@@ -11590,9 +11603,9 @@ const App={
     const show=()=>{
       if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
       if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look,r.fx.lookV);
-      if(r.fx&&['gacha','gacha10','collarGacha','letterGacha','letterGacha10','decoGacha'].includes(act))Sound.gachaResult(r.fx.rar);
+      if(r.fx&&['gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha'].includes(act))Sound.gachaResult(r.fx.rar);
     };
-    const tame=['gacha','gacha10','collarGacha','letterGacha','letterGacha10','decoGacha'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
+    const tame=['gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
     if(tame){this.gachaBusy=true;Sound.gachaRoll(tame);setTimeout(()=>{this.gachaBusy=false;show();},tame*1000);}
     else show();
     if(r.sel)this.inv.sel=r.sel;
@@ -11949,7 +11962,7 @@ const App={
     const petCard=`<div class="recipe"><div class="rn">ペットガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペット（見た目と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
     const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます。レア度で出る種類が変わります。かぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
-      <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button></div></div>`;
+      <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button><button class="${coins>=10?'primary':''}" data-act="collarGacha10" ${coins>=10?'':'disabled'}>10連（10コイン）</button></div></div>`;
     const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:sub==='collar'?`<div class="recipes">${collarCard}</div>`:`<div class="recipes">${petCard}</div>`;
     return `${tabBar}${body}`;
   },
