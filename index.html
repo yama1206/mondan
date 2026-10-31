@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.13.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.14.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1388,205 +1388,234 @@ const DATA={
   enemies:{
     kama_mantis:{name:'草原の大鎌蟷螂',ai:'pattern',look:'gen',hp:2400,atk:23,def:6,r:36,speed:112,color:'#6a8a3a',drops:'kama_mantis',boss:true,stunMax:120,stunTime:4,gen:{body:'oval',legs:6,head:'horn',arm:'scythe'},pal:{body:'#6a8a3a',dark:'#34481a',spot:'#c8e070',eye:'#ffe060'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:110,arc:1.5,el:'thunder'},
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
-        {k:'charge',wind:0.7,cd:4.5,dmg:1.2,el:'thunder'},
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:3,spread:0.45,speed:320,el:'thunder'},
+        {k:'combo',wind:0.6,cd:5,dmg:0.9,r:115,arc:1.4,hits:3,step:0.4,el:'thunder'}, // 左右の大鎌で三連斬り
+        {k:'sweep',wind:0.9,cd:6,dmg:1.3,r:150,arc:2.4,el:'thunder'}, // 両鎌を広げた大なぎ払い
+        {k:'leap',wind:0.9,cd:6,dmg:1.2,r:90,range:380}, // 草むらから飛びかかる
+        {k:'charge',wind:0.7,cd:5,dmg:1.2,el:'thunder'}, // 雷をまとって突進
+        {k:'shot',wind:0.5,cd:4,dmg:0.7,n:3,spread:0.5,speed:340,kind:'feather',el:'thunder'}, // 鎌風（真空の刃）
       ]},
     armadillo:{name:'草原の巨躯アルマジロ',ai:'pattern',look:'gen',hp:2500,atk:22,def:6,r:38,speed:96,color:'#8a7a5a',drops:'armadillo',boss:true,stunMax:130,stunTime:4,gen:{body:'shell',legs:4,head:'round',tail:true},pal:{body:'#8a7a5a',dark:'#4a3e2a',spot:'#d8c8a0',eye:'#ffe060'},
       pattern:[
-        {k:'charge',wind:0.8,cd:5,dmg:1.2,st:'slow'},
-        {k:'slam',wind:0.9,cd:4.5,dmg:1.1},
-        {k:'shot',wind:0.5,cd:4,dmg:0.7,n:4,spread:0.6,speed:260},
-        {k:'burrow',wind:0.9,cd:7,dmg:1.3,r:80},
+        {k:'charge',wind:0.8,cd:6,dmg:1.1,st:'slow',times:3}, // 丸まって三度転がる
+        {k:'slam',wind:0.9,cd:4.5,dmg:1.1,r:120}, // 体を丸めて押しつぶす
+        {k:'shot',wind:0.6,cd:5,dmg:0.6,n:10,ring:true,speed:250}, // 背中の棘を四方へ飛ばす
+        {k:'burrow',wind:0.9,cd:8,dmg:1.3,r:85}, // 穴を掘って足元から
       ]},
     flower_dragon:{name:'古森の毒花竜',ai:'pattern',look:'gen',hp:2700,atk:25,def:7,r:40,speed:100,color:'#7a3a8a',drops:'flower_dragon',boss:true,stunMax:130,stunTime:4,gen:{body:'round',legs:0,head:'petal',arm:'claw',wings:false},pal:{body:'#7a3a8a',dark:'#3a1a44',spot:'#e0a0f0',eye:'#ffe060'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:120,arc:1.4,el:'mei'},
-        {k:'crack',wind:0.8,cd:5,dmg:1.0,len:260,width:50,el:'mei',hz:'poison'},
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:3,spread:0.4,speed:290},
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
+        {k:'beam',wind:0.9,cd:5,dmg:1.1,len:300,width:60,el:'mei',st:'poison'}, // 花の口から毒の吐息
+        {k:'pool',wind:1.0,cd:6,dmg:0.6,r:100,life:5,hz:'toxpool',st:'poison'}, // 毒の花粉を降らせる
+        {k:'shot',wind:0.6,cd:5,dmg:0.6,n:8,ring:true,speed:240,kind:'mucus',st:'poison',stChance:0.4}, // 種を四方へはじく
+        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:125,arc:1.6,el:'mei'}, // 葉の腕でなぎ払う
+        {k:'crack',wind:0.8,cd:6,dmg:1.0,len:260,width:50,el:'mei',hz:'poison'}, // 根が地を這う
       ]},
     hermit_crab:{name:'樹海の巨大ヤドカリ',ai:'pattern',look:'gen',hp:2600,atk:24,def:7,r:38,speed:100,color:'#c08a5a',drops:'hermit_crab',boss:true,stunMax:125,stunTime:4,gen:{body:'shell',legs:6,head:'round',arm:'pincer'},pal:{body:'#c08a5a',dark:'#6a4a2a',spot:'#f0d8b0',eye:'#ffe060'},
       pattern:[
-        {k:'charge',wind:0.7,cd:4.5,dmg:1.1},
-        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:105,arc:1.3,st:'sleep'},
-        {k:'shot',wind:0.5,cd:5,dmg:0.6,n:3,spread:0.5,speed:240,st:'sleep',stChance:0.5},
-        {k:'slam',wind:1.0,cd:5.5,dmg:1.3,r:115},
+        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:105,arc:1.2,hits:2,step:0.45}, // 大バサミで二度はさむ
+        {k:'charge',wind:0.7,cd:5,dmg:1.1}, // 殻ごと横歩きで突進
+        {k:'shot',wind:0.6,cd:5,dmg:0.6,n:3,spread:0.5,speed:240,kind:'mucus',st:'sleep',stChance:0.5,volleys:2}, // 泡をぶくぶく吐く
+        {k:'slam',wind:1.0,cd:6,dmg:1.3,r:120}, // 重い殻を叩きつける
       ]},
     mud_whale:{name:'腐沼の泥鯨',ai:'pattern',look:'gen',hp:2900,atk:27,def:7,r:42,speed:95,color:'#4a5a6a',drops:'mud_whale',boss:true,stunMax:140,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true},pal:{body:'#4a5a6a',dark:'#222c38',spot:'#9ad8ea',eye:'#ffe060'},
       pattern:[
-        {k:'shot',wind:0.6,cd:3.5,dmg:0.9,n:3,spread:0.6,speed:280,el:'ice'},
-        {k:'sweep',wind:0.7,cd:4,dmg:1.0,r:130,arc:1.4},
-        {k:'charge',wind:0.8,cd:5,dmg:1.2,el:'ice'},
-        {k:'erupt',wind:1.0,cd:5.5,dmg:1.1,n:2,spread:300,r:110,el:'ice'},
+        {k:'erupt',wind:1.0,cd:5,dmg:1.0,n:3,spread:300,r:90,el:'ice'}, // 潮吹きの泥が降る
+        {k:'beam',wind:0.9,cd:5.5,dmg:1.1,len:320,width:70,el:'ice'}, // 口から泥水の奔流
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,el:'ice'}, // 泥の中を泳いで体当たり
+        {k:'slam',wind:1.1,cd:6,dmg:1.3,r:150}, // 尾びれで泥を叩く
+        {k:'pool',wind:1.0,cd:7,dmg:0.6,r:110,life:5,el:'ice'}, // 冷たい泥だまり
       ]},
     queen_bee:{name:'毒霧の女王蜂',ai:'pattern',look:'gen',hp:2800,atk:24,def:7,r:34,speed:120,color:'#c8a030',drops:'queen_bee',boss:true,stunMax:110,stunTime:4,gen:{body:'oval',legs:6,head:'antler',wings:true,tail:true},pal:{body:'#c8a030',dark:'#5a4010',spot:'#f0e0a0',eye:'#ff5070'},
       pattern:[
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.9,n:1,speed:340,st:'poison'},
-        {k:'swarm',wind:0.6,cd:8,kind:'cave_bat',n:2},
-        {k:'charge',wind:0.7,cd:4.5,dmg:1.1,st:'poison'},
-        {k:'pool',wind:1.0,cd:6,dmg:0.7,r:110,life:4,hz:'toxpool',st:'poison'},
+        {k:'shot',wind:0.5,cd:4,dmg:0.8,n:1,speed:360,st:'poison',volleys:4,gap:0.3}, // 毒針を連射
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.1,st:'poison',times:2}, // 毒針を突き出して二連突撃
+        {k:'pool',wind:1.0,cd:6,dmg:0.7,r:110,life:4,hz:'toxpool',st:'poison'}, // 毒霧を残す
+        {k:'swarm',wind:0.6,cd:9,kind:'cave_bat',n:2}, // 手下を呼ぶ
+        {k:'shot',wind:0.8,cd:7,dmg:0.6,n:10,ring:true,speed:240,st:'poison',stChance:0.4,below:0.5}, // 毒霧を全方位に撒く（怒り時）
       ]},
     twin_shark:{name:'深淵の双頭鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.4,el:'mei'},
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'mei'},
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:1,speed:300},
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
+        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:120,arc:1.3,hits:2,step:0.35,el:'mei'}, // 二つの頭で交互に噛む
+        {k:'charge',wind:0.7,cd:5,dmg:1.2,el:'mei',times:3}, // 背びれを立てて何度も突っ込む
+        {k:'leap',wind:0.9,cd:6.5,dmg:1.2,r:95,range:420}, // 水面から跳ねて食らいつく
+        {k:'slam',wind:1.0,cd:6,dmg:1.2,r:115}, // 尾びれの一撃
       ]},
     mola_fish:{name:'蒼海の巨大マンボウ',ai:'pattern',look:'gen',hp:3100,atk:25,def:8,r:44,speed:90,color:'#5a8ab0',drops:'mola_fish',boss:true,stunMax:140,stunTime:4,gen:{body:'round',legs:0,head:'round',fins:true},pal:{body:'#5a8ab0',dark:'#2a4a6a',spot:'#e0f0ff',eye:'#ffe060'},
       pattern:[
-        {k:'charge',wind:0.9,cd:5,dmg:1.2},
-        {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'},
-        {k:'shot',wind:0.5,cd:4,dmg:0.6,n:3,spread:0.5,speed:260,st:'sleep',stChance:0.6},
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:120},
+        {k:'slam',wind:1.0,cd:5,dmg:1.3,r:130}, // 巨体ののしかかり
+        {k:'shot',wind:0.6,cd:5,dmg:0.6,n:10,ring:true,speed:240,st:'sleep',stChance:0.4,volleys:2,gap:0.5}, // 泡を全方位に吐く
+        {k:'leap',wind:1.0,cd:7,dmg:1.3,r:110,range:380}, // 水面から跳ね上がって落ちる
+        {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'}, // ぬめりの水たまり
+        {k:'charge',wind:0.9,cd:6,dmg:1.2}, // ゆったり体当たり
       ]},
     crystal_guardian:{name:'結晶の大守護者',ai:'pattern',look:'gen',hp:3200,atk:27,def:8,r:42,speed:95,color:'#6a5ab0',drops:'crystal_guardian',boss:true,stunMax:145,stunTime:4,gen:{body:'round',legs:0,head:'crystal',arm:'claw'},pal:{body:'#6a5ab0',dark:'#2a2250',spot:'#c0f0ff',eye:'#ffe060'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:115,arc:1.3,el:'thunder'},
-        {k:'shot',wind:0.6,cd:4,dmg:0.9,n:1,speed:380,el:'thunder'},
-        {k:'crack',wind:0.8,cd:5.5,dmg:1.0,len:240,width:46,el:'thunder',hz:'poison'},
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:115},
+        {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:12,ring:true,speed:260,el:'thunder',volleys:2,gap:0.5}, // 結晶片を全方位に放つ
+        {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:44,el:'thunder'}, // 核から光線
+        {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:4,spread:280,r:65,el:'thunder'}, // 結晶柱が生える
+        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.5,el:'thunder'}, // 結晶の腕で薙ぐ
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:120}, // 体ごと落ちて押し潰す
       ]},
     quake_dragon:{name:'地底の轟音竜',ai:'pattern',look:'gen',hp:3300,atk:26,def:8,r:44,speed:98,color:'#7a6a4a',drops:'quake_dragon',boss:true,stunMax:150,stunTime:4,gen:{body:'long',legs:4,head:'horn',tail:true},pal:{body:'#7a6a4a',dark:'#3a3020',spot:'#d8c890',eye:'#ffe060'},
       pattern:[
-        {k:'erupt',wind:1.0,cd:5,dmg:0.8,n:2,spread:280,r:100,st:'slow'},
-        {k:'crack',wind:0.8,cd:5.5,dmg:0.9,len:240,width:46,st:'slow'},
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2},
-        {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90},
+        {k:'slam',wind:1.1,cd:5,dmg:1.4,r:170,st:'slow'}, // 轟音の地響き
+        {k:'beam',wind:1.0,cd:6,dmg:1.2,len:340,width:70}, // 咆哮の衝撃波をまっすぐ
+        {k:'erupt',wind:1.0,cd:5.5,dmg:0.9,n:4,spread:300,r:90,st:'slow'}, // 岩盤が隆起する
+        {k:'crack',wind:0.8,cd:5.5,dmg:0.9,len:260,width:46,st:'slow'}, // 大地を割る
+        {k:'charge',wind:0.8,cd:5,dmg:1.2}, // 重い突進
+        {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90}, // 尾の岩塊を振り飛ばす
       ]},
     scarab:{name:'灼熱の大甲虫',ai:'pattern',look:'gen',hp:3400,atk:29,def:9,r:40,speed:100,color:'#a0402a',drops:'scarab',boss:true,stunMax:140,stunTime:4,gen:{body:'shell',legs:6,head:'horn',arm:'pincer'},pal:{body:'#a0402a',dark:'#4a1a0e',spot:'#ffb070',eye:'#ff6a2a'},
       pattern:[
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2},
-        {k:'slam',wind:1.0,cd:5,dmg:1.3,r:115},
-        {k:'shot',wind:0.6,cd:4,dmg:0.8,n:3,spread:0.5,speed:300,st:'poison'},
-        {k:'erupt',wind:1.0,cd:5.5,dmg:1.0,n:2,spread:300,r:100},
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,times:2}, // 角を構えて二連突進
+        {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90,el:'fire'}, // 灼けた岩玉を転がし投げる
+        {k:'sweep',wind:0.7,cd:3.6,dmg:1.2,r:120,arc:1.6}, // 角ですくい上げる
+        {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:3,spread:300,r:90,el:'fire'}, // 熱砂が噴き上がる
+        {k:'shot',wind:0.6,cd:5,dmg:0.8,n:3,spread:0.5,speed:300,st:'poison'}, // 毒の体液を飛ばす
       ]},
     fire_phoenix:{name:'焦土の不死鳥',ai:'pattern',look:'gen',hp:3300,atk:28,def:9,r:40,speed:115,color:'#c05020',drops:'fire_phoenix',boss:true,stunMax:130,stunTime:4,gen:{body:'oval',legs:0,head:'flame',wings:true,tail:true},pal:{body:'#c05020',dark:'#5a1a08',spot:'#ffd080',eye:'#ff70ff'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:120,arc:1.4,el:'mei'},
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'mei'},
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.9,n:1,speed:300,el:'mei'},
-        {k:'swarm',wind:0.6,cd:9,kind:'wisp',n:2},
+        {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:12,ring:true,speed:280,kind:'fire',el:'fire'}, // 炎の羽根を全方位へ
+        {k:'leap',wind:0.9,cd:6,dmg:1.2,r:100,range:450,el:'fire'}, // 炎をまとって急降下
+        {k:'beam',wind:1.0,cd:6,dmg:1.2,len:360,width:56,el:'fire'}, // 炎の吐息
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,el:'fire',times:2}, // 火の鳥の二連突撃
+        {k:'swarm',wind:0.6,cd:10,kind:'wisp',n:2}, // 火の霊を呼ぶ
       ]},
     ice_bear:{name:'氷河の大白熊',ai:'pattern',look:'gen',hp:3500,atk:30,def:9,r:44,speed:100,color:'#e8f0f8',drops:'ice_bear',boss:true,stunMax:150,stunTime:4,gen:{body:'round',legs:4,head:'round',arm:'claw'},pal:{body:'#e8f0f8',dark:'#8aa0b8',spot:'#ff8040',eye:'#ff3020'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:115,arc:1.3,el:'fire'},
-        {k:'slam',wind:1.0,cd:5,dmg:1.3,r:115},
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'fire'},
-        {k:'shot',wind:0.6,cd:4.5,dmg:0.9,n:2,spread:0.4,speed:300,el:'fire'},
+        {k:'combo',wind:0.7,cd:4.5,dmg:1.1,r:115,arc:1.4,hits:2,step:0.45,el:'ice'}, // 前足の二連撃
+        {k:'slam',wind:1.0,cd:5,dmg:1.4,r:125}, // 立ち上がってのしかかる
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,el:'ice'}, // 氷原の突進
+        {k:'toss',wind:1.0,cd:5,dmg:1.1,r:80,el:'ice'}, // 氷塊を投げる
+        {k:'erupt',wind:1.0,cd:7,dmg:0.9,n:3,spread:260,r:70,el:'ice'}, // 足踏みで氷柱が立つ
       ]},
     ice_unicorn:{name:'雪原の氷角獣',ai:'pattern',look:'gen',hp:3300,atk:27,def:9,r:40,speed:118,color:'#9ad8ea',drops:'ice_unicorn',boss:true,stunMax:135,stunTime:4,gen:{body:'oval',legs:4,head:'horn',mane:true},pal:{body:'#9ad8ea',dark:'#3a7a9a',spot:'#ffffff',eye:'#ffe060'},
       pattern:[
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,st:'paralysis'},
-        {k:'sweep',wind:0.6,cd:4,dmg:1.0,r:110,arc:1.4,st:'paralysis'},
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.8,n:1,speed:340,st:'paralysis'},
-        {k:'erupt',wind:1.0,cd:5.5,dmg:0.9,n:3,spread:260,r:70},
+        {k:'charge',wind:0.7,cd:5,dmg:1.2,st:'paralysis',times:3}, // 氷角を構えて駆け抜ける
+        {k:'beam',wind:0.9,cd:5.5,dmg:1.2,len:360,width:44,el:'ice'}, // 角から氷の光線
+        {k:'erupt',wind:1.0,cd:6,dmg:0.9,n:4,spread:260,r:65,el:'ice'}, // 氷柱を呼ぶ
+        {k:'leap',wind:0.8,cd:6,dmg:1.1,r:90,range:420}, // 前足を上げて跳ぶ
+        {k:'shot',wind:0.5,cd:4,dmg:0.8,n:1,speed:360,st:'paralysis',volleys:3,gap:0.3}, // 氷の礫を連射
       ]},
     headless_knight:{name:'冥府の首狩り騎士',ai:'pattern',look:'gen',hp:3600,atk:28,def:10,r:40,speed:108,color:'#3a3a4a',drops:'headless_knight',boss:true,stunMax:140,stunTime:4,gen:{body:'oval',legs:0,head:'skull',arm:'scythe',cloak:true},pal:{body:'#3a3a4a',dark:'#14141e',spot:'#b898ff',eye:'#ff70ff'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.5,st:'sleep'},
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,st:'sleep'},
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:110},
-        {k:'shot',wind:0.5,cd:4,dmg:0.9,n:1,speed:320},
-        {k:'swarm',wind:0.7,cd:10,kind:'skeleton',n:1},
+        {k:'combo',wind:0.7,cd:4.5,dmg:1.0,r:130,arc:1.6,hits:3,step:0.45,st:'sleep'}, // 大鎌の三連斬り
+        {k:'sweep',wind:1.0,cd:6,dmg:1.4,r:160,arc:6.2}, // 大鎌を一回転
+        {k:'charge',wind:0.8,cd:5,dmg:1.2,st:'sleep',times:2}, // 鎧ごと二連突撃
+        {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:5,spread:0.9,speed:320,kind:'soul',el:'mei'}, // 首の霊火を放つ
+        {k:'swarm',wind:0.7,cd:11,kind:'skeleton',n:1}, // 亡者を呼ぶ
       ]},
     yomi_samurai:{name:'黄泉の怨霊武者',ai:'pattern',look:'gen',hp:3700,atk:28,def:10,r:40,speed:110,color:'#2a4a6a',drops:'yomi_samurai',boss:true,stunMax:145,stunTime:4,gen:{body:'oval',legs:0,head:'mane',arm:'katana',cloak:true},pal:{body:'#2a4a6a',dark:'#10203a',spot:'#9ad8ff',eye:'#ff5070'},
       pattern:[
-        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.4,el:'water'},
-        {k:'charge',wind:0.8,cd:4.5,dmg:1.2,el:'water'},
-        {k:'shot',wind:0.5,cd:3.5,dmg:0.9,n:3,spread:0.5,speed:320,el:'water'},
-        {k:'swarm',wind:0.7,cd:10,kind:'wisp',n:2},
+        {k:'beam',wind:0.8,cd:4.5,dmg:1.3,len:300,width:40,el:'mei'}, // 居合の一閃（まっすぐ）
+        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:125,arc:1.4,hits:3,step:0.4,el:'mei'}, // 刀の三連斬り
+        {k:'charge',wind:0.7,cd:5,dmg:1.2,el:'mei'}, // 踏み込み斬り
+        {k:'shot',wind:0.6,cd:5,dmg:0.8,n:8,ring:true,speed:260,kind:'soul',el:'mei'}, // 人魂を放つ
+        {k:'swarm',wind:0.7,cd:11,kind:'wisp',n:2}, // 怨霊を呼ぶ
       ]},
     giant_frog:{name:'大蛙',ai:'pattern',look:'frog',hp:2200,atk:22,def:6,r:30,speed:112,color:'#4a8a3a',drops:'giant_frog',boss:true,stunMax:110,stunTime:4,
       pattern:[
-        {k:'charge',wind:0.6,cd:4.5,dmg:1.0},
-        {k:'slam',wind:0.9,cd:6,dmg:0.9,r:85},
-        {k:'shot',wind:0.6,cd:4,n:3,spread:0.5,speed:280,dmg:0.7,kind:'mucus',st:'poison'},
-        {k:'sweep',wind:0.5,cd:3,dmg:1.0,r:80,arc:0.9},
+        {k:'leap',wind:0.8,cd:4.5,dmg:1.1,r:90,range:420}, // 大跳躍でのしかかる
+        {k:'beam',wind:0.6,cd:4,dmg:1.0,len:220,width:34}, // 長い舌を伸ばす
+        {k:'shot',wind:0.6,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.7,kind:'mucus',st:'poison'}, // 毒の粘液を吐く
+        {k:'slam',wind:0.9,cd:6,dmg:0.9,r:95}, // 着地の衝撃
+        {k:'pool',wind:1.0,cd:7,dmg:0.6,r:90,life:4,hz:'toxpool',st:'poison'}, // 毒袋をふくらませて撒く
       ],
       pal:{body:'#4a8a3a',dark:'#23401a',spot:'#c8e070',eye:'#ffe060'}},
     bog_leech:{name:'沼底の吸血蛭',ai:'pattern',look:'leech',hp:2000,atk:20,def:4,r:26,speed:118,color:'#6a2a3a',drops:'bog_leech',boss:true,stunMax:105,stunTime:4,
       pattern:[
-        {k:'burrow',wind:0.9,cd:6,dmg:1.0,r:70},
-        {k:'charge',wind:0.5,cd:3.5,dmg:0.9},
-        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:60,arc:1.2,st:'poison'},
+        {k:'burrow',wind:0.9,cd:6,dmg:1.0,r:70}, // 泥に潜って足元から
+        {k:'leap',wind:0.7,cd:5,dmg:0.9,r:70,range:320,st:'poison'}, // 跳ねて吸いつく
+        {k:'charge',wind:0.5,cd:3.5,dmg:0.9}, // うねって這い寄る
+        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:65,arc:1.2,st:'poison'}, // 吸盤で噛みつく
+        {k:'pool',wind:0.9,cd:7,dmg:0.5,r:80,life:5,st:'poison'}, // 毒の泥を広げる
       ],
       pal:{body:'#6a2a3a',dark:'#2e1018',spot:'#d05060',eye:'#ffe0e0'}},
     deep_octopus:{name:'深淵の大蛸',ai:'pattern',look:'jelly',hp:3000,atk:26,def:8,r:36,speed:96,color:'#2a4a7a',drops:'deep_octopus',boss:true,stunMax:130,stunTime:4,
       pattern:[
-        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:120,arc:2.0},
-        {k:'toss',wind:0.9,cd:5,dmg:1.0,r:70},
-        {k:'slam',wind:0.8,cd:5,dmg:1.0,r:100},
-        {k:'shot',wind:0.8,cd:6,n:6,spread:5.0,speed:260,dmg:0.7,kind:'soul',el:'water'},
+        {k:'combo',wind:0.5,cd:4,dmg:0.8,r:125,arc:2.0,hits:4,step:0.3}, // 八本の腕の連打
+        {k:'pool',wind:0.9,cd:6,dmg:0.5,r:120,life:5,hz:'curse',st:'sleep'}, // 墨を吐いて視界を奪う
+        {k:'shot',wind:0.8,cd:6,n:8,ring:true,speed:260,dmg:0.7,kind:'soul',el:'water'}, // 水を全方位に噴く
+        {k:'toss',wind:0.9,cd:5,dmg:1.0,r:70}, // 岩をつかんで投げる
+        {k:'slam',wind:0.8,cd:5,dmg:1.0,r:110}, // 腕を叩きつける
       ],
       pal:{body:'#2a4a7a',dark:'#101e36',spot:'#70b0e0',eye:'#e0f0ff'}},
     giant_bat:{name:'洞窟の大蝙蝠',ai:'pattern',look:'bat',hp:2400,atk:24,def:5,r:28,speed:130,color:'#4a3a6a',drops:'giant_bat',boss:true,stunMax:110,stunTime:4,
       pattern:[
-        {k:'charge',wind:0.5,cd:3.5,dmg:1.1},
-        {k:'shot',wind:0.6,cd:4,n:1,speed:380,dmg:0.9,kind:'soul',st:'sleep',stChance:0.5},
-        {k:'slam',wind:0.8,cd:6,dmg:0.9,r:110},
+        {k:'leap',wind:0.7,cd:4.5,dmg:1.0,r:80,range:450}, // 天井から急降下
+        {k:'shot',wind:0.6,cd:4,n:1,speed:380,dmg:0.9,kind:'soul',st:'sleep',stChance:0.5,volleys:3,gap:0.3}, // 超音波を三連射
+        {k:'slam',wind:0.8,cd:6,dmg:0.9,r:130,st:'sleep',stChance:0.3}, // 叫び声の衝撃
+        {k:'charge',wind:0.5,cd:4,dmg:1.1}, // 低く飛んで体当たり
       ],
       pal:{body:'#4a3a6a',dark:'#221a36',wing:'#8a7ab8',eye:'#ffe060'}},
     crystal_scorpion:{name:'晶毒の大蠍',ai:'pattern',look:'scorpion',hp:3000,atk:27,def:10,r:34,speed:90,color:'#6a4a8a',drops:'crystal_scorpion',boss:true,stunMax:130,stunTime:4,
       pattern:[
-        {k:'sweep',wind:0.6,cd:3,dmg:1.1,r:75,arc:1.2},
-        {k:'slam',wind:0.9,cd:5,dmg:1.1,r:90},
-        {k:'shot',wind:0.7,cd:4.5,n:1,speed:340,dmg:0.9,kind:'mucus',st:'poison'},
+        {k:'combo',wind:0.6,cd:4,dmg:1.0,r:85,arc:1.2,hits:2,step:0.4}, // 左右のハサミで二連
+        {k:'beam',wind:0.8,cd:5,dmg:1.2,len:220,width:40,st:'poison'}, // 尾の毒針を突き出す
+        {k:'shot',wind:0.7,cd:4.5,n:3,spread:0.5,speed:340,dmg:0.8,kind:'mucus',st:'poison'}, // 毒液を飛ばす
+        {k:'erupt',wind:1.0,cd:7,dmg:1.0,n:3,spread:260,r:65}, // 結晶を地面から突き出す
+        {k:'slam',wind:0.9,cd:6,dmg:1.1,r:95}, // 尾を叩きつける
       ],
       pal:{body:'#6a4a8a',dark:'#2a1a3a',spot:'#c8a0ff',eye:'#ffe0ff'}},
     crimson_serpent:{name:'紅蓮の大蛇',ai:'pattern',look:'centipede',hp:3000,atk:27,def:8,r:34,speed:105,color:'#a03a1a',drops:'crimson_serpent',boss:true,stunMax:130,stunTime:4,
       pattern:[
-        {k:'shot',wind:0.7,cd:4,n:3,spread:0.5,speed:280,dmg:0.9,kind:'fire',el:'fire'},
-        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:110,arc:2.5},
-        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:300,width:34,el:'fire'},
+        {k:'beam',wind:0.9,cd:5,dmg:1.2,len:340,width:50,el:'fire'}, // 紅蓮の炎を吐く
+        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:120,arc:3.4}, // とぐろを解いて薙ぎ払う
+        {k:'combo',wind:0.6,cd:5,dmg:1.0,r:110,arc:1.0,hits:2,step:0.35,st:'poison'}, // 鎌首の素早い噛みつき
+        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:300,width:34,el:'fire'}, // 炎が地を這う
+        {k:'shot',wind:0.7,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.9,kind:'fire',el:'fire'}, // 火の玉
       ],
       pal:{body:'#a03a1a',dark:'#4a1608',spot:'#ff9040',eye:'#ffe060'}},
     fire_griffon:{name:'火口の翼獅子',ai:'pattern',look:'fireWyvern',hp:3200,atk:28,def:9,r:38,speed:115,color:'#c05a20',drops:'fire_griffon',boss:true,stunMax:140,stunTime:4,
       pattern:[
-        {k:'charge',wind:0.6,cd:4.5,dmg:1.1},
-        {k:'slam',wind:0.9,cd:6,dmg:1.0,r:110},
-        {k:'sweep',wind:0.5,cd:2.8,dmg:0.9,r:90,arc:1.4},
-        {k:'shot',wind:0.6,cd:5,n:3,spread:0.4,speed:300,dmg:0.9,kind:'fire',el:'fire'},
+        {k:'leap',wind:0.8,cd:5,dmg:1.2,r:95,range:450}, // 翼で舞い上がり飛びかかる
+        {k:'combo',wind:0.5,cd:4,dmg:0.9,r:95,arc:1.4,hits:3,step:0.35}, // 前足の爪で連続で引っかく
+        {k:'beam',wind:0.9,cd:6,dmg:1.1,len:320,width:56,el:'fire'}, // 炎のたてがみから火を吐く
+        {k:'shot',wind:0.6,cd:5,n:3,spread:0.4,speed:300,dmg:0.9,kind:'fire',el:'fire'}, // 火の羽根
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.1}, // 獅子の突進
       ],
       pal:{body:'#c05a20',dark:'#5a2010',wing:'#ffb050',eye:'#fff0a0'}},
     eternal_beast:{name:'永久凍土の巨象',ai:'pattern',look:'boar',hp:3400,atk:28,def:11,r:40,speed:104,color:'#8aaccc',drops:'eternal_beast',boss:true,stunMax:150,stunTime:4,
       pattern:[
-        {k:'charge',wind:0.7,cd:4.5,dmg:1.2},
-        {k:'slam',wind:0.9,cd:5.5,dmg:1.0,r:100},
-        {k:'sweep',wind:0.8,cd:5,dmg:1.1,r:120,arc:1.8,el:'ice'},
+        {k:'charge',wind:0.8,cd:5,dmg:1.3,times:2}, // 巨体の二連突進
+        {k:'slam',wind:1.1,cd:5.5,dmg:1.4,r:160}, // 前足を振り下ろす地響き
+        {k:'sweep',wind:0.8,cd:4,dmg:1.2,r:140,arc:2.0,el:'ice'}, // 長い牙で薙ぐ
+        {k:'beam',wind:0.9,cd:6,dmg:1.1,len:280,width:50,el:'water'}, // 鼻から水を噴く
+        {k:'erupt',wind:1.1,cd:7,dmg:1.0,n:4,spread:280,r:75,el:'ice'}, // 凍土が割れて氷が突き出す
       ],
       pal:{body:'#8aaccc',dark:'#3a5a7a',tusk:'#f0f8ff',eye:'#e0f4ff',snout:'#5a7a9a'}},
     frost_cat:{name:'白霜の大山猫',ai:'pattern',look:'snowFox',hp:2800,atk:26,def:6,r:28,speed:140,color:'#d8e8f4',drops:'frost_cat',boss:true,stunMax:120,stunTime:4,
       pattern:[
-        {k:'charge',wind:0.45,cd:3.5,dmg:1.0},
-        {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:70,arc:1.6},
-        {k:'charge',wind:0.9,cd:5,dmg:1.2},
-        {k:'shot',wind:0.6,cd:4.5,n:6,spread:5.0,speed:300,dmg:0.7,kind:'shard',el:'ice'},
+        {k:'leap',wind:0.6,cd:4,dmg:1.1,r:80,range:450}, // 音もなく飛びかかる
+        {k:'combo',wind:0.5,cd:3.5,dmg:0.8,r:80,arc:1.6,hits:3,step:0.3}, // 爪の三連撃
+        {k:'charge',wind:0.45,cd:4.5,dmg:1.0,times:2}, // 素早い二連ダッシュ
+        {k:'shot',wind:0.6,cd:5,n:8,ring:true,speed:300,dmg:0.7,kind:'shard',el:'ice'}, // 霜を撒き散らす
       ],
       pal:{body:'#d8e8f4',dark:'#6a8aa4',spot:'#a0d0f0',eye:'#60b0ff'}},
     abyss_spider:{name:'冥府の大蜘蛛',ai:'pattern',look:'spider',hp:3000,atk:24,def:6,r:32,speed:108,color:'#3a2a4a',drops:'abyss_spider',boss:true,stunMax:130,stunTime:4,
       pattern:[
-        {k:'shot',wind:0.6,cd:4,n:1,speed:300,dmg:0.4,kind:'soul',slow:{time:2.5}},
-        {k:'shot',wind:0.7,cd:6,n:8,spread:6.0,speed:240,dmg:0.5,kind:'soul',slow:{time:1.5}},
-        {k:'charge',wind:0.5,cd:4,dmg:1.1},
-        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:260,width:40,el:'mei',hz:'curse'},
+        {k:'shot',wind:0.6,cd:4,n:1,speed:300,dmg:0.4,kind:'soul',slow:{time:2.5},volleys:2,gap:0.4}, // 糸を吐いて足止め
+        {k:'leap',wind:0.7,cd:5,dmg:1.1,r:85,range:420,st:'paralysis'}, // 糸を伝って飛びかかる
+        {k:'combo',wind:0.6,cd:4.5,dmg:0.9,r:95,arc:1.3,hits:2,step:0.35,st:'paralysis'}, // 毒牙の二連噛み
+        {k:'shot',wind:0.7,cd:7,n:10,ring:true,speed:240,dmg:0.5,kind:'soul',slow:{time:1.5}}, // 蜘蛛の巣を広げる
+        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:260,width:40,el:'mei',hz:'curse'}, // 呪いの糸を這わせる
       ],
       pal:{body:'#3a2a4a',dark:'#1a1024',spot:'#9a70c0',eye:'#e080ff'}},
     ghost_moth:{name:'死霊の大蛾',ai:'pattern',look:'ghost',hp:2800,atk:25,def:5,r:30,speed:110,color:'#8a8aa8',drops:'ghost_moth',boss:true,stunMax:120,stunTime:4,
       pattern:[
-        {k:'sweep',wind:0.7,cd:3.5,dmg:1.0,r:110,arc:1.6,st:'sleep'},
-        {k:'slam',wind:0.8,cd:5.5,dmg:0.9,r:100},
-        {k:'shot',wind:0.8,cd:4.5,n:1,speed:340,dmg:1.0,kind:'soul',el:'mei'},
+        {k:'shot',wind:0.7,cd:4.5,n:10,ring:true,speed:240,dmg:0.6,kind:'soul',st:'sleep',stChance:0.35,volleys:2,gap:0.5}, // 眠りの鱗粉を全方位に
+        {k:'pool',wind:1.0,cd:6,dmg:0.5,r:110,life:5,hz:'curse',st:'sleep'}, // 鱗粉の霧を残す
+        {k:'sweep',wind:0.7,cd:3.6,dmg:1.0,r:120,arc:2.2,st:'sleep'}, // 翅で打ち払う
+        {k:'leap',wind:0.8,cd:6,dmg:1.0,r:90,range:420}, // ふわりと舞って覆いかぶさる
+        {k:'shot',wind:0.7,cd:4.5,n:1,speed:340,dmg:1.0,kind:'soul',el:'mei'}, // 霊の光弾
       ],
       pal:{body:'#8a8aa8',dark:'#3a3a52',wing:'#c0c0e0',eye:'#e0e0ff'}},
     grave_rat:{name:'墓穴の大鼠',ai:'pattern',look:'mole',hp:2400,atk:22,def:5,r:26,speed:135,color:'#5a4a3a',drops:'grave_rat',boss:true,stunMax:110,stunTime:4,
       pattern:[
-        {k:'charge',wind:0.5,cd:3.5,dmg:1.0},
-        {k:'sweep',wind:0.5,cd:2.8,dmg:0.9,r:65,arc:1.2},
-        {k:'charge',wind:0.6,cd:5,dmg:1.1},
-        {k:'burrow',wind:0.9,cd:6,dmg:1.1,r:75,el:'mei'},
+        {k:'charge',wind:0.5,cd:4,dmg:1.0,times:3}, // ちょこまかと三連突進
+        {k:'combo',wind:0.5,cd:3.5,dmg:0.8,r:70,arc:1.2,hits:3,step:0.3,st:'poison'}, // 前歯でかじり続ける
+        {k:'burrow',wind:0.9,cd:6,dmg:1.1,r:75,el:'mei'}, // 墓穴に潜って足元から
+        {k:'leap',wind:0.6,cd:5,dmg:1.0,r:70,range:380}, // 飛びついてくる
+        {k:'pool',wind:0.9,cd:7,dmg:0.5,r:80,life:5,hz:'curse',st:'poison'}, // 腐った土を撒く
       ],
       pal:{body:'#5a4a3a',dark:'#2a2018',spot:'#9a8a7a',eye:'#ff8080'}},
     // ai：行動パターン（goblin=接近して殴る / archer=距離を取って射る / wolf=ボス）。pal：見た目の色
@@ -1602,44 +1631,48 @@ const DATA={
     // 森の強敵：樹海の大山椒魚（長い舌・体をくねらせる体当たり・水属性の粘液）
     salamander:{name:'樹海の大山椒魚',ai:'pattern',look:'salamander',hp:2800,atk:26,def:7,r:38,speed:95,stunMax:120,stunTime:4,color:'#3a6a4a',drops:'salamander',boss:true,
       pattern:[
-        {k:'crack',wind:0.9,cd:4.5,dmg:1.1,len:300,width:34,hz:'poison',el:'none',st:'poison'},
-        {k:'charge',wind:0.7,cd:5,dmg:1.25},
-        {k:'shot',wind:0.7,cd:4,dmg:0.9,n:3,spread:0.6,speed:300,kind:'mucus',el:'water'},
-        {k:'sweep',wind:0.7,cd:3.2,dmg:1.1,r:110,arc:Math.PI*0.6},
+        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:115,arc:3.6}, // 平たい尾で打つ
+        {k:'shot',wind:0.7,cd:4,dmg:0.9,n:3,spread:0.6,speed:300,kind:'mucus',el:'water'}, // 粘液を吐く
+        {k:'pool',wind:0.9,cd:6,dmg:0.6,r:100,life:5,el:'water',st:'poison'}, // ぬめる粘液の水たまり
+        {k:'charge',wind:0.7,cd:5,dmg:1.25}, // のそりと体当たり
+        {k:'crack',wind:0.9,cd:6,dmg:1.0,len:300,width:34,hz:'poison',st:'poison'}, // 地を這う毒の筋
       ],
       pal:{body:'#3a6a4a',dark:'#1e3a28',rage:'#6a5a2a',rageDark:'#3a2e12',eye:'#ffe060',rageEye:'#ff4030',belly:'#c8d8a0',spot:'#a0c060'}},
     // 草原の4体目・5体目のボス：鎧犀は正面からの攻撃に強い、猪は突進と土塊を飛ばす
     rhino:{name:'草原の鎧犀',ai:'pattern',look:'rhino',hp:2300,atk:24,def:12,r:36,speed:105,stunMax:120,stunTime:4,color:'#7a7a80',drops:'rhino',boss:true,
       guard:{arc:120*Math.PI/180,mult:0.2},turn:1.6,
       pattern:[
-        {k:'charge',wind:0.8,cd:5,dmg:1.25},
-        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:115,arc:Math.PI*0.6},
-        {k:'slam',wind:0.9,cd:5.5,dmg:1.1,r:125},
+        {k:'charge',wind:0.8,cd:5,dmg:1.3,times:2}, // 角を構えて二連突進
+        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:115,arc:1.9}, // 角のすくい上げ
+        {k:'slam',wind:0.9,cd:5.5,dmg:1.1,r:130}, // 前足の踏みつけ
+        {k:'erupt',wind:1.0,cd:7,dmg:0.9,n:3,spread:260,r:70}, // 地鳴りで岩が跳ねる
       ],
       pal:{body:'#7a7a80',dark:'#4a4a52',plate:'#9aa0a8',rage:'#a05a3a',rageDark:'#5a2a18',eye:'#ffe0a0',rageEye:'#ff4030',horn:'#ece6d0'}},
     boar:{name:'轟牙の大猪',ai:'pattern',look:'boar',hp:1980,atk:23,def:5,r:32,speed:150,stunMax:105,stunTime:4,color:'#6a4a34',drops:'boar',boss:true,
       pattern:[
-        {k:'charge',wind:0.6,cd:4,dmg:1.3,el:'thunder'},
-        {k:'toss',wind:1.0,cd:5,dmg:1.1,r:70},
-        {k:'burrow',wind:1.2,cd:12,dmg:1.2,r:90},
-        {k:'sweep',wind:0.6,cd:3,dmg:1.0,r:110,arc:Math.PI*0.6},
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.3,el:'thunder',times:2}, // 猪突猛進（向き直してもう一度）
+        {k:'sweep',wind:0.6,cd:3,dmg:1.0,r:110,arc:1.9}, // 牙のかち上げ
+        {k:'toss',wind:1.0,cd:5,dmg:1.1,r:70}, // 鼻で土塊を放る
+        {k:'burrow',wind:1.2,cd:12,dmg:1.2,r:90}, // 地面を掘り進む
       ],
       pal:{body:'#6a4a34',dark:'#3a2818',rage:'#a04a2a',rageDark:'#5a2010',eye:'#ffe8c0',rageEye:'#ff4030',tusk:'#f4ecd6',snout:'#8a6a52',dirt:'#7a5a3a'}},
     // 草原の2体目・3体目のボス（技の並びは pattern。動きは沼地のボスと同じ仕組み）
     gale_bird:{name:'疾風怪鳥ゲイルホーク',ai:'pattern',look:'galeBird',hp:1500,atk:17,def:3,r:28,speed:168,stunMax:100,stunTime:4,color:'#5a8ac0',drops:'gale_bird',boss:true,
       pattern:[
-        {k:'charge',wind:0.5,cd:3.6,dmg:0.9},
-        {k:'shot',wind:0.8,cd:3.0,dmg:0.6,n:3,spread:1.1,speed:240,kind:'feather'},
-        {k:'sweep',wind:0.5,cd:2.6,dmg:0.8,r:105,arc:Math.PI*0.9},
-        {k:'slam',wind:0.8,cd:6,dmg:0.8,r:140,el:'thunder'},
+        {k:'shot',wind:0.7,cd:4,dmg:0.6,n:3,spread:1.0,speed:260,kind:'feather',volleys:3,gap:0.35}, // 羽ばたきの羽根を三連射
+        {k:'leap',wind:0.9,cd:5.5,dmg:1.0,r:85,range:450}, // 急降下してかぎ爪で掴みかかる
+        {k:'sweep',wind:0.5,cd:3,dmg:0.8,r:105,arc:2.8}, // 翼で打ち払う
+        {k:'slam',wind:0.8,cd:6,dmg:0.8,r:140,el:'thunder'}, // 大きく羽ばたく突風
+        {k:'charge',wind:0.5,cd:4,dmg:0.9}, // 低空飛行の体当たり
       ],
       pal:{body:'#5a8ac0',dark:'#2a4a7a',wing:'#a8d0f0',beak:'#ffd060',rage:'#c06a3a',rageDark:'#6a2a14',eye:'#ffe040',rageEye:'#ff3030'}},
     rock_lizard:{name:'岩肌の大蜥蜴',ai:'pattern',look:'rockLizard',hp:2000,atk:22,def:6,r:31,speed:122,stunMax:110,stunTime:4,color:'#7a8a4a',drops:'rock_lizard',boss:true,
       pattern:[
-        {k:'sweep',wind:0.7,cd:3.0,dmg:1.1,r:115,arc:Math.PI*0.7},
-        {k:'charge',wind:0.75,cd:5,dmg:1.2},
-        {k:'slam',wind:0.85,cd:4.5,dmg:1.0,r:135},
-        {k:'shot',wind:0.7,cd:4,dmg:0.9,n:3,spread:0.5,speed:300,kind:'rock',el:'fire'},
+        {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:125,arc:3.6}, // 尾を振り回す
+        {k:'shot',wind:0.7,cd:4.5,dmg:0.9,n:3,spread:0.5,speed:300,kind:'rock',el:'fire'}, // くわえた岩を吐き出す
+        {k:'toss',wind:1.0,cd:5.5,dmg:1.2,r:80,el:'fire'}, // 背中の岩を放り投げる
+        {k:'charge',wind:0.75,cd:5,dmg:1.2}, // 這い寄る突進
+        {k:'slam',wind:0.85,cd:6,dmg:1.0,r:135}, // 体を打ちつける
       ],
       pal:{body:'#7a8a4a',dark:'#3e4a22',spine:'#e8d890',belly:'#a8b870',rage:'#a06a3a',rageDark:'#4a2a14',eye:'#ff9020',rageEye:'#ff3020'}},
     // ステージ3：腐毒の沼地（既存の動きを流用し、見た目と能力を変えた魔物）
@@ -1662,26 +1695,29 @@ const DATA={
        wind：予備動作の秒数／cd：次に使えるまでの秒数／dmg：攻撃力への倍率／r・arc：範囲 */
     hydra:{name:'腐沼の多頭竜ヒュドラ',ai:'pattern',look:'hydra',hp:3000,atk:26,def:6,r:34,speed:110,stunMax:120,stunTime:4,color:'#4a6a3a',drops:'hydra',boss:true,
       pattern:[
-        {k:'sweep',wind:0.8,cd:3.0,dmg:1.1,r:130,arc:Math.PI*0.9},
-        {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:3,spread:0.5,speed:300,kind:'soul',el:'water'},
-        {k:'charge',wind:0.8,cd:5,dmg:1.3},
-        {k:'pool',wind:1.0,cd:6.5,dmg:0.9,r:95,life:6,el:'water',st:'poison'},
+        {k:'combo',wind:0.7,cd:4.5,dmg:1.0,r:130,arc:1.4,hits:3,step:0.35}, // 三つ首が順に噛みつく
+        {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:3,spread:0.5,speed:300,kind:'soul',el:'water'}, // 三つ首から水弾
+        {k:'beam',wind:1.0,cd:6,dmg:1.2,len:320,width:60,el:'water',st:'poison'}, // 毒の水流ブレス
+        {k:'charge',wind:0.8,cd:5,dmg:1.3}, // 巨体の突進
+        {k:'pool',wind:1.0,cd:7,dmg:0.9,r:95,life:6,el:'water',st:'poison'}, // 毒の沼を作る
       ],
       pal:{body:'#4a6a3a',dark:'#1e2e18',rage:'#6a4a20',rageDark:'#3a2010',eye:'#ffe060',rageEye:'#ff4020'}},
     venomKing:{name:'沼地の毒蟲王',ai:'pattern',look:'venomKing',hp:3200,atk:28,def:9,r:36,speed:100,stunMax:140,stunTime:4,color:'#5a3a6a',drops:'venom_king',boss:true,
       pattern:[
-        {k:'swarm',wind:0.7,cd:8,n:2,kind:'leech',max:4,st:'poison'},
-        {k:'pool',wind:0.9,cd:4.5,dmg:0.9,r:85,life:6,st:'poison'},
-        {k:'slam',wind:0.9,cd:4.2,dmg:1.2,r:120},
-        {k:'charge',wind:0.7,cd:5.5,dmg:1.3},
+        {k:'swarm',wind:0.7,cd:9,n:2,kind:'leech',max:4,st:'poison'}, // 毒蟲を産む
+        {k:'pool',wind:0.9,cd:5,dmg:0.9,r:85,life:6,st:'poison'}, // 毒液だまり
+        {k:'combo',wind:0.7,cd:5,dmg:1.0,r:110,arc:1.3,hits:2,step:0.4,st:'poison'}, // 大顎の二連噛み
+        {k:'shot',wind:0.7,cd:6,dmg:0.6,n:12,ring:true,speed:230,st:'poison',stChance:0.3}, // 背の棘から毒を飛ばす
+        {k:'charge',wind:0.7,cd:6,dmg:1.3}, // 体節をうねらせて突進
       ],
       pal:{body:'#5a3a6a',dark:'#2a1a34',shell:'#8a5aa0',rage:'#7a3a4a',rageDark:'#3a1a24',eye:'#ffe060',rageEye:'#ff4040'}},
     mireGiant:{name:'腐敗の沼巨人',ai:'pattern',look:'mireGiant',hp:3800,atk:30,def:10,r:42,speed:80,stunMax:150,stunTime:4,color:'#5a6a4a',drops:'mire_giant',boss:true,
       pattern:[
-        {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150},
-        {k:'sweep',wind:0.9,cd:3.5,dmg:1.2,r:150,arc:Math.PI*0.8},
-        {k:'shot',wind:0.8,cd:4.5,dmg:1.0,n:1,speed:260,kind:'soul',el:'water'},
-        {k:'pool',wind:1.2,cd:6,dmg:1.0,r:110,life:7,el:'water',st:'poison'},
+        {k:'slam',wind:1.1,cd:5,dmg:1.4,r:150}, // 両腕で叩き潰す
+        {k:'sweep',wind:0.9,cd:3.6,dmg:1.2,r:150,arc:2.5}, // 腕で薙ぎ払う
+        {k:'toss',wind:1.0,cd:5,dmg:1.1,r:85,el:'water'}, // 泥の塊を投げる
+        {k:'erupt',wind:1.1,cd:7,dmg:0.9,n:4,spread:280,r:70,el:'water',st:'poison'}, // 足元から泥が噴き出す
+        {k:'pool',wind:1.2,cd:7,dmg:1.0,r:110,life:7,el:'water',st:'poison'}, // 腐った泥を広げる
       ],
       pal:{body:'#5a6a4a',dark:'#262e1c',mud:'#7a6a3a',rage:'#7a5a3a',rageDark:'#3a2a1a',eye:'#ffe060',rageEye:'#ff6020'}},
     // ステージ4：蒼流の水辺（既存の動きを流用し、見た目と能力を変えた魔物）
@@ -1700,35 +1736,41 @@ const DATA={
     /* 水辺のボス（技は pattern に並べる。技の種類は沼地と同じ） */
     aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,
       pattern:[
-        {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:Math.PI*0.8},
-        {k:'shot',wind:0.6,cd:3.4,dmg:0.9,n:5,spread:0.9,speed:300,kind:'soul',el:'water'},
-        {k:'charge',wind:0.8,cd:5,dmg:1.3},
-        {k:'swarm',wind:0.7,cd:9,n:2,kind:'piranha',max:4},
+        {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:70,el:'water'}, // 激流のブレス
+        {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:2.5}, // 長い体で薙ぎ払う
+        {k:'shot',wind:0.6,cd:4,dmg:0.9,n:5,spread:0.9,speed:300,kind:'soul',el:'water'}, // 水弾を扇に吐く
+        {k:'erupt',wind:1.1,cd:7,dmg:1.0,n:4,spread:280,r:70,el:'water'}, // 足元から水柱
+        {k:'charge',wind:0.8,cd:5,dmg:1.3}, // うねって突進
+        {k:'swarm',wind:0.7,cd:10,n:2,kind:'piranha',max:4}, // 小魚を呼ぶ
       ],
       pal:{body:'#2a6aa0',dark:'#10284a',fin:'#60c0f0',rage:'#5a3a8a',rageDark:'#2a1a4a',eye:'#e0f8ff',rageEye:'#ff5080'}},
     turtle:{name:'水瀑の大亀',ai:'pattern',look:'turtle',hp:4000,atk:30,def:14,r:40,speed:76,stunMax:150,stunTime:4,color:'#4a7a5a',drops:'turtle',boss:true,
       pattern:[
-        {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150},
-        {k:'shot',wind:0.8,cd:4.2,dmg:1.0,n:3,spread:0.6,speed:250,kind:'soul',el:'water'},
-        {k:'sweep',wind:0.9,cd:3.6,dmg:1.2,r:140,arc:Math.PI*0.8},
-        {k:'swarm',wind:0.8,cd:8,n:2,kind:'crab',max:3},
+        {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150}, // 甲羅ごとのしかかる
+        {k:'charge',wind:0.9,cd:6,dmg:1.2,times:3}, // 甲羅にこもって回転しながら滑る
+        {k:'beam',wind:1.0,cd:6,dmg:1.2,len:320,width:60,el:'water'}, // 口から滝のような水流
+        {k:'shot',wind:0.8,cd:4.5,dmg:1.0,n:3,spread:0.6,speed:250,kind:'soul',el:'water'}, // 水弾
+        {k:'swarm',wind:0.8,cd:9,n:2,kind:'crab',max:3}, // 甲羅に住む蟹を呼ぶ
       ],
       pal:{body:'#4a7a5a',dark:'#1e3a2a',shell:'#7aa070',rage:'#5a5a8a',rageDark:'#2a2a4a',eye:'#e0ffe0',rageEye:'#ff6040'}},
     thunderEel:{name:'雷鳴の大鰻',ai:'pattern',look:'thunderEel',hp:3600,atk:33,def:6,r:36,speed:120,stunMax:140,stunTime:4,color:'#3a4ab0',drops:'thunder_eel',boss:true,
       pattern:[
-        {k:'charge',wind:0.6,cd:4.5,dmg:1.4},
-        {k:'slam',wind:1.0,cd:4.8,dmg:1.2,r:130},
-        {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:2,spread:0.4,speed:340,kind:'soul',el:'thunder',st:'paralysis'},
-        {k:'swarm',wind:0.8,cd:9,n:2,kind:'eel',max:4},
+        {k:'beam',wind:0.9,cd:5,dmg:1.2,len:340,width:50,el:'thunder',st:'paralysis'}, // 一直線の稲妻
+        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:140,el:'thunder'}, // 全身から放電
+        {k:'charge',wind:0.6,cd:4.5,dmg:1.4}, // うねって突進
+        {k:'erupt',wind:1.0,cd:7,dmg:0.9,n:4,spread:280,r:60,el:'thunder'}, // 落雷を呼ぶ
+        {k:'shot',wind:0.6,cd:4,dmg:0.9,n:2,spread:0.4,speed:340,kind:'soul',el:'thunder',st:'paralysis'}, // 雷球
+        {k:'swarm',wind:0.8,cd:10,n:2,kind:'eel',max:4}, // 子鰻を呼ぶ
       ],
       pal:{body:'#3a4ab0',dark:'#1a2060',spark:'#ffe858',rage:'#6a3ab0',rageDark:'#2a1460',eye:'#ffffff',rageEye:'#ff40ff'}},
     // 水辺の隠しボス（依頼「大蚯蚓」）：ゴムのような体。雷は通りにくい
     giantWorm:{name:'滝つぼの大蚯蚓',ai:'pattern',look:'giantWorm',hp:2800,atk:28,def:5,r:34,speed:100,stunMax:120,stunTime:4,color:'#b07a8a',drops:'giant_worm',boss:true,
       pattern:[
-        {k:'burrow',wind:0.9,cd:7,dmg:1.3,r:90},
-        {k:'sweep',wind:0.7,cd:3.6,dmg:1.1,r:120,arc:Math.PI*0.7},
-        {k:'charge',wind:0.7,cd:5.5,dmg:1.25},
-        {k:'slam',wind:1.0,cd:5.2,dmg:1.2,r:115},
+        {k:'burrow',wind:0.9,cd:6,dmg:1.3,r:95}, // 地中を進み、真下から飛び出す
+        {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:3,spread:280,r:80}, // 地面を突き破って何度も顔を出す
+        {k:'sweep',wind:0.7,cd:3.6,dmg:1.1,r:125,arc:2.2}, // 体を振り回す
+        {k:'slam',wind:1.0,cd:5.2,dmg:1.2,r:120}, // 倒れ込んで押し潰す
+        {k:'shot',wind:0.7,cd:5,dmg:0.7,n:3,spread:0.6,speed:260,kind:'mucus'}, // 泥水を吐く
       ],
       pal:{body:'#b07a8a',dark:'#5a3445',ring:'#e0b0c0',rage:'#8a3a6a',rageDark:'#3a1430',eye:'#ffffff',rageEye:'#ff6aa0'}},
     // ステージ5
@@ -1765,19 +1807,20 @@ const DATA={
     stag_beetle:{name:'古森の大顎クワガタ',ai:'pattern',look:'stagBeetle',hp:2900,atk:25,def:9,r:34,speed:110,stunMax:130,stunTime:4,color:'#3a2a22',drops:'stag_beetle',boss:true,
       guard:{arc:120*Math.PI/180,mult:0.15},turn:1.9,
       pattern:[
-        {k:'sweep',wind:0.75,cd:3.0,dmg:1.3,r:120,arc:Math.PI*0.55},
-        {k:'charge',wind:0.7,cd:5,dmg:1.3},
-        {k:'slam',wind:0.9,cd:5,dmg:1.1,r:130},
-        {k:'swarm',wind:0.8,cd:10,n:2,kind:'beetle',max:3},
+        {k:'sweep',wind:0.75,cd:3.2,dmg:1.3,r:120,arc:1.7}, // 大顎ではさむ
+        {k:'charge',wind:0.7,cd:5,dmg:1.3,times:2}, // 大顎を構えて二連突進
+        {k:'leap',wind:0.9,cd:7,dmg:1.2,r:100,range:400}, // 羽を広げて飛び、のしかかる
+        {k:'swarm',wind:0.8,cd:10,n:2,kind:'beetle',max:3}, // 子分の甲虫を呼ぶ
       ],
       pal:{body:'#3a2a22',dark:'#160e0a',shell:'#5a4030',jaw:'#7a5a3a',shine:'#c8a070',rage:'#5a2020',rageDark:'#200808',eye:'#ffd040',rageEye:'#ff3030'}},
     // 森の白うさぎ：素早く跳ねて突進し、耳を振る薙ぎ払いと、弱めの綿毛弾を撃つ。森林の4体目のボス
     forest_rabbit:{name:'古森の跳ね兎',ai:'pattern',look:'rabbit',hp:2400,atk:20,def:4,r:28,speed:165,stunMax:110,stunTime:4,color:'#f4eee8',drops:'forest_rabbit',boss:true,
       pattern:[
-        {k:'charge',wind:0.45,cd:3.5,dmg:1.15},
-        {k:'shot',wind:0.6,cd:4,n:3,spread:0.5,speed:300,dmg:0.6,kind:'soul'},
-        {k:'sweep',wind:0.55,cd:3.0,dmg:1.0,r:105,arc:Math.PI*0.6},
-        {k:'slam',wind:0.7,cd:5.5,dmg:0.9,r:100},
+        {k:'leap',wind:0.7,cd:4,dmg:1.0,r:80,range:420}, // ぴょんと跳んで踏みつける
+        {k:'charge',wind:0.45,cd:4,dmg:1.15,times:2}, // 素早く二度跳ね回る
+        {k:'sweep',wind:0.55,cd:3,dmg:1.0,r:105,arc:3.2}, // 後ろ足で蹴る
+        {k:'slam',wind:0.8,cd:6,dmg:0.9,r:110}, // 地を踏み鳴らす
+        {k:'shot',wind:0.6,cd:5,n:6,ring:true,speed:260,dmg:0.6,kind:'soul'}, // 綿毛を舞い散らす
       ],
       pal:{body:'#f4eee8',dark:'#b8a8a0',ear:'#ffb8c8',cheek:'#ffb0c0',eye:'#d83c60',rage:'#ffd8c8',rageDark:'#a07060',rageEye:'#ff2040'}},
     forest_king:{name:'古森の覇狼',ai:'wolf',atkEl:{roar:'ice',sweep:'ice'},hp:2600,atk:24,def:6,r:34,speed:128,stunMax:120,stunTime:4,color:'#5a6a3a',drops:'forest_king',boss:true,
@@ -1804,13 +1847,30 @@ const DATA={
       empower:{range:230,time:10,atk:1.3,speed:1.15,cd:[6,8]},revive:{range:280,max:2,hp:0.6,age:30,cd:[5,7]},
       pal:{body:'#5a3a7a',dark:'#2a1640',robe:'#7a4aa0',eye:'#ff90ff'}},
     mole:{name:'結晶喰いの土竜',ai:'pattern',look:'mole',hp:2700,atk:24,def:8,r:32,speed:105,stunMax:120,stunTime:4,color:'#8a6a4a',drops:'mole',boss:true,
-      pattern:[{k:'burrow',wind:0.9,cd:6,dmg:1.4,r:90},{k:'sweep',wind:0.6,cd:3,dmg:1.1,r:110,arc:Math.PI*0.6},{k:'charge',wind:0.6,cd:5,dmg:1.2},{k:'slam',wind:0.9,cd:6,dmg:1.0,r:110}],
+      pattern:[
+        {k:'burrow',wind:0.9,cd:6,dmg:1.4,r:90}, // 潜って真下から
+        {k:'combo',wind:0.6,cd:4,dmg:0.9,r:110,arc:1.6,hits:3,step:0.3}, // 大きな爪でひっかき連打
+        {k:'erupt',wind:1.0,cd:6.5,dmg:1.0,n:3,spread:260,r:65,el:'thunder'}, // 掘り起こした結晶が飛び出す
+        {k:'toss',wind:0.9,cd:5,dmg:1.0,r:70}, // 結晶塊を投げる
+        {k:'charge',wind:0.6,cd:5,dmg:1.2}, // 土をかき分けて突進
+      ],
       pal:{body:'#8a6a4a',dark:'#3e2e1e',claw:'#e8e0c8',crystal:'#9ae8ff',rage:'#a06a3a',rageDark:'#4a2a10',eye:'#ffe060',rageEye:'#ff6020'}},
     centipede:{name:'晶殻の大百足',ai:'pattern',look:'centipede',hp:3000,atk:27,def:9,r:30,speed:118,stunMax:130,stunTime:4,color:'#8a4a3a',drops:'centipede',boss:true,
-      pattern:[{k:'sweep',wind:0.6,cd:3,dmg:1.2,r:130,arc:Math.PI*0.8},{k:'shot',wind:0.6,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.8,kind:'fire',el:'fire'},{k:'charge',wind:0.7,cd:5.5,dmg:1.25},{k:'shot',wind:0.5,cd:7,n:1,speed:360,dmg:1.3,kind:'fire',el:'fire'}],
+      pattern:[
+        {k:'combo',wind:0.6,cd:4,dmg:1.0,r:120,arc:1.5,hits:3,step:0.35,st:'poison'}, // 毒あごで連続で噛む
+        {k:'charge',wind:0.7,cd:5,dmg:1.2,times:3}, // くねりながら三連突進
+        {k:'shot',wind:0.6,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.8,kind:'fire',el:'fire'}, // 晶炎を吐く
+        {k:'sweep',wind:0.6,cd:3,dmg:1.2,r:130,arc:2.5}, // 長い体で薙ぎ払う
+      ],
       pal:{body:'#8a4a3a',dark:'#3a1e16',shell:'#c86a4a',leg:'#e8a060',crystal:'#ffb070',rage:'#c05020',rageDark:'#501808',eye:'#ffe060',rageEye:'#ffffff'}},
     grados:{name:'地底王グラドス',ai:'pattern',look:'golem',hp:4200,atk:34,def:16,r:42,speed:62,stunMax:170,stunTime:4,color:'#6a6a7a',drops:'grados',boss:true,physRes:0.4,
-      pattern:[{k:'slam',wind:1.2,cd:6,dmg:1.5,r:150},{k:'sweep',wind:0.9,cd:4,dmg:1.3,r:130,arc:Math.PI*0.9}],
+      pattern:[
+        {k:'slam',wind:1.2,cd:6,dmg:1.5,r:150}, // 両の拳で地面を叩く
+        {k:'sweep',wind:0.9,cd:4,dmg:1.3,r:130,arc:2.8}, // 腕で大きく薙ぐ
+        {k:'toss',wind:1.0,cd:5,dmg:1.3,r:80}, // 岩をもいで投げる
+        {k:'erupt',wind:1.1,cd:6.5,dmg:1.0,n:4,spread:300,r:70}, // 地底から岩柱
+        {k:'beam',wind:1.1,cd:7,dmg:1.3,len:360,width:50,el:'fire',below:0.5}, // 核の光線（怒り時）
+      ],
       pal:{body:'#6a6a7a',dark:'#2a2a36',ore:'#9ae8ff',core:'#c8f0ff',rage:'#7a5a8a',rageDark:'#3a2a4a',eye:'#9ae8ff',rageEye:'#ff8040'}},
     // ===== 灼熱の火山（ステージ6）雑魚 =====
     fire_wyvern:{name:'炎翼竜',ai:'wyvern',look:'fireWyvern',hp:90,atk:14,def:2,r:18,speed:120,color:'#e0502a',drops:'fire_wyvern',
@@ -1826,13 +1886,32 @@ const DATA={
       pal:{body:'#9a4a22',dark:'#3a1a0a',shell:'#c8703a',tail:'#ff7040',sting:'#ffd080',eye:'#ffe060'}},
     // ===== 灼熱の火山 ボス =====
     lava_giant:{name:'溶岩の巨人',ai:'pattern',look:'lavaGiant',hp:3600,atk:32,def:14,r:40,speed:70,stunMax:160,stunTime:4,color:'#7a4a2a',drops:'lava_giant',boss:true,
-      pattern:[{k:'slam',wind:1.2,cd:6,dmg:1.5,r:140},{k:'toss',wind:1.0,cd:5,dmg:1.3,r:60},{k:'crack',wind:0.9,cd:6,dmg:1.2,len:360,width:44,el:'fire'},{k:'sweep',wind:0.9,cd:4,dmg:1.3,r:120,arc:Math.PI*1.0}],
+      pattern:[
+        {k:'slam',wind:1.2,cd:6,dmg:1.5,r:140,el:'fire'}, // 溶岩の拳で叩きつける
+        {k:'toss',wind:1.0,cd:4.5,dmg:1.3,r:70,el:'fire'}, // 溶岩弾を投げる
+        {k:'crack',wind:0.9,cd:6,dmg:1.2,len:360,width:44,el:'fire'}, // 溶岩の亀裂
+        {k:'sweep',wind:0.9,cd:4,dmg:1.3,r:120,arc:3.1}, // 腕を振り回す
+        {k:'pool',wind:1.0,cd:7,dmg:0.8,r:90,life:6,hz:'fire',el:'fire'}, // 滴る溶岩だまり
+      ],
       pal:{body:'#7a4a2a',dark:'#2a1608',rock:'#a06a40',lava:'#ff6a20',core:'#ffb050',rage:'#a03a1a',rageDark:'#3a0a04',eye:'#ffe060',rageEye:'#ffffff'}},
     volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:110,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,
-      pattern:[{k:'shot',wind:0.9,cd:4,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire',el:'fire'},{k:'toss',wind:1.0,cd:4.5,dmg:1.2,r:70},{k:'slam',wind:1.1,cd:6.5,dmg:1.2,r:170,below:0.5},{k:'erupt',wind:1.2,cd:7,dmg:1.0,r:60,n:4,spread:220,below:0.25,el:'fire'}],
+      pattern:[
+        {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:70,el:'fire'}, // 炎獄のブレス
+        {k:'shot',wind:0.9,cd:4.5,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire',el:'fire'}, // 火炎弾を扇に
+        {k:'leap',wind:1.0,cd:7,dmg:1.4,r:120,range:460}, // 翼で飛び上がって降り立つ
+        {k:'toss',wind:1.0,cd:4.5,dmg:1.2,r:70}, // 溶岩塊を吐き飛ばす
+        {k:'slam',wind:1.1,cd:6.5,dmg:1.2,r:170,below:0.5}, // 尾と翼で周りを薙ぐ（怒り時）
+        {k:'erupt',wind:1.2,cd:7,dmg:1.0,r:60,n:5,spread:240,below:0.5,el:'fire'}, // 火山弾の雨（怒り時）
+      ],
       pal:{body:'#8a2a14',dark:'#2a0a04',scale:'#c04a20',lava:'#ff7a30',wing:'#5a1808',rage:'#b03010',rageDark:'#3a0800',eye:'#ffe060',rageEye:'#ffffff'}},
     felgnas:{name:'熔鉄の魔獣フェルグナス',ai:'pattern',look:'felgnas',hp:3000,atk:30,def:9,r:36,speed:130,stunMax:140,stunTime:4,color:'#c05a1a',drops:'felgnas',boss:true,rageChain:2,
-      pattern:[{k:'charge',wind:0.7,cd:4.5,dmg:1.3},{k:'slam',wind:0.9,cd:5,dmg:1.1,r:130},{k:'pool',wind:1.0,cd:5,dmg:0.8,r:70,life:6,hz:'fire',below:0.4,el:'fire'}],
+      pattern:[
+        {k:'charge',wind:0.7,cd:4.5,dmg:1.3,times:2}, // 熔鉄の角で二連突進
+        {k:'leap',wind:0.8,cd:5.5,dmg:1.2,r:95,range:420,el:'fire'}, // 獣の跳躍
+        {k:'combo',wind:0.6,cd:4,dmg:1.0,r:105,arc:1.4,hits:3,step:0.35,el:'fire'}, // 灼けた爪の連撃
+        {k:'beam',wind:1.0,cd:6,dmg:1.2,len:300,width:50,el:'fire'}, // 溶けた鉄を吐く
+        {k:'pool',wind:1.0,cd:6,dmg:0.8,r:70,life:6,hz:'fire',el:'fire'}, // 熔鉄だまり
+      ],
       pal:{body:'#c05a1a',dark:'#3a1406',metal:'#ffa040',glow:'#ffd080',rage:'#e05a10',rageDark:'#4a1404',eye:'#fff0a0',rageEye:'#ffffff'}},
     // ===== 氷雪地帯（ステージ7）雑魚 =====
     ice_beetle:{name:'氷晶甲虫',ai:'iceBeetle',look:'iceBeetle',hp:140,atk:14,def:14,r:22,speed:60,color:'#8fd0e8',drops:'ice_beetle',
@@ -1853,13 +1932,31 @@ const DATA={
       pal:{body:'#c8c0b0',dark:'#5a5040',face:'#f0e0c8',eye:'#2a2a2a'}},
     // ===== 氷雪地帯 ボス =====
     ice_deer:{name:'氷冠の大鹿',ai:'pattern',look:'iceDeer',hp:3200,atk:30,def:10,r:38,speed:115,stunMax:150,stunTime:4,color:'#a8d8f0',drops:'ice_deer',boss:true,
-      pattern:[{k:'charge',wind:0.8,cd:5,dmg:1.3},{k:'shot',wind:0.6,cd:4,n:5,spread:0.9,speed:300,dmg:0.9,kind:'ice',el:'ice'},{k:'erupt',wind:1.1,cd:6.5,dmg:1.1,r:55,n:4,spread:200,el:'ice'}],
+      pattern:[
+        {k:'charge',wind:0.8,cd:5,dmg:1.3}, // 氷の大角で突進
+        {k:'sweep',wind:0.7,cd:3.6,dmg:1.2,r:130,arc:2.0,el:'ice'}, // 角を振り払う
+        {k:'shot',wind:0.6,cd:4,n:5,spread:0.9,speed:300,dmg:0.9,kind:'ice',el:'ice'}, // 氷の礫
+        {k:'erupt',wind:1.1,cd:6.5,dmg:1.1,r:55,n:5,spread:220,el:'ice'}, // 氷冠から氷柱を降らせる
+        {k:'leap',wind:0.8,cd:6,dmg:1.1,r:85,range:420}, // 跳躍して踏み抜く
+      ],
       pal:{body:'#a8d8f0',dark:'#2a5a78',antler:'#e8f8ff',ice:'#c8f0ff',rage:'#7ab8e0',rageDark:'#1a3a58',eye:'#1a3a50',rageEye:'#ffffff'}},
     frost_wyvern:{name:'永冬竜フロストレイン',ai:'pattern',look:'frostWyvern',hp:3300,atk:31,def:9,r:40,speed:120,stunMax:150,stunTime:4,color:'#7ac8e8',drops:'frost_wyvern',boss:true,
-      pattern:[{k:'shot',wind:0.9,cd:4.5,n:7,spread:1.2,speed:270,dmg:0.8,kind:'ice',el:'ice'},{k:'shot',wind:0.5,cd:3,n:1,speed:380,dmg:1.0,kind:'ice',el:'ice'},{k:'erupt',wind:1.1,cd:7,dmg:1.0,r:50,n:5,spread:240,el:'ice'}],
+      pattern:[
+        {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:64,el:'ice'}, // 凍える吐息
+        {k:'shot',wind:0.9,cd:4.5,n:7,spread:1.2,speed:270,dmg:0.8,kind:'ice',el:'ice'}, // 氷の礫を扇に
+        {k:'leap',wind:1.0,cd:6.5,dmg:1.3,r:110,range:460}, // 舞い上がって急降下
+        {k:'erupt',wind:1.1,cd:7,dmg:1.0,r:50,n:6,spread:240,el:'ice'}, // 氷柱の雨
+        {k:'sweep',wind:0.8,cd:4,dmg:1.1,r:140,arc:3.4}, // 尾で薙ぎ払う
+      ],
       pal:{body:'#7ac8e8',dark:'#1e4a68',scale:'#c8f0ff',wing:'#3a88b0',rage:'#50a8d8',rageDark:'#143a58',eye:'#ffffff',rageEye:'#ff8040'}},
     ice_ape:{name:'氷嶺の剛猿',ai:'pattern',look:'iceApe',hp:3500,atk:33,def:10,r:40,speed:100,stunMax:160,stunTime:4,color:'#e8eef4',drops:'ice_ape',boss:true,
-      pattern:[{k:'slam',wind:1.0,cd:5.5,dmg:1.4,r:130},{k:'charge',wind:0.7,cd:6,dmg:1.2},{k:'shot',wind:0.6,cd:4,n:5,spread:0.8,speed:330,dmg:0.8,kind:'shard',el:'ice'},{k:'swarm',wind:1.0,cd:9,kind:'snow_monkey',n:2,max:4}],
+      pattern:[
+        {k:'slam',wind:1.0,cd:5,dmg:1.4,r:130}, // 両拳で地面を叩く
+        {k:'combo',wind:0.6,cd:4,dmg:1.0,r:115,arc:1.5,hits:3,step:0.35}, // 左右の拳の連打
+        {k:'leap',wind:0.9,cd:6,dmg:1.3,r:110,range:420}, // 飛び上がってのしかかる
+        {k:'toss',wind:1.0,cd:5,dmg:1.2,r:80,el:'ice'}, // 氷塊を投げる
+        {k:'swarm',wind:1.0,cd:10,kind:'snow_monkey',n:2,max:4}, // 群れの猿を呼ぶ
+      ],
       pal:{body:'#e8eef4',dark:'#5a6a7a',fur:'#ffffff',ice:'#a8e8ff',rage:'#b8c8d8',rageDark:'#4a5a6a',eye:'#1a2a3a',rageEye:'#ff6040'}},
     bone_dragon:{name:'冥府の骨竜',ai:'dragon',atkEl:{orb:'mei'},atkSt:{orb:'curse'},hp:5200,atk:30,def:10,r:40,speed:92,stunMax:160,stunTime:3.5,color:'#d8d0c0',drops:'bone_dragon',boss:true,
       summon:'skeleton',pal:{body:'#d8d0c0',dark:'#5a5246',glow:'#80a0ff',rageGlow:'#c050ff'}},
@@ -5315,6 +5412,9 @@ function patternReady(w,e,mv,d,los){
     case 'pool':return d<520;
     case 'burrow':return d<700;
     case 'swarm':return w.enemies.filter(x=>!x.dead&&x.type===mv.kind).length<(mv.max||4);
+    case 'leap':return los&&d>110&&d<(mv.range||420);
+    case 'combo':return d<mv.r*0.9+e.r;
+    case 'beam':return los&&d<mv.len*0.9+e.r;
   }
   return false;
 }
@@ -5325,9 +5425,9 @@ function updateBossPattern(w,e,p,dt){
   const def=DATA.enemies[e.type],ph2=e.phase===2,rc=ph2?0.7:1,pat=def.pattern||[];
   for(const k in e.cds)e.cds[k]-=dt;
   if(e.state==='sleep')return;
-  if(e.state==='stunned'){e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
+  if(e.state==='stunned'){e.z=0;e.leapTo=null;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
   if(e.boss&&e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
-    e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;
+    e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;e.z=0;e.leapTo=null;
     w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
     emit(w,{type:'enrage',x:e.x,y:e.y,name:def.name,cry:e.type});
     return;
@@ -5351,14 +5451,23 @@ function updateBossPattern(w,e,p,dt){
         e.noAtkT=0;
         const mv=pat[pick],wind=mv.wind*(ph2?0.8:1);
         e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc;e.curMv=mv;e.atkAngle=ang;
+        e.chargeTimes=mv.k==='charge'?(mv.times||1)-1:0;
         if(mv.k==='charge')startCharge(w,e,ang,wind,false);
+        else if(mv.k==='leap'){ // 飛びかかり：着地点を予告し、溜めのあと弧を描いて跳ぶ
+          let tx=p.x,ty=p.y;if(cannotEnter(w.map,e,tx,ty)){tx=e.x;ty=e.y;}
+          e.state='windup';e.action='leap';e.timer=wind;e.leapT=wind;e.leapFrom=[e.x,e.y];e.leapTo=[tx,ty];
+          addTelegraph(w,{shape:'circle',x:tx,y:ty,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
+        }
         else if(mv.k==='burrow'&&mv.wind){e.state='windup';e.action='burrow';e.timer=mv.wind*(ph2?0.8:1);addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r||90,total:e.timer,dmg:0,owner:e.id});} // 潜る前の溜め：狙われる足元に予告を出す（その間は見えて、攻撃も届く）
         else if(mv.k==='burrow'){e.state='burrow';e.timer=1.3;e.hidden=true;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});}
         else{
           e.state='windup';e.action=mv.k;e.timer=wind;
           if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
           else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
-          else if(mv.k==='shot')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+(mv.kind==='feather'?200:240),arc:(mv.spread||0)+0.2,total:wind,dmg:0,owner:e.id,small:true}); // 飛び道具（羽根・石・弾）：飛ばす前に扇の範囲を予告
+          else if(mv.k==='combo'){e.comboLeft=(mv.hits||3)-1;addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});} // 連撃：一撃ごとに向き直して扇を予告
+          else if(mv.k==='beam')addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:mv.len+e.r,width:mv.width,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st}); // ブレス・水流：まっすぐの帯
+          else if(mv.k==='shot'&&mv.ring){e.volleyLeft=(mv.volleys||1)-1;addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:e.r+170,total:wind,dmg:0,owner:e.id,small:true});} // 全方位に撒く
+          else if(mv.k==='shot'&&(e.volleyLeft=(mv.volleys||1)-1,true))addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+(mv.kind==='feather'?200:240),arc:(mv.spread||0)+0.2,total:wind,dmg:0,owner:e.id,small:true}); // 飛び道具（羽根・石・弾）：飛ばす前に扇の範囲を予告
           else if(mv.k==='pool'){ // 狙った場所に毒の沼（hz指定で炎の溜まりにもなる）：予告のあと、その場に残る
             addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
             w.hazards.push({id:w.nextId++,kind:mv.hz||'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind,el:mv.el,st:mv.st});
@@ -5382,19 +5491,32 @@ function updateBossPattern(w,e,p,dt){
       break;
     }
     case 'windup':{
-      e.timer-=dt;if(e.timer>0)break;
+      e.timer-=dt;
+      if(e.action==='leap'&&e.leapTo){const k=clamp(1-e.timer/e.leapT,0,1),q=clamp((k-0.4)/0.6,0,1);
+        e.x=e.leapFrom[0]+(e.leapTo[0]-e.leapFrom[0])*q;e.y=e.leapFrom[1]+(e.leapTo[1]-e.leapFrom[1])*q;e.z=Math.sin(Math.PI*q)*70;}
+      if(e.timer>0)break;
       const mv=e.curMv||{};
+      if(e.action==='leap'){e.z=0;e.leapTo=null;e.state='recover';e.timer=(0.7)+BOSS_REST_OF(e);emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r||100});break;}
+      if(e.action==='combo'&&e.comboLeft>0){ // 次の一撃：向き直して少し踏み込む
+        e.comboLeft--;const a2=Math.atan2(p.y-e.y,p.x-e.x);e.atkAngle=a2;e.facing=a2;moveEntity(w.map,e,Math.cos(a2)*18,Math.sin(a2)*18);
+        e.timer=(mv.step||0.45)*(ph2?0.85:1);
+        addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:a2,r:mv.r,arc:mv.arc,total:e.timer,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});break;}
+      if(e.action==='combo'||e.action==='beam'){e.state='recover';e.timer=(0.7)+BOSS_REST_OF(e);if(e.action==='beam')emit(w,{type:'shoot',x:e.x,y:e.y});break;}
       if(e.action==='sweep'||e.action==='pool'||e.action==='toss'||e.action==='erupt'||e.action==='crack'){e.state='recover';e.timer=(0.6)+BOSS_REST_OF(e);break;}
       if(e.action==='slam'){e.state='recover';e.timer=(0.7)+BOSS_REST_OF(e);emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});break;}
       if(e.action==='burrow'){e.state='burrow';e.timer=1.3;e.hidden=true;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});break;}
       if(e.action==='shot'){
         const n=mv.n||1,sp=mv.speed||300;
         for(let i=0;i<n;i++){
-          const a=e.atkAngle+(n===1?0:(i-(n-1)/2)*(mv.spread||0.4)/(n-1));
+          const a=mv.ring?e.atkAngle+i/n*TAU+(e.volleyLeft%2)*Math.PI/n:e.atkAngle+(n===1?0:(i-(n-1)/2)*(mv.spread||0.4)/(n-1));
           w.projectiles.push({id:w.nextId++,kind:mv.kind||'soul',owner:'enemy',x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),
             vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,life:2.4,dmg:e.atk*(mv.dmg||1),angle:a,el:mv.el,src:e.type,inflict:mv.st,inflictChance:mv.stChance,slow:mv.slow});
         }
         emit(w,{type:'shoot',x:e.x,y:e.y});
+        if(e.volleyLeft>0){ // 連射：向き直して次の弾
+          e.volleyLeft--;e.atkAngle=Math.atan2(p.y-e.y,p.x-e.x);e.facing=e.atkAngle;e.timer=(mv.gap||0.35)*(ph2?0.85:1);
+          if(!mv.ring)addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:e.atkAngle,r:e.r+(mv.kind==='feather'?200:240),arc:(mv.spread||0)+0.2,total:e.timer,dmg:0,owner:e.id,small:true});
+          break;}
         e.state='recover';e.timer=(0.6)+BOSS_REST_OF(e);break;
       }
       if(e.action==='swarm'){
@@ -5413,6 +5535,7 @@ function updateBossPattern(w,e,p,dt){
         if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r+4){e.hitSet.add(q.id);hitPlayer(w,q,dmg,e.x,e.y,e.type,e.curMv&&e.curMv.el,e.curMv&&e.curMv.st);}}
       if(blocked||e.chargeLeft<=0){
         if(blocked)emit(w,{type:'bump',x:e.x,y:e.y});
+        if(e.chargeTimes>0){e.chargeTimes--;startCharge(w,e,Math.atan2(p.y-e.y,p.x-e.x),(blocked?0.6:0.45)*(ph2?0.85:1),true);break;} // 続けて突進（向き直して予告を出し直す）
         e.state='recover';e.timer=(blocked?1.1:0.6)+BOSS_REST_OF(e);
       }
       break;
