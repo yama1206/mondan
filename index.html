@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.19.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.20.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4908,7 +4908,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
     if(w.map.tiles[Math.floor(p.y/TILE)*w.map.W+Math.floor(p.x/TILE)]===TILE_PUDDLE)k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
     if(w.blizzard&&w.blizzard.on)k*=0.92;                      // 吹雪：わずかに遅くなる（ほかの補正と掛け算で共存、終われば戻る）
-    const spd=(p.drawn?s.speed:s.sheathSpeed)*k;
+    const spd=(p.drawn?s.speed:s.sheathSpeed)*k*(p.buffs.spd&&p.buffs.spd.t>0?1+p.buffs.spd.pct/100:1); // ペットの応援で速くなる
     moveEntity(w.map,p,mx*spd*dt,my*spd*dt);p.walk+=dt*spd/28;
   }
   // 回避：アイテム使用（消費なし）とチャージを中断する
@@ -6280,6 +6280,68 @@ function updateRevive(w,dt){
   }
 }
 /** ワールドを1ステップ進める。inputs = {playerId: 入力} */
+// ===== PETAI BEGIN =====
+/* ペットのサポート：はめている首輪ごとに決まった行動を、ペットのAIが自分で判断して行う（マルチプレイと訓練場のみ）。
+   attack：敵に向かって攻撃する首輪（ranged は離れた所から撃つ、boss はボスを優先）
+   ready／do：飼い主の様子を見て助ける首輪（回復・守り・応援） */
+const PET_ACTS={
+  rabbit:{name:'応援ダッシュ',desc:'飼い主が走っていると、まわりを跳ね回って足を速くする（移動速度+20%・5秒）',cd:14,
+    ready:(w,o)=>!!o.moving,do:(w,pt,o)=>{o.buffs.spd={t:5,pct:20};}},
+  slime:{name:'ぷるぷる回復',desc:'飼い主のHPが8割を切ると、体を寄せて少し回復する（最大HPの6%）',cd:10,
+    ready:(w,o)=>o.hp<o.stats.maxHp*0.8,do:(w,pt,o)=>petHeal(w,o,0.06)},
+  bee:{name:'蜜の差し入れ',desc:'飼い主のHPが4割を切ると、蜜を運んで大きく回復する（最大HPの20%）',cd:30,
+    ready:(w,o)=>o.hp<o.stats.maxHp*0.4,do:(w,pt,o)=>petHeal(w,o,0.2)},
+  mole:{name:'土の守り',desc:'飼い主に敵の攻撃の予告が重なると、土の守りで受けるダメージを30%減らす（4秒）',cd:15,
+    ready:(w,o)=>w.telegraphs.some(t=>t.dmg>0&&inTelegraph(t,o.x,o.y,o.r)),do:(w,pt,o)=>petGuard(o,4,30)},
+  turtle:{name:'甲羅の盾',desc:'飼い主のHPが5割を切ると、甲羅の盾で受けるダメージを40%減らす（6秒）',cd:25,
+    ready:(w,o)=>o.hp<o.stats.maxHp*0.5,do:(w,pt,o)=>petGuard(o,6,40)},
+  fox:{name:'かく乱の噛みつき',desc:'近くの敵に飛びかかって噛みつく（飼い主の攻撃力の35%）',cd:5,attack:{mult:0.35,range:320}},
+  cat:{name:'ひっかき',desc:'近くの敵を短い間隔で何度もひっかく（飼い主の攻撃力の20%）',cd:2.2,attack:{mult:0.2,range:260}},
+  wolf:{name:'噛みつき',desc:'飼い主のそばの敵に強く噛みつく（飼い主の攻撃力の50%）',cd:4.5,attack:{mult:0.5,range:340}},
+  owl:{name:'羽根飛ばし',desc:'離れた所からボスを優先して羽根を飛ばす（飼い主の攻撃力の40%）',cd:5,attack:{mult:0.4,range:440,ranged:true,boss:true}},
+  dragonling:{name:'火の息',desc:'離れた所から近くの敵に火を吐く（飼い主の攻撃力の60%）',cd:6,attack:{mult:0.6,range:380,ranged:true}},
+};
+function petsActive(w){return w.questId==='training'||(typeof Net!=='undefined'&&!!Net.role);}
+function petHeal(w,o,ratio){const amt=Math.min(o.stats.maxHp-o.hp,Math.round(o.stats.maxHp*ratio));if(amt>0){o.hp+=amt;emit(w,{type:'heal',x:o.x,y:o.y-20,amount:amt});}}
+function petGuard(o,t,pct){if(!(o.buffs.def&&o.buffs.def.t>0&&o.buffs.def.pct>=pct))o.buffs.def={t,pct};}
+function petTarget(w,o,at){
+  let best=null,bd=1e9;
+  for(const e of w.enemies){if(e.dead||e.hidden)continue;const d=Math.hypot(e.x-o.x,e.y-o.y);if(d>at.range)continue;
+    const score=d-(at.boss&&e.boss?1000:0);if(score<bd){bd=score;best=e;}}
+  return best;
+}
+function petStrike(w,pt,o,e,A){
+  if(e.dead||e.hidden)return;
+  damageEnemy(w,o,e,A.attack.mult,{pet:true,stunMult:0.01});
+  emit(w,{type:'petAct',x:pt.x,y:pt.y-12,tx:e.x,ty:e.y,name:A.name,ranged:!!A.attack.ranged,collar:o.petCollar,pid:o.id});
+}
+function updatePets(w,dt){
+  if(!petsActive(w))return;
+  for(const id in w.players){const o=w.players[id];
+    if(!o.petLook||!o.petCollar||o.ai){o.pet=null;continue;}
+    const A=PET_ACTS[o.petCollar];
+    const pt=o.pet||(o.pet={x:o.x-30,y:o.y,f:0,st:'follow',cd:3,t:0,tgt:null,moving:false});
+    pt.cd-=dt;pt.t+=dt;
+    if(o.dead&&pt.st!=='follow'){pt.st='follow';pt.tgt=null;}
+    if(pt.st==='follow'&&pt.cd<=0&&A&&!o.dead){
+      if(A.attack){const e=petTarget(w,o,A.attack);if(e){pt.st=A.attack.ranged?'shoot':'dash';pt.tgt=e.id;pt.cd=A.cd;pt.t=0;}}
+      else if(A.ready(w,o)){A.do(w,pt,o);pt.cd=A.cd;pt.st='cheer';pt.t=0;emit(w,{type:'petAct',x:pt.x,y:pt.y-12,name:A.name,collar:o.petCollar,pid:o.id});}
+    }
+    const e=pt.tgt!=null?w.enemies.find(x=>x.id===pt.tgt&&!x.dead&&!x.hidden):null;
+    if((pt.st==='dash'||pt.st==='shoot')&&!e){pt.st='back';pt.tgt=null;}
+    let tx,ty,sp=Math.max(200,(o.stats.speed||200)*1.15);
+    if(pt.st==='dash'){const a=Math.atan2(pt.y-e.y,pt.x-e.x);tx=e.x+Math.cos(a)*(e.r+8);ty=e.y+Math.sin(a)*(e.r+8);sp=Math.max(sp,340);
+      if(Math.hypot(pt.x-tx,pt.y-ty)<16||pt.t>2.5){petStrike(w,pt,o,e,A);pt.st='back';pt.t=0;pt.tgt=null;}}
+    else if(pt.st==='shoot'){tx=pt.x;ty=pt.y;pt.f=Math.atan2(e.y-pt.y,e.x-pt.x);if(pt.t>0.45){petStrike(w,pt,o,e,A);pt.st='follow';pt.tgt=null;}}
+    else{const f=o.facing||0,back=o.r*1.9;tx=o.x-Math.cos(f)*back;ty=o.y-Math.sin(f)*back+o.r*0.2;
+      if(pt.st==='back'&&Math.hypot(pt.x-tx,pt.y-ty)<30)pt.st='follow';if(pt.st==='cheer'&&pt.t>0.8)pt.st='follow';}
+    const dx=tx-pt.x,dy=ty-pt.y,d=Math.hypot(dx,dy);
+    pt.moving=d>3;
+    if(d>0.5){const m=Math.min(d,sp*dt*(pt.st==='follow'&&d<50?0.5:1));pt.x+=dx/d*m;pt.y+=dy/d*m;if(pt.st!=='shoot'&&d>2)pt.f=Math.atan2(dy,dx);}
+    if(Math.hypot(pt.x-o.x,pt.y-o.y)>700){pt.x=o.x;pt.y=o.y;} // 離れすぎたら飼い主のそばへ戻る
+  }
+}
+// ===== PETAI END =====
 function updateWorld(w,dt,inputs){
   if(w.status!=='playing')return;
   w.time+=dt;
@@ -6290,6 +6352,7 @@ function updateWorld(w,dt,inputs){
   for(const id in w.players){const p=w.players[id];before[id]={x:p.x,y:p.y};}
   Companion.tick(w,dt);
   for(const id in w.players){const p=w.players[id];updatePlayer(w,p,p.ai?Companion.decide(w,p):(inputs[id]||EMPTY_INPUT),dt);}
+  updatePets(w,dt); // ペットが首輪ごとの行動でサポートする
   // 手裏剣の2枚目以降：少し間をあけて投げる
   if(w.pendingShots&&w.pendingShots.length){
     for(const q of w.pendingShots)q.t-=dt;
@@ -7869,6 +7932,67 @@ BossArt.A.bone_dragon=(k,H)=>{ // 冥府の骨竜：背骨と左右の肋骨、�
   c.restore();
 };
 // ===== BOSSART END =====
+// ===== PETART BEGIN =====
+/* ペットの見た目：横から見た全身。+x が前、単位はペットの大きさ、足元は y=0.65 あたり。戻り値は首輪を描く位置 [x,y,半径] */
+const PET_ART={
+  l_dog(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.18:0.04;
+    H.S(k,[-0.65,-0.1,-0.9,-0.45+Math.sin(k.t*12)*0.12,-0.95,-0.65],C,0.12);
+    for(const [x,ph] of [[-0.45,0],[0.35,1.6]])H.leg(k,x,0.1,ph,'#a87a48',0.13,{g:0.65,sw,knee:0,lift:0.08});
+    H.E(k,-0.1,0.0,0.62,0.34,0,C,d);
+    for(const [x,ph] of [[-0.3,3.1],[0.5,4.7]])H.leg(k,x,0.1,ph,C,0.13,{g:0.65,sw,knee:0,lift:0.08});
+    H.E(k,0.55,-0.42,0.32,0.28,0,C,d);H.E(k,0.85,-0.32,0.18,0.13,0,'#f0d8b0',d);H.E(k,0.99,-0.36,0.06,0.05,0,'#222');
+    H.E(k,0.42,-0.4,0.12,0.26,0.25,'#8a5a30');H.eye(k,0.65,-0.5,0.05);
+    if(k.wind)H.P(k,[0.8,-0.25,1.0,-0.24,0.82,-0.17],'#d04060');return [0.35,-0.2,0.25];},
+  l_cat(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.18:0.04;
+    H.S(k,[-0.6,-0.05,-0.95,-0.2,-0.85,-0.7+Math.sin(k.t*3)*0.1],C,0.1);
+    for(const [x,ph] of [[-0.42,0],[0.3,1.6]])H.leg(k,x,0.05,ph,C,0.1,{g:0.65,sw,knee:0,lift:0.08});
+    H.E(k,-0.1,-0.05,0.58,0.28,0,C,d);
+    for(const [x,ph] of [[-0.28,3.1],[0.45,4.7]])H.leg(k,x,0.05,ph,C,0.1,{g:0.65,sw,knee:0,lift:0.08});
+    H.E(k,0.55,-0.4,0.3,0.27,0,C,d);for(const x of [0.4,0.62])H.P(k,[x-0.1,-0.58,x,-0.85,x+0.1,-0.6],C,d);H.P(k,[0.45,-0.6,0.5,-0.76,0.56,-0.6],'#f0a0b0');
+    H.eye(k,0.7,-0.45,0.05,'#4a8a2a');H.E(k,0.84,-0.36,0.03,0.025,0,'#e08090');for(let i=0;i<2;i++)H.L(k,[0.78,-0.32+i*0.05,1.05,-0.36+i*0.1],'#333',0.02);return [0.35,-0.22,0.24];},
+  l_hedgehog(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.12:0.02;
+    for(const [x,ph] of [[-0.3,0],[0.3,1.6],[-0.15,3.1],[0.45,4.7]])H.leg(k,x,0.3,ph,'#d8b890',0.08,{g:0.65,sw,knee:0,lift:0.05});
+    for(let i=0;i<11;i++){const a=Math.PI*(1.05+i*0.09);H.P(k,[-0.05+Math.cos(a)*0.4,0.05+Math.sin(a)*0.4,-0.05+Math.cos(a+0.06)*0.8,0.05+Math.sin(a+0.06)*0.8,-0.05+Math.cos(a+0.14)*0.4,0.05+Math.sin(a+0.14)*0.4],C,d,0.03);}
+    H.E(k,-0.05,0.08,0.58,0.4,0,C,d);H.E(k,0.15,0.25,0.42,0.2,0,'#e8d0b0');
+    H.P(k,[0.35,-0.15,0.8,0.12,0.4,0.3],'#e8d0b0',d);H.E(k,0.8,0.12,0.05,0.05,0,'#222');H.eye(k,0.5,0.0,0.045);return [0.38,0.05,0.22];},
+  l_penguin(k,H,C,mv){const d='rgba(0,0,0,.55)',w=mv?Math.sin(k.t*12)*0.12:0;
+    for(const s of [0,1])H.E(k,0.05+s*0.15+(s?w:-w)*0.3,0.65,0.14,0.06,0,'#ffb040');
+    H.E(k,0,-0.1,0.42,0.68,w*0.5,C,d);H.E(k,0.12,0.0,0.28,0.52,w*0.5,'#ffffff');
+    H.E(k,-0.12,0.0,0.12,0.38,0.3+w,C,d);
+    H.P(k,[0.3,-0.45,0.58,-0.38,0.3,-0.32],'#ffb040',d);H.eye(k,0.2,-0.5,0.05);return [0.05,-0.32,0.36];},
+  l_dragon(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.16:0.03,fl=Math.sin(k.t*(mv?14:5))*0.4;
+    H.S(k,[-0.45,0.1,-0.8,0.3,-1.0,0.1],C,0.13);H.P(k,[-1.0,0.1,-1.15,-0.05,-1.08,0.2],'#f8a0b8',d);
+    H.bwing(k,-0.1,-0.25,0.75,-2.4+fl,'#f8a0b8',C,d);
+    for(const [x,ph] of [[-0.2,0],[0.25,3.1]])H.leg(k,x,0.2,ph,C,0.13,{g:0.65,sw,knee:-0.02,lift:0.08});
+    H.E(k,0,0.05,0.45,0.35,0,C,d);H.E(k,0.08,0.18,0.3,0.18,0,'#ffe0c0');
+    H.E(k,0.45,-0.35,0.3,0.26,0,C,d);H.P(k,[0.6,-0.4,0.92,-0.3,0.62,-0.22],C,d);
+    for(const x of [0.35,0.5])H.P(k,[x-0.04,-0.55,x-0.1,-0.78,x+0.05,-0.58],'#fff0d0',d,0.02);
+    H.eye(k,0.55,-0.42,0.055);if(k.wind)H.flame(k,1.05,-0.25,0.25,0.08,'#ff6a20','#ffd040');return [0.28,-0.15,0.22];},
+  l_turtle(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.12:0.02;
+    for(const [x,ph] of [[-0.4,0],[0.3,1.6],[-0.25,3.1],[0.45,4.7]])H.leg(k,x,0.3,ph,'#7ab07a',0.14,{g:0.65,sw,knee:0,lift:0.05});
+    H.E(k,0.62,0.05,0.24,0.2,0,'#7ab07a',d);H.eye(k,0.7,0.0,0.045);
+    const c=k.ctx;c.beginPath();c.moveTo(-0.7,0.35);c.bezierCurveTo(-0.7,-0.55,0.55,-0.55,0.55,0.35);c.closePath();c.fillStyle='#8a6a40';c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+    for(const [x,y] of [[-0.35,-0.05],[0.15,-0.05],[-0.1,-0.25]])H.E(k,x,y,0.16,0.12,0,C);
+    H.E(k,-0.08,0.36,0.65,0.07,0,'#c0a060',d);return [0.45,0.05,0.2];},
+  l_ghost(k,H,C,mv){const d='rgba(0,0,0,.4)',c=k.ctx,fy=Math.sin(k.t*3)*0.08;c.globalAlpha*=0.9;
+    c.beginPath();c.moveTo(0.45,-0.25+fy);c.bezierCurveTo(0.45,-0.95+fy,-0.45,-0.95+fy,-0.45,-0.25+fy);
+    for(let i=0;i<5;i++){const x=-0.45-i*0.12,y=0.2+fy+(i%2?0.12:0)+Math.sin(k.t*6+i)*0.05;c.lineTo(x,y);}
+    c.quadraticCurveTo(-0.3,0.25+fy,0.45,0.1+fy);c.closePath();c.fillStyle=C;c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();c.globalAlpha/=0.9;
+    H.E(k,0.42,-0.05+fy,0.12,0.07,0.6+Math.sin(k.t*4)*0.3,C,d);
+    for(const x of [0.15,0.32])H.E(k,x,-0.45+fy,0.05,0.07,0,'#111');H.E(k,0.25,-0.25+fy,0.06,0.05,0,'#111');return [0.0,-0.15+fy,0.3];},
+  l_hamster(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.12:0.02;
+    for(const [x,ph] of [[-0.25,0],[0.3,1.6]])H.leg(k,x,0.35,ph,'#f0c8b0',0.09,{g:0.65,sw,knee:0,lift:0.05});
+    H.E(k,0,0.05,0.62,0.48,0,C,d);H.E(k,0.15,0.25,0.4,0.25,0,'#fff4e0');
+    H.E(k,0.42,0.02,0.2,0.16,0,'#f8c8a0');H.E(k,0.15,-0.4,0.13,0.13,0,C,d);H.E(k,0.15,-0.4,0.07,0.07,0,'#f0a0a8');
+    H.eye(k,0.4,-0.15,0.055);H.E(k,0.62,-0.02,0.04,0.035,0,'#e08090');return [0.35,-0.05,0.28];},
+  l_bird(k,H,C,mv){const d='rgba(0,0,0,.55)',fl=Math.sin(k.t*(mv?18:4))*0.5;
+    for(const s of [0,1])H.L(k,[0.0+s*0.12,0.3,0.02+s*0.12,0.65],'#ffb040',0.05);
+    H.P(k,[-0.4,0.0,-0.85,-0.05,-0.8,0.15],C,d);
+    H.E(k,0,0,0.42,0.36,-0.2,C,d);H.E(k,0.1,0.12,0.26,0.2,-0.2,'#fff4d0');
+    H.E(k,0.35,-0.32,0.24,0.22,0,C,d);H.P(k,[0.55,-0.36,0.78,-0.3,0.55,-0.25],'#ffb040',d);H.eye(k,0.42,-0.38,0.05);
+    k.ctx.save();k.ctx.translate(-0.05,-0.05);k.ctx.rotate(-0.4+fl*(mv?1:0.2));H.E(k,-0.2,0,0.3,0.14,0,'#3a80d0',d);k.ctx.restore();return [0.25,-0.15,0.2];},
+};
+// ===== PETART END =====
 const Renderer={
   cv:null,ctx:null,dpr:1,w:0,h:0,scale:1,cam:{x:0,y:0},camInit:false,mapCanvas:null,mapVersion:-1,mapRef:null,
   particles:[],floaters:[],rings:[],shake:0,banner:null,time:0,
@@ -8065,6 +8189,7 @@ const Renderer={
       case 'itemCancel':this.floater(ev.x,ev.y,'中断','#aaaaaa',14,0.8);break;
       case 'itemArea':this.ring(ev.x,ev.y,20,ev.r,ev.color,0.7,4);break;
       case 'buff':this.floater(ev.x,ev.y,(ev.stat==='atk'?'攻撃':'防御')+'UP!',ev.color,16,1.2);break;
+      case 'petAct':this.floater(ev.x,ev.y-6,ev.name,'#ffd0f0',12,1.0);if(ev.tx!=null){this.ring(ev.tx,ev.ty,4,ev.ranged?26:18,ev.collar==='dragonling'?'#ff8040':'#ffe0f0',0.35);}else this.ring(ev.x,ev.y+12,6,30,'#ffd0f0',0.5);break; // ペットのサポート行動
       case 'swing':if(ev.level>0){this.ring(ev.x,ev.y,10,40+ev.level*20,'#ffd060',0.35,3+ev.level);this.addShake(ev.level*2);}break;
       case 'skill':this.ring(ev.x,ev.y,10,50,'#7fe0ff',0.3);break;
       case 'tgResolve':
@@ -9730,56 +9855,32 @@ const Renderer={
     if(Net.role)return !App.localInputPid(p.id);
     return typeof Companion!=='undefined'&&Companion.isId&&Companion.isId(p.id);
   },
-  /** 連れ歩くペット（マルチプレイのみ）。プレイヤーの後ろをついてくる。性能には影響しない */
+  /** 連れ歩くペット（マルチプレイと訓練場）。横から見た全身の姿で、進む向きに合わせて左右を反転する。
+      位置はホストのペットAI（p.pet）に合わせ、無いとき（結果画面の見本など）は飼い主の後ろにつく */
   drawPet(ctx,p){
     if(!(Net.role||App.training||p.preview)||!p.petLook||p.dead)return;
+    const lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
     this.petPos=this.petPos||{};
-    const pp=this.petPos[p.id]||(this.petPos[p.id]={x:p.x,y:p.y});
-    const f=p.facing||0,back=p.r*1.5;
-    const tx=p.x-Math.cos(f)*back,ty=p.y-Math.sin(f)*back+p.r*0.2;
-    if(p.preview){pp.x=tx;pp.y=ty;}else{pp.x+=(tx-pp.x)*0.15;pp.y+=(ty-pp.y)*0.15;} // 結果画面の見た目は最初から定位置に出す
-    const r=p.r*0.45,lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
-    const id=lk.id;
+    const pp=this.petPos[p.id]||(this.petPos[p.id]={x:p.x,y:p.y,f:0});
+    const src=p.pet;let tx,ty,tf;
+    if(src&&!p.preview){tx=src.x;ty=src.y;tf=src.f||0;}
+    else{const f=p.facing||0,back=p.r*1.5;tx=p.x-Math.cos(f)*back;ty=p.y-Math.sin(f)*back+p.r*0.2;tf=f;}
+    if(p.preview){pp.x=tx;pp.y=ty;}else{pp.x+=(tx-pp.x)*0.3;pp.y+=(ty-pp.y)*0.3;}
+    pp.f=tf;
+    const st=src?src.st:'follow',moving=src?!!src.moving:!!p.moving;
+    const r=p.preview?p.r*0.5:p.r*0.62,t=this.time||0,run=st==='dash'?2:1;
+    const k={ctx,c:x=>x,lw:Math.max(0.06,1.3/r),ph2:false,t,p:t*9*run,fast:run,wind:st==='shoot'||st==='dash'};
+    const H=BossArt.H,dir=Math.cos(tf)<0?-1:1;
     ctx.save();ctx.translate(pp.x,pp.y);
+    ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,r*0.7,r*0.9,r*0.28,0,0,TAU);ctx.fill();
+    const hop=st==='cheer'?Math.abs(Math.sin(t*12))*r*0.5:(moving?Math.abs(Math.sin(t*10*run))*r*0.08:0);
+    ctx.translate(0,-hop);
     const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0];
     if(hv.hue&&'filter' in ctx)ctx.filter=`hue-rotate(${hv.hue}deg)`;
-    const C=lk.col;ctx.fillStyle=C;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;
-    const eyes=(y,sp)=>{ctx.fillStyle='#111';ctx.beginPath();ctx.arc(-r*0.35,y,r*sp,0,Math.PI*2);ctx.arc(r*0.35,y,r*sp,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;};
-    const body=()=>{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();};
-    if(id==='l_dog'){ // 垂れ耳の犬
-      body();ctx.fillStyle='#8a5a30';ctx.beginPath();ctx.ellipse(-r*0.85,-r*0.1,r*0.35,r*0.6,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(r*0.85,-r*0.1,r*0.35,r*0.6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;eyes(-r*0.1,0.13);
-      ctx.fillStyle='#222';ctx.beginPath();ctx.arc(0,r*0.35,r*0.14,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
-    }else if(id==='l_cat'){ // 猫：三角の耳とヒゲ
-      for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(sx*r*0.7,-r*0.4);ctx.lineTo(sx*r*0.85,-r*1.1);ctx.lineTo(sx*r*0.2,-r*0.8);ctx.closePath();ctx.fill();ctx.stroke();}
-      body();eyes(-r*0.1,0.13);ctx.strokeStyle='#333';ctx.lineWidth=1;for(const sx of [-1,1]){ctx.beginPath();ctx.moveTo(sx*r*0.5,r*0.2);ctx.lineTo(sx*r*1.1,r*0.1);ctx.stroke();}
-      ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;
-    }else if(id==='l_hedgehog'){ // ハリネズミ：背中のトゲ
-      for(let i=0;i<7;i++){const a=Math.PI*(0.1+i*0.13);ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.6,-Math.sin(a)*r*0.6);ctx.lineTo(Math.cos(a)*r*1.25,-Math.sin(a)*r*1.25);ctx.lineWidth=2.5;ctx.stroke();}
-      ctx.lineWidth=1.5;body();eyes(0,0.11);ctx.fillStyle='#222';ctx.beginPath();ctx.arc(0,r*0.45,r*0.13,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
-    }else if(id==='l_penguin'){ // ペンギン：白いお腹とくちばし
-      body();ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,r*0.2,r*0.6,r*0.7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;eyes(-r*0.2,0.12);
-      ctx.fillStyle='#ffb040';ctx.beginPath();ctx.moveTo(-r*0.2,r*0.2);ctx.lineTo(r*0.2,r*0.2);ctx.lineTo(0,r*0.5);ctx.closePath();ctx.fill();ctx.fillStyle=C;
-    }else if(id==='l_dragon'){ // チビドラゴン：小さな翼としっぽ
-      for(const sx of [-1,1]){ctx.fillStyle='#f8a0b8';ctx.beginPath();ctx.moveTo(sx*r*0.5,-r*0.2);ctx.lineTo(sx*r*1.4,-r*0.9);ctx.lineTo(sx*r*0.8,r*0.1);ctx.closePath();ctx.fill();ctx.stroke();}
-      ctx.fillStyle=C;ctx.beginPath();ctx.moveTo(0,r*0.6);ctx.quadraticCurveTo(r*1.3,r*0.9,r*1.1,r*0.2);ctx.lineWidth=2.5;ctx.stroke();ctx.lineWidth=1.5;
-      body();eyes(-r*0.1,0.13);
-    }else if(id==='l_turtle'){ // 亀：甲羅
-      ctx.beginPath();ctx.ellipse(0,0,r*1.1,r*0.9,0,0,Math.PI*2);ctx.fillStyle='#8a6a40';ctx.fill();ctx.stroke();
-      ctx.fillStyle='#c0a060';ctx.beginPath();ctx.ellipse(0,0,r*0.6,r*0.45,0,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle=C;ctx.beginPath();ctx.arc(0,-r*1.0,r*0.4,0,Math.PI*2);ctx.fill();ctx.stroke();eyes(-r*1.05,0.1);
-    }else if(id==='l_ghost'){ // 小さなオバケ：ゆらゆらの裾
-      ctx.globalAlpha=0.9;ctx.beginPath();ctx.arc(0,-r*0.2,r,Math.PI,0);ctx.lineTo(r,r*0.9);
-      for(let i=0;i<4;i++){ctx.lineTo(r-(i+0.5)*(2*r/4),r*(i%2?0.5:1.1));}
-      ctx.lineTo(-r,r*0.9);ctx.closePath();ctx.fill();ctx.stroke();ctx.globalAlpha=1;eyes(-r*0.2,0.14);
-      ctx.fillStyle='#111';ctx.beginPath();ctx.ellipse(0,r*0.35,r*0.2,r*0.15,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
-    }else if(id==='l_hamster'){ // ハムスター：ほっぺ
-      body();ctx.fillStyle='#f8c8a0';ctx.beginPath();ctx.arc(-r*0.7,r*0.3,r*0.35,0,Math.PI*2);ctx.arc(r*0.7,r*0.3,r*0.35,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;
-      ctx.beginPath();ctx.arc(-r*0.5,-r*0.85,r*0.22,0,Math.PI*2);ctx.arc(r*0.5,-r*0.85,r*0.22,0,Math.PI*2);ctx.fill();ctx.stroke();eyes(-r*0.1,0.12);
-    }else if(id==='l_bird'){ // 小鳥：くちばしと羽
-      body();ctx.fillStyle='#ffb040';ctx.beginPath();ctx.moveTo(r*0.6,-r*0.1);ctx.lineTo(r*1.1,r*0.1);ctx.lineTo(r*0.6,r*0.3);ctx.closePath();ctx.fill();ctx.fillStyle=C;
-      ctx.fillStyle='#3a80d0';ctx.beginPath();ctx.ellipse(-r*0.2,r*0.2,r*0.4,r*0.25,-0.3,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;eyes(-r*0.2,0.12);
-    }else{body();}
-    if(p.petCollar){const c=PETS.find(x=>x.id===p.petCollar);if(c){ctx.strokeStyle=RARITY[c.rar].color;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,r*0.2,r*0.85,Math.PI*0.15,Math.PI*0.85);ctx.stroke();}}
+    ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';
+    const draw=PET_ART[lk.id]||PET_ART.l_dog;
+    const neck=draw(k,H,lk.col,moving)||[0.5,-0.2,0.32];
+    if(p.petCollar){const c=PETS.find(x=>x.id===p.petCollar);if(c){ctx.filter='none';ctx.strokeStyle=RARITY[c.rar].color;ctx.lineWidth=0.09;ctx.beginPath();ctx.ellipse(neck[0],neck[1],neck[2]*0.45,neck[2],0.2,0,TAU);ctx.stroke();ctx.fillStyle='#ffd23a';ctx.beginPath();ctx.arc(neck[0]+neck[2]*0.3,neck[1]+neck[2]*0.95,0.08,0,TAU);ctx.fill();}}
     ctx.restore();
   },
   /** プレイヤーの体（装備によって見た目が変わる）。lk＝部位→装備ID */
@@ -11926,7 +12027,7 @@ const Net={
     this.statT+=1/NET.SNAP_HZ;
     if(this.statT>=2){this.statT=0;full=true;}
     const s={t:'s',time:r1(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
-      players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,petLook:p.petLook||null,petLookV:p.petLookV||0,petCollar:p.petCollar||null,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
+      players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,petLook:p.petLook||null,petLookV:p.petLookV||0,petCollar:p.petCollar||null,pet:p.pet?{x:r1(p.pet.x),y:r1(p.pet.y),f:r3(p.pet.f),st:p.pet.st,moving:p.pet.moving}:null,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,ws:p.ws?{id:p.ws.id,t:r1(p.ws.t)}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
@@ -13486,7 +13587,7 @@ const App={
     if(!x||!p.pets[id])return '<div class="muted">ペットを選ぶと詳細が出ます。</div>';
     const eq=p.equipped.pet===id;
     return `<div class="iname" style="color:${RARITY[x.rar].color}">${x.name}の首輪</div><div class="isub">${RARITY[x.rar].name}　${eq?'<span class="tag">装備中</span>':''}</div>
-      <div class="eff">首輪：${x.fmt.replace('{v}',petValue(x,1).toFixed(x.stat==='dodgeIframe'?2:1))}（マルチプレイで連れ歩くと効果）</div>
+      <div class="eff">首輪：${x.fmt.replace('{v}',petValue(x,1).toFixed(x.stat==='dodgeIframe'?2:1))}（マルチプレイで連れ歩くと効果）</div>${PET_ACTS[x.id]?`<div class="eff">サポート行動「${PET_ACTS[x.id].name}」：${PET_ACTS[x.id].desc}（間隔 ${PET_ACTS[x.id].cd}秒）</div>`:''}
       <div style="margin-top:8px"><button data-act="petEquip" data-id="${id}">${eq?'首輪を外す':'首輪をはめる'}</button></div>`;
   },
   /** 装備中の表示：左＝装備中の防具、真ん中＝ステータス、右＝合計スキルポイントと発動中のスキル */
