@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.16.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.17.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4845,7 +4845,7 @@ function updatePlayer(w,p,inp,dt){
     const target=Math.round(dr.left*Math.min(1,dr.t/dr.total)),add=target-dr.done;
     if(add>0){dr.done=target;p.hp=Math.min(s.maxHp,p.hp+add);dr.pend+=add;}
     dr.emitT+=dt;
-    if(dr.pend>0&&(dr.emitT>=0.5||dr.t>=dr.total)){emit(w,{type:'heal',x:p.x,y:p.y-20,amount:dr.pend});dr.pend=0;dr.emitT=0;}
+    if(dr.pend>0&&(dr.emitT>=0.5||dr.t>=dr.total)){emit(w,{type:'heal',x:p.x,y:p.y-20,amount:dr.pend,pid:p.id,item:dr.item});dr.pend=0;dr.emitT=0;}
     if(dr.t>=dr.total)p.drip=null;}
   if(p.slowT>0)p.slowT-=dt;if(p.poisoned>0)p.poisoned-=dt;
   if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;if(p.sleepImmune>0)p.sleepImmune-=dt;
@@ -4986,7 +4986,7 @@ function startDrip(w,p,id){
   const hl=Math.round(p.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(medic?1.5:1));
   p.bag[id]=Math.max(0,(p.bag[id]||0)-1);
   emit(w,{type:'itemUsed',pid:p.id,item:id});
-  p.drip={left:hl,total:ef.drip||3,t:0,done:0,pend:0,emitT:0};
+  p.drip={left:hl,total:ef.drip||3,t:0,done:0,pend:0,emitT:0,item:id};
   if(id!=='potion'&&(p.poisonT>0||p.curseT>0)){p.poisonT=0;p.curseT=0;emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-34,text:'状態異常が治った',color:'#7fe09a'});}
   // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
   if(id==='potion'&&medic){const share=Math.round(hl/2);for(const id2 in w.players){const a=w.players[id2];if(a===p||a.dead||Math.hypot(a.x-p.x,a.y-p.y)>220)continue;a.hp=Math.min(a.stats.maxHp,a.hp+share);emit(w,{type:'heal',x:a.x,y:a.y-20,amount:share});}}
@@ -8313,7 +8313,7 @@ const Renderer={
       const k=(this.time*1.6+(p.id?p.id.length*0.37:0))%1;
       ctx.save();ctx.strokeStyle=`rgba(210,240,255,${(1-k)*0.6})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y+8,6+k*12,3+k*5,0,0,TAU);ctx.stroke();ctx.restore();
     }
-    for(const it of ents){if(it.k==='e'){if(seen(it.o.x,it.o.y,it.o.r))this.drawEnemy(ctx,it.o);}else{this.drawPlayer(ctx,it.o);this.drawStatus(ctx,it.o);}}
+    for(const it of ents){if(it.k==='e'){if(seen(it.o.x,it.o.y,it.o.r))this.drawEnemy(ctx,it.o);}else{const fo=this.fadeOther(it.o);if(fo){ctx.save();ctx.globalAlpha*=0.35;}this.drawPlayer(ctx,it.o);this.drawStatus(ctx,it.o);if(fo)ctx.restore();}}
     for(const pr of w.projectiles)if(pr.owner!=='enemy'||seen(pr.x,pr.y,4))this.drawProjectile(ctx,pr);
     for(const r of this.rings){const k=r.t/r.life;ctx.strokeStyle=r.color;ctx.globalAlpha=1-k;ctx.lineWidth=r.width;ctx.beginPath();ctx.arc(r.x,r.y,lerp(r.r0,r.r1,k),0,TAU);ctx.stroke();}
     ctx.globalAlpha=1;
@@ -9724,6 +9724,12 @@ const Renderer={
     if(this.multi)this.drawPlayerLabel(ctx,p);
     this.drawPet(ctx,p);
   },
+  /** 設定「他のプレイヤーを薄く表示」：オンラインでは自分以外、ひとりでは仲間（とそのペット）を薄くする */
+  fadeOther(p){
+    if(typeof App==='undefined'||!App.settings||!App.settings().fadeOthers||!p)return false;
+    if(Net.role)return !App.localInputPid(p.id);
+    return typeof Companion!=='undefined'&&Companion.isId&&Companion.isId(p.id);
+  },
   /** 連れ歩くペット（マルチプレイのみ）。プレイヤーの後ろをついてくる。性能には影響しない */
   drawPet(ctx,p){
     if(!(Net.role||App.training||p.preview)||!p.petLook||p.dead)return;
@@ -10692,6 +10698,8 @@ const Sound={
   onEvent(ev){
     if(!this.ready)return;
     const x=ev.x,y=ev.y;
+    // 他のプレイヤー（仲間を含む）が回復薬・良い回復薬を使ったときの音は鳴らさない
+    if(ev.pid&&ev.item&&DRIP_ITEMS.includes(ev.item)&&typeof App!=='undefined'&&App.localInputPid&&!App.localInputPid(ev.pid))return;
     switch(ev.type){
       case 'swing':this.play(ev.level>0?'swingHeavy':'swing',x,y,{w:ev.w,level:ev.level});break;
       case 'damage':
@@ -13189,7 +13197,7 @@ const App={
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
-      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとそのペットを薄く表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
         <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
