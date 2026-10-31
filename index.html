@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.4.5',date:'2026/10/31'};
+const GAME_VERSION={no:'1.4.6',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4091,10 +4091,19 @@ function decayHate(e,dt){
   for(const id in e.hate)if(e.hate[id]<HATE_MAX)e.hate[id]*=k; // 最大値（挑発中）は減らない
 }
 /** ヘイトが最も高い生存プレイヤーを狙う。同点（全員0など）なら近い方 */
+/** 攻撃の条件を満たせない時間を数える。3秒続いたら、いまの相手を一定時間外して別のプレイヤーを狙う（ぐるぐる回り続けないように） */
+function bossNoAttack(e,p,dt){
+  e.noAtkT=(e.noAtkT||0)+dt;
+  if(e.noAtkT>=3){e.noAtkT=0;e.avoid={id:p.id,t:6};}
+}
 function bossTarget(w,e){
   const h=e.hate||{};let best=null,bh=-1,bd=Infinity;
-  for(const id in w.players){
-    const p=w.players[id];if(p.dead)continue;
+  // 狙いを外している相手は、ほかに生きているプレイヤーがいれば選ばない
+  const alive=Object.keys(w.players).filter(id=>!w.players[id].dead);
+  const avoid=e.avoid&&e.avoid.t>0?e.avoid.id:null;
+  const pool=alive.some(id=>id!==avoid)?alive.filter(id=>id!==avoid):alive;
+  for(const id of pool){
+    const p=w.players[id];
     const v=h[id]||0,d=(p.x-e.x)**2+(p.y-e.y)**2;
     if(v>bh||(v===bh&&d<bd)){bh=v;bd=d;best=p;}
   }
@@ -4895,7 +4904,7 @@ function updateEnemy(w,e,dt){
     e.facing=e.wanderA;
     return;
   }
-  if(e.boss)decayHate(e,dt);
+  if(e.boss){decayHate(e,dt);if(e.avoid){e.avoid.t-=dt;if(e.avoid.t<=0)e.avoid=null;}}
   const p=e.boss?bossTarget(w,e):nearestPlayer(w,e);if(!p)return;
   if(e.boss){ENEMY_AI[DATA.enemies[e.type].ai](w,e,p,dt);return;}
   const d=Math.hypot(p.x-e.x,p.y-e.y);
@@ -5101,6 +5110,7 @@ function updateBossPattern(w,e,p,dt){
         pick=idx;break;
       }
       if(pick>=0){
+        e.noAtkT=0;
         const mv=pat[pick],wind=mv.wind*(ph2?0.8:1);
         e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc;e.curMv=mv;e.atkAngle=ang;
         if(mv.k==='charge')startCharge(w,e,ang,wind,false);
@@ -5127,6 +5137,7 @@ function updateBossPattern(w,e,p,dt){
           }
         }
       }else{
+        bossNoAttack(e,p,dt);
         if(d>170)steerTo(w,e,p,e.speed,dt);
         else if(d<120)moveEntity(w.map,e,-Math.cos(ang)*e.speed*dt*0.6,-Math.sin(ang)*e.speed*dt*0.6);
       }
