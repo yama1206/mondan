@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.2.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.2.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11709,7 +11709,6 @@ const App={
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
-        <div class="filters" style="margin-top:6px"><button data-act="checkUpdate">更新を確認</button></div>
         <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
       <div class="setting" style="display:block">スマホのボタンの大きさ（いまは ${Math.round((s.touchSize||1)*100)}%）
         <div class="filters" style="margin-top:6px">${[0.7,0.85,1,1.2,1.4].map(v=>`<button class="${Math.abs((s.touchSize||1)-v)<0.001?'on':''}" data-act="touchSize" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
