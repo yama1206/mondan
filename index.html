@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.40',date:'2026/10/31'};
+const GAME_VERSION={no:'1.41',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8083,7 +8083,7 @@ const Renderer={
     const pp=this.petPos[p.id]||(this.petPos[p.id]={x:p.x,y:p.y});
     const f=p.facing||0,back=p.r*1.5;
     const tx=p.x-Math.cos(f)*back,ty=p.y-Math.sin(f)*back+p.r*0.2;
-    pp.x+=(tx-pp.x)*0.15;pp.y+=(ty-pp.y)*0.15;
+    if(p.preview){pp.x=tx;pp.y=ty;}else{pp.x+=(tx-pp.x)*0.15;pp.y+=(ty-pp.y)*0.15;} // 結果画面の見た目は最初から定位置に出す
     const r=p.r*0.45,lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
     const id=lk.id;
     ctx.save();ctx.translate(pp.x,pp.y);
