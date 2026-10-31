@@ -37,6 +37,8 @@ button.danger:hover{background:#6e2a3a}
 .gver>button,.gver .updbar button{width:112px;font-size:12px;text-align:center}
 .gver .updbar{margin-top:4px;text-align:right}
 .gver #updateMsg{display:block}
+.gver button.gift-new{border-color:#ffd23a;color:#ffe9a0;font-weight:bold;animation:giftGlow 1.2s ease-in-out infinite}
+@keyframes giftGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,210,58,0)}50%{box-shadow:0 0 12px 3px rgba(255,210,58,.85)}}
 .updbar{margin-top:10px;text-align:center}
 .updbar button{font-size:13px}
 .campinfo{background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px;color:#cfc7e6;line-height:1.7}
@@ -237,7 +239,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.3',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.4',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11663,7 +11665,7 @@ const App={
   },
   campHTML(){
     const p=this.profile;
-    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}<br><button data-act="gifts">🎁 プレゼント</button></div><div class="panel camp"><h1>モンスターダンジョンズ</h1>      <div class="campinfo">${this.charLine(0)}</div>
+    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}<br><button data-act="gifts" class="${DATA.gifts.some(g=>!p.giftsGot[g.id])?'gift-new':''}">🎁 プレゼント${DATA.gifts.some(g=>!p.giftsGot[g.id])?'！':''}</button></div><div class="panel camp"><h1>モンスターダンジョンズ</h1>      <div class="campinfo">${this.charLine(0)}</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button data-act="training" style="background:#3a5a8a;border-color:#7aa8e0">🏋 訓練場（報酬なし・時間制限なし）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
