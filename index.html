@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.82',date:'2026/10/31'};
+const GAME_VERSION={no:'1.83',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9817,8 +9817,8 @@ function matSellPrice(id){
 /** 手紙ガチャの区切り（3ステージごと）。end：その区切りの最後のステージ（レア度の上限）。price：1回のゴールド。10連は1回の9倍 */
 const LETTER_BANDS=[{start:1,end:3,price:200},{start:4,end:6,price:300},{start:7,end:8,price:400}];
 const LETTER_TEN_MUL=9;
-/** 装飾品ガチャの値段（ゴールド）：1回・10連。レア度はランダム（レア以上も出る） */
-const DECO_GACHA={price:300,price10:2700};
+/** 装飾品ガチャ：持っている装飾品を3個使って1個もらう。出るレア度の最低保証は、使った3個のうち一番低いレア度 */
+const DECO_GACHA={need:3};
 /** 指定の区切りの手紙ガチャが使えるか（そのステージまで進んでいれば区切りを返す） */
 function letterBandOf(p,a){
   const start=Number(a.stage)||LETTER_BANDS[0].start;
@@ -9899,29 +9899,20 @@ const Ops={
     return {rar,color:r.color,name,label:`${r.name}：${name}`};
   },
   /** ステージごとの手紙ガチャ：そのステージまで進んだら使える。レア度はそのステージの上限まで */
-  /** 装飾品を1つ抽選して手に入れる（レア度もランダム） */
-  decoPull(p){
-    const rarity=Items.rollRarity(1.3,0);
-    const d=Items.createDeco(pick(Object.keys(DATA.decorations)),rarity);
-    Profile.addDeco(p,d);
+  /** 装飾品を使って、装飾品を1つ抽選して手に入れる（使った3個の一番低いレア度以上が出る） */
+  decoGacha(p,who,a){
+    const uids=[...new Set(a.uids||[])];
+    if(uids.length!==DECO_GACHA.need)return {msg:`装飾品を${DECO_GACHA.need}個選んでください`,color:'#888'};
+    const used=uids.map(u=>Profile.getDeco(p,u));
+    if(used.some(d=>!d||Profile.decoOwner(p,d.uid)))return {msg:'装着中の装飾品は使えません',color:'#ff8060'};
+    const minR=Math.min(...used.map(d=>d.rarity));
+    p.decos=p.decos.filter(d=>!uids.includes(d.uid));
+    const rarity=Items.rollRarity(1.3,minR);
+    const d=Profile.addDeco(p,Items.createDeco(pick(Object.keys(DATA.decorations)),rarity));
     const r=DATA.rarities[rarity],dd=DATA.decorations[d.decoId];
     const rar=['N','R','SR','SR','SSR'][rarity];
-    return {rar,color:r.color,label:`${r.name}：${dd.name}`};
-  },
-  decoGacha(p,who,a){
-    if((p.gold||0)<DECO_GACHA.price)return {msg:`ゴールドが足りません（${DECO_GACHA.price}G必要）`,color:'#ff8060'};
-    p.gold-=DECO_GACHA.price;
-    const f=Ops.decoPull(p);
-    return {changed:true,msg:`${f.label}を手に入れた！`,color:f.color,fx:{rar:f.rar,text:f.label}};
-  },
-  decoGacha10(p,who,a){
-    if((p.gold||0)<DECO_GACHA.price10)return {msg:`ゴールドが足りません（10連は${DECO_GACHA.price10}G必要）`,color:'#ff8060'};
-    p.gold-=DECO_GACHA.price10;
-    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.decoPull(p));
-    const rank={N:0,R:1,SR:2,SSR:3};
-    const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
-    const names=rs.map(f=>f.label).join(' ／ ');
-    return {changed:true,msg:`装飾品10連：${names}`,color:best.color,fx:{rar:best.rar,text:`装飾品10連結果：${names}`}};
+    const label=`${r.name}：${dd.name}`;
+    return {changed:true,msg:`${label}を手に入れた！（使った${DECO_GACHA.need}個の最低 ${DATA.rarities[minR].name} 以上）`,color:r.color,fx:{rar,text:label}};
   },
   letterGacha(p,who,a){
     const band=letterBandOf(p,a);if(!band)return {msg:'まだ解放されていません',color:'#888'};
@@ -11165,8 +11156,8 @@ const App={
       case 'gacha':this.gachaRoll();break;
       case 'letterGacha':this.doOp('letterGacha',{stage:+ds.stage});break;
       case 'letterGacha10':this.doOp('letterGacha10',{stage:+ds.stage});break;
-      case 'decoGacha':this.doOp('decoGacha',{});break;
-      case 'decoGacha10':this.doOp('decoGacha10',{});break;
+      case 'decoGachaPick':{const u=ds.uid,cur=this.decoGachaSel||[];this.decoGachaSel=cur.includes(u)?cur.filter(x=>x!==u):(cur.length<DECO_GACHA.need?[...cur,u]:cur);this.refreshPanel();break;}
+      case 'decoGacha':this.doOp('decoGacha',{uids:[...(this.decoGachaSel||[])]});this.decoGachaSel=[];break;
       case 'gacha10':this.gachaRoll10();break;
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
@@ -11275,9 +11266,9 @@ const App={
     const show=()=>{
       if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
       if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look,r.fx.lookV);
-      if(r.fx&&['gacha','gacha10','letterGacha','letterGacha10','decoGacha','decoGacha10'].includes(act))Sound.gachaResult(r.fx.rar);
+      if(r.fx&&['gacha','gacha10','letterGacha','letterGacha10','decoGacha'].includes(act))Sound.gachaResult(r.fx.rar);
     };
-    const tame=['gacha','gacha10','letterGacha','letterGacha10','decoGacha','decoGacha10'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
+    const tame=['gacha','gacha10','letterGacha','letterGacha10','decoGacha'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
     if(tame){this.gachaBusy=true;Sound.gachaRoll(tame);setTimeout(()=>{this.gachaBusy=false;show();},tame*1000);}
     else show();
     if(r.sel)this.inv.sel=r.sel;
@@ -11537,9 +11528,14 @@ const App={
       const lp=b.price,lp10=b.price*LETTER_TEN_MUL;
       return `<div class="recipe"><div class="rn">手紙ガチャ（${name}）</div><div class="muted">${DATA.rarities[0].name}〜${DATA.rarities[cap].name}の手紙がランダムに出ます。</div>
       <div class="btnrow"><button class="${gl>=lp?'primary':''}" data-act="letterGacha" data-stage="${b.start}" ${gl>=lp?'':'disabled'}>1回（${lp}G）</button><button class="${gl>=lp10?'primary':''}" data-act="letterGacha10" data-stage="${b.start}" ${gl>=lp10?'':'disabled'}>10連（${lp10}G）</button></div></div>`;}).join('');
-    const dl=DECO_GACHA.price,dl10=DECO_GACHA.price10;
-    const deco=`<div class="recipe"><div class="rn">装飾品ガチャ</div><div class="muted">ランダムな装飾品が出ます。レア度もランダムです。</div>
-      <div class="btnrow"><button class="${gl>=dl?'primary':''}" data-act="decoGacha" ${gl>=dl?'':'disabled'}>1回（${dl}G）</button><button class="${gl>=dl10?'primary':''}" data-act="decoGacha10" ${gl>=dl10?'':'disabled'}>10連（${dl10}G）</button></div></div>`;
+    // 装飾品ガチャ：持っている（装着していない）装飾品から3個選んで回す
+    const sel=this.decoGachaSel||[];
+    const free=(p.decos||[]).filter(d=>!Profile.decoOwner(p,d.uid));
+    const chips=free.length?free.map(d=>{const on=sel.includes(d.uid);
+      return `<button class="${on?'primary':''}" data-act="decoGachaPick" data-uid="${d.uid}">${DATA.rarities[d.rarity].name} ${DATA.decorations[d.decoId].name}</button>`;}).join(''):'<div class="muted small">使える装飾品がありません</div>';
+    const deco=`<div class="recipe"><div class="rn">装飾品ガチャ</div><div class="muted">持っている装飾品を${DECO_GACHA.need}個使って、ランダムな装飾品を1個もらえます。使った中で一番低いレア度以上が出ます。</div>
+      <div class="small" style="margin:6px 0">選択中 ${sel.length}/${DECO_GACHA.need}</div><div class="btnrow" style="flex-wrap:wrap">${chips}</div>
+      <div class="btnrow"><button class="${sel.length===DECO_GACHA.need?'primary':''}" data-act="decoGacha" ${sel.length===DECO_GACHA.need?'':'disabled'}>${DECO_GACHA.need}個使って回す</button></div></div>`;
     const letter=letters+deco;
     return `<div class="recipes"><div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットは見た目と色の組み合わせがかぶるとコイン1枚。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>${letter}</div>`;
