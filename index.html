@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.52',date:'2026/10/31'};
+const GAME_VERSION={no:'1.53',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3035,7 +3035,8 @@ const COMP_COUNT=2, COMP_REVIVES=2, COMP_REVIVE_DELAY=3;
 /* 仲間の役割は固定：1人目ヒーラー、2人目タンク */
 const COMP_FIXED_ROLES=['healer','tank'];
 /* 仲間が出撃時に毎回持っている消耗品（プレイヤーの持ち物からは減らない） */
-const COMP_KIT={healer:{potion:6,good_potion:2},tank:{potion:4}};
+// 仲間は出撃のたびに、回復薬・良い回復薬・癒しの香を常に最大数持ってスタートする（アイテムの所持上限まで）
+const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,good_potion:10,heal_all:3}};
 /* ペット：ガチャで出る（全10種・レア度なし）。プレイヤーだけがペット枠に1匹はめられる。
    効果はマルチプレイで連れ歩いているときだけ乗る。stat：maxHpPct／atkPct／potionHealPct（％）、他は加算値 */
 const PETS=[
