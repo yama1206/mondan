@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.78',date:'2026/10/31'};
+const GAME_VERSION={no:'1.80',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -386,7 +386,7 @@ const DATA={
     iai:{name:'居合の極意',duration:20,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
     kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
     taunt:{name:'挑発',duration:20,cd:120},         // ランス：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
-    sokusha:{name:'速射',duration:20,cd:120},       // 弓：チャージ速度2倍（威力は変えない）
+    sokusha:{name:'速射',duration:20,cd:120},       // 弓：攻撃力1.3倍（火力アップ）
     inmitsu:{name:'隠密',duration:20,cd:120},
     gouwan:{name:'剛腕',duration:20,cd:120},       // ハンマー：ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
   },
@@ -3976,6 +3976,7 @@ function nearestPlayer(w,e){
 }
 /** ボスのヘイト：プレイヤーごとに、与えたダメージ分たまる。時間とともに少しずつ薄れる */
 const HATE_DECAY=0.03; // 毎秒の減衰率
+const HATE_MAX=1e9; // ヘイトの最大値（ランスの挑発中はこの値になる）
 function addHate(e,p,amount){
   if(!e.hate)e.hate={};
   e.hate[p.id]=(e.hate[p.id]||0)+Math.max(0,amount);
@@ -3986,7 +3987,7 @@ function decayHate(e,dt){
   if(e.hateT>=HATE_RESET){e.hateT=0;e.hate={};return;}
   if(!e.hate)return;
   const k=Math.exp(-HATE_DECAY*dt);
-  for(const id in e.hate)e.hate[id]*=k;
+  for(const id in e.hate)if(e.hate[id]<HATE_MAX)e.hate[id]*=k; // 最大値（挑発中）は減らない
 }
 /** ヘイトが最も高い生存プレイヤーを狙う。同点（全員0など）なら近い方 */
 function bossTarget(w,e){
@@ -4191,6 +4192,7 @@ function damageEnemy(w,p,e,mult,src){
   if(s.effects.desperate&&p.hp<=s.maxHp*0.3)atk*=1.35;
   if(p.buffT>0)atk*=1+(s.perfectAtk||0)*(wsActive(p,'iai')?1.6:1);
   if(wsActive(p,'kyodo'))atk*=1.1;
+  if(wsActive(p,'sokusha'))atk*=1.3; // 速射：弓の火力アップ
   if(p.buffs.atk&&p.buffs.atk.t>0)atk*=1+p.buffs.atk.pct/100;
   {const fw=DATA.weaponTypes[s.weaponType];if(fw&&fw.flow&&p.flow>0)atk*=1+p.flow*fw.flow.pct/100;}
   let dmg=atk*mult*rand(0.92,1.08);
@@ -4510,7 +4512,7 @@ function updatePlayer(w,p,inp,dt){
   }
   else if(wt.charge){
     if(p.charging){
-      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'sokusha')?2:1); // チャージ速度（防具スキル）
+      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100); // チャージ速度（防具スキル）
       else{
         const lv=chargeLevel(wt.charge,p.charge);
         p.charging=false;p.charge=0;
@@ -5787,7 +5789,14 @@ function updateWorld(w,dt,inputs){
   }
   enforceLeash(w,before);
   // 挑発中のランス使いは、ボスのヘイトが常に高まる
-  for(const id in w.players){const p=w.players[id];if(wsActive(p,'taunt'))for(const e of w.enemies)if(e.boss&&!e.dead)addHate(e,p,dt*60);}
+  // ランスの挑発中は、ボスのヘイトを常に最大にする（スキルが切れたら元に戻す）
+  for(const id in w.players){const p=w.players[id];
+    for(const e of w.enemies){
+      if(!e.boss||e.dead)continue;
+      if(!e.hate)e.hate={};
+      if(wsActive(p,'taunt'))e.hate[p.id]=HATE_MAX;
+      else if(e.hate[p.id]>=HATE_MAX)e.hate[p.id]=0;
+    }}
   // 誰かが最初の部屋から出たら、敵に見つかるようになる
   if(!w.leftStart)for(const id in w.players){const p=w.players[id];if(!p.dead&&!playerHidden(w,p)){w.leftStart=true;break;}}
   if(w.leftStart)w.map.startLocked=true; // 一度出たら、最初の部屋には戻れない
