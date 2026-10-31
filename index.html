@@ -241,7 +241,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.12',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.13',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -381,10 +381,10 @@ const DATA={
     dual:{ws:'kyodo',name:'双剣',range:50,arc:120*Math.PI/180,interval:0.24,active:0.08,power:0.45,move:1.0,swing:0.15,sheathe:0.4,
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
-    hammer:{ws:'gouwan',name:'ハンマー',knockback:true,range:70,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
+    hammer:{ws:'gouwan',name:'槌',knockback:true,range:70,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
       charge:{levels:[0.6,1.2],mult:[1.63,1.95],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
-    lance:{ws:'taunt',name:'ランス',guard:{mult:0.2},range:83,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
+    lance:{ws:'taunt',name:'槍',guard:{mult:0.2},range:83,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。ガード長押しで構える（動きは極端に遅く、受けるダメージ80%軽減）。納刀に1.1秒'},
     bow:{ws:'sokusha',name:'弓',holdAim:true,range:300,arc:0,interval:0.6,active:0.1,power:0.75,move:1.0,swing:0.22,sheathe:0.4,hurtMult:1.5, // 装備中は受けるダメージ1.5倍
       bow:{speed:620,life:0.5,weakMult:2.2}, // 矢：速さ（px/秒）と飛ぶ時間。矢は無限に撃てる。weakMult：ボスの弱点に当たったときの倍率
@@ -400,10 +400,10 @@ const DATA={
     fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージ中の被ダメージ軽減を75%に（通常50%）、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない
     iai:{name:'居合の極意',duration:20,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
     kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
-    taunt:{name:'挑発',duration:20,cd:120},         // ランス：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
+    taunt:{name:'挑発',duration:20,cd:120},         // 槍：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
     sokusha:{name:'速射',duration:20,cd:120},       // 弓：攻撃力1.3倍（火力アップ）
     inmitsu:{name:'隠密',duration:20,cd:120},
-    gouwan:{name:'剛腕',duration:20,cd:120},       // ハンマー：ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
+    gouwan:{name:'剛腕',duration:20,cd:120},       // 槌：ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -543,9 +543,9 @@ const DATA={
     stone_db:{name:'鉄の双剣',slot:'weapon',wtype:'dual',atk:8,crit:8},
     stone_gs:{name:'鉄の大剣',slot:'weapon',wtype:'greatsword',atk:10,crit:2},
     stone_tachi:{name:'鉄の太刀',slot:'weapon',wtype:'tachi',atk:9,crit:6},
-    stone_hammer:{name:'鉄のハンマー',slot:'weapon',wtype:'hammer',atk:10,crit:0},
+    stone_hammer:{name:'鉄の槌',slot:'weapon',wtype:'hammer',atk:10,crit:0},
     stone_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:7,crit:4},
-    stone_lance:{name:'鉄のランス',slot:'weapon',wtype:'lance',atk:8,crit:4},
+    stone_lance:{name:'鉄の槍',slot:'weapon',wtype:'lance',atk:8,crit:4},
     hunter_sword:{name:'狩猟の弓',slot:'weapon',wtype:'bow',atk:10,crit:6,}, // IDは昔の名残（セーブデータを壊さないため hunter_sword のまま）
     wolf_sword:{name:'古狼の剣',slot:'weapon',el:{k:'thunder',v:7},wtype:'sword',atk:18,crit:8,slots:1},
     fang_king:{name:'牙王の剣',slot:'weapon',el:{k:'thunder',v:10},wtype:'sword',atk:24,crit:12,slots:2},
@@ -568,16 +568,16 @@ const DATA={
     bwolf_vambrace:{name:'黒狼の腕甲',slot:'arms',def:17,skills:{atk_up:4,crit_dmg:3},slots:2},
     bwolf_faulds:{name:'黒狼の腰甲',slot:'waist',def:17,skills:{dodge_dist:5,item_speed:3},slots:2},
     bwolf_greaves:{name:'黒狼の脚甲',slot:'legs',def:18,skills:{atk_up:5,dodge_dist:5},slots:2},
-    // 大剣・太刀・ハンマー（鉄→古狼→黒狼）
+    // 大剣・太刀・槌（鉄→古狼→黒狼）
     iron_gs:{name:'鉄の大剣',slot:'weapon',wtype:'greatsword',atk:10,crit:2},
     wolf_gs:{name:'古狼の大剣',slot:'weapon',el:{k:'thunder',v:8},wtype:'greatsword',atk:20,crit:5,slots:1},
     iron_tachi:{name:'鉄の太刀',slot:'weapon',wtype:'tachi',atk:9,crit:6},
     wolf_tachi:{name:'古狼の太刀',slot:'weapon',el:{k:'thunder',v:7},wtype:'tachi',atk:18,crit:10,slots:1},
     iron_db:{name:'鉄の双剣',slot:'weapon',wtype:'dual',atk:8,crit:8},
     wolf_db:{name:'古狼の双剣',slot:'weapon',el:{k:'thunder',v:6},wtype:'dual',atk:16,crit:12,slots:1},
-    iron_hammer:{name:'鉄のハンマー',slot:'weapon',wtype:'hammer',atk:10,crit:0},
-    wolf_hammer:{name:'古狼のハンマー',slot:'weapon',el:{k:'thunder',v:8},wtype:'hammer',atk:20,crit:3,slots:1},
-    iron_lance:{name:'鉄のランス',slot:'weapon',wtype:'lance',atk:8,crit:4},
+    iron_hammer:{name:'鉄の槌',slot:'weapon',wtype:'hammer',atk:10,crit:0},
+    wolf_hammer:{name:'古狼の槌',slot:'weapon',el:{k:'thunder',v:8},wtype:'hammer',atk:20,crit:3,slots:1},
+    iron_lance:{name:'鉄の槍',slot:'weapon',wtype:'lance',atk:8,crit:4},
     iron_bow:{name:'鉄の弓',slot:'weapon',wtype:'bow',atk:7,crit:4},
     iron_shuriken:{name:'鉄の手裏剣',slot:'weapon',wtype:'shuriken',atk:7,crit:4},
     hunter_shuriken:{name:'狩猟の手裏剣',slot:'weapon',wtype:'shuriken',atk:10,crit:5},
@@ -593,10 +593,10 @@ const DATA={
     sanshou_bow:{name:'大山椒の弓',slot:'weapon',el:{k:'water',v:8},wtype:'bow',atk:13,crit:5,slots:1},
     sanshou_dual:{name:'大山椒の双剣',slot:'weapon',el:{k:'water',v:7},wtype:'dual',atk:12,crit:8,slots:1},
     bone_hammer:{name:'骨の大槌',slot:'weapon',wtype:'hammer',atk:14,crit:1,},
-    bone_lance:{name:'骨のランス',slot:'weapon',wtype:'lance',atk:13,crit:6,},
-    beast_lance:{name:'獣牙のランス',slot:'weapon',wtype:'lance',atk:12,crit:6,slots:1},
-    mire_lance:{name:'沼喰いのランス',slot:'weapon',st:{k:'poison',buildup:20},wtype:'lance',atk:22,crit:10,slots:1},
-    wolf_lance:{name:'古狼のランス',slot:'weapon',wtype:'lance',atk:19,crit:8,slots:1},
+    bone_lance:{name:'骨の槍',slot:'weapon',wtype:'lance',atk:13,crit:6,},
+    beast_lance:{name:'獣牙の槍',slot:'weapon',wtype:'lance',atk:12,crit:6,slots:1},
+    mire_lance:{name:'沼喰いの槍',slot:'weapon',st:{k:'poison',buildup:20},wtype:'lance',atk:22,crit:10,slots:1},
+    wolf_lance:{name:'古狼の槍',slot:'weapon',wtype:'lance',atk:19,crit:8,slots:1},
     /* ---- ザコ素材の防具（各ステージ2シリーズ）：同じステージのボス装備より一段弱く、一式効果はなし ---- */
     // 草原：獣皮シリーズ（森狼）
     beast_db:{name:'獣牙の双剣',slot:'weapon',wtype:'dual',atk:12,crit:10,},
@@ -613,7 +613,7 @@ const DATA={
     goblin_belt:{name:'ゴブリンの縄帯',slot:'waist',def:4,skills:{gather_up:3,item_speed:1}},
     goblin_boots:{name:'ゴブリンのぼろ靴',slot:'legs',def:5,skills:{gather_up:2,minion_hunter:3}},
     // 森林：甲虫シリーズ（森甲虫）
-    beetle_hammer:{name:'甲虫のハンマー',slot:'weapon',el:{k:'ice',v:5},wtype:'hammer',atk:15,crit:1,},
+    beetle_hammer:{name:'甲虫の槌',slot:'weapon',el:{k:'ice',v:5},wtype:'hammer',atk:15,crit:1,},
     beetle_helm:{name:'甲虫の兜',slot:'head',def:7,skills:{def_up:2,flinch_free:2}},
     beetle_mail:{name:'甲虫の鎧',slot:'body',def:9,skills:{def_up:3,flinch_free:1}},
     beetle_vambrace:{name:'甲虫の肩甲',slot:'arms',def:6,skills:{def_up:2,flinch_free:1}},
@@ -744,7 +744,7 @@ const DATA={
     rabbit_faulds:{name:'まるい尾の腰飾り',slot:'waist',def:6,skills:{dodge_dist:4,minion_hunter:1},slots:1},
     rabbit_greaves:{name:'跳ね足の脚甲',slot:'legs',def:7,skills:{dodge_dist:5,hp_up:1},slots:1},
     stag_gs:{name:'大顎の大剣',slot:'weapon',wtype:'greatsword',atk:29,crit:5,slots:2},
-    stag_hammer:{name:'大顎のハンマー',slot:'weapon',el:{k:'ice',v:12},wtype:'hammer',atk:29,crit:3,slots:2},
+    stag_hammer:{name:'大顎の槌',slot:'weapon',el:{k:'ice',v:12},wtype:'hammer',atk:29,crit:3,slots:2},
     stag_db:{name:'大顎の双剣',slot:'weapon',wtype:'dual',atk:25,crit:13,slots:2},
     stag_helm:{name:'大顎の兜',slot:'head',def:12,skills:{flinch_free:6,rescue:2},slots:2},
     stag_mail:{name:'大顎の甲殻',slot:'body',def:16,skills:{dmg_cut:3,weakness:4},slots:2},
@@ -753,7 +753,7 @@ const DATA={
     stag_greaves:{name:'大顎の脚甲',slot:'legs',def:12,skills:{dmg_cut:4,boss_hunter:3},slots:2},
     // ---- 多頭竜シリーズ（ヒュドラ・沼地）：毒耐性と攻撃 ----
     hydra_sword:{name:'多頭竜の剣',slot:'weapon',el:{k:'water',v:11},wtype:'sword',atk:28,crit:11,slots:2},
-    hydra_lance:{name:'多頭竜のランス',slot:'weapon',el:{k:'water',v:11},wtype:'lance',atk:27,crit:11,slots:2},
+    hydra_lance:{name:'多頭竜の槍',slot:'weapon',el:{k:'water',v:11},wtype:'lance',atk:27,crit:11,slots:2},
     hydra_bow:{name:'多頭竜の弓',slot:'weapon',el:{k:'water',v:10},wtype:'bow',atk:24,crit:9,slots:2},
     hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,skills:{poison_res:3,crit_up:2},slots:2},
     hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:17,skills:{poison_res:4,hp_up:3},slots:2},
@@ -770,7 +770,7 @@ const DATA={
     venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{status_res:4,item_speed:2},slots:2},
     venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,skills:{evade:3,crit_dmg:3},slots:2},
     // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
-    mire_hammer:{name:'沼巨人のハンマー',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:29,crit:0,slots:2},
+    mire_hammer:{name:'沼巨人の槌',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:29,crit:0,slots:2},
     mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:29,crit:3,slots:2},
     mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,skills:{heal_up:2,crit_dmg:3},slots:2},
     mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,skills:{charge_up:4,def_up:3},slots:2},
@@ -939,7 +939,7 @@ const DATA={
     scorp_shuriken:{name:'晶毒の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:26,crit:12,slots:2},
     scorp_db:{name:'晶毒の双剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'dual',atk:31,crit:14,slots:2},
     serpent_gs:{name:'紅蓮の大剣',slot:'weapon',el:{k:'fire',v:10},wtype:'greatsword',atk:36,crit:4,slots:2},
-    serpent_hammer:{name:'紅蓮のハンマー',slot:'weapon',el:{k:'fire',v:10},wtype:'hammer',atk:36,crit:0,slots:2},
+    serpent_hammer:{name:'紅蓮の槌',slot:'weapon',el:{k:'fire',v:10},wtype:'hammer',atk:36,crit:0,slots:2},
     mammoth_tachi:{name:'永久凍土の太刀',slot:'weapon',el:{k:'ice',v:10},wtype:'tachi',atk:38,crit:12,slots:2},
     mammoth_bow:{name:'永久凍土の弓',slot:'weapon',el:{k:'ice',v:10},wtype:'bow',atk:32,crit:10,slots:2},
     abyss_sword:{name:'冥糸の剣',slot:'weapon',el:{k:'mei',v:10},wtype:'sword',atk:35,crit:12,slots:2},
@@ -979,7 +979,7 @@ const DATA={
     // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
     haro_tachi:{name:'覇狼の太刀',slot:'weapon',el:{k:'ice',v:9},wtype:'tachi',atk:23,crit:12,slots:2},
     haro_db:{name:'覇狼の双剣',slot:'weapon',el:{k:'ice',v:7},wtype:'dual',atk:21,crit:14,slots:2},
-    haro_lance:{name:'覇狼のランス',slot:'weapon',el:{k:'ice',v:8},wtype:'lance',atk:22,crit:10,slots:2},
+    haro_lance:{name:'覇狼の槍',slot:'weapon',el:{k:'ice',v:8},wtype:'lance',atk:22,crit:10,slots:2},
     haro_helm:{name:'覇狼の兜',slot:'head',def:11,skills:{crit_dmg:3,weakness:2},slots:2},
     haro_mail:{name:'覇狼の鎧',slot:'body',def:14,skills:{crit_dmg:3,regen:3},slots:2},
     haro_vambrace:{name:'覇狼の篭手',slot:'arms',def:10,skills:{crit_up:2,item_power:3},slots:2},
@@ -1261,7 +1261,7 @@ const DATA={
   },
   /* ボスの当たり判定（部位）。x・y・r はボスの半径に対する割合で、x＋が向いている方向（前）、y＋が右。
      mult：その部位へのダメージ倍率／weak：弱点（弓の矢は weakMult 倍の大ダメージ、防具スキル「弱点特効」が効く）
-     head：頭（ハンマーのスタン値がたまる）／guard：正面の硬い部位（guard を持つボスで、この部位に当たると弾かれる）
+     head：頭（槌のスタン値がたまる）／guard：正面の硬い部位（guard を持つボスで、この部位に当たると弾かれる）
      1回の攻撃で当たるのは1か所だけ：近接は振った側から一番近い部位、矢は最初に触れた部位 */
   bossParts:{
     wolf:[{id:'head',name:'頭',x:1.05,y:0,r:0.43,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.72,mult:1},{id:'tail',name:'尻尾',x:-1.2,y:0,r:0.36,mult:0.9}],
@@ -1499,7 +1499,7 @@ const DATA={
     goblin:{name:'ゴブリン',ai:'goblin',hp:34,atk:9,def:2,r:12,speed:95,color:'#5cae3c',drops:'goblin',pal:{body:'#5cae3c',dark:'#2a5a1a',ear:'#4c9a30',eye:'#ffe040'}},
     field_rat:{name:'フィールドラット',ai:'goblin',hp:14,atk:6,def:0,r:9,speed:210,color:'#9a8a7a',drops:'field_rat',pal:{body:'#9a8a7a',dark:'#4a4038',ear:'#e0a0a0',eye:'#ff4040'}},
     archer:{name:'スケルトンアーチャー',ai:'archer',hp:28,atk:11,def:1,r:12,speed:80,color:'#ddd6c0',drops:'archer',pal:{body:'#ddd6c0',dark:'#7a7260'}},
-    // stunMax：ハンマーで頭を叩いたときのスタン値の上限（無い敵はスタンしない）。stunTime：スタンの秒数
+    // stunMax：槌で頭を叩いたときのスタン値の上限（無い敵はスタンしない）。stunTime：スタンの秒数
     wolf:{name:'古狼',ai:'wolf',atkEl:{roar:'thunder',sweep:'thunder'},hp:1600,atk:22,def:5,r:30,speed:120,stunMax:100,stunTime:4,color:'#7c6c5c',drops:'wolf',boss:true,
       pal:{body:'#7c6c5c',dark:'#4c4038',rage:'#8a5848',rageDark:'#5a3028',eye:'#ffd060',rageEye:'#ff2a2a'}},
     // ステージ1（風渡る草原）
@@ -3392,7 +3392,7 @@ const Save={
       9:d=>{if(d.progress&&(d.progress.stage|0)>=4)d.progress.stage+=1;return d;}, // 9 → 10：水辺を4番に追加（墓地は5番へ）
       10:d=>d, // 10 → 11：晶石の大洞窟を6番に追加
       11:d=>{if(d.progress){const st=d.progress.stage|0;if(st>=6)d.progress.stage=8;else if(st===5)d.progress.stage=5;}return d;}, // 11 → 12：晶石の大洞窟を5番、火山を6番、氷雪を7番、墓地を8番へ
-      12:d=>{for(const it of (d.items||[]))if(it&&typeof it.baseId==='string')it.baseId=it.baseId.replace(/_whip$/,'_lance');return d;}, // 12 → 13：鞭をランスに置き換え（持っている鞭はランスに）
+      12:d=>{for(const it of (d.items||[]))if(it&&typeof it.baseId==='string')it.baseId=it.baseId.replace(/_whip$/,'_lance');return d;}, // 12 → 13：鞭を槍に置き換え（持っている鞭は槍に）
     };
     while(v<this.VERSION){if(migrations[v])data=migrations[v](data);v++;}
     return data;
@@ -4097,7 +4097,7 @@ function nearestPlayer(w,e){
 }
 /** ボスのヘイト：プレイヤーごとに、与えたダメージ分たまる。時間とともに少しずつ薄れる */
 const HATE_DECAY=0.03; // 毎秒の減衰率
-const HATE_MAX=1e9; // ヘイトの最大値（ランスの挑発中はこの値になる）
+const HATE_MAX=1e9; // ヘイトの最大値（槍の挑発中はこの値になる）
 function addHate(e,p,amount){
   if(!e.hate)e.hate={};
   e.hate[p.id]=(e.hate[p.id]||0)+Math.max(0,amount);
@@ -4217,9 +4217,9 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   }
   if(p.hitInv>0)return false;
   let dmg=raw*(60/(60+p.stats.def));
-  // 大剣・ハンマーのチャージ中は被ダメージ半分／弓を装備中は被ダメージ1.5倍
+  // 大剣・槌のチャージ中は被ダメージ半分／弓を装備中は被ダメージ1.5倍
   {const cw=DATA.weaponTypes[p.stats.weaponType];if(cw&&cw.hurtMult)dmg*=cw.hurtMult;else if(p.charging&&cw&&cw.charge)dmg*=wsActive(p,'fudou')?0.25:0.5;}
-  // ランスの盾：向いている方向からの攻撃は大きく減らす（攻撃元の位置で判定）
+  // 槍の盾：向いている方向からの攻撃は大きく減らす（攻撃元の位置で判定）
   if(p.guarding){const gw=DATA.weaponTypes[p.stats.weaponType];if(gw&&gw.guard)dmg*=gw.guard.mult;} // ガード中：武器ごとの軽減率（全方向）
   if(p.stats.effects.guard)dmg*=0.88;
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
@@ -4366,11 +4366,11 @@ function damageEnemy(w,p,e,mult,src){
     if(e.hitAcc>=e.maxHp*0.25){
       e.hitAcc=0;e.hitAccT=0;
       e.stun=0.15;
-      // ノックバックは武器ごと（大剣・ハンマーだけ）。片手剣・太刀・双剣は吹き飛ばさない
+      // ノックバックは武器ごと（大剣・槌だけ）。片手剣・太刀・双剣は吹き飛ばさない
       if(DATA.weaponTypes[s.weaponType]&&DATA.weaponTypes[s.weaponType].knockback){const a=Math.atan2(e.y-p.y,e.x-p.x),k=src.skill?260:170;e.kx=Math.cos(a)*k;e.ky=Math.sin(a)*k;}
     }
   }
-  // ハンマー：ボスの頭（向いている方向の前側）に当たるとスタン値がたまる
+  // 槌：ボスの頭（向いている方向の前側）に当たるとスタン値がたまる
   const wt=DATA.weaponTypes[s.weaponType];let head=false;
   if(wt&&wt.stun&&e.stunMax>0&&!e.dead&&e.state!=='stunned'&&e.state!=='sleep'){
     head=part?!!part.head:frontal;
@@ -4520,7 +4520,7 @@ const Companion={
     return I;
   },
 };
-// ガード（片手剣・大剣・ランス）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
+// ガード（片手剣・大剣・槍）：ガードボタンを押している間だけ。移動はかなり遅くなり、正面（前方120°）からのダメージは大きく減る
 const GUARD_CFG={move:0.2};
 /** 幽霊（復活できなくなった後）：普通の歩きより速く動けるが、壁は通れない。攻撃・アイテム・採取・被弾はない */
 function updateSpirit(w,p,inp,dt){
@@ -4855,7 +4855,7 @@ function updateAttacks(w,dt){
       if(!lineOfSight(w.map,p.x,p.y,hit.x,hit.y)&&!lineOfSight(w.map,p.x,p.y,e.x,e.y))continue; // 壁越しには当たらない
       a.hit.add(e.id);
       let mult=a.mult;
-      if(a.tip){const f=clamp(Math.max(0,d-hit.r)/a.range,0,1);mult*=a.tip.min+(a.tip.max-a.tip.min)*f;} // ランス：先端ほど強い
+      if(a.tip){const f=clamp(Math.max(0,d-hit.r)/a.range,0,1);mult*=a.tip.min+(a.tip.max-a.tip.min)*f;} // 槍：先端ほど強い
       damageEnemy(w,p,e,mult,{stunMult:a.stunMult,hit});
       const fw=DATA.weaponTypes[p.stats.weaponType];
       if(fw&&fw.flow&&!a.flowed){a.flowed=true;const before=p.flow;p.flow=Math.min(fw.flow.max,p.flow+1);p.flowT=fw.flow.keep;
@@ -5961,8 +5961,8 @@ function updateWorld(w,dt,inputs){
     for(const q of due){const p=w.players[q.pid];if(p&&!p.dead)spawnShurikenShot(w,p,q.a,q.off,q.mult);}
   }
   enforceLeash(w,before);
-  // 挑発中のランス使いは、ボスのヘイトが常に高まる
-  // ランスの挑発中は、ボスのヘイトを常に最大にする（スキルが切れたら元に戻す）
+  // 挑発中の槍使いは、ボスのヘイトが常に高まる
+  // 槍の挑発中は、ボスのヘイトを常に最大にする（スキルが切れたら元に戻す）
   for(const id in w.players){const p=w.players[id];
     for(const e of w.enemies){
       if(!e.boss||e.dead)continue;
@@ -6450,7 +6450,7 @@ const GEAR_ART={
   },
 };
 /* 武器の飾り：GEAR_LOOKS の w（例：['fang']）に名前を並べると、武器の上に描き足す。
-   g.along(t)：刃（ランスはランスの線、弓は弓の弧）に沿った位置。t=0 が根元、t=1 が先端。a＝その場所の向き、hw＝刃の半分の太さ */
+   g.along(t)：刃（槍は槍の線、弓は弓の弧）に沿った位置。t=0 が根元、t=1 が先端。a＝その場所の向き、hw＝刃の半分の太さ */
 function weaponGeom(wtype,r){
   const blade=(x0,x1,hw,gx)=>({kind:'blade',x0,x1,hw,gx,along:t=>({x:x0+(x1-x0)*t,y:0,a:0})});
   switch(wtype){
@@ -6469,14 +6469,14 @@ const WEAPON_ART={
     ctx.fillStyle=l.main;ctx.beginPath();for(let i=0;i<=16;i++){const a=i/16*TAU,rr=i%2?R:R*0.6;const x=p.x+Math.cos(a)*rr*0.7,y=p.y+Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();ctx.fill();
     ctx.fillStyle=l.light;ctx.beginPath();ctx.ellipse(p.x,p.y,R*0.3,R*0.55,0,0,TAU);ctx.fill();
   },
-  fang(ctx,g,l){ // 刃の片側に並ぶ牙（ハンマーは頭の上下）
+  fang(ctx,g,l){ // 刃の片側に並ぶ牙（槌は頭の上下）
     ctx.fillStyle=l.accent;
     if(g.kind==='hammer'){const h=g.head;for(let x=h.x0+1;x<h.x1;x+=4.5)for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(x,s*h.hy);ctx.lineTo(x+2,s*(h.hy+4.5));ctx.lineTo(x+4,s*h.hy);ctx.closePath();ctx.fill();}return;}
     const n=g.kind==='blade'?Math.max(3,Math.round((g.x1-g.x0)/7)):6;
     for(let i=0;i<n;i++){const t=0.12+i*(0.8/n),p=g.along(t),nx=Math.sin(p.a),ny=-Math.cos(p.a),tx=Math.cos(p.a),ty=Math.sin(p.a);
       const bx=p.x+nx*g.hw,by=p.y+ny*g.hw;ctx.beginPath();ctx.moveTo(bx-tx*1.8,by-ty*1.8);ctx.lineTo(bx+nx*3.8+tx*1.2,by+ny*3.8+ty*1.2);ctx.lineTo(bx+tx*1.8,by+ty*1.8);ctx.closePath();ctx.fill();}
   },
-  horn(ctx,g,l){ // 角：根元から後ろへ反る一対の角（ハンマーは頭から横へ）
+  horn(ctx,g,l){ // 角：根元から後ろへ反る一対の角（槌は頭から横へ）
     ctx.strokeStyle=l.accent;ctx.lineWidth=2.6;ctx.lineCap='round';
     if(g.kind==='hammer'){const h=g.head,cx=(h.x0+h.x1)/2;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(cx,s*h.hy);ctx.quadraticCurveTo(cx-4,s*(h.hy+9),cx+8,s*(h.hy+11));ctx.stroke();}}
     else if(g.kind==='bow'){for(const t of [0,1]){const p=g.along(t),s=t?1:-1;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.quadraticCurveTo(p.x-6,p.y+s*5,p.x-3,p.y+s*9);ctx.stroke();}}
@@ -6494,7 +6494,7 @@ const WEAPON_ART={
     for(let i=0;i<6;i++){const t=0.15+i*0.13,p=g.along(t),s=i%2?1:-1,nx=Math.sin(p.a)*s,ny=-Math.cos(p.a)*s,tx=Math.cos(p.a),ty=Math.sin(p.a);
       const bx=p.x+nx*g.hw,by=p.y+ny*g.hw;ctx.beginPath();ctx.moveTo(bx-tx*1.5,by-ty*1.5);ctx.lineTo(bx+nx*4.5-tx*1.5,by+ny*4.5-ty*1.5);ctx.lineTo(bx+tx*1.5,by+ty*1.5);ctx.closePath();ctx.fill();}
   },
-  mandible(ctx,g,l){ // 大顎：刃に沿って内側へ曲がるもう一本の顎と内歯（ハンマーは頭の先に大顎）
+  mandible(ctx,g,l){ // 大顎：刃に沿って内側へ曲がるもう一本の顎と内歯（槌は頭の先に大顎）
     ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=1;
     if(g.kind==='hammer'){const h=g.head;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(h.x1,s*6);ctx.quadraticCurveTo(h.x1+10,s*10,h.x1+13,s*1.5);ctx.lineTo(h.x1+9,s*2.5);ctx.quadraticCurveTo(h.x1+7,s*5,h.x1,s*2);ctx.closePath();ctx.fill();ctx.stroke();}return;}
     const a=g.along(0.3),m=g.along(0.7),b=g.along(1),na=-1;
@@ -6580,7 +6580,7 @@ const KEY_LABELS={
   kb2:{dodge:'右Shift',skill:'/',heal:'.',cycle:',',sheathe:'/'},
 };
 const CONTROL_LINES={
-  kbm:['WASD：移動　マウス：向き　F：納刀','左クリック：抜刀・攻撃（大剣・ハンマーは長押しでチャージ）　Space：回避','E：持ち物を使う　R／ホイール：切替　1〜8：選択'],
+  kbm:['WASD：移動　マウス：向き　F：納刀','左クリック：抜刀・攻撃（大剣・槌は長押しでチャージ）　Space：回避','E：持ち物を使う　R／ホイール：切替　1〜8：選択'],
   pad:['左スティック：移動　右スティック：向き　Y：納刀　B：スキル','RT / X：抜刀・攻撃（長押しでチャージ）　A：回避　LT（L2）：ガード（押し続ける）','LB：持ち物を使う　RB：切替'],
   kb2:['矢印キー：移動（移動方向を向く）　/：納刀','Enter：抜刀・攻撃（長押しでチャージ）　右Shift：回避','.：持ち物を使う　,：切替'],
 };
@@ -8329,7 +8329,7 @@ const Renderer={
       ctx.fillStyle='rgba(255,210,58,.8)';ctx.beginPath();ctx.moveTo(r+74,0);ctx.lineTo(r+64,-5);ctx.lineTo(r+64,5);ctx.closePath();ctx.fill();
       ctx.restore();
     }
-    // ランス：盾は常に向いている方向の左寄りに構える（納刀中も表示）
+    // 槍：盾は常に向いている方向の左寄りに構える（納刀中も表示）
     if(s.weaponType==='lance'&&!p.dead){
       ctx.save();ctx.rotate(p.facing-0.75);
       ctx.fillStyle='#8a6a40';ctx.beginPath();ctx.moveTo(r+1,-8);ctx.lineTo(r+10,-8);ctx.lineTo(r+10,4);ctx.quadraticCurveTo(r+10,11,r+5,13);ctx.quadraticCurveTo(r+1,11,r+1,4);ctx.closePath();ctx.fill();
@@ -8341,7 +8341,7 @@ const Renderer={
     // チャージ中：弓は狙っている方向に構える（ほかの武器は後ろに引く）
     if(p.charging&&!p.dead)swordA=wtype==='bow'?p.facing:p.facing+Math.PI*0.75*(p.swingDir||1);
     if(sheathed)swordA=p.facing+Math.PI*0.8;
-    // 大剣・ハンマーのチャージ中は、狙いの斜め後ろに構え、体の後ろ（下）に描く
+    // 大剣・槌のチャージ中は、狙いの斜め後ろに構え、体の後ろ（下）に描く
     if(p.charging&&!p.dead&&(wtype==='greatsword'||wtype==='hammer'))behind=true;
     const lk=(s.look||{}),wl=gearLook(lk.weapon)||GEAR_LOOKS.iron,bl=wl.blade||'#e6ecf8';
     const wg=weaponGeom(wtype,r),wDeco=()=>{for(const k of (wl.w||[]))if(WEAPON_ART[k])WEAPON_ART[k](ctx,wg,wl);};
@@ -10784,7 +10784,7 @@ const App={
     }else if((!w||w.status!=='playing'||['camp','lobby','board','online'].includes(this.state))&&!['clear','gameover'].includes(this.state))id='camp';
     if(this.state==='shop'&&this.shopCat==='gacha')id='gacha';
     if(id||Sound.cur)Sound.playMusic(id,id==='rage'?0.6:1.0);
-    // 大剣・ハンマーのチャージ：段階が上がるたびに音（自分のキャラだけ）
+    // 大剣・槌のチャージ：段階が上がるたびに音（自分のキャラだけ）
     if(w){
       const mine=Net.role==='guest'?[Net.myPid]:Net.role==='host'?['p1']:Object.keys(w.players);
       this.chargeLv=this.chargeLv||{};
@@ -11640,7 +11640,7 @@ const App={
   /* ---------- 画面HTML ---------- */
   howtoHTML(){
     return `<div class="howto"><b>W A S D</b>移動（斜めも同じ速さ）<br><b>マウス</b>キャラクターの向き<br>
-      <b>左クリック</b>抜刀・攻撃（押しっぱなしで連続。大剣・ハンマーは長押しでチャージ、離して振る）<br>
+      <b>左クリック</b>抜刀・攻撃（押しっぱなしで連続。大剣・槌は長押しでチャージ、離して振る）<br>
       <b>F</b>納刀（武器をしまうと、どの武器も片手剣と同じ速さで移動できる）<br>
       <b>Space</b>回避（短時間無敵。アイテム使用やチャージを中断できる）<br>
       <b>E</b>持ち物を使う（使ってから少しして発動。その間に攻撃を受けると不発）<br>
@@ -12403,7 +12403,7 @@ const App={
       if(E.slow)feats.push('攻撃が当たると鈍足');
       if(E.spore)feats.push('毒の雲（中にいると継続ダメージ）');
       if(E.empower)feats.push('仲間を強化・よみがえらせる');
-      if(E.stunMax)feats.push('ハンマーで頭を叩くとスタン');
+      if(E.stunMax)feats.push('槌で頭を叩くとスタン');
       const hpRank=E.hp>=2000?'★★★★★':E.hp>=200?'★★★★':E.hp>=100?'★★★':E.hp>=45?'★★':'★';
       detail=`<div class="iname" style="color:${E.boss?'#ff8a6a':'#f3d48a'}">${esc(E.name)}</div>
         <div class="isub">${esc(B.role)}　出現：${B.stage.map(stName).join('、')}</div>
