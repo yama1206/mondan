@@ -46,6 +46,7 @@ button.danger:hover{background:#6e2a3a}
 .inv-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .who-sel{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
 .gfx{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9000;animation:gfxFade 1s ease-out forwards}
+.gfx-pet{display:block;width:150px;height:auto;margin:0 auto 4px}
 .gfx-in{text-align:center;padding:14px 22px;border-radius:12px;background:rgba(10,8,20,.82);animation:gfxPop .35s ease-out}
 .gfx-r{font-weight:bold;font-size:18px;letter-spacing:.1em}
 .gfx-t{font-size:15px;margin-top:4px}
@@ -214,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.38',date:'2026/10/31'};
+const GAME_VERSION={no:'1.39',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8077,7 +8078,7 @@ const Renderer={
   },
   /** 連れ歩くペット（マルチプレイのみ）。プレイヤーの後ろをついてくる。性能には影響しない */
   drawPet(ctx,p){
-    if(!(Net.role||App.training)||!p.petLook||p.dead)return;
+    if(!(Net.role||App.training||p.preview)||!p.petLook||p.dead)return;
     this.petPos=this.petPos||{};
     const pp=this.petPos[p.id]||(this.petPos[p.id]={x:p.x,y:p.y});
     const f=p.facing||0,back=p.r*1.5;
@@ -8918,11 +8919,12 @@ const Sound={
   },
 
   /** ガチャの溜め：太鼓がだんだん速くなる */
-  gachaRoll(){
+  gachaRoll(sec){
     if(!this.ready||this.ctx.state!=='running')return;
-    let tt=this.now()+0.02;
-    for(let i=0;i<14;i++){this.timpani(this.sfx,tt,43,0.35+i*0.04);tt+=0.09-i*0.004;}
-    this.timpani(this.sfx,tt,48,1.1);
+    const t0=this.now()+0.02,end=t0+(sec||1);
+    let tt=t0,iv=0.09,i=0;
+    while(tt<end){this.timpani(this.sfx,tt,43,Math.min(1.2,0.35+i*0.03));tt+=iv;iv=Math.max(0.035,iv-0.004);i++;}
+    this.timpani(this.sfx,end,48,1.1);
   },
   /** ガチャの結果。レア度が高いほど派手な音 */
   gachaResult(rar){
@@ -9717,7 +9719,7 @@ const Ops={
     if(rest.length&&(first||RNG.next()*100<GACHA_PET_RATE)){
       const lk=pick(rest);
       p.looks[lk.id]=true;
-      return {changed:true,msg:`${lk.name}（ペット）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}が仲間になった！`}};
+      return {changed:true,msg:`${lk.name}（ペット）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}が仲間になった！`,look:lk.id}};
     }
     // 首輪はレア度で抽選してから種類を選ぶ
     let roll=RNG.next()*100,tier='N';
@@ -10971,16 +10973,27 @@ const App={
   /** ガチャを回す。溜めの太鼓を鳴らしてから結果を出す（ソロで足りない時は溜めなし） */
   gachaRoll(){
     if(this.gachaBusy)return;
-    if(!Net.role&&(this.profile.coins||0)<3){this.doOp('gacha',{});return;}
-    this.gachaBusy=true;Sound.gachaRoll();
-    setTimeout(()=>{this.gachaBusy=false;this.doOp('gacha',{});},1000);
+    if(Net.role==='guest'){
+      // 結果はホストから届くので、ここでは溜めの太鼓だけ鳴らす
+      this.gachaBusy=true;Sound.gachaRoll(1);setTimeout(()=>{this.gachaBusy=false;},1000);
+    }
+    this.doOp('gacha',{});
   },
   /** ガチャの演出。レア度が高いほど大きく・長く出す */
-  gachaFx(rar,text){
+  gachaFx(rar,text,look){
     try{
       const el=document.createElement('div');
       el.className='gfx gfx-'+rar;
       el.innerHTML=`<div class="gfx-in"><div class="gfx-r">${RARITY[rar].name}</div><div class="gfx-t">${esc(text)}</div></div>`;
+      if(look){
+        // 出たペットの見た目を、ペットと同じ描き方でそのまま見せる
+        try{
+          const cv=document.createElement('canvas');cv.width=240;cv.height=160;cv.className='gfx-pet';
+          const cx=cv.getContext('2d');
+          Renderer.drawPet(cx,{id:'__gacha',x:240,y:64,r:80,facing:0,petLook:look,preview:true});
+          el.querySelector('.gfx-in').insertBefore(cv,el.querySelector('.gfx-r'));
+        }catch(e){}
+      }
       document.body.appendChild(el);
       setTimeout(()=>el.remove(),rar==='SSR'?2600:rar==='SR'?1800:1000);
     }catch(e){}
@@ -10989,9 +11002,15 @@ const App={
     if(Net.role==='guest'){Net.send({t:'cmd',act,args});this.refreshPanel();return;}
     if(this.training&&!['equip','unequip','petEquip','lookEquip'].includes(act)){UI.notify('訓練場では装備の付け替えだけできます','#888',2);return;}
     const r=Ops[act](this.profile,this.inv.who||0,args)||{};
-    if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
-    if(r.fx)this.gachaFx(r.fx.rar,r.fx.text);
-    if(r.fx&&act==='gacha')Sound.gachaResult(r.fx.rar);
+    // ガチャの結果は、レア度に応じた溜めのあとで出す（最高レアは3秒）
+    const show=()=>{
+      if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
+      if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look);
+      if(r.fx&&act==='gacha')Sound.gachaResult(r.fx.rar);
+    };
+    const tame=act==='gacha'&&r.fx?(r.fx.rar==='SSR'?3:1):0;
+    if(tame){this.gachaBusy=true;Sound.gachaRoll(tame);setTimeout(()=>{this.gachaBusy=false;show();},tame*1000);}
+    else show();
     if(r.sel)this.inv.sel=r.sel;
     if(r.cleared&&this.inv.sel===r.cleared)this.inv.sel=null;
     if(r.changed){this.syncPotions(Net.role?'p1':undefined);this.onEquipChanged();}
