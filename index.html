@@ -239,7 +239,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.7',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.8',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4654,6 +4654,7 @@ function updatePlayer(w,p,inp,dt){
     const id=ITEM_ORDER[p.sel],c=DATA.consumables[id];
     if((p.bag[id]||0)<=0)emit(w,{type:'info',pid:p.id,text:c.name+'を持っていません'});
     else if(c.effect.type==='heal'&&!c.effect.radius&&p.hp>=s.maxHp&&!(p.poisonT>0)&&!(p.curseT>0))emit(w,{type:'info',pid:p.id,text:'体力は満タンです'});
+    else if(c.effect.type==='place'&&c.effect.kind==='heal'&&(w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done)||(p.using&&p.using.item===id)))emit(w,{type:'info',pid:p.id,text:'癒しの香は効果が切れるまで置けません'});
     else if(p.potionCd<=0){
       p.using={item:id,t:0,total:Math.max(P.minItemDelay,c.delay+s.itemDelayAdj)};
       emit(w,{type:'itemStart',pid:p.id,x:p.x,y:p.y,item:id});
@@ -4754,6 +4755,9 @@ function updatePlaced(w,dt){
         o.acc-=1;
         const owner=w.players[o.owner],mul=owner?(owner.stats.healMult||1)*(wsActive(owner,'medic')?1.5:1):1;
         for(const id in w.players){const q=w.players[id];if(q.dead||Math.hypot(q.x-o.x,q.y-o.y)>=o.r)continue;
+          // 癒しの香が重なっても、味方は1秒に1回分しか回復しない（効果は重ならない）
+          if(q.incHealT!==undefined&&w.time-q.incHealT<0.95)continue;
+          q.incHealT=w.time;
           const hl=Math.round(q.stats.maxHp*ef.rate*mul);
           q.hp=Math.min(q.stats.maxHp,q.hp+hl);
           emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
