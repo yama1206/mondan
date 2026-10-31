@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.44',date:'2026/10/31'};
+const GAME_VERSION={no:'1.45',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1617,6 +1617,9 @@ const DATA={
     forest_wolf:{name:'森狼',ai:'dasher',look:'wolf',hp:42,atk:12,def:2,r:14,speed:150,color:'#8a7a5a',drops:'forest_wolf',
       dash:{wind:0.55,speed:560,dist:250,cd:[2.2,3.2]},
       pal:{body:'#8a7a5a',dark:'#4a3e2a',rage:'#8a7a5a',rageDark:'#4a3e2a',eye:'#ffd060',rageEye:'#ffd060'}},
+    wild_boar:{name:'ワイルドボア',ai:'dasher',look:'boar',hp:40,atk:11,def:2,r:13,speed:140,color:'#8a6a4a',drops:'wild_boar',dashOnly:true,
+      dash:{wind:0.6,speed:520,dist:240,cd:[2.5,3.5]},
+      pal:{body:'#8a6a4a',dark:'#4a3a24',rage:'#8a6a4a',rageDark:'#4a3a24',eye:'#ff9a40',rageEye:'#ff9a40'}},
     slime:{name:'グリーンスライム',ai:'slime',hp:46,atk:13,def:0,r:14,speed:150,color:'#5fd068',drops:'slime',
       pal:{body:'#5fd068',dark:'#2a7a34',eye:'#103a14'}},
     beetle:{name:'森甲虫',ai:'beetle',hp:70,atk:13,def:6,r:15,speed:70,color:'#3f6a5a',drops:'beetle',guard:{arc:140*Math.PI/180,mult:0.25},turn:2.2,heavy:true,
@@ -1876,6 +1879,9 @@ const DATA={
       {type:'mat',id:'beast_hide',chance:0.75,min:1,max:2},
       {type:'mat',id:'beast_fang',chance:0.6,min:1,max:1}
       ]},
+    wild_boar:{rarityBoost:1.0,one:0.6,rolls:[
+      {type:'mat',id:'boar_hide',chance:0.75,min:1,max:2}
+      ]},
     slime:{rarityBoost:1.0,one:0.55,rolls:[
       {type:'mat',id:'slime_gel',chance:0.8,min:1,max:2}
       ]},
@@ -2056,19 +2062,19 @@ const DATA={
      obstacle：障害物の種類（trees=木、rocks=岩、pillars=柱、tombs=墓石）／wander：通路をうろつく魔物
      puddle：水溜まりの数 [最少,最多]（部屋ごと。踏むと移動が遅くなる） */
   layouts:{
-    meadow:{theme:'meadow',obstacle:'rocks',wander:['goblin','forest_wolf','slime'],
+    meadow:{theme:'meadow',obstacle:'rocks',wander:['goblin','wild_boar','slime'],
       start:{id:'entrance',name:'草原の入口'},
-      boss:{id:'arena',name:'暴角の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['forest_wolf',1,1]]},
+      boss:{id:'arena',name:'暴角の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['wild_boar',1,1]]},
       main:[
         {id:'grass',name:'丈の長い草原',spawn:[['goblin',3,4],['slime',0,1]]},
         {id:'hill',name:'小高い丘',spawn:[['goblin_archer',2,2],['goblin',1,1]]},
-        {id:'herd',name:'獣の縄張り',spawn:[['forest_wolf',2,3]]},
+        {id:'herd',name:'獣の縄張り',spawn:[['wild_boar',2,3]]},
         {id:'stream',name:'浅瀬の川辺',spawn:[['slime',1,2],['goblin',1,2]]},
         {id:'outpost',name:'はぐれ者の野営地',spawn:[['goblin',2,3],['goblin_archer',1,2]]},
       ],
       side:[
         {id:'hollow',name:'草むらの窪地',spawn:[['slime',0,1]],gather:[3,4]},
-        {id:'lair',name:'狼の巣穴',spawn:[['forest_wolf',1,1],['goblin',0,1]],elite:1,chest:1},
+        {id:'lair',name:'猪の寝床',spawn:[['wild_boar',1,1],['goblin',0,1]],elite:1,chest:1},
       ]},
     forest:{theme:'forest',obstacle:'trees',wander:['goblin','forest_wolf','slime'],
       start:{id:'entrance',name:'森林の入口'},
@@ -2296,13 +2302,14 @@ const DATA={
     goblin:{stage:[1,2],role:'近接攻撃型',desc:'森に住みつく小鬼。群れで近づき、こん棒で殴りかかってくる。この地では剣を持つ「ゴブリン剣士」と呼ばれることも。',tip:'振りかぶる動作（赤い扇形）が見えたら横へ。体力は低いので素早く倒そう。'},
     archer:{stage:[2,8],role:'遠距離攻撃型',desc:'骨の弓兵（骸骨弓兵）。距離を取り、狙いを定めて矢を放つ。',tip:'狙いの線が赤く固まった直後に矢が来る。柱や木を盾にしながら近づこう。'},
     goblin_archer:{stage:[1,2],role:'遠距離攻撃型',desc:'見張り台や野営地に陣取るゴブリンの射手。ほかの魔物と組むと厄介。',tip:'近接の魔物を引きつけつつ、先に弓兵を倒すと楽になる。'},
-    forest_wolf:{stage:[1,2],role:'高速近接型',desc:'森を駆ける狼。獲物を追いかけ、少し離れた場所から一直線に突進してくる。',tip:'突進は直線だけ。地面の帯が見えたら横へ回避して、止まったところを攻撃。'},
+    forest_wolf:{stage:[2],role:'高速近接型',desc:'森を駆ける狼。獲物を追いかけ、少し離れた場所から一直線に突進してくる。',tip:'突進は直線だけ。地面の帯が見えたら横へ回避して、止まったところを攻撃。'},
     slime:{stage:[1,2],role:'低速・範囲攻撃型',desc:'跳ねながら近づいてくるスライム。近くでは大きく跳び、着地点の周りを押しつぶす。',tip:'着地点に赤い円が出る。円の外へ出てから反撃しよう。'},
     beetle:{stage:[2],role:'防御型',desc:'硬い甲殻に覆われた大きな甲虫。正面からの攻撃はほとんど弾いてしまう。',tip:'向きを変えるのが遅い。横や背後に回り込んで攻撃しよう。'},
     mushroom:{stage:[2],role:'範囲妨害型',desc:'近づいた者に毒胞子を浴びせるキノコ。胞子の雲の中にいると少しずつ体力が減る。',tip:'緑の円が出たら離れる。雲が消えてから近づき、一気に倒そう。'},
     forest_king:{stage:[2],role:'ボス',desc:'森林を支配する巨大な狼。突進・前方の薙ぎ払い・周囲への咆哮を使い分ける。',tip:'怒ると突進が何度も続く。帯の向きをよく見て横へ。咆哮は円の外へ。'},
     salamander:{stage:[2],role:'ボス',desc:'湿った森の奥に棲む巨大な両生類。長い舌で狙い、体をくねらせて突っ込み、水の粘液を飛ばす。',tip:'舌は細く長い直線。粘液は水の塊なので、横へよけながら攻めよう。'},
     rhino:{stage:[1],role:'ボス',desc:'硬い装甲をまとった大型のサイ。正面からの攻撃にとても強い。',tip:'正面は弾かれやすい。横や後ろから攻めよう。角の突進は直線。'},
+    wild_boar:{stage:[1],role:'突進型',desc:'草原にすむ小さなイノシシ。噛みつきはせず、少し離れた場所から一直線に突進してくる。',tip:'突進は直線だけ。帯が見えたら横へ避けて、止まったところを攻撃。'},
     boar:{stage:[1],role:'ボス',desc:'勢いよく突進し、地面を掘り返して土塊を飛ばす大型のイノシシ。',tip:'突進は直線で速い。掘り返しの後は土塊が飛ぶので、円の外へ。'},
     meadow_bull:{stage:[1],role:'ボス',desc:'草原の主。角で突き、薙ぎ払い、足で大地を踏み鳴らす。',tip:'突進は直線。突進の後は大きな隙がある。踏みつけの円の外へ逃げよう。'},
     wolf:{stage:[2],role:'ボス',desc:'森の最奥に棲みつく古い狼。噛みつき・突進・地面への叩きつけで襲いかかる。',tip:'叩きつけの円は大きい。弱ると怒り、叩きつけの周りにも衝撃が走る。'},
@@ -5033,7 +5040,7 @@ function updateDasher(w,e,p,d,dt){
     addTelegraph(w,{shape:'rect',x:e.x,y:e.y,angle:ang,len:D.dist+e.r,width:e.r*2+6,total:D.wind,dmg:0,owner:e.id,small:true});
     return;
   }
-  if(d<e.r+p.r+16&&e.cd<=0){
+  if(d<e.r+p.r+16&&e.cd<=0&&!D.dashOnly){
     e.state='windup';e.action='bite';e.timer=0.35;e.atkAngle=ang;e.facing=ang;
     addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+30,arc:Math.PI*0.5,total:0.35,dmg:e.atk,owner:e.id,small:true});
     return;
