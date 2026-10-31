@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.98',date:'2026/10/31'};
+const GAME_VERSION={no:'1.99',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10115,7 +10115,9 @@ const Ops={
       const it=Items.createEquipment(r.out.id);
       Profile.addItem(p,it);label=lootLabel({type:'equip',item:it});sel=it.uid;
     }else if(r.out.type==='deco'){
-      const d=Items.createDeco(pick(Object.keys(DATA.decorations)),Items.rollRarityMax(1.3,2));
+      // 種類は鍛冶屋で選んだもの（指定が無いときはランダム）。レアリティはレア以下
+      const kind=(a.deco&&DATA.decorations[a.deco])?a.deco:pick(Object.keys(DATA.decorations));
+      const d=Items.createDeco(kind,Items.rollRarityMax(1.3,2));
       Profile.addDeco(p,d);label=lootLabel({type:'deco',item:d});
     }else if(r.out.type==='collar'){
       const pt=PETS.find(x=>x.id===r.out.id);
@@ -11329,7 +11331,7 @@ const App={
         break;
       }
       case 'cancelPick':this.inv.decoPick=null;this.renderInventory();break;
-      case 'craft':this.doOp('craft',{id:ds.id});break;
+      case 'craft':this.doOp('craft',{id:ds.id,deco:ds.deco||null});break;
       case 'buy':this.doOp('buy',{id:ds.id,n:Number(ds.n)||1});break;
       case 'cartAdd':this.cartAdd(ds.kind,ds.id,ds.n);break;
       case 'cartRemove':this.cartRemove(ds.kind,ds.id);break;
@@ -12166,7 +12168,14 @@ const App={
         const b=DATA.equipment[r.out.id];name=isBossWeapon(r.out.id)?`<span style="color:${BOSS_WEAPON_COLOR}">${b.name}</span>`:b.name;
         const set=b.slot!=='weapon'?Object.values(DATA.armorSets).find(s=>s.pieces[b.slot]===r.out.id):null;
         info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk}前後 / 会心率 ${b.crit}%前後${b.el?` / <span style="color:${DATA.elements[b.el.k].color}">${DATA.elements[b.el.k].name}属性 ${b.el.v}</span>`:''}${b.st?` / <span style="color:${DATA.playerStatus[b.st.k].color}">${DATA.playerStatus[b.st.k].name}（状態異常・蓄積 ${b.st.buildup}）</span>`:''}`:`防御力 ${b.def}前後 / 装飾品スロット ${b.slots||0}`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（一式で「${set.bonus}」）</span>`:''}`;
-      }else if(r.out.type==='deco'){name='ランダム装飾品（レア以下）';info='5種類のいずれか（レアリティもランダム。レア以下だけ作れる）';}
+      }else if(r.out.type==='deco'){
+        // 装飾品は種類ごとに選んで作る（レアリティはレア以下の中からランダム）
+        const g0=craftGold(r),can0=Profile.hasMats(p,r.cost)&&(p.gold||0)>=g0;
+        const cost0=Object.keys(r.cost).map(k=>{const have=p.materials[k]||0;return `<span class="${have>=r.cost[k]?'ok':'ng'}">${DATA.materials[k].name} ${have}/${r.cost[k]}</span>`;}).join('');
+        return Object.keys(DATA.decorations).map(id=>{const dd=DATA.decorations[id],sk=DATA.armorSkills[dd.skill];
+          return `<div class="recipe"><div class="rn"><span class="gem" style="background:${dd.color};color:${dd.color}"></span>${dd.name}</div><div class="muted">${sk?sk.name:dd.skill}の装飾品（レア以下のどれかが出る）</div><div class="cost">${cost0}${g0?`<span class="${(p.gold||0)>=g0?'ok':'ng'}">${g0}G</span>`:''}</div>
+          <div class="btnrow"><button class="${can0?'primary':''}" data-act="craft" data-id="${r.id}" data-deco="${id}" ${can0?'':'disabled'}>製作する</button></div></div>`;}).join('');
+      }
       else if(r.out.type==='collar'){const x=PETS.find(q=>q.id===r.out.id);name=x.name+'の首輪';info='首輪（性能）。マルチプレイで連れ歩くと効果';}
       else{const c=DATA.consumables[r.out.id];name=c.name+' ×'+r.out.n+'（調合）';info=c.desc+'。所持 '+(p.bag[r.out.id]||0)+' / '+c.max+'個';}
       const gold=craftGold(r),can=Profile.hasMats(p,r.cost)&&(p.gold||0)>=gold&&!(r.out.type==='item'&&(p.bag[r.out.id]||0)>=DATA.consumables[r.out.id].max);
