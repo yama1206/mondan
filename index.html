@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.63',date:'2026/10/31'};
+const GAME_VERSION={no:'1.64',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2918,7 +2918,27 @@ function bagText(p){
 }
 function rarColor(r){return DATA.rarities[r].color;}
 /** 装備の色と名前：レア度の概念はなし（手紙だけレア度の色）。 */
-function eqColor(it){return it.slot==='charm'?rarColor(it.rarity):'#e6e6e6';} // 手紙はレア度の色（自分を呼ぶと無限に再帰していた）
+const BOSS_WEAPON_COLOR='#4aa8ff'; // ボス素材を使う武器の文字色（青）
+let BOSS_ONLY_MATS=null;
+/** ボスからしか手に入らない素材（通常の魔物・宝箱・通常の依頼・ショップにないもの）。初回に計算して使い回す */
+function bossOnlyMats(){
+  if(BOSS_ONLY_MATS)return BOSS_ONLY_MATS;
+  const boss=new Set(),other=new Set(),tables=new Set();
+  for(const id in DATA.enemies){const e=DATA.enemies[id];if(e.drops)tables.add(e.drops);
+    const dr=DATA.dropTables[e.drops];if(!dr)continue;
+    for(const r of dr.rolls)if(r.type==='mat')(e.boss?boss:other).add(r.id);}
+  for(const tid in DATA.dropTables)if(!tables.has(tid))for(const r of (DATA.dropTables[tid].rolls||[]))if(r.type==='mat')other.add(r.id);
+  for(const q of DATA.quests)if(!q.boss)for(const m in ((q.reward&&q.reward.mats)||{}))other.add(m);
+  for(const sh of DATA.shop)if(sh.type==='mat')other.add(sh.mat);
+  BOSS_ONLY_MATS=new Set([...boss].filter(m=>!other.has(m)));return BOSS_ONLY_MATS;
+}
+/** 武器の製作素材にボス素材を1つでも使うか */
+function isBossWeapon(baseId){
+  const b=DATA.equipment[baseId];if(!b||b.slot!=='weapon')return false;
+  const r=DATA.recipes.find(x=>x.out.type==='equip'&&x.out.id===baseId);if(!r)return false;
+  const bs=bossOnlyMats();return Object.keys(r.cost).some(k=>bs.has(k));
+}
+function eqColor(it){if(it.slot==='charm')return rarColor(it.rarity);if(it.slot==='weapon'&&isBossWeapon(it.baseId))return BOSS_WEAPON_COLOR;return '#e6e6e6';} // 手紙はレア度の色（自分を呼ぶと無限に再帰していた）
 function eqRarity(it){return it.slot==='charm'?DATA.rarities[it.rarity]:{name:'',color:'#e6e6e6'};}
 function lootLabel(l){
   if(l.type==='mat')return {text:`${DATA.materials[l.id].name} ×${l.n}`,color:DATA.materials[l.id].color};
@@ -11783,7 +11803,7 @@ const App={
     return `<div class="col full" data-scroll="craft"><div class="recipes">${list.map(r=>{
       let name,info='';
       if(r.out.type==='equip'){
-        const b=DATA.equipment[r.out.id];name=b.name;
+        const b=DATA.equipment[r.out.id];name=isBossWeapon(r.out.id)?`<span style="color:${BOSS_WEAPON_COLOR}">${b.name}</span>`:b.name;
         const set=b.slot!=='weapon'?Object.values(DATA.armorSets).find(s=>s.pieces[b.slot]===r.out.id):null;
         info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk}前後 / 会心 ${b.crit}%前後${b.el?` / <span style="color:${DATA.elements[b.el.k].color}">${DATA.elements[b.el.k].name}属性 ${b.el.v}</span>`:''}`:`防御力 ${b.def}前後`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（一式で「${set.bonus}」）</span>`:''}`;
         if(b.fixed)info+='<br>固有：'+b.fixed.map(f=>STAT_NAMES[f.stat]+' '+fmtStat(f.stat,f.v)).join('、');
