@@ -241,7 +241,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.6.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.6.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1304,7 +1304,7 @@ const DATA={
         {k:'charge',wind:0.8,cd:5,dmg:1.2,st:'slow'},
         {k:'slam',wind:0.9,cd:4.5,dmg:1.1},
         {k:'shot',wind:0.5,cd:4,dmg:0.7,n:4,spread:0.6,speed:260},
-        {k:'burrow',cd:7,dmg:1.3,r:80},
+        {k:'burrow',wind:0.9,cd:7,dmg:1.3,r:80},
       ]},
     flower_dragon:{name:'古森の毒花竜',ai:'pattern',look:'gen',hp:2700,atk:25,def:7,r:40,speed:100,color:'#7a3a8a',drops:'flower_dragon',boss:true,stunMax:130,stunTime:4,gen:{body:'round',legs:0,head:'petal',arm:'claw',wings:false},pal:{body:'#7a3a8a',dark:'#3a1a44',spot:'#e0a0f0',eye:'#ffe060'},
       pattern:[
@@ -1415,7 +1415,7 @@ const DATA={
       pal:{body:'#4a8a3a',dark:'#23401a',spot:'#c8e070',eye:'#ffe060'}},
     bog_leech:{name:'沼底の吸血蛭',ai:'pattern',look:'leech',hp:2000,atk:20,def:4,r:26,speed:118,color:'#6a2a3a',drops:'bog_leech',boss:true,stunMax:105,stunTime:4,
       pattern:[
-        {k:'burrow',cd:6,dmg:1.0,r:70},
+        {k:'burrow',wind:0.9,cd:6,dmg:1.0,r:70},
         {k:'charge',wind:0.5,cd:3.5,dmg:0.9},
         {k:'sweep',wind:0.5,cd:3,dmg:0.9,r:60,arc:1.2,st:'poison'},
       ],
@@ -1492,7 +1492,7 @@ const DATA={
         {k:'charge',wind:0.5,cd:3.5,dmg:1.0},
         {k:'sweep',wind:0.5,cd:2.8,dmg:0.9,r:65,arc:1.2},
         {k:'charge',wind:0.6,cd:5,dmg:1.1},
-        {k:'burrow',cd:6,dmg:1.1,r:75,el:'mei'},
+        {k:'burrow',wind:0.9,cd:6,dmg:1.1,r:75,el:'mei'},
       ],
       pal:{body:'#5a4a3a',dark:'#2a2018',spot:'#9a8a7a',eye:'#ff8080'}},
     // ai：行動パターン（goblin=接近して殴る / archer=距離を取って射る / wolf=ボス）。pal：見た目の色
@@ -1631,7 +1631,7 @@ const DATA={
     // 水辺の隠しボス（依頼「大蚯蚓」）：ゴムのような体。雷は通りにくい
     giantWorm:{name:'滝つぼの大蚯蚓',ai:'pattern',look:'giantWorm',hp:2800,atk:28,def:5,r:34,speed:100,stunMax:120,stunTime:4,color:'#b07a8a',drops:'giant_worm',boss:true,
       pattern:[
-        {k:'burrow',cd:7,dmg:1.3,r:90},
+        {k:'burrow',wind:0.9,cd:7,dmg:1.3,r:90},
         {k:'sweep',wind:0.7,cd:3.6,dmg:1.1,r:120,arc:Math.PI*0.7},
         {k:'charge',wind:0.7,cd:5.5,dmg:1.25},
         {k:'slam',wind:1.0,cd:5.2,dmg:1.2,r:115},
@@ -1710,7 +1710,7 @@ const DATA={
       empower:{range:230,time:10,atk:1.3,speed:1.15,cd:[6,8]},revive:{range:280,max:2,hp:0.6,age:30,cd:[5,7]},
       pal:{body:'#5a3a7a',dark:'#2a1640',robe:'#7a4aa0',eye:'#ff90ff'}},
     mole:{name:'結晶喰いの土竜',ai:'pattern',look:'mole',hp:2700,atk:24,def:8,r:32,speed:105,stunMax:120,stunTime:4,color:'#8a6a4a',drops:'mole',boss:true,
-      pattern:[{k:'burrow',cd:6,dmg:1.4,r:90},{k:'sweep',wind:0.6,cd:3,dmg:1.1,r:110,arc:Math.PI*0.6},{k:'charge',wind:0.6,cd:5,dmg:1.2},{k:'slam',wind:0.9,cd:6,dmg:1.0,r:110}],
+      pattern:[{k:'burrow',wind:0.9,cd:6,dmg:1.4,r:90},{k:'sweep',wind:0.6,cd:3,dmg:1.1,r:110,arc:Math.PI*0.6},{k:'charge',wind:0.6,cd:5,dmg:1.2},{k:'slam',wind:0.9,cd:6,dmg:1.0,r:110}],
       pal:{body:'#8a6a4a',dark:'#3e2e1e',claw:'#e8e0c8',crystal:'#9ae8ff',rage:'#a06a3a',rageDark:'#4a2a10',eye:'#ffe060',rageEye:'#ff6020'}},
     centipede:{name:'晶殻の大百足',ai:'pattern',look:'centipede',hp:3000,atk:27,def:9,r:30,speed:118,stunMax:130,stunTime:4,color:'#8a4a3a',drops:'centipede',boss:true,
       pattern:[{k:'sweep',wind:0.6,cd:3,dmg:1.2,r:130,arc:Math.PI*0.8},{k:'shot',wind:0.6,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.8,kind:'fire',el:'fire'},{k:'charge',wind:0.7,cd:5.5,dmg:1.25},{k:'shot',wind:0.5,cd:7,n:1,speed:360,dmg:1.3,kind:'fire',el:'fire'}],
@@ -5138,7 +5138,7 @@ function updateBossPattern(w,e,p,dt){
         const mv=pat[pick],wind=mv.wind*(ph2?0.8:1);
         e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc;e.curMv=mv;e.atkAngle=ang;
         if(mv.k==='charge')startCharge(w,e,ang,wind,false);
-        else if(mv.k==='burrow'&&mv.wind){e.state='windup';e.action='burrow';e.timer=mv.wind*(ph2?0.8:1);} // 潜る前の溜め（その間は見えて、攻撃も届く）
+        else if(mv.k==='burrow'&&mv.wind){e.state='windup';e.action='burrow';e.timer=mv.wind*(ph2?0.8:1);addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r||90,total:e.timer,dmg:0,owner:e.id});} // 潜る前の溜め：狙われる足元に予告を出す（その間は見えて、攻撃も届く）
         else if(mv.k==='burrow'){e.state='burrow';e.timer=1.3;e.hidden=true;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});}
         else{
           e.state='windup';e.action=mv.k;e.timer=wind;
@@ -9198,32 +9198,56 @@ const Sound={
   taiko(dest,t,vel){this.tone(dest,t,95,0.55,{to:42,slide:0.25,vol:0.6*vel});this.noise(dest,t,0.18,{bp:180,q:0.8,vol:0.3*vel});},
   snare(dest,t,vel){this.noise(dest,t,0.16,{bp:1900,q:0.7,vol:0.2*vel});this.tone(dest,t,210,0.08,{to:150,vol:0.1*vel,type:'triangle'});},
   hat(dest,t,vel){this.noise(dest,t,0.045,{hp:7000,vol:0.06*vel});},
-  /** ボスの鳴き声。種類（唸り・咆哮・甲高い声・キチキチ・ボコボコ）ごとに音を作る。大きい体ほど低く鳴る */
-  bossCry(type,x,y,amp){
+  /** ボスの鳴き声。種類（唸り・咆哮・甲高い声・キチキチ・ボコボコ）ごとに音を作る。大きい体ほど低く鳴る。
+   * mode：start＝登場（声を張り上げる）／enrage＝怒り（声を重ねて荒々しく）／roar＝咆哮攻撃（今の声を長めに）／death＝撃破（声が落ちて消える） */
+  bossCry(type,x,y,mode){
     if(!this.ready||this.ctx.state!=='running'||!type)return;
     const k=this.sfxGain('bossCry',x,y,0.5);if(k<=0.02)return;
-    const o=this.sfx,t=this.now()+0.005,v=k*(amp==null?1:amp),d=DATA.enemies[type]||{},r=d.r||30;
+    const o=this.sfx,t=this.now()+0.005,d=DATA.enemies[type]||{},r=d.r||30;
     const kind=bossVoiceKind(type);
     const base=clamp(900/r,120,420); // 体が大きいほど低い声
-    if(kind==='growl'){
-      this.tone(o,t,base,0.8,{type:'sawtooth',to:base*0.55,slide:0.7,lp:700,vol:0.34*v});
-      this.tone(o,t,base*1.5,0.5,{type:'triangle',to:base*0.8,slide:0.5,vol:0.1*v});
-      this.noise(o,t,0.6,{bp:base*2,q:1.1,vol:0.14*v});
-    }else if(kind==='roar'){
-      this.tone(o,t,base*0.9,1.0,{type:'sawtooth',to:base*0.7,slide:0.9,lp:1100,vol:0.28*v});
-      this.tone(o,t,base*0.45,1.0,{type:'square',to:base*0.4,slide:0.9,lp:400,vol:0.14*v});
-      this.noise(o,t,0.9,{bp:900,q:0.8,vol:0.16*v});
-    }else if(kind==='screech'){
-      const hi=base*2.6;
-      this.tone(o,t,hi,0.26,{type:'square',to:hi*1.6,slide:0.22,vol:0.09*v});
-      this.tone(o,t+0.24,hi*1.6,0.36,{type:'square',to:hi*0.9,slide:0.33,vol:0.09*v});
-      this.noise(o,t,0.5,{hp:3200,vol:0.08*v});
-    }else if(kind==='chitter'){
-      for(let i=0;i<7;i++)this.tone(o,t+i*0.055,base*2.4+(i%2)*120,0.03,{type:'square',vol:0.08*v});
-      this.noise(o,t,0.4,{hp:4200,vol:0.05*v});
-    }else{ // bloop：水や粘液の声
-      this.tone(o,t,base*1.2,0.34,{type:'sine',to:base*2.4,slide:0.3,vol:0.3*v});
-      this.tone(o,t+0.22,base*0.9,0.4,{type:'sine',to:base*1.8,slide:0.36,vol:0.24*v});
+    const M={
+      start:{f:1.08,v:1.3,L:1.0,fall:1,layers:1},
+      enrage:{f:1.12,v:1.2,L:0.85,fall:1,layers:2},
+      roar:{f:1.0,v:1.0,L:1.7,fall:1,layers:1},
+      death:{f:0.9,v:0.8,L:1.0,fall:0.4,layers:1}
+    }[mode]||{f:1,v:1,L:1,fall:1,layers:1};
+    const f=base*M.f,v=k*M.v,L=M.L,fl=M.fall;
+    const body=(t0,f0,v0,L0)=>{
+      if(kind==='growl'){
+        this.tone(o,t0,f0,0.8*L0,{type:'sawtooth',to:f0*0.55*fl,slide:0.7*L0,lp:700,vol:0.34*v0});
+        this.tone(o,t0,f0*1.5,0.5*L0,{type:'triangle',to:f0*0.8*fl,slide:0.5*L0,vol:0.1*v0});
+        this.noise(o,t0,0.6*L0,{bp:f0*2,q:1.1,vol:0.14*v0});
+      }else if(kind==='roar'){
+        this.tone(o,t0,f0*0.9,1.0*L0,{type:'sawtooth',to:f0*0.7*fl,slide:0.9*L0,lp:1100,vol:0.28*v0});
+        this.tone(o,t0,f0*0.45,1.0*L0,{type:'square',to:f0*0.4*fl,slide:0.9*L0,lp:400,vol:0.14*v0});
+        this.noise(o,t0,0.9*L0,{bp:900,q:0.8,vol:0.16*v0});
+      }else if(kind==='screech'){
+        const hi=f0*2.6;
+        this.tone(o,t0,hi,0.26*L0,{type:'square',to:hi*1.6*fl,slide:0.22*L0,vol:0.09*v0});
+        this.tone(o,t0+0.24*L0,hi*1.6,0.36*L0,{type:'square',to:hi*0.9*fl,slide:0.33*L0,vol:0.09*v0});
+        this.noise(o,t0,0.5*L0,{hp:3200,vol:0.08*v0});
+      }else if(kind==='chitter'){
+        const n=mode==='enrage'?10:7;
+        for(let i=0;i<n;i++)this.tone(o,t0+i*0.055,f0*2.4+(i%2)*120,0.03,{type:'square',vol:0.08*v0});
+        this.noise(o,t0,0.4*L0,{hp:4200,vol:0.05*v0});
+      }else{ // bloop：水や粘液の声
+        this.tone(o,t0,f0*1.2,0.34*L0,{type:'sine',to:f0*2.4*fl,slide:0.3*L0,vol:0.3*v0});
+        this.tone(o,t0+0.22*L0,f0*0.9,0.4*L0,{type:'sine',to:f0*1.8*fl,slide:0.36*L0,vol:0.24*v0});
+      }
+    };
+    if(mode==='start'){ // 登場：息を吸う音のあと、声を張り上げる
+      this.noise(o,t,0.18,{bp:f*3,q:1,vol:0.12*v});
+      body(t+0.12,f,v,L);
+    }else if(mode==='enrage'){ // 怒り：二重に重ねて、少し高く荒々しく
+      body(t,f,v,L);
+      body(t+0.3,f*0.95,v*0.9,L);
+      this.tone(o,t,f*1.05,0.8,{type:'sawtooth',to:f*0.9,slide:0.8,lp:1600,vol:0.1*v});
+    }else if(mode==='death'){ // 撃破：声が落ちて消えていく
+      body(t,f,v,L);
+      this.noise(o,t,0.25,{lp:800,vol:0.1*v});
+    }else{
+      body(t,f,v,L);
     }
   },
   crash(dest,t,vel){this.noise(dest,t,1.8,{hp:4200,vol:0.13*vel});this.noise(dest,t,0.6,{bp:6000,vol:0.06*vel});},
@@ -9385,7 +9409,7 @@ const Sound={
         if(ev.target==='player')this.play(ev.dot?'dot':'hurt',x,y);
         else this.play(ev.guard?'guard':ev.crit?'crit':'hit',x,y,{head:ev.head});
         break;
-      case 'kill':if(!ev.noCount)this.play(ev.boss?'bossKill':'kill',x,y);else this.play('crumble',x,y);if(ev.boss&&ev.enemy)this.bossCry(ev.enemy,x,y,0.8);break;
+      case 'kill':if(!ev.noCount)this.play(ev.boss?'bossKill':'kill',x,y);else this.play('crumble',x,y);if(ev.boss&&ev.enemy)this.bossCry(ev.enemy,x,y,'death');break;
       case 'dodge':this.play('dodge',x,y);break;
       case 'perfectDodge':this.play('perfect',x,y);break;
       case 'justDodge':this.play('perfect',x,y);break;
@@ -9402,9 +9426,9 @@ const Sound={
       case 'shoot':this.play('shoot',x,y);break;
       case 'tgResolve':if(ev.shape==='circle'&&!ev.small)this.play('slam',x,y);else if(!ev.small)this.play('heavySwing',x,y);break;
       case 'bump':this.play('slam',x,y);break;
-      case 'bossStart':this.play('roar',null,null,{big:false});this.bossCry(ev.cry,x,y,1);break;
-      case 'enrage':this.play('roar',null,null,{big:true});this.bossCry(ev.cry,x,y,1.2);break;
-      case 'roarWave':this.play('roar',x,y,{short:true});if(ev.cry)this.bossCry(ev.cry,x,y,0.9);break;
+      case 'bossStart':this.play('roar',null,null,{big:false});this.bossCry(ev.cry,x,y,'start');break;
+      case 'enrage':this.play('roar',null,null,{big:true});this.bossCry(ev.cry,x,y,'enrage');break;
+      case 'roarWave':this.play('roar',x,y,{short:true});if(ev.cry)this.bossCry(ev.cry,x,y,'roar');break;
       case 'bossStun':this.play('stun',x,y);break;
       case 'doorClose':this.play('door');break;
       case 'playerDead':this.play('down',x,y);break;
