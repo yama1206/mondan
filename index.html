@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.55',date:'2026/10/31'};
+const GAME_VERSION={no:'1.56',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3040,16 +3040,16 @@ const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,goo
 /* ペット：ガチャで出る（全10種・レア度なし）。プレイヤーだけがペット枠に1匹はめられる。
    効果はマルチプレイで連れ歩いているときだけ乗る。stat：maxHpPct／atkPct／potionHealPct（％）、他は加算値 */
 const PETS=[
-  {id:'rabbit',name:'ウサギ',rar:'N',stat:'moveSpd',base:3,fmt:'移動速度 +{v}%',col:'#f4f0ff'},
-  {id:'slime',name:'スライム',rar:'N',stat:'maxHpPct',base:3,fmt:'最大HP +{v}%',col:'#7fe09a'},
-  {id:'fox',name:'キツネ',rar:'N',stat:'crit',base:2,fmt:'会心率 +{v}%',col:'#f0a040'},
-  {id:'owl',name:'フクロウ',rar:'R',stat:'critDmg',base:5,fmt:'会心ダメージ +{v}%',col:'#b09070'},
-  {id:'bee',name:'ミツバチ',rar:'N',stat:'potionHealPct',base:5,fmt:'回復薬の回復量 +{v}%',col:'#ffd23a'},
-  {id:'mole',name:'モグラ',rar:'N',stat:'def',base:2,fmt:'防御力 +{v}',col:'#8a6a50'},
-  {id:'cat',name:'ネコ',rar:'R',stat:'dodgeIframe',base:0.03,fmt:'回避後無敵 +{v}秒',col:'#c0c0c8'},
-  {id:'turtle',name:'カメ',rar:'SR',stat:'def',base:3,fmt:'防御力 +{v}',col:'#4a9a5a'},
-  {id:'wolf',name:'オオカミ',rar:'R',stat:'atkPct',base:3,fmt:'攻撃力 +{v}%',col:'#90909a'},
-  {id:'dragonling',name:'子竜',rar:'SR',stat:'atkPct',base:2,fmt:'攻撃力 +{v}%',col:'#e04a4a'},
+  {id:'rabbit',name:'移動速度',rar:'N',stat:'moveSpd',base:3,fmt:'移動速度 +{v}%',col:'#f4f0ff'},
+  {id:'slime',name:'最大HP',rar:'N',stat:'maxHpPct',base:3,fmt:'最大HP +{v}%',col:'#7fe09a'},
+  {id:'fox',name:'会心率',rar:'N',stat:'crit',base:2,fmt:'会心率 +{v}%',col:'#f0a040'},
+  {id:'owl',name:'会心ダメージ',rar:'R',stat:'critDmg',base:5,fmt:'会心ダメージ +{v}%',col:'#b09070'},
+  {id:'bee',name:'回復薬',rar:'N',stat:'potionHealPct',base:5,fmt:'回復薬の回復量 +{v}%',col:'#ffd23a'},
+  {id:'mole',name:'防御',rar:'N',stat:'def',base:2,fmt:'防御力 +{v}',col:'#8a6a50'},
+  {id:'cat',name:'回避無敵',rar:'R',stat:'dodgeIframe',base:0.03,fmt:'回避後無敵 +{v}秒',col:'#c0c0c8'},
+  {id:'turtle',name:'防御',rar:'SR',stat:'def',base:3,fmt:'防御力 +{v}',col:'#4a9a5a'},
+  {id:'wolf',name:'攻撃',rar:'R',stat:'atkPct',base:3,fmt:'攻撃力 +{v}%',col:'#90909a'},
+  {id:'dragonling',name:'攻撃',rar:'SR',stat:'atkPct',base:2,fmt:'攻撃力 +{v}%',col:'#e04a4a'},
 ];
 const RARITY={N:{name:'ノーマル',color:'#c8c8c8',w:60},R:{name:'レア',color:'#5fb0ff',w:30},SR:{name:'スーパーレア',color:'#ffb040',w:10},SSR:{name:'最高レア（ペット）',color:'#ff6ad5'}};
 /* ペットの見た目（最高レア）。連れ歩く姿だけで性能は無い */
@@ -3068,7 +3068,9 @@ const LOOKS=[
 const GACHA_PET_RATE=8;
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
 const PET_MAX=1;
-const petValue=(pt,lv)=>pt.base*(1+0.25*((lv||1)-1));
+/* 首輪の効果量はレア度で変わる（ノーマル×1、レア×1.5、スーパーレア×2） */
+const COLLAR_RMUL={N:1,R:1.5,SR:2};
+const petValue=(pt,lv)=>pt.base*(COLLAR_RMUL[pt.rar]||1)*(1+0.25*((lv||1)-1));
 function applyPet(s,profile,who){
   if(who||!Net.role)return; // 仲間のペットは無し。ペットの効果はマルチプレイのみ
   const id=profile.equipped&&profile.equipped.pet;if(!id||!profile.pets[id])return;
