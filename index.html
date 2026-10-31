@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.4.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.4.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11599,8 +11599,7 @@ const App={
       <button data-act="openItems">🎒 アイテム・インベントリ</button>
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
-      <button data-act="help">📘 操作説明</button>
-      <button data-act="settings">設定</button>
+      <div class="row" style="margin:0"><button data-act="help" style="flex:1">📘 操作説明</button><button data-act="settings" style="flex:1">設定</button></div>
       </div>
       </div>`;
   },
