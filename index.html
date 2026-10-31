@@ -214,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.33',date:'2026/10/31'};
+const GAME_VERSION={no:'1.34',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3680,13 +3680,22 @@ const QuestRules={
   },
 };
 /** 依頼（opts.quest）に合わせてダンジョンを作る */
+/** 訓練場の広場（ボスの部屋だけ）。周りは壁、中は床 */
+function buildArenaMap(){
+  const W=30,H=20,tiles=new Uint8Array(W*H).fill(1);
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)tiles[y*W+x]=0;
+  return {W,H,tiles,version:1,rooms:{},roomList:[],theme:'meadow',doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[],
+    start:{x:6.5*TILE,y:10*TILE},bossX1:14,bossSpot:{x:19*TILE,y:10*TILE}};
+}
 function createWorld(opts){
   const quest=opts.quest||DATA.quests[0],stage=stageById(quest.stage),np=Math.max(1,opts.players||1);
   const goal=quest.goal;
   // ステージに部屋構成（layout）があれば毎回組み合わせるマップ、無ければ従来の固定マップ
   const L=stage.layout&&DATA.layouts[stage.layout];
-  const map=L?buildStageMap(L):buildDungeon();
-  if(!L)Object.assign(map,{theme:'cave',start:{x:6.5*TILE,y:18.5*TILE},bossX1:61,bossSpot:{x:74*TILE,y:19.5*TILE}});
+  // 訓練場は、ボスの部屋だけの広場（ほかの部屋・雑魚・宝箱はなし）
+  const TR=!!quest.training;
+  const map=TR?buildArenaMap():L?buildStageMap(L):buildDungeon();
+  if(!L&&!TR)Object.assign(map,{theme:'cave',start:{x:6.5*TILE,y:18.5*TILE},bossX1:61,bossSpot:{x:74*TILE,y:19.5*TILE}});
   const w={time:0,map,nextId:1,hazards:[],gathers:[],corpses:[],players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],
     playerCount:np,leash:opts.leash||0,stageId:stage.id,questId:quest.id,placed:[],
     // 人数が増えるほど敵のHPを増やす（2人で1.5倍）
@@ -3695,7 +3704,8 @@ function createWorld(opts){
     quest:{title:quest.name,goal,progress:0,need:goal.type==='boss'?1:goal.type==='explore'?0:questNeed(goal,np),done:false,
       killed:0,total:0,chests:0,chestsTotal:0,boss:(goal.type==='boss'||goal.type==='explore')?'unseen':'none',bossType:(goal.type==='boss'||goal.type==='explore')?(quest.boss||stage.enemySet.boss):null},
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
-  if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
+  if(TR){const b=spawnEnemy(w,w.quest.bossType,map.bossSpot.x,map.bossSpot.y);w.bossId=b.id;}
+  else if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
   if(stage.layout==='volcano')placeMagma(w);
   if(stage.layout==='swamp')placeToxPools(w);
   w.narrowVision=stage.layout==='crystal'; // 洞窟は常に視界が少し狭い
