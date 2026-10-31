@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.86',date:'2026/10/31'};
+const GAME_VERSION={no:'1.88',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2926,6 +2926,9 @@ function bagText(p){
   return parts.length?parts.join(' '):'<span class="muted">持ち物なし</span>';
 }
 function rarColor(r){return DATA.rarities[r].color;}
+/** 装飾品のレア度の色（武器・防具の青とは別の色にする）：コモン・アンコモン・レア・エピック・レジェンダリー */
+const DECO_RAR_COLORS=['#d8d8d8','#8be28b','#ffe066','#ff7ad9','#ff8a3d'];
+function decoRarColor(r){return DECO_RAR_COLORS[r]||rarColor(r);}
 /** 装備の色と名前：レア度の概念はなし（手紙だけレア度の色）。 */
 const BOSS_WEAPON_COLOR='#4aa8ff'; // ボス素材を使う武器の文字色（青）
 let BOSS_ONLY_MATS=null;
@@ -11079,9 +11082,10 @@ const App={
         break;
       case 'bestiary':UI.show(this.bestiaryHTML());break;
       case 'shop':
+        if(was!=='shop')this.shopCart={buy:{},sell:{}};
         UI.show(this.shopHTML());
         // コントローラーで入ったときは、先頭の「装備画面へ」ではなく最初の商品に合わせる（押しっぱなしで装備が開くのを防ぐ）
-        if(was!=='shop'&&Input.uiPad){const el=document.querySelector('.inv-body [data-act="buy"]:not([disabled])')||document.querySelector('[data-act="facilityBack"]');UI.setFocus(el);}
+        if(was!=='shop'&&Input.uiPad){const el=document.querySelector('.inv-body [data-act="cartAdd"]:not([disabled])')||document.querySelector('[data-act="facilityBack"]');UI.setFocus(el);}
         break;
       case 'lobby':if(!this.inGame)this.world=null;UI.notes.style.top='';UI.show(this.lobbyHTML());break;
       case 'playing':UI.hide();Input.reset();this.acc=0;break;
@@ -11162,6 +11166,8 @@ const App={
       case 'gacha10':this.gachaRoll10();break;
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
+      case 'decoRarFilter':this.inv.decoRar=ds.r===''?null:+ds.r;this.renderInventory();break;
+      case 'decoSort':this.inv.decoSort=ds.s;this.renderInventory();break;
       case 'gachaTab':this.gachaSub=ds.t;this.refreshPanel();break;
       case 'collarGacha':this.doOp('collarGacha',{});break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
@@ -11197,6 +11203,10 @@ const App={
       case 'cancelPick':this.inv.decoPick=null;this.renderInventory();break;
       case 'craft':this.doOp('craft',{id:ds.id});break;
       case 'buy':this.doOp('buy',{id:ds.id,n:Number(ds.n)||1});break;
+      case 'cartAdd':this.cartAdd(ds.kind,ds.id,ds.n);break;
+      case 'cartRemove':this.cartRemove(ds.kind,ds.id);break;
+      case 'cartClear':this.cartClear();break;
+      case 'cartCommit':this.cartCommit();break;
       case 'toggleSetting':this.settings()[ds.key]=!!el.checked;this.save();break;
       case 'vol':
         if(ds.key==='bgmVol'||ds.key==='sfxVol'){this.settings()[ds.key]=clamp(Number(ds.id),0,1);this.save();Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);Sound.ui('click');}
@@ -11514,13 +11524,61 @@ const App={
         ${Net.role==='host'?'':'<p class="small muted">報酬はあなたのPCに保存されました。ホストが出発すると自動で始まります</p>'}`
       :`<div class="row"><button class="primary" data-act="retry">同じ依頼をもう一度</button><button data-act="board">依頼ボードへ</button><button data-act="camp">拠点に戻る</button></div>`}</div>`;
   },
+  /** ショップのカート：クリックで入るだけで、購入・売却ボタンを押すまで確定しない */
+  cartHTML(){
+    const p=this.profile,c=this.shopCart||{buy:{},sell:{}};
+    const bl=Object.entries(c.buy).filter(([,n])=>n>0),sl=Object.entries(c.sell).filter(([,n])=>n>0);
+    if(!bl.length&&!sl.length)return '<div class="recipe cart"><div class="muted small">カートは空です。商品をクリックするとカートに入ります。購入・売却ボタンを押すまで確定しません。</div></div>';
+    const buyTotal=bl.reduce((t,[id,n])=>{const s=DATA.shop.find(x=>x.id===id);return t+(s?s.price*n:0);},0);
+    const sellTotal=sl.reduce((t,[id,n])=>t+matSellPrice(id)*n,0);
+    const gold=p.gold||0,canCommit=gold+sellTotal>=buyTotal;
+    const bLines=bl.map(([id,n])=>{const s=DATA.shop.find(x=>x.id===id);if(!s)return '';
+      return `<div class="small">${s.name}　${s.type==='equip'?'1本':n+'個'}　${s.price*n?s.price*n+'G':'無料'}　<button data-act="cartRemove" data-kind="buy" data-id="${id}">×</button></div>`;}).join('');
+    const sLines=sl.map(([id,n])=>`<div class="small">${DATA.materials[id].name}を売却 ${n}個　+${matSellPrice(id)*n}G　<button data-act="cartRemove" data-kind="sell" data-id="${id}">×</button></div>`).join('');
+    return `<div class="recipe cart"><div class="rn">カート</div>${bLines}${sLines}
+      <div class="small" style="margin:6px 0">購入 ${buyTotal}G ／ 売却 +${sellTotal}G ／ 所持 ${gold}G</div>
+      <div class="btnrow"><button class="${canCommit?'primary':''}" data-act="cartCommit" ${canCommit?'':'disabled'}>購入・売却を確定する</button><button data-act="cartClear">カートを空にする</button></div>
+      ${canCommit?'':'<div class="small" style="color:#ff8060">ゴールドが足りません</div>'}</div>`;
+  },
+  cartAdd(kind,id,n){
+    const p=this.profile;this.shopCart=this.shopCart||{buy:{},sell:{}};const c=this.shopCart;
+    if(kind==='sell'){
+      const have=p.materials[id]||0,cur=c.sell[id]||0,left=have-cur;
+      if(!matSellPrice(id)||left<=0)return UI.notify('これ以上カートに入れられません','#888',1.5);
+      c.sell[id]=cur+(n==='all'?left:Math.min(left,Number(n)||1));
+    }else{
+      const s=DATA.shop.find(x=>x.id===id);if(!s)return;
+      if(s.once&&(p.shopOnce||{})[s.id])return UI.notify('購入済みです','#888',1.5);
+      const cur=c.buy[id]||0;
+      if(s.type==='equip'){if(cur>0)return UI.notify('すでにカートに入っています','#888',1.5);c.buy[id]=1;}
+      else{
+        const cap=s.type==='item'?DATA.consumables[s.item].max-(p.bag[s.item]||0):10;
+        const add=Math.min(Number(n)||1,cap-cur,10-cur);
+        if(add<=0)return UI.notify('これ以上カートに入れられません','#888',1.5);
+        c.buy[id]=cur+add;
+      }
+    }
+    Sound.ui('click');this.refreshPanel();
+  },
+  cartRemove(kind,id){if(this.shopCart)delete this.shopCart[kind][id];this.refreshPanel();},
+  cartClear(){this.shopCart={buy:{},sell:{}};this.refreshPanel();},
+  cartCommit(){
+    const c=this.shopCart||{buy:{},sell:{}};
+    const sells=Object.entries(c.sell).filter(([,n])=>n>0),buys=Object.entries(c.buy).filter(([,n])=>n>0);
+    if(!sells.length&&!buys.length)return;
+    this.shopCart={buy:{},sell:{}};
+    // 売却を先に行い、そのゴールドで購入できるようにする
+    sells.forEach(([id,n])=>this.doOp('sellMat',{id,n}));
+    buys.forEach(([id,n])=>this.doOp('buy',{id,n}));
+    this.refreshPanel();
+  },
   /** ショップのカテゴリ切り替え：購入・売却・ガチャ（ボタンを押すとその項目が開く） */
   shopTabHTML(){
     const cat=this.shopCat||'buy';
     const cats=[['buy','購入'],['sell','売却'],['gacha','ガチャ']];
     const tabs=`<div class="tabs shop-tabs">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="shopCat" data-cat="${k}">${n}</button>`).join('')}</div>`;
     const body=cat==='sell'?this.shopSellHTML():cat==='gacha'?this.shopGachaHTML():this.shopBuyHTML();
-    return `<div class="col full" data-scroll="shop">${tabs}${body}</div>`;
+    return `<div class="col full" data-scroll="shop">${tabs}${cat==='gacha'?'':this.cartHTML()}${body}</div>`;
   },
   shopGachaHTML(){
     const p=this.profile,coins=p.coins||0;
@@ -11560,7 +11618,7 @@ const App={
       <div class="recipes shop-items">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
-          return `<button class="${ok?'primary':''}" data-act="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${s.type==='equip'?'1本もらう（無料）':n+'個買う（'+s.price*n+'G）'}</button>`;};
+          return `<button class="${ok?'primary':''}" data-act="cartAdd" data-kind="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${s.type==='equip'?'カートに入れる（無料）':'カートに'+n+'個（'+s.price*n+'G）'}</button>`;};
         return `<div class="recipe"><div class="rn">${s.name}　<span style="color:#ffd23a">${s.price}G</span></div><div class="muted">${s.desc}</div>
           ${s.type==='item'?`<div>所持 ${p.bag[s.item]||0} / ${DATA.consumables[s.item].max}　発動まで${DATA.consumables[s.item].delay}秒</div>`:s.type==='mat'?`<div>所持 ${p.materials[s.mat]||0}</div>`:''}
           <div class="btnrow">${s.type==='deco'||s.type==='equip'?btn(1):s.type==='mat'?btn(1)+btn(5):btn(1)+btn(3)}</div></div>`;}).join('')}</div>
@@ -11572,7 +11630,7 @@ const App={
       <div class="recipes">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
         const n=p.materials[id];
         return `<div class="recipe"><div class="rn">${DATA.materials[id].name}　<span style="color:#ffd23a">${matSellPrice(id)}G</span>　<small class="muted">所持 ${n}</small></div>
-          <div class="btnrow"><button data-act="sellMat" data-id="${id}" data-n="1">1個売る</button><button data-act="sellMatAll" data-id="${id}">全部売る（${matSellPrice(id)*n}G）</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
+          <div class="btnrow"><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="1">1個をカートへ</button><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="all">全部をカートへ（${matSellPrice(id)*n}G）</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
 </div>`;
   },
   renderInventory(){
@@ -11777,7 +11835,7 @@ const App={
     if(it.slot!=='charm'&&it.effects.length)h+=sec('特殊効果',it.effects.length?it.effects.map(e=>`<div class="eff"><b>${DATA.effects[e].name}</b>：${DATA.effects[e].desc}</div>`).join(''):'<div class="muted small">なし</div>');
     h+=sec(`装飾品スロット（${it.slots.length}）`,it.slots.length?it.slots.map((u,i)=>{
       const d=Profile.getDeco(p,u);
-      return `<button class="slotbtn" data-act="decoSlot" data-uid="${it.uid}" data-idx="${i}">${d?`<span style="color:${rarColor(d.rarity)}">◆ ${DATA.decorations[d.decoId].name}</span> <small>${Items.decoText(d)}</small>`:'<span class="muted">◇ 空きスロット（クリックで装着）</span>'}</button>`;
+      return `<button class="slotbtn" data-act="decoSlot" data-uid="${it.uid}" data-idx="${i}">${d?`<span style="color:${decoRarColor(d.rarity)}">◆ ${DATA.decorations[d.decoId].name}</span> <small>${Items.decoText(d)}</small>`:'<span class="muted">◇ 空きスロット（クリックで装着）</span>'}</button>`;
     }).join(''):'<div class="muted small">スロットなし</div>');
     if(!eq)h+=sec(`現在の装備との比較`,this.compareHTML(computeStats(p,null,who),computeStats(p,{[it.slot]:it},who)));
     let btns='';
@@ -11797,7 +11855,7 @@ const App={
     h+=decos.map(d=>{
       const dd=DATA.decorations[d.decoId],owner=Profile.decoOwner(p,d.uid);
       const where=d.uid===cur?'このスロットに装着中':(owner?'装着中：'+itemName(owner)+this.ownerSuffix(owner):'未装着');
-      return `<button class="decorow" data-act="pickDeco" data-deco="${d.uid}" ${d.uid===cur?'disabled':''}><span style="color:${rarColor(d.rarity)}">◆ ${dd.name}</span>（${DATA.rarities[d.rarity].name}）<br><small>${Items.decoText(d)}　<span class="muted">${where}</span></small></button>`;
+      return `<button class="decorow" data-act="pickDeco" data-deco="${d.uid}" ${d.uid===cur?'disabled':''}><span style="color:${decoRarColor(d.rarity)}">◆ ${dd.name}</span>（${DATA.rarities[d.rarity].name}）<br><small>${Items.decoText(d)}　<span class="muted">${where}</span></small></button>`;
     }).join('')||'<div class="muted">装飾品を持っていません。敵や宝箱から入手できます。</div>';
     h+=`<div class="btnrow"><button data-act="cancelPick">キャンセル</button></div>`;
     return h;
@@ -11814,12 +11872,16 @@ const App={
     <div class="small muted" style="margin-top:6px">E（コントローラーLB）で選んでいる持ち物を使用、R／マウスホイール（RB）で切り替え、1〜8キーで直接選択</div></div>`;
   },
   decosTabHTML(){
-    const p=this.profile;
-    const decos=[...p.decos].sort((a,b)=>a.decoId.localeCompare(b.decoId)||b.rarity-a.rarity);
-    return `<div class="col full" data-scroll="decos"><div class="small muted" style="margin-bottom:8px">装飾品は「装備」タブで装備を選び、空きスロットをクリックして装着します。装飾品は防具スキルのポイントを足します（武器にはめてもOK）。同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動します。序盤の装備にはスロットが無く、ボス素材の装備ほど多くなります。</div>
+    const p=this.profile,rf=this.inv.decoRar==null?null:this.inv.decoRar,sortK=this.inv.decoSort||'rarDesc';
+    const cmp={rarDesc:(a,b)=>b.rarity-a.rarity||a.decoId.localeCompare(b.decoId),rarAsc:(a,b)=>a.rarity-b.rarity||a.decoId.localeCompare(b.decoId),name:(a,b)=>a.decoId.localeCompare(b.decoId)||b.rarity-a.rarity}[sortK]||((a,b)=>b.rarity-a.rarity);
+    const decos=[...p.decos].filter(d=>rf==null||d.rarity===rf).sort(cmp);
+    const rarBtns=[['','すべて']].concat(DATA.rarities.map((r,i)=>[String(i),r.name])).map(([k,n])=>`<button class="${(rf==null&&k==='')||String(rf)===k?'on':''}" data-act="decoRarFilter" data-r="${k}">${n}</button>`).join('');
+    const sortBtns=[['rarDesc','レア度 高い順'],['rarAsc','レア度 低い順'],['name','種類順']].map(([k,n])=>`<button class="${sortK===k?'on':''}" data-act="decoSort" data-s="${k}">${n}</button>`).join('');
+    return `<div class="col full" data-scroll="decos"><div class="filters">${rarBtns}</div><div class="filters">${sortBtns}</div>
+      <div class="small muted" style="margin-bottom:8px">装飾品は「装備」タブで装備を選び、空きスロットをクリックして装着します。装飾品は防具スキルのポイントを足します（武器にはめてもOK）。同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動します。序盤の装備にはスロットが無く、ボス素材の装備ほど多くなります。</div>
       ${decos.map(d=>{const dd=DATA.decorations[d.decoId],o=Profile.decoOwner(p,d.uid);
-        return `<div class="mat" style="margin-bottom:6px"><span class="gem" style="background:${dd.color};color:${dd.color}"></span><span style="color:${rarColor(d.rarity)}">${dd.name}（${DATA.rarities[d.rarity].name}）</span>
-        <div class="small">${Items.decoText(d)}　<span class="muted">${o?'装着中：'+itemName(o)+this.ownerSuffix(o):'未装着'}</span></div></div>`;}).join('')||'<div class="muted">装飾品を持っていません。</div>'}</div>`;
+        return `<div class="mat" style="margin-bottom:6px"><span class="gem" style="background:${dd.color};color:${dd.color}"></span><span style="color:${decoRarColor(d.rarity)}">${dd.name}（${DATA.rarities[d.rarity].name}）</span>
+        <div class="small">${Items.decoText(d)}　<span class="muted">${o?'装着中：'+itemName(o)+this.ownerSuffix(o):'未装着'}</span></div></div>`;}).join('')||'<div class="muted">この条件の装飾品はありません。</div>'}</div>`;
   },
   /** 施設（鍛冶屋・ショップ）の共通の枠 */
   facilityHTML(title,sub,body){
