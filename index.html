@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.4.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.4.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11284,7 +11284,7 @@ const App={
     else if(i===9){if(this.state==='pause')this.onKey('Escape');}
     else if(i===8)this.onKey('KeyI');
     else if((i===4||i===5)&&this.state==='inventory'){
-      const tabs=this.inv.mode==='items'?['items','mats']:['equip','decos'];
+      const tabs=this.inv.mode==='items'?['items','craft','mats']:['equip','decos'];
       const n=(tabs.indexOf(this.inv.tab)+(i===5?1:-1)+tabs.length)%tabs.length;
       this.inv.tab=tabs[n];this.inv.decoPick=null;this.renderInventory();
       UI.restoreFocus('tab||'+tabs[n]+'|||||');
@@ -11883,10 +11883,10 @@ const App={
   renderInventory(){
     const p=this.profile;
     const itemsMode=this.inv.mode==='items';
-    const tabs=itemsMode?[['items','アイテム'],['mats','素材']]:[['equip','装備'],['decos','装飾品']];
+    const tabs=itemsMode?[['items','アイテム'],['craft','調合'],['mats','素材']]:[['equip','装備'],['decos','装飾品']];
     if(!tabs.some(([k])=>k===this.inv.tab))this.inv.tab=tabs[0][0];
     const tab=this.inv.tab;
-    const body=tab==='equip'?this.equipTabHTML():tab==='mats'?this.matsTabHTML():tab==='items'?this.itemsTabHTML():this.decosTabHTML();
+    const body=tab==='equip'?this.equipTabHTML():tab==='mats'?this.matsTabHTML():tab==='items'?this.itemsTabHTML():tab==='craft'?this.craftTabHTML():this.decosTabHTML();
     UI.show(`<div class="panel inv-panel"><div class="inv-top"><button data-act="back">閉じる（I / Esc）</button><b style="margin-right:6px">${itemsMode?'アイテム・インベントリ':'装備'}</b><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
       ${tab==='equip'?this.whoSelectHTML():''}
       <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div></div>
@@ -12121,6 +12121,11 @@ const App={
     h+=`<div class="btnrow"><button data-act="cancelPick">キャンセル</button></div>`;
     return h;
   },
+  /** 調合：素材から消耗品（回復薬・解毒薬など）を作る */
+  craftTabHTML(){
+    return `<div class="small muted" style="margin-bottom:6px">素材を使って回復薬や罠などを調合します。必要な素材がそろっていれば作れます。</div>`
+      +this.recipeListHTML(r=>r.out.type==='item',false);
+  },
   /** 所有アイテム（戦闘で使う消耗品の所持数） */
   itemsTabHTML(){
     const p=this.profile;
@@ -12162,8 +12167,8 @@ const App={
   },
   /** 鍛冶屋：素材から装備・装飾品を作る */
   smithHTML(){
-    const cat=this.smithCat||'weapon';
-    const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['item','薬'],['reinforce','強化']];
+    const cat=(!this.smithCat||this.smithCat==='item')?'weapon':this.smithCat; // 薬（調合）はアイテム・インベントリへ移動
+    const cats=[['weapon','武器'],['armor','防具'],['deco','装飾品'],['reinforce','強化']];
     // 防具は「シリーズ」ごとに見る（シリーズに属さない防具は「その他」）
     const seriesOf=id=>Object.keys(DATA.armorSets).find(k=>Object.values(DATA.armorSets[k].pieces).includes(id));
     const SLOT_ORDER_ARMOR=()=>Object.keys(SLOT_NAMES).filter(k=>k!=='weapon'&&k!=='charm');
