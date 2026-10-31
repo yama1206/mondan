@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.90',date:'2026/10/31'};
+const GAME_VERSION={no:'1.91',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11634,7 +11634,7 @@ const App={
       <div class="recipes sell-list">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
         const n=p.materials[id];
         return `<div class="recipe"><div class="rn">${DATA.materials[id].name}　<span style="color:#ffd23a">${matSellPrice(id)}G</span>　<small class="muted">所持 ${n}</small></div>
-          <div class="btnrow"><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="10">10個カートへ</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
+          <div class="btnrow"><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="1">1個</button><button data-act="cartAdd" data-kind="sell" data-id="${id}" data-n="10">10個</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
 </div>`;
   },
   renderInventory(){
