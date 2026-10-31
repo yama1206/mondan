@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.91',date:'2026/10/31'};
+const GAME_VERSION={no:'1.92',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4415,9 +4415,11 @@ function updateSpirit(w,p,inp,dt){
 function updatePlayer(w,p,inp,dt){
   p.guarding=false;
   if(p.dead&&p.out){updateSpirit(w,p,inp,dt);return;}
-  if(p.dead){p.using=null;p.charging=false;return;}
+  if(p.dead){p.using=null;p.charging=false;p.pendingHeals=null;return;}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
+  // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
+  if(p.pendingHeals&&p.pendingHeals.length){for(const h of p.pendingHeals)h.t-=dt;const due=p.pendingHeals.filter(h=>h.t<=0);p.pendingHeals=p.pendingHeals.filter(h=>h.t>0);for(const h of due){p.hp=Math.min(p.stats.maxHp,p.hp+h.amt);emit(w,{type:'heal',x:p.x,y:p.y-20,amount:h.amt});}}
   if(p.slowT>0)p.slowT-=dt;if(p.poisoned>0)p.poisoned-=dt;
   if(p.curseT>0)p.curseT-=dt;if(p.paraImmune>0)p.paraImmune-=dt;if(p.sleepImmune>0)p.sleepImmune-=dt;
   if(p.poisonT>0){ // 毒：一定時間ごとに減る（HP1より下がらない）
@@ -4550,8 +4552,12 @@ function applyItem(w,p,id){
   for(const q of targets){
     if(ef.type==='heal'){
       const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(wsActive(p,'medic')?1.5:1));
-      q.hp=Math.min(q.stats.maxHp,q.hp+hl);
-      emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
+      // 回復薬・良い回復薬は半分をその場で、残り半分を1秒後に回復する
+      const split=!radius&&(id==='potion'||id==='good_potion');
+      const now=split?Math.floor(hl/2):hl;
+      q.hp=Math.min(q.stats.maxHp,q.hp+now);
+      emit(w,{type:'heal',x:q.x,y:q.y-20,amount:now});
+      if(split&&hl-now>0)(q.pendingHeals=q.pendingHeals||[]).push({t:1,amt:hl-now});
       if(q.poisonT>0||q.curseT>0){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
     }else if(ef.type==='coat'){
       q.coat={status:ef.status,shots:ef.shots};
