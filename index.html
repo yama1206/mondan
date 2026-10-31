@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.1.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.2.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2886,6 +2886,24 @@ const PAD_NAMES={
   switch:{0:'B',1:'A',2:'Y',3:'X',4:'L',5:'R',6:'ZL',7:'ZR',8:'−',9:'+'}
 };
 const PAD_TYPE_NAMES={xbox:'Xbox',ps:'PlayStation',switch:'Switch'};
+/** 操作の割り当て（既定）。pad＝コントローラーのボタン番号、kb＝キー（Mouse0＝左クリック） */
+const DEFAULT_BINDS={pad:{attack:5,skill:7,guard:6,dodge:0,sheathe:3,heal:4,cycle:2},kb:{attack:'Mouse0',guard:'KeyG',dodge:'Space',skill:'KeyQ',sheathe:'KeyF',heal:'KeyE',cycle:'KeyR'}};
+/** 割り当てを変えられる操作 */
+const BIND_ACTS=[['attack','攻撃'],['guard','ガード'],['dodge','回避'],['skill','武器スキル'],['sheathe','納刀・抜刀'],['heal','持ち物を使う'],['cycle','持ち物の切り替え']];
+/** いまの割り当て（設定に保存したものを既定に上書き） */
+function getBinds(){const b=(App.settings().binds)||{};return {pad:Object.assign({},DEFAULT_BINDS.pad,b.pad||{}),kb:Object.assign({},DEFAULT_BINDS.kb,b.kb||{})};}
+/** キーの表示名 */
+function keyLabel(c){
+  if(!c)return '−';
+  if(c==='Mouse0')return '左クリック';if(c==='Mouse2')return '右クリック';
+  if(c==='Escape')return 'Esc';if(c==='Space')return 'Space';
+  if(c.startsWith('Key'))return c.slice(3);
+  if(c.startsWith('Digit'))return c.slice(5);
+  if(c.startsWith('Arrow'))return {ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→'}[c]||c;
+  return c;
+}
+/** 表示するコントローラーの種類（設定の選択、自動なら接続中の機器から） */
+function padTypeNow(){const v=App.settings().padLabel||'auto';return v==='auto'?detectPadType():v;}
 /** 接続中のコントローラーの種類（見つからなければ Xbox 式） */
 function detectPadType(){
   try{
@@ -2899,14 +2917,14 @@ function detectPadType(){
 }
 /** 基本操作：kb＝キーボード、pad＝コントローラーのボタン番号（null は割り当てなし） */
 const HELP_BASIC=[
-  {name:'移動',kb:'WASD / 矢印キー',pad:null,padText:'左スティック'},
-  {name:'攻撃',kb:'左クリック（押しっぱなしで溜め）',pad:7},
-  {name:'ガード',kb:'右クリック / G',pad:6},
-  {name:'回避',kb:'Space',pad:0},
-  {name:'武器スキル',kb:'Q',pad:1},
-  {name:'納刀・抜刀',kb:'F',pad:3},
-  {name:'持ち物を使う',kb:'E',pad:4},
-  {name:'持ち物の切り替え',kb:'R（短く押す＝次へ、長く押す＝一覧）',pad:5},
+  {name:'移動',kb:'WASD / 矢印キー',padText:'左スティック'},
+  {name:'攻撃',act:'attack'},
+  {name:'ガード',act:'guard'},
+  {name:'回避',act:'dodge'},
+  {name:'武器スキル',act:'skill'},
+  {name:'納刀・抜刀',act:'sheathe'},
+  {name:'持ち物を使う',act:'heal'},
+  {name:'持ち物の切り替え',act:'cycle'},
   {name:'持ち物を番号で選ぶ',kb:'1〜9',pad:null},
   {name:'装備画面',kb:'I',pad:8},
   {name:'メニュー',kb:'Esc',pad:9}
@@ -9610,13 +9628,15 @@ const Input={
     if(App.state==='playing')App.goto('pause');
   },
   pollPads(dt){
-    const pads=this.getPads(),seen=new Set();
+    const pads=this.getPads(),seen=new Set(),PB=getBinds().pad;
     let navDir=null;
     for(const gp of pads){
       seen.add(gp.index);
       const S=this.padState[gp.index]||(this.padState[gp.index]={prev:[],move:{x:0,y:0},attack:false,aim:null,aimT:0});
       const cur=[];
       for(let i=0;i<17;i++){const b=gp.buttons[i];cur[i]=!!b&&(b.pressed||b.value>0.5);}
+      // 割り当て変更中：新しく押したボタンを登録する
+      if(App.rebind&&App.rebind.kind==='pad'){const i=cur.findIndex((v,j)=>v&&!(S.prev&&S.prev[j]));if(i>=0)App.finishRebind(i);}
       // コントローラーを使ったら、スマホ用の操作パネルは消す（画面をタッチすれば再び出る）
       if(this.isTouch&&(cur.some(Boolean)||Math.hypot(gp.axes[0]||0,gp.axes[1]||0)>0.5))this.dropTouch();
       // 円形デッドゾーン（軸ごとに切らないので、浅い斜め入力も素直に反映される）
@@ -9639,8 +9659,8 @@ const Input={
       }
       // RB：短く押すと持ち物を次へ、0.3秒以上押すとホイールを開く（右スティックで選び、離すと決定）
       const owner=this.ownerOf(gp.index);
-      const rbHeld=!!cur[5]&&App.state==='playing'&&!!owner;
-      if(rbHeld&&!S.prev[5]){S.rbT=0;S.rbOpen=false;}
+      const rbHeld=!!cur[PB.cycle]&&App.state==='playing'&&!!owner;
+      if(rbHeld&&!(S.prev&&S.prev[PB.cycle])){S.rbT=0;S.rbOpen=false;}
       if(rbHeld){
         S.rbT=(S.rbT||0)+dt;
         if(!S.rbOpen&&S.rbT>=0.3&&owner){const ids=this.wheelIds(owner);if(ids.length){S.rbOpen=true;this.wheel={pid:owner,open:true,sel:null,ids};}}
@@ -9650,7 +9670,7 @@ const Input={
           this.wheel.sel=Math.round(a/step)%N;
         }
       }
-      if(!cur[5]&&S.prev[5]){
+      if(!cur[PB.cycle]&&S.prev&&S.prev[PB.cycle]){
         if(S.rbOpen){
           if(this.wheel&&this.wheel.sel!=null&&this.wheel.ids[this.wheel.sel]&&owner&&this.edges[owner])this.edges[owner].pick=ITEM_ORDER.indexOf(this.wheel.ids[this.wheel.sel]);
           this.wheel=null;S.rbOpen=false;
@@ -9658,7 +9678,7 @@ const Input={
         S.rbT=0;
       }
       if(S.rbOpen){S.move={x:lx,y:ly};S.attack=false;S.guard=false;} // ホイールを開いていても左スティックで移動できる
-      else{S.move={x:lx,y:ly};S.attack=cur[7]||cur[2];S.guard=!!cur[6];} // ガードは LT / L2 を押し続ける
+      else{S.move={x:lx,y:ly};S.attack=!!cur[PB.attack];S.guard=!!cur[PB.guard];} // 攻撃・ガードは割り当てたボタンを押し続ける
       // 右スティックで向きを指定。倒していないときは移動方向を向く（攻撃中は向きを維持）
       if(S.rbOpen){/* ホイールを開いている間は向きを変えない */}
       else if(Math.hypot(rx,ry)>0.35){S.aim=Math.atan2(ry,rx);S.aimT=performance.now();}
@@ -9689,11 +9709,13 @@ const Input={
   /** キーボードの単発入力（回避・スキル・回復）。2Pキーボードは2人プレイかつ2Pにコントローラーが無いときだけ有効 */
   keyEdge(code){
     const E1=this.edges.p1,E2=this.edges.p2,kb2=this.coop&&this.assign.p2===null;
-    if(code==='Space')E1.dodge=true;
-    else if(code==='KeyQ')E1.skill=true;
-    else if(code==='KeyE')E1.heal=true;
-    else if(code==='KeyR')E1.cycle=1;
-    else if(code==='KeyF')E1.sheathe=true;
+    // 割り当てた操作（設定で変えられる）
+    const kbA=getBinds().kb,act=Object.keys(kbA).find(a=>kbA[a]===code);
+    if(act==='dodge')E1.dodge=true;
+    else if(act==='skill')E1.skill=true;
+    else if(act==='heal')E1.heal=true;
+    else if(act==='cycle')E1.cycle=1;
+    else if(act==='sheathe')E1.sheathe=true;
     else if(kb2&&code==='Slash')E2.sheathe=true;
     else if(/^Digit[1-9]$/.test(code)&&+code.slice(5)<=ITEM_ORDER.length)E1.pick=+code.slice(5)-1;
     else if(kb2&&code==='Comma')E2.cycle=1;
@@ -9709,8 +9731,9 @@ const Input={
     if(isP1){
       mx=(k.KeyD?1:0)-(k.KeyA?1:0);my=(k.KeyS?1:0)-(k.KeyW?1:0);
       if(!kb2&&mx===0&&my===0){mx=(k.ArrowRight?1:0)-(k.ArrowLeft?1:0);my=(k.ArrowDown?1:0)-(k.ArrowUp?1:0);}
-      attack=this.mouse.down;
-      guard=!!(k.KeyG||this.mouse.rdown);
+      const kbA=getBinds().kb;
+      attack=this.mouse.down||!!k[kbA.attack];
+      guard=!!(k[kbA.guard]||this.mouse.rdown);
     }else if(kb2){
       mx=(k.ArrowRight?1:0)-(k.ArrowLeft?1:0);my=(k.ArrowDown?1:0)-(k.ArrowUp?1:0);
       attack=!!(k.Enter||k.NumpadEnter||k.Numpad0);
@@ -11186,7 +11209,31 @@ const App={
   },
 
   /* ---------- 入力・画面遷移 ---------- */
+  /** 割り当ての登録：押したキー・ボタンを操作に入れる（すでに別の操作にあれば入れ替える） */
+  finishRebind(v){
+    const r=this.rebind;if(!r)return;this.rebind=null;
+    const st=this.settings(),B=getBinds(),cur=B[r.kind];
+    const other=Object.keys(cur).find(a=>a!==r.act&&cur[a]===v);
+    const old=cur[r.act];
+    st.binds=st.binds||{};st.binds[r.kind]=Object.assign({},DEFAULT_BINDS[r.kind],st.binds[r.kind]||{},{[r.act]:v});
+    if(other!==undefined)st.binds[r.kind][other]=old;
+    this.save();this.goto('settings');
+  },
+  bindHTML(){
+    const B=getBinds(),r=this.rebind,type=padTypeNow();
+    const rows=BIND_ACTS.map(([a,n])=>{
+      const kbWait=r&&r.kind==='kb'&&r.act===a,padWait=r&&r.kind==='pad'&&r.act===a;
+      return `<div style="display:grid;grid-template-columns:120px 1fr 1fr;gap:6px;align-items:center;margin:3px 0"><span>${n}</span>
+        <button class="${kbWait?'primary':''}" data-act="bindKb" data-a="${a}">${kbWait?'キーを押して…（Escで取消）':'キー：'+keyLabel(B.kb[a])}</button>
+        <button class="${padWait?'primary':''}" data-act="bindPad" data-a="${a}">${padWait?'ボタンを押して…':PAD_TYPE_NAMES[type]+'：'+PAD_NAMES[type][B.pad[a]]}</button></div>`;}).join('');
+    return `<div class="setting" style="display:block"><b>操作の割り当て</b>（変えたい操作のボタンを押して、次に押したキー・ボタンを登録）
+      <div class="small muted" style="margin:4px 0">割り当ては、ほかの操作と同じものを選ぶと入れ替わります。攻撃の左クリック・右クリック、メニュー（Esc／START）と持ち物（I／BACK）は変わりません。</div>
+      ${rows}
+      <div class="filters" style="margin-top:6px">${r?'<button data-act="bindCancel">割り当ての変更を取消</button>':''}<button data-act="bindReset">割り当てを初期設定に戻す</button></div></div>`;
+  },
   onKey(code){
+    // 割り当て変更中のキー（Esc は取消）
+    if(this.rebind&&this.rebind.kind==='kb'){if(code==='Escape')this.rebind=null;else this.finishRebind(code);this.goto('settings');return;}
     if(UI.modalOpen()){if(code==='Escape')UI.closeModal();return;}
     switch(this.state){
       case 'playing':
@@ -11224,12 +11271,13 @@ const App={
       }
       if(!pid)return;                               // 割り当てのないコントローラー
       const E=Input.edges[pid];
-      if(i===0)E.dodge=true;                        // A / ×：回避
-      else if(i===3)E.sheathe=true;                 // Y / △：納刀
-      else if(i===1)E.skill=true;                   // B / ○：スキル（納刀とは別のボタン）
-      // RB / R1：持ち物の切り替え（短く押す＝次へ、長く押す＝ホイール。Input.pollPads で判定）
-      else if(i===4)E.heal=true;                    // LB / L1：持ち物を使う
-      return;                                        // RT / X は攻撃（押しっぱなし判定は sample で行う）
+      // 割り当てた操作（攻撃・ガード・持ち物の切り替えは Input.pollPads で判定）
+      const PBm=getBinds().pad,act=Object.keys(PBm).find(a=>PBm[a]===i);
+      if(act==='dodge')E.dodge=true;
+      else if(act==='sheathe')E.sheathe=true;
+      else if(act==='skill')E.skill=true;
+      else if(act==='heal')E.heal=true;
+      return;
     }
     if(i===okB)UI.padClick();
     else if(i===backB)this.onKey('Escape');
@@ -11289,6 +11337,10 @@ const App={
       case 'facilityBack':this.goto(this.facilityFrom||'camp');break;
       case 'bestiary':if(this.state!=='bestiary')this.bestiaryFrom=this.state==='lobby'?'lobby':'camp';this.goto('bestiary');break;
       case 'help':if(this.state!=='help')this.helpFrom=this.state;this.helpTab='basic';this.helpWeapon=this.helpWeapon||'sword';this.goto('help');break;
+      case 'bindKb':this.rebind={kind:'kb',act:ds.a};this.goto('settings');break;
+      case 'bindPad':this.rebind={kind:'pad',act:ds.a};this.goto('settings');break;
+      case 'bindCancel':this.rebind=null;this.goto('settings');break;
+      case 'bindReset':{const st=this.settings();delete st.binds;this.rebind=null;this.save();this.goto('settings');break;}
       case 'helpBack':this.goto(this.helpFrom||'camp');break;
       case 'helpTab':this.helpTab=ds.t;this.goto('help');break;
       case 'helpWeapon':this.helpWeapon=ds.w;this.goto('help');break;
@@ -11657,6 +11709,7 @@ const App={
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
         <div class="filters" style="margin-top:6px"><button data-act="checkUpdate">更新を確認</button></div>
         <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
@@ -12172,8 +12225,17 @@ const App={
     let body='';
     if(tab==='basic'){
       const head=`<div style="display:grid;grid-template-columns:150px 1fr 110px;gap:4px 10px;font-size:13px;color:#8a82a2;margin-bottom:4px"><span>操作</span><span>キーボード</span><span>${PAD_TYPE_NAMES[type]}</span></div>`;
-      const rows=HELP_BASIC.map(r=>{const pad=r.padText||(r.pad==null?'−':PAD_NAMES[type][r.pad]);
-        return `<div style="display:grid;grid-template-columns:150px 1fr 110px;gap:4px 10px;align-items:center;padding:4px 0;border-bottom:1px solid #2a2440"><span>${r.name}</span><span>${r.kb}</span><span style="color:#f3d48a">${pad}</span></div>`;}).join('');
+      const B=getBinds();
+      const rows=HELP_BASIC.map(r=>{
+        let kb=r.kb,pad=r.padText||(r.pad==null?'−':PAD_NAMES[type][r.pad]);
+        if(r.act){
+          const k=B.kb[r.act];pad=PAD_NAMES[type][B.pad[r.act]];
+          kb=keyLabel(k);
+          if(r.act==='attack'&&k!=='Mouse0')kb+=' ／ 左クリック';
+          if(r.act==='guard')kb+=' ／ 右クリック';
+          if(r.act==='cycle')kb+='（短く押す＝次へ、長く押す＝一覧）';
+        }
+        return `<div style="display:grid;grid-template-columns:150px 1fr 110px;gap:4px 10px;align-items:center;padding:4px 0;border-bottom:1px solid #2a2440"><span>${r.name}</span><span>${kb}</span><span style="color:#f3d48a">${pad}</span></div>`;}).join('');
       body=`<div class="col full">${head}${rows}<div class="small muted" style="margin-top:8px">コントローラーの表示は、つないだ機器から自動で判定します。違うときは上のボタンで選んでください。</div></div>`;
     }else{
       const list=Object.keys(DATA.weaponTypes).map(k=>`<button class="${k===wk?'on':''}" data-act="helpWeapon" data-w="${k}">${DATA.weaponTypes[k].name}</button>`).join('');
@@ -12181,7 +12243,7 @@ const App={
       body=`<div class="col full"><div class="filters">${list}</div>
         <div class="recipe" style="margin-top:8px"><div class="rn">${w.name}</div><div class="muted">${w.feature||''}</div>
         <div class="small" style="margin:6px 0">性能：移動 ${m.move||'−'}　攻撃速度 ${m.speed||'−'}　威力 ${m.power||'−'}　リーチ ${m.reach||'−'}　／　攻撃の間隔 約${w.interval}秒</div>
-        <div><b style="color:#f3d48a">スキル「${sk.name}」</b>（${PAD_NAMES[type][1]}／Q）</div>
+        <div><b style="color:#f3d48a">スキル「${sk.name}」</b>（${PAD_NAMES[type][getBinds().pad.skill]}／${keyLabel(getBinds().kb.skill)}）</div>
         <div class="small">${HELP_WS[w.ws]||''}</div>
         <div class="small muted">効果は${sk.duration}秒間、使ったあと${sk.cd}秒は再使用できません</div></div></div>`;
     }
