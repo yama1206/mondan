@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.53',date:'2026/10/31'};
+const GAME_VERSION={no:'1.54',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3838,7 +3838,9 @@ function spawnEnemy(w,type,x,y,opt){
   opt=opt||{};
   const d=DATA.enemies[type],E=CONFIG.elite,M=CONFIG.midBoss,mid=!!opt.mid&&!d.boss,el=!!opt.elite&&!d.boss&&!mid;
   const ub=d.boss&&opt.urgentStage?urgentBossBoost(type,opt.urgentStage):{hp:1,atk:1,def:1};
-  const partyMul=d.boss?(CONFIG.bossHpByParty[Math.max(1,Math.min(5,w.playerCount||1))]||1)*CONFIG.bossBoost.hp:1;
+  // 1人プレイのボスは体力1.5倍（仲間がいても1人プレイ扱い。訓練場のカカシは除く）
+  const soloMul=(w.playerCount||1)===1&&!(w.quest&&w.quest.training)?1.5:1;
+  const partyMul=d.boss?(CONFIG.bossHpByParty[Math.max(1,Math.min(5,w.playerCount||1))]||1)*CONFIG.bossBoost.hp*soloMul:1;
   const mult=d.boss?partyMul:CONFIG.minionHp*(el?E.hp:mid?M.hp:1);
   const hp=Math.round(d.hp*ub.hp*w.diff.hp*mult),atk=d.atk*ub.atk*w.diff.atk*(el?E.atk:mid?M.atk:1)*(d.boss?CONFIG.bossBoost.atk:CONFIG.minionBoost.atk)*CONFIG.enemyAtkMult;
   const e={id:w.nextId++,type,x,y,r:el?Math.round(d.r*E.size):mid?Math.round(d.r*M.size):d.boss?Math.round(d.r*CONFIG.bossScale.size):d.r,hp,maxHp:hp,atk,armor:d.def*ub.def,mid,
