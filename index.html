@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.11.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.12.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -6614,6 +6614,986 @@ const CONTROL_LINES={
   pad:['左スティック：移動　右スティック：向き　Y：納刀　B：スキル','RT / X：抜刀・攻撃（長押しでチャージ）　A：回避　LT（L2）：ガード（押し続ける）','LB：持ち物を使う　RB：切替'],
   kb2:['矢印キー：移動（移動方向を向く）　/：納刀','Enter：抜刀・攻撃（長押しでチャージ）　右Shift：回避','.：持ち物を使う　,：切替'],
 };
+// ===== BOSSART BEGIN =====
+// ===== ボスの見た目：名前どおりの姿を横向きで描く（進行方向へ左右反転。座標は体の大きさ r を 1 とした単位） =====
+const BossArt=(()=>{
+  const cache={};
+  const rgb=c=>{let s=c.slice(1);if(s.length===3)s=s.replace(/./g,'$&$&');const n=parseInt(s,16);return [n>>16&255,n>>8&255,n&255];};
+  const mix=(a,b,t)=>{if(typeof a!=='string'||a[0]!=='#')return a;const key=a+b+t;if(cache[key])return cache[key];const A=rgb(a),B=rgb(b);return cache[key]='rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')';};
+  // --- 描画の部品 ---
+  function E(k,x,y,rx,ry,rot,fill,st,lw){const c=k.ctx;c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),rot||0,0,TAU);if(fill){c.fillStyle=k.c(fill);c.fill();}if(st){c.strokeStyle=st;c.lineWidth=lw||k.lw;c.stroke();}}
+  function P(k,a,fill,st,lw){const c=k.ctx;c.beginPath();c.moveTo(a[0],a[1]);for(let i=2;i<a.length;i+=2)c.lineTo(a[i],a[i+1]);c.closePath();if(fill){c.fillStyle=k.c(fill);c.fill();}if(st){c.strokeStyle=st;c.lineWidth=lw||k.lw;c.stroke();}}
+  function L(k,a,col,w){const c=k.ctx;c.beginPath();c.moveTo(a[0],a[1]);for(let i=2;i<a.length;i+=2)c.lineTo(a[i],a[i+1]);c.strokeStyle=k.c(col);c.lineWidth=w;c.stroke();}
+  function S(k,a,col,w){ // 点列をなめらかにつないだ線
+    const c=k.ctx;c.beginPath();c.moveTo(a[0],a[1]);
+    if(a.length<=4)c.lineTo(a[2],a[3]);
+    else{for(let i=2;i<a.length-2;i+=2){const mx=(a[i]+a[i+2])/2,my=(a[i+1]+a[i+3])/2;c.quadraticCurveTo(a[i],a[i+1],mx,my);}c.lineTo(a[a.length-2],a[a.length-1]);}
+    c.strokeStyle=k.c(col);c.lineWidth=w;c.stroke();}
+  function T(k,a,col,dark,w){S(k,a,dark,w+k.lw*2);S(k,a,col,w);} // 縁取りつきの管（首・尾・胴）
+  function tube(k,pts,w0,w1,col,dark){ // 先細りの管：点ごとに太さを変える
+    const n=pts.length/2;
+    for(const pass of [0,1])for(let i=0;i<n-1;i++){const w=w0+(w1-w0)*(i/(n-1));const seg=[pts[i*2],pts[i*2+1],pts[i*2+2],pts[i*2+3]];L(k,seg,pass?col:dark,pass?w:w+k.lw*2);}
+  }
+  function eye(k,x,y,s,col){E(k,x,y,s,s,0,k.ph2?'#ff3a2a':(col||'#1a1010'));const c=k.ctx;c.fillStyle='rgba(255,255,255,.9)';c.beginPath();c.arc(x+s*0.3,y-s*0.3,s*0.35,0,TAU);c.fill();}
+  function leg(k,x,y,ph,col,w,o){o=o||{}; // 2関節の脚。足先は地面へ
+    const p=k.p+ph,sw=Math.sin(p)*(o.sw==null?0.2:o.sw),lift=Math.max(0,Math.cos(p))*(o.lift==null?0.1:o.lift);
+    const fx=x+sw,fy=(o.g==null?k.G:o.g)-lift,kx=(x+fx)/2+(o.knee==null?0.08:o.knee),ky=(y+fy)/2;
+    if(o.ol)L(k,[x,y,kx,ky,fx,fy],o.ol,w+k.lw*2);
+    L(k,[x,y,kx,ky,fx,fy],col,w);
+    if(o.paw)E(k,fx+w*0.3,fy-w*0.15,w*0.75,w*0.42,0,o.paw,o.ol);
+    return [fx,fy];}
+  function wing(k,x,y,len,ang,col,dark,n,tip){ // 羽根の翼：肩から角度angへ羽根を扇状に広げる
+    const c=k.ctx;c.save();c.translate(x,y);c.rotate(ang);
+    for(let i=n-1;i>=0;i--){const l=len*(1-i*0.08);c.save();c.rotate(-0.12+i*0.17);E(k,l*0.52,0,l*0.52,len*0.09,0,(i<2&&tip)?tip:col,dark);c.restore();}
+    E(k,len*0.28,len*0.06,len*0.34,len*0.17,0.15,col,dark);
+    c.restore();}
+  function bwing(k,x,y,len,ang,mem,bone,dark){ // 皮膜の翼（コウモリ・竜）
+    const c=k.ctx;c.save();c.translate(x,y);c.rotate(ang);
+    const f=[[len,0],[len*0.82,len*0.38],[len*0.52,len*0.55],[len*0.18,len*0.48]];
+    c.beginPath();c.moveTo(0,0);c.lineTo(len*0.32,-len*0.04);c.lineTo(f[0][0],f[0][1]);
+    for(let i=1;i<f.length;i++){const p=f[i-1],q=f[i];c.quadraticCurveTo((p[0]+q[0])/2*0.78,(p[1]+q[1])/2*0.78,q[0],q[1]);}
+    c.quadraticCurveTo(len*0.05,len*0.3,0,len*0.12);c.closePath();c.fillStyle=k.c(mem);c.fill();c.strokeStyle=dark;c.lineWidth=k.lw;c.stroke();
+    L(k,[0,0,len*0.32,-len*0.04,f[0][0],f[0][1]],bone,0.07);
+    for(let i=1;i<f.length;i++)L(k,[len*0.32,-len*0.04,f[i][0],f[i][1]],bone,0.04);
+    c.restore();}
+  function claw(k,x,y,s,ang,open,col,dark){ // ハサミ
+    const c=k.ctx;c.save();c.translate(x,y);c.rotate(ang);
+    E(k,0,0,s*0.5,s*0.33,0,col,dark);
+    P(k,[s*0.25,-s*0.28,s*1.0,-s*0.18,s*0.95,-s*0.05,s*0.35,-s*0.02],col,dark);
+    c.save();c.translate(s*0.3,s*0.08);c.rotate(open);P(k,[0,0,s*0.65,-s*0.02,s*0.6,s*0.1,0,s*0.2],col,dark);c.restore();
+    c.restore();}
+  function flame(k,x,y,h,w,c1,c2){const c=k.ctx;const f=1+Math.sin(k.t*13+x*9)*0.15;
+    for(const [col,s] of [[c1,1],[c2,0.55]]){c.beginPath();c.moveTo(x-w*s,y);c.quadraticCurveTo(x-w*s,y-h*0.5*f*s,x+Math.sin(k.t*7+y*5)*w*0.4,y-h*f*s);c.quadraticCurveTo(x+w*s,y-h*0.5*f*s,x+w*s,y);c.quadraticCurveTo(x,y+w*0.6*s,x-w*s,y);c.fillStyle=k.c(col);c.fill();}}
+  function along(a,f){ // 折れ線上の割合fの位置と向き
+    let tot=0;const seg=[];for(let i=0;i<a.length-2;i+=2){const l=Math.hypot(a[i+2]-a[i],a[i+3]-a[i+1]);seg.push(l);tot+=l;}
+    let d=f*tot;for(let j=0;j<seg.length;j++){if(d<=seg[j]||j===seg.length-1){const t=seg[j]?Math.min(1,d/seg[j]):0,i=j*2;return [a[i]+(a[i+2]-a[i])*t,a[i+1]+(a[i+3]-a[i+1])*t,Math.atan2(a[i+3]-a[i+1],a[i+2]-a[i])];}d-=seg[j];}
+    return [a[0],a[1],0];}
+  const H={E,P,L,S,T,tube,eye,leg,wing,bwing,claw,flame,along};
+  const A={}; // ボスごとの描き方
+  const top={}; // 上から見た姿で描くボス（向きは回転で表す）
+  const size={frost_cat:1.3,giant_bat:1.2,kama_mantis:1.1,grave_rat:1.15,bog_leech:1.1,gale_bird:1.1}; // 小さく見えるものは少し大きく
+  return {H,A,top,mix,
+    has(type){return !!A[type];},
+    draw(ctx,e,hurt){
+      const f=A[e.type];if(!f)return false;
+      const r=e.r,dir=Math.cos(e.facing||0)<0?-1:1,st=e.state;
+      const fast=(st==='charge'||st==='dash'||st==='pounce'||st==='glide'||st==='retreat')?2.4:1;
+      const k={ctx,e,r,t:e.anim||0,st,act:e.action,ph2:e.phase===2,hurt,fast,G:0.7,lw:Math.max(0.045,2.2/r),
+        wind:st==='windup'||st==='aim'||st==='tell'||st==='channel'};
+      k.p=k.t*7*fast;
+      k.c=c=>hurt?mix(c,'#ffffff',0.72):c;
+      ctx.save();
+      if(k.ph2){const a=0.22+0.12*Math.sin(k.t*6),g=ctx.createRadialGradient(0,-r*0.2,r*0.2,0,-r*0.2,r*1.7);g.addColorStop(0,`rgba(255,60,40,${a})`);g.addColorStop(1,'rgba(255,60,40,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,-r*0.2,r*1.7,0,TAU);ctx.fill();}
+      ctx.translate(0,-(e.z||0));const sz=size[e.type]||1;if(top[e.type]){ctx.rotate(e.facing||0);ctx.scale(r*sz,r*sz);}else{ctx.translate(0,0.7*r*(1-sz));ctx.scale(dir*r*sz,r*sz);}ctx.lineJoin='round';ctx.lineCap='round';
+      f(k,H);
+      ctx.restore();return true;}
+  };
+})();
+// --- 草原・古森・樹海 ---
+BossArt.A.kama_mantis=(k,{E,P,L,leg,eye})=>{ // 大鎌蟷螂：反った腹・立ち上がる胸・振り上げる二本の鎌
+  const g='#6fae3a',d='#2a5212',l='#c4ec80',c=k.ctx;
+  for(const [x,ph] of [[-0.25,0],[0.02,2.4]])leg(k,x,0.02,ph,d,0.06,{sw:0.18,knee:-0.18});
+  E(k,-0.62,0.0,0.64,0.24,-0.18,g,d);
+  for(let i=0;i<4;i++)L(k,[-0.28-i*0.2,-0.16+i*0.04,-0.32-i*0.2,0.2],d,0.025);
+  E(k,-0.55,-0.17,0.58,0.12,-0.22,'rgba(210,245,170,.6)',d,0.03);
+  L(k,[0.0,0.02,0.22,-0.45,0.38,-0.78],d,0.24);L(k,[0.0,0.02,0.22,-0.45,0.38,-0.78],g,0.16);
+  leg(k,0.12,-0.12,4,d,0.06,{sw:0.2,knee:0.12});
+  const raise=k.wind?-2.0:-0.55+Math.sin(k.t*2)*0.08;
+  for(const s of [1,0]){c.save();c.translate(0.3-s*0.06,-0.56);c.rotate(raise+s*0.18);
+    L(k,[0,0,0.52,0],d,0.13);L(k,[0,0,0.52,0],s?d:g,0.08);
+    c.translate(0.52,0);c.rotate(1.15);
+    c.beginPath();c.moveTo(0,0);c.quadraticCurveTo(0.55,-0.38,0.8,0.08);c.quadraticCurveTo(0.45,-0.1,0,0.12);c.closePath();c.fillStyle=k.c(s?'#5a9a2a':l);c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+    for(let i=0;i<3;i++)P(k,[0.14+i*0.17,0.03,0.2+i*0.17,0.14,0.26+i*0.17,0.02],d);
+    c.restore();}
+  P(k,[0.24,-1.0,0.74,-0.9,0.5,-0.6],g,d);
+  E(k,0.3,-0.96,0.11,0.11,0,'#e8e040',d,0.03);E(k,0.68,-0.88,0.1,0.1,0,'#d8d038',d,0.03);
+  if(k.ph2){E(k,0.3,-0.96,0.05,0.05,0,'#ff3a2a');E(k,0.68,-0.88,0.05,0.05,0,'#ff3a2a');}
+  L(k,[0.42,-0.98,0.32,-1.32,0.08,-1.48],d,0.025);L(k,[0.48,-0.97,0.52,-1.38,0.36,-1.56],d,0.025);
+};
+BossArt.A.armadillo=(k,{E,P,L,T,leg,eye})=>{ // 巨躯アルマジロ：帯の入った甲羅、とがった鼻、丸まって転がる
+  const sh='#a07c56',bd='#5e4228',sk='#d4ae86',d='#3e2a18',c=k.ctx;
+  if(k.act==='roll'||k.st==='charge'||k.st==='dash'){
+    const y=k.G-0.78;E(k,0,y,0.8,0.8,0,sh,d);
+    c.save();c.translate(0,y);c.rotate(k.t*12);c.beginPath();c.arc(0,0,0.8,0,TAU);c.clip();
+    for(let i=-3;i<=3;i++){c.beginPath();c.ellipse(i*0.24,0,0.07,0.85,0,0,TAU);c.strokeStyle=bd;c.lineWidth=0.06;c.stroke();}
+    c.restore();E(k,0,y,0.8,0.8,0,null,d);return;}
+  for(const [x,ph] of [[-0.55,0],[0.35,1.6]])leg(k,x,0.25,ph,d,0.14,{sw:0.1,paw:sk,knee:0.02,ol:d});
+  T(k,[-0.85,0.2,-1.15,0.32,-1.42,0.58],sh,d,0.11);
+  for(let i=1;i<4;i++){const x=-0.85-i*0.14;L(k,[x,0.12+i*0.1,x-0.02,0.32+i*0.08],bd,0.025);}
+  c.beginPath();c.moveTo(-0.98,0.34);c.bezierCurveTo(-0.98,-1.0,0.78,-1.0,0.78,0.34);c.closePath();c.fillStyle=k.c(sh);c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+  c.save();c.clip();for(let i=-3;i<=3;i++){c.beginPath();c.ellipse(-0.1+i*0.21,0.3,0.08,0.95,0,0,TAU);c.strokeStyle=bd;c.lineWidth=0.055;c.stroke();}
+  for(let i=-4;i<=4;i++)for(let j=0;j<3;j++){c.fillStyle='rgba(60,40,20,.25)';c.fillRect(-0.18+i*0.21,-0.55+j*0.28,0.08,0.1);}
+  c.fillStyle='rgba(255,240,200,.25)';c.beginPath();c.ellipse(-0.25,-0.45,0.5,0.14,-0.1,0,TAU);c.fill();c.restore();
+  for(const [x,ph] of [[-0.4,3.1],[0.5,4.7]])leg(k,x,0.25,ph,d,0.14,{sw:0.1,paw:sk,knee:0.02,ol:d});
+  P(k,[0.58,-0.18,1.3,0.22,1.26,0.33,0.62,0.32],sk,d);
+  P(k,[0.58,-0.18,0.98,0.02,0.62,0.06],sh,d);
+  E(k,0.64,-0.28,0.08,0.19,-0.35,sk,d);E(k,0.64,-0.28,0.035,0.12,-0.35,'#c08a7a');
+  eye(k,0.88,0.06,0.05);E(k,1.3,0.27,0.04,0.04,0,'#3a2418');
+};
+BossArt.A.meadow_bull=(k,{E,P,L,S,leg,eye})=>{ // 暴角獣：盛り上がった肩、前へ反る大角、鼻輪
+  const b='#7a4a2a',d='#341c0c',m='#c8927a',h='#f0e6c8',hf='#1e140a',c=k.ctx,low=(k.wind||k.fast>1)?0.18:0;
+  for(const [x,ph] of [[-0.6,0],[0.3,1.6]])leg(k,x,0.05,ph,mixD(d),0.17,{paw:hf,knee:-0.04,sw:0.16});
+  S(k,[-0.88,-0.32,-1.02,-0.08,-1.02,0.22],d,0.05);E(k,-1.02,0.28,0.06,0.11,0,hf);
+  E(k,-0.15,-0.15,0.86,0.52,0,b,d);
+  E(k,0.3,-0.48,0.46,0.34,-0.3,b,d);
+  for(let i=0;i<5;i++)L(k,[0.05+i*0.1,-0.75+i*0.02,0.1+i*0.1,-0.6],d,0.02);
+  for(const [x,ph] of [[-0.42,3.1],[0.48,4.7]])leg(k,x,0.05,ph,d,0.17,{paw:hf,knee:0.04,sw:0.16});
+  c.save();c.translate(0.72,-0.18+low);c.rotate(0.35+low);
+  E(k,0.25,0,0.32,0.27,0,b,d);E(k,0.52,0.1,0.18,0.16,0,m,d);
+  E(k,0.62,0.07,0.035,0.045,0,hf);
+  c.lineWidth=0.035;c.strokeStyle='#e0b840';c.beginPath();c.arc(0.62,0.2,0.07,0,Math.PI);c.stroke();
+  eye(k,0.3,-0.06,0.055);L(k,[0.2,-0.14,0.38,-0.1],d,0.03);
+  E(k,0.04,-0.12,0.13,0.06,-0.4,b,d);
+  for(const s of [1,0]){const a=[0.15,-0.2,0.0-s*0.06,-0.62,0.42,-0.8-s*0.05];S(k,a,d,0.16-s*0.03);S(k,a,s?'#c8bea0':h,0.11-s*0.03);}
+  c.restore();
+  if(k.wind){c.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<2;i++){c.beginPath();c.arc(1.42+i*0.12,0.42-i*0.06+Math.sin(k.t*20+i)*0.03,0.07-i*0.02,0,TAU);c.fill();}}
+  function mixD(x){return x;}
+};
+BossArt.A.rhino=(k,{E,P,L,S,leg,eye})=>{ // 鎧犀：鎧のような皮の継ぎ目、鼻先の大角
+  const b='#8a9098',d='#3e434a',pl='#aab0b8',h='#ece2c6',c=k.ctx,low=(k.wind||k.fast>1)?0.15:0;
+  for(const [x,ph] of [[-0.58,0],[0.3,1.6]])leg(k,x,0.1,ph,d,0.21,{paw:'#3a3e44',sw:0.14,knee:0.02});
+  S(k,[-0.92,-0.2,-1.04,0.05],d,0.06);
+  E(k,-0.12,-0.12,0.88,0.56,0,b,d);
+  c.save();E(k,-0.12,-0.12,0.88,0.56,0,null,null);c.clip();
+  E(k,0.42,-0.3,0.42,0.5,0,pl);E(k,-0.62,-0.2,0.4,0.52,0,pl);
+  for(const x of [0.05,-0.3])S(k,[x,-0.7,x-0.08,-0.1,x+0.02,0.5],d,0.04);
+  c.fillStyle='rgba(40,44,50,.5)';for(let i=0;i<9;i++){c.beginPath();c.arc(-0.8+i*0.2,-0.05+Math.sin(i*2.1)*0.25,0.03,0,TAU);c.fill();}
+  c.restore();
+  for(const [x,ph] of [[-0.4,3.1],[0.5,4.7]])leg(k,x,0.1,ph,d,0.21,{paw:'#3a3e44',sw:0.14,knee:0.02});
+  c.save();c.translate(0.68,-0.1+low);c.rotate(0.22+low);
+  P(k,[0,-0.28,0.5,-0.14,0.66,0.12,0.5,0.24,0,0.26],b,d);
+  P(k,[0.42,-0.12,0.68,-0.75,0.62,-0.06],h,d);
+  P(k,[0.22,-0.22,0.34,-0.48,0.36,-0.18],h,d);
+  E(k,0.02,-0.3,0.08,0.14,-0.4,b,d);
+  eye(k,0.22,-0.05,0.045);L(k,[0.4,0.14,0.62,0.12],d,0.03);
+  c.restore();
+};
+BossArt.A.boar=(k,{E,P,L,S,leg,eye})=>{ // 轟牙の大猪：逆立つたてがみ、反り返る大牙、平たい鼻
+  const b='#6a4a32',d='#2a1a10',br='#24160c',sn='#c48a7a',t='#f4ecd8',c=k.ctx,low=(k.wind||k.fast>1)?0.15:0;
+  for(const [x,ph] of [[-0.55,0],[0.25,1.6]])leg(k,x,0.1,ph,d,0.15,{paw:br,sw:0.16});
+  E(k,-0.25,-0.05,0.7,0.45,0,b,d);E(k,0.25,-0.15,0.5,0.5,0,b,d);
+  const ridge=[];for(let i=0;i<=10;i++){const x=-0.85+i*0.14,y=-0.42-Math.sin(i/10*Math.PI)*0.22;ridge.push(x,y+(i%2?-0.22:0));}
+  P(k,[-0.9,-0.3,...ridge,0.6,-0.35],br,d);
+  S(k,[-0.92,-0.15,-1.08,-0.25,-1.0,-0.38],b,0.04);
+  for(const [x,ph] of [[-0.4,3.1],[0.42,4.7]])leg(k,x,0.1,ph,d,0.15,{paw:br,sw:0.16});
+  c.save();c.translate(0.62,-0.05+low);c.rotate(0.28+low);
+  P(k,[0,-0.38,0.55,-0.08,0.62,0.22,0.0,0.32],b,d);
+  E(k,0.62,0.07,0.07,0.15,0,sn,d);E(k,0.63,0.03,0.02,0.03,0,'#3a1a10');E(k,0.63,0.12,0.02,0.03,0,'#3a1a10');
+  P(k,[0.02,-0.3,0.06,-0.62,0.22,-0.28],b,d);
+  eye(k,0.26,-0.12,0.05);
+  for(const s of [1,0]){const a=[0.42,0.2-s*0.04,0.62,0.05-s*0.04,0.52,-0.32-s*0.05];S(k,a,d,0.12);S(k,a,s?'#d8cfb8':t,0.08);}
+  c.restore();
+};
+function wolfBase(k,H,o){ // 狼の共通形（毛色・たてがみ・飾りを変える）
+  const {E,P,L,S,leg,eye}=H,c=k.ctx;const run=k.fast>1,st=run?0.06:0;
+  for(const [x,ph] of [[-0.55,0],[0.32,1.6]])leg(k,x,-0.02,ph,o.d,0.11,{paw:o.d,knee:-0.1,sw:run?0.3:0.18});
+  const tw=Math.sin(k.t*4)*0.08;
+  const tl=[-0.7,-0.22,-1.05,-0.42+tw,-1.38,-0.18+tw];S(k,tl,o.d,0.36);S(k,tl,o.b,0.3);E(k,-1.38,-0.18+tw,0.14,0.14,0,o.belly);
+  E(k,-0.1,-0.12+st,0.75,0.35,0,o.b,o.d);E(k,-0.05,0.04+st,0.52,0.17,0,o.belly);
+  if(o.moss){c.fillStyle=k.c(o.moss);for(const [x,y] of [[-0.5,-0.32],[-0.15,-0.4],[0.2,-0.35]]){c.beginPath();c.ellipse(x,y,0.12,0.06,0,0,TAU);c.fill();}}
+  for(const [x,ph] of [[-0.4,3.1],[0.48,4.7]])leg(k,x,-0.02,ph,o.d,0.11,{paw:o.d,knee:0.06,sw:run?0.3:0.18});
+  // 首まわりのたてがみ（ギザギザ）
+  const mn=[];for(let i=0;i<=8;i++){const a=-2.4+i*0.42,rr=i%2?0.5:0.38;mn.push(0.42+Math.cos(a)*rr,-0.35+Math.sin(a)*rr);}
+  P(k,mn,o.mane||o.b,o.d);
+  c.save();c.translate(0.7,-0.58+st);c.rotate(k.wind?0.3:0);c.scale(1.4,1.4);
+  P(k,[-0.1,-0.12,0.0,-0.5,0.12,-0.14],o.d,o.d);P(k,[-0.22,-0.1,-0.16,-0.48,0.0,-0.14],o.b,o.d);
+  P(k,[-0.18,-0.12,-0.16,-0.4,-0.06,-0.14],'#d8a0a0');
+  E(k,0,0,0.26,0.22,0,o.b,o.d);
+  const open=k.wind?0.14:0.03;
+  P(k,[0.08,0.06,0.56,0.08+open,0.5,0.16+open,0.06,0.16],o.belly,o.d);
+  P(k,[0.08,-0.12,0.58,-0.02,0.58,0.08,0.08,0.08],o.b,o.d);
+  E(k,0.58,0.02,0.05,0.045,0,'#111');
+  if(k.wind){c.fillStyle='#fff';for(let i=0;i<3;i++)P(k,[0.25+i*0.1,0.08,0.29+i*0.1,0.14,0.33+i*0.1,0.08],'#fff');}
+  c.save();c.translate(0.13,-0.06);c.rotate(-0.15);E(k,0,0,0.065,0.04,0,k.ph2?'#ff3a2a':o.eye);c.restore();E(k,0.13,-0.06,0.02,0.035,0,'#111');
+  L(k,[0.04,-0.13,0.2,-0.1],o.d,0.03);
+  if(o.scar)L(k,[0.05,-0.2,0.2,0.05],'#e0d0c0',0.025);
+  if(o.crown){ // 古森の覇者：木の枝の冠と葉
+    for(const s of [0,1]){const bx=-0.05-s*0.1;S(k,[bx,-0.18,bx-0.1,-0.5,bx+0.05,-0.75],'#5a3a1e',0.06);L(k,[bx-0.08,-0.42,bx-0.25,-0.55],'#5a3a1e',0.04);}
+    for(const [x,y,a] of [[0.0,-0.78,-0.5],[-0.3,-0.58,0.6],[-0.12,-0.6,-1.2]])E(k,x,y,0.09,0.04,a,'#6ac040','#2a5a1a',0.02);
+  }
+  c.restore();
+}
+BossArt.A.wolf=(k,H)=>wolfBase(k,H,{b:'#8a8a94',d:'#34343c',belly:'#d4d4da',eye:'#f0c040',mane:'#9a9aa4',scar:true});
+BossArt.A.black_wolf=(k,H)=>wolfBase(k,H,{b:'#2e2e38',d:'#08080c',belly:'#5a5a6e',eye:'#ff5a2a',mane:'#1c1c24'});
+BossArt.A.forest_king=(k,H)=>wolfBase(k,H,{b:'#6a7458',d:'#20281a',belly:'#bcc49c',eye:'#f6e860',mane:'#d8b84a',moss:'#4a8a2a',crown:true,scar:true});
+BossArt.A.gale_bird=(k,{E,P,L,S,wing,eye})=>{ // 疾風怪鳥：猛禽の頭・鉤くちばし・大きな翼と尾羽・かぎ爪
+  const b='#3d6db5',l='#eef2fa',d='#14284e',bk='#f0b030',c=k.ctx,fl=Math.sin(k.t*(k.fast>1?16:9));
+  const y=-0.38+Math.sin(k.t*4.5)*0.05;
+  wing(k,-0.1,y-0.12,1.15,-2.35+fl*0.55,'#2a5090',d,6);
+  for(let i=0;i<5;i++){c.save();c.translate(-0.45,y+0.08);c.rotate(2.75+(i-2)*0.12);E(k,0.35,0,0.36,0.08,0,i%2?b:l,d);c.restore();}
+  for(const s of [0,1]){L(k,[0.05-s*0.12,y+0.22,0.1-s*0.12,0.5],bk,0.06);for(let j=0;j<3;j++)L(k,[0.1-s*0.12,0.5,0.1-s*0.12+(j-1)*0.08,0.62],'#222',0.035);}
+  E(k,-0.05,y,0.55,0.32,-0.2,b,d);E(k,0.2,y+0.08,0.32,0.22,-0.3,l);
+  for(let i=0;i<4;i++)L(k,[0.08+i*0.08,y+0.02,0.12+i*0.08,y+0.1],'#9ab0d0',0.02);
+  for(let i=0;i<3;i++){c.save();c.translate(0.4,y-0.42);c.rotate(-2.6-i*0.25);E(k,0.2,0,0.22,0.045,0,i===1?l:b,d);c.restore();}
+  E(k,0.5,y-0.32,0.24,0.22,0,b,d);E(k,0.56,y-0.25,0.15,0.12,0,l);
+  c.beginPath();c.moveTo(0.66,y-0.4);c.quadraticCurveTo(0.95,y-0.38,0.92,y-0.2);c.quadraticCurveTo(0.84,y-0.26,0.68,y-0.24);c.closePath();c.fillStyle=k.c(bk);c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+  eye(k,0.58,y-0.37,0.05,'#f0d040');E(k,0.58,y-0.37,0.02,0.02,0,'#111');L(k,[0.48,y-0.46,0.68,y-0.42],d,0.04);
+  wing(k,0.0,y-0.18,1.25,-2.0+fl*0.65,b,d,6,l);
+  if(k.fast>1){c.strokeStyle='rgba(220,240,255,.6)';c.lineWidth=0.03;for(let i=0;i<3;i++){c.beginPath();c.moveTo(-0.8-i*0.2,y-0.3+i*0.25);c.lineTo(-1.3-i*0.2,y-0.3+i*0.25);c.stroke();}}
+};
+BossArt.A.rock_lizard=(k,{E,P,L,tube,leg,eye})=>{ // 岩肌の大蜥蜴：低い胴・背中の岩・長い尾
+  const b='#8a7a5a',d='#342c1c',r1='#a8a296',r2='#7a746a',bl='#c0b088',c=k.ctx,wv=Math.sin(k.p*0.6)*0.08;
+  tube(k,[-0.55,0.22,-0.9,0.3+wv,-1.2,0.36-wv*0.5,-1.5,0.42],0.3,0.06,b,d);
+  for(const [x,ph] of [[-0.42,0],[0.38,1.6]])leg(k,x,0.25,ph,d,0.12,{paw:d,knee:-0.12,sw:0.16,lift:0.06});
+  E(k,-0.05,0.15,0.68,0.28,0,b,d);E(k,-0.05,0.3,0.55,0.1,0,bl);
+  P(k,[-0.62,-0.05,-0.55,-0.32,-0.32,-0.36,-0.25,-0.08],r2,d);
+  P(k,[-0.3,-0.08,-0.2,-0.48,0.05,-0.42,0.12,-0.08],r1,d);
+  P(k,[0.08,-0.06,0.18,-0.34,0.38,-0.28,0.42,-0.02],r2,d);
+  for(const [x,y] of [[-0.45,-0.18],[-0.1,-0.25],[0.22,-0.16]])L(k,[x,y,x+0.08,y+0.06],'#e8e0d0',0.02);
+  for(const [x,ph] of [[-0.25,3.1],[0.55,4.7]])leg(k,x,0.25,ph,d,0.12,{paw:d,knee:0.12,sw:0.16,lift:0.06});
+  P(k,[0.55,-0.02,1.18,0.12,1.18,0.24,0.55,0.34],b,d);
+  P(k,[0.6,-0.02,0.85,-0.12,0.95,0.05],r1,d);
+  L(k,[0.75,0.22,1.15,0.2],d,0.03);eye(k,0.82,0.06,0.05,'#d8a020');
+  if(k.wind)E(k,1.22,0.18,0.15,0.13,0.3,r2,d);
+};
+BossArt.A.flower_dragon=(k,{E,P,L,T,S,eye})=>{ // 毒花竜：球根から伸びる茎の首、花びらの襟巻きをもつ竜の顔、葉の腕
+  const st='#4a8a3a',d='#1a4012',pe='#c860d0',pd='#7a2a8a',ce='#f0d040',c=k.ctx,sw=Math.sin(k.t*2)*0.07;
+  for(let i=0;i<5;i++)S(k,[-0.1,0.5,-0.6+i*0.3,0.62,-0.9+i*0.45,0.7],'#5a4020',0.04);
+  E(k,-0.12,0.42,0.55,0.3,0,st,d);
+  for(const [x,a] of [[-0.55,-2.6],[0.3,-0.4],[-0.3,-2.2]]){c.save();c.translate(x,0.3);c.rotate(a);E(k,0.3,0,0.32,0.11,0,'#5ca848',d);L(k,[0,0,0.55,0],d,0.02);c.restore();}
+  const nk=[-0.1,0.3,-0.3,-0.15,0.05+sw,-0.55,0.3+sw,-0.78];T(k,nk,st,d,0.26);
+  for(const s of [1,0]){c.save();c.translate(0.0,-0.25);c.rotate(-0.25-s*0.35+(k.wind?-0.6:0));E(k,0.35,0,0.36,0.12,0,s?'#3a7a2a':'#6cb850',d);for(let j=0;j<3;j++)P(k,[0.66,-0.06+j*0.06,0.82,-0.1+j*0.08,0.68,0.0+j*0.06],'#e8e0c0',d,0.02);c.restore();}
+  const hx=0.35+sw,hy=-0.85;
+  for(let i=0;i<9;i++){const a=i/9*TAU+k.t*0.3;c.save();c.translate(hx-0.05,hy);c.rotate(a);E(k,0.38,0,0.24,0.13,0,i%2?pe:pd,'#4a0a5a');c.restore();}
+  E(k,hx-0.05,hy,0.3,0.3,0,ce,'#a08010');
+  c.save();c.translate(hx,hy);
+  E(k,0,0,0.24,0.2,0,st,d);
+  const open=k.wind?0.12:0.04;
+  P(k,[0.05,0.02,0.5,0.06+open,0.45,0.16+open,0.02,0.15],'#3a7a2a',d);
+  P(k,[0.05,-0.14,0.52,-0.04,0.52,0.05,0.05,0.04],st,d);
+  for(let j=0;j<3;j++)P(k,[0.2+j*0.1,0.05,0.24+j*0.1,0.12,0.28+j*0.1,0.05],'#fff');
+  P(k,[-0.08,-0.15,-0.2,-0.38,0.02,-0.18],'#5ca848',d);
+  eye(k,0.12,-0.06,0.05,'#c020a0');
+  c.restore();
+  c.fillStyle='rgba(200,100,220,.5)';for(let i=0;i<5;i++){const a=k.t*0.8+i*1.3,rr=0.6+0.3*Math.sin(k.t+i);c.beginPath();c.arc(hx+Math.cos(a)*rr,hy+Math.sin(a)*rr*0.6,0.04,0,TAU);c.fill();}
+};
+BossArt.A.salamander=(k,{E,P,L,S,tube,leg,eye})=>{ // 大山椒魚：平たく大きな頭・ちいさな目・斑模様・ひれ状の尾
+  const b='#6a5a3e',sp='#2e2616',bl='#a89a6a',d='#241c10',c=k.ctx,wv=Math.sin(k.p*0.5)*0.06;
+  tube(k,[-0.5,0.22,-0.95,0.26+wv,-1.4,0.18-wv],0.36,0.14,b,d);
+  P(k,[-0.6,0.06,-1.0,0.1+wv,-1.42,0.12-wv,-1.0,0.0+wv],b,d);
+  for(const [x,ph] of [[-0.4,0],[0.32,1.6]])leg(k,x,0.3,ph,d,0.12,{paw:b,knee:-0.06,sw:0.12,lift:0.05});
+  E(k,-0.05,0.22,0.66,0.3,0,b,d);E(k,-0.05,0.38,0.55,0.12,0,bl);
+  for(const [x,ph] of [[-0.25,3.1],[0.48,4.7]])leg(k,x,0.3,ph,d,0.12,{paw:b,knee:0.06,sw:0.12,lift:0.05});
+  E(k,0.62,0.2,0.44,0.24,0.04,b,d);
+  c.fillStyle=k.c(sp);for(const [x,y,s] of [[-0.5,0.12,0.08],[-0.2,0.05,0.1],[0.1,0.12,0.07],[0.45,0.08,0.06],[0.75,0.12,0.05],[-1.0,0.22,0.05],[0.3,0.25,0.05]]){c.beginPath();c.ellipse(x,y,s,s*0.7,0,0,TAU);c.fill();}
+  S(k,[0.35,0.3,0.75,0.33,1.04,0.22],d,0.035);
+  E(k,0.78,0.02,0.05,0.045,0,'#d8c060',d,0.02);E(k,0.78,0.02,0.02,0.02,0,k.ph2?'#ff3a2a':'#111');
+  E(k,1.02,0.14,0.02,0.02,0,'#111');
+};
+BossArt.A.hermit_crab=(k,{E,P,L,S,leg,claw,eye})=>{ // 巨大ヤドカリ：巻き貝を背負い、片方の大きなハサミ
+  const sh='#dcb48a',sd='#8a6440',cr='#d0503a',d='#5a1a0c',c=k.ctx;
+  for(const [x,ph] of [[0.15,0],[0.32,2.1],[0.5,4.2]])leg(k,x,0.12,ph,cr,0.08,{ol:d,knee:0.2,sw:0.1,lift:0.08});
+  c.save();c.translate(-0.35,-0.22);c.rotate(-0.3+Math.sin(k.t*2)*0.03);
+  E(k,0,0,0.78,0.64,0,sh,d);
+  c.beginPath();for(let a=0;a<4*Math.PI;a+=0.15){const rr=0.6*Math.exp(-0.16*a),x=-0.1+Math.cos(a)*rr,y=Math.sin(a)*rr*0.85;a===0?c.moveTo(x,y):c.lineTo(x,y);}c.strokeStyle=k.c(sd);c.lineWidth=0.06;c.stroke();
+  P(k,[-0.7,-0.25,-1.15,-0.45,-0.75,-0.05],sh,d);
+  for(let i=0;i<5;i++)E(k,-0.4+i*0.22,-0.55+Math.abs(i-2)*0.05,0.05,0.05,0,'#b88a5a');
+  c.restore();
+  E(k,0.2,0.0,0.16,0.42,0.25,'#f4e0c8',d);
+  E(k,0.42,0.0,0.24,0.26,0,cr,d);
+  for(const s of [0,1]){L(k,[0.48+s*0.06,-0.18,0.52+s*0.1,-0.52],cr,0.04);E(k,0.52+s*0.1,-0.55,0.06,0.06,0,'#1a1a1a');}
+  S(k,[0.6,-0.12,0.95,-0.5,1.2,-0.45],d,0.02);
+  claw(k,0.55,0.22,0.36,0.25,0.15,cr,d);
+  const op=k.wind?0.45:0.08+Math.sin(k.t*3)*0.06;
+  claw(k,0.6,0.02,0.56,-0.2,op,cr,d);
+  c.fillStyle='rgba(255,255,255,.35)';c.beginPath();c.arc(0.85,-0.05,0.06,0,TAU);c.fill();
+};
+// --- 沼・毒霧・海・滝 ---
+BossArt.A.giant_frog=(k,{E,P,L,S,eye})=>{ // 大蛙：座った姿勢、大きな後ろ脚、出っぱった目、ふくらむ喉袋
+  const g='#5a9a3a',d='#1e4410',be='#e4e4a4',sp='#336818',c=k.ctx;
+  const hop=k.fast>1?Math.abs(Math.sin(k.t*8))*0.3:0,sac=0.5+0.5*Math.sin(k.t*3);
+  c.save();c.translate(0,-hop);
+  P(k,[-0.6,0.68,-0.05,0.62,0.05,0.72,-0.1,0.74,0.08,0.78,-0.6,0.76],g,d);
+  E(k,-0.42,0.25,0.45,0.32,-0.5,g,d);
+  E(k,-0.05,-0.05,0.68,0.5,-0.25,g,d);
+  E(k,0.12,0.22,0.46,0.25,-0.2,be);
+  c.fillStyle=k.c(sp);for(const [x,y,s] of [[-0.4,-0.25,0.1],[-0.1,-0.4,0.08],[-0.5,0.15,0.08],[0.1,-0.2,0.06],[-0.55,0.35,0.07]]){c.beginPath();c.arc(x,y,s,0,TAU);c.fill();}
+  L(k,[0.35,0.1,0.42,0.45,0.5,0.68],d,0.15);L(k,[0.35,0.1,0.42,0.45,0.5,0.68],g,0.1);
+  for(let i=0;i<3;i++)L(k,[0.5,0.68,0.4+i*0.1,0.74],g,0.05);
+  E(k,0.55,-0.36,0.44,0.28,-0.1,g,d);
+  S(k,[0.18,-0.25,0.6,-0.24,0.98,-0.34],d,0.035);
+  E(k,0.6,-0.08,0.2+0.08*sac,0.12+0.06*sac,0,'#f2f2c4',d,0.025);
+  E(k,0.52,-0.62,0.17,0.16,0,g,d);E(k,0.55,-0.64,0.12,0.11,0,k.ph2?'#ff5a2a':'#f0d040');E(k,0.56,-0.64,0.09,0.035,0,'#111');
+  E(k,0.92,-0.42,0.02,0.02,0,'#111');
+  if(k.wind)S(k,[0.95,-0.3,1.3,-0.3+Math.sin(k.t*20)*0.04,1.5,-0.28],'#e06a8a',0.08);
+  c.restore();
+};
+BossArt.A.bog_leech=(k,{E,P,L,S,tube,along})=>{ // 吸血蛭：体節のある柔らかい体、持ち上げた頭、牙の並ぶ吸盤
+  const b='#5a2a3a',d='#1e0a12',st='#b8607a',c=k.ctx,p=k.t*3;
+  const pts=[];for(let i=0;i<8;i++){const x=-1.05+i*0.27,y=0.42-Math.max(0,i-4)*0.24+Math.sin(p+i*0.9)*0.05;pts.push(x,y);}
+  tube(k,pts,0.34,0.44,b,d);
+  for(let i=1;i<7;i++){const [x,y,a]=along(pts,i/7);c.save();c.translate(x,y);c.rotate(a);L(k,[0,-0.18,0.02,0.18],d,0.025);c.restore();}
+  S(k,pts.map((v,i)=>i%2?v-0.12:v),st,0.05);
+  c.fillStyle=k.c('#e0a0b0');for(let i=0;i<6;i++){const [x,y]=along(pts,0.1+i*0.15);c.beginPath();c.arc(x,y-0.04,0.025,0,TAU);c.fill();}
+  const hx=pts[14],hy=pts[15];
+  E(k,hx+0.2,hy,0.1,0.24,0,'#3a0a14',d);
+  for(let i=0;i<7;i++){const a=-1.3+i*0.43;P(k,[hx+0.2+Math.cos(a)*0.03,hy+Math.sin(a)*0.2,hx+0.14,hy+Math.sin(a)*0.12,hx+0.2+Math.cos(a)*0.03,hy+Math.sin(a)*0.14],'#f4e8e0');}
+  E(k,hx,hy-0.16,0.03,0.03,0,k.ph2?'#ff3a2a':'#f0d040');E(k,hx-0.08,hy-0.17,0.025,0.025,0,k.ph2?'#ff3a2a':'#f0d040');
+};
+BossArt.A.mud_whale=(k,{E,P,L,S,T,eye})=>{ // 泥鯨：大きな鯨が泥の沼から浮かぶ。潮吹きは泥
+  const b='#6a5a46',d='#2a2016',be='#b4a484',m='#4a3a28',c=k.ctx,sw=Math.sin(k.t*2)*0.04;
+  E(k,0,0.62,1.35,0.16,0,'rgba(70,52,34,.75)');
+  const tl=[-0.65,0.0,-1.0,-0.12,-1.12,-0.42-sw];T(k,tl,b,d,0.24);
+  P(k,[-1.12,-0.42-sw,-1.45,-0.7-sw,-1.25,-0.42-sw,-1.42,-0.18-sw],b,d);
+  E(k,0,0.05,0.98,0.5,0.05+sw,b,d);
+  c.save();E(k,0,0.05,0.98,0.5,0.05+sw,null,null);c.clip();E(k,0.1,0.42,0.9,0.25,0.05,be);for(let i=0;i<6;i++)L(k,[-0.4+i*0.18,0.25,-0.35+i*0.18,0.6],'#8a7a60',0.025);c.restore();
+  S(k,[0.38,0.24,0.75,0.28,0.97,0.12],d,0.04);
+  eye(k,0.5,0.08,0.045);
+  E(k,0.1,0.38,0.26,0.1,0.6,b,d);
+  c.fillStyle=k.c(m);for(const [x,y,s] of [[-0.3,-0.3,0.08],[0.2,-0.35,0.06],[-0.6,-0.1,0.07],[0.55,-0.2,0.05]]){c.beginPath();c.arc(x,y,s,0,TAU);c.fill();}
+  const sp=Math.sin(k.t*1.6);if(sp>0.2||k.wind){c.fillStyle=k.c('#7a6040');for(let i=0;i<6;i++){const a=-Math.PI/2+(i-2.5)*0.25,h=0.35+0.3*Math.abs(Math.sin(k.t*5+i));c.beginPath();c.arc(0.32+Math.cos(a)*h,-0.42+Math.sin(a)*h,0.05,0,TAU);c.fill();}}
+  c.fillStyle=k.c(m);for(let i=0;i<3;i++){const y=0.5+((k.t*0.6+i*0.33)%1)*0.15;c.beginPath();c.arc(-0.4+i*0.4,y,0.035,0,TAU);c.fill();}
+};
+BossArt.A.hydra=(k,{E,P,L,S,T,leg,eye})=>{ // 多頭竜ヒュドラ：どっしりした胴から三本の首と蛇の頭
+  const b='#4a7a4a',d='#163016',be='#a8b880',c=k.ctx;
+  T(k,[-0.7,0.2,-1.05,0.35,-1.4,0.3],b,d,0.2);
+  for(const [x,ph] of [[-0.55,0],[0.15,1.6]])leg(k,x,0.3,ph,d,0.15,{paw:d,sw:0.1,knee:-0.05});
+  E(k,-0.2,0.15,0.72,0.45,0,b,d);E(k,-0.15,0.35,0.55,0.15,0,be);
+  for(const [x,ph] of [[-0.35,3.1],[0.3,4.7]])leg(k,x,0.3,ph,d,0.15,{paw:d,sw:0.1,knee:0.05});
+  const heads=[[0.45,-1.3,0.0],[0.9,-1.0,1.7],[1.15,-0.45,3.4]];
+  heads.forEach(([hx,hy,ph],i)=>{const sx=Math.sin(k.t*2.5+ph)*0.08,sy=Math.cos(k.t*2+ph)*0.05;const X=hx+sx,Y=hy+sy;
+    T(k,[0.2,-0.05+i*0.1,0.3+i*0.15,-0.55+i*0.2,X-0.2,Y+0.1],i===1?'#3e6a3e':b,d,0.18);
+    c.save();c.translate(X,Y);
+    E(k,0,0,0.22,0.16,0,b,d);P(k,[0.05,-0.1,0.42,0.0,0.4,0.08,0.05,0.12],b,d);
+    if(k.wind){P(k,[0.05,0.05,0.38,0.18,0.05,0.14],'#a02020',d);P(k,[0.25,0.04,0.28,0.12,0.31,0.05],'#fff');}
+    P(k,[-0.1,-0.12,-0.3,-0.25,-0.05,-0.05],be,d);
+    eye(k,0.08,-0.05,0.04,'#e0d020');c.restore();});
+};
+BossArt.A.venomKing=(k,{E,P,L,S,eye})=>{ // 毒蟲王：体節の大きな毒虫。トゲに毒、頭に王冠、大きな牙
+  const b='#6a3a8a',d='#22102e',ac='#a8e040',gold='#e8c040',c=k.ctx,p=k.t*4;
+  const seg=[];for(let i=0;i<6;i++){const x=-1.0+i*0.34,y=0.38-Math.max(0,i-3)*0.34+Math.sin(p+i)*0.03;seg.push([x,y,0.27+i*0.015]);}
+  for(const [x,y,s] of seg)for(const o of [-0.08,0.08])L(k,[x+o,y+s*0.6,x+o+Math.sin(p*2+x*5)*0.05,0.7],d,0.05);
+  seg.forEach(([x,y,s],i)=>{E(k,x,y,s*1.08,s,0,b,d);E(k,x,y+s*0.4,s*0.7,s*0.25,0,'#8a5aa8');
+    c.fillStyle=k.c(ac);c.beginPath();c.arc(x-s*0.3,y-s*0.1,0.04,0,TAU);c.arc(x+s*0.3,y,0.035,0,TAU);c.fill();
+    if(i<5)P(k,[x-0.08,y-s*0.85,x,y-s*1.5,x+0.08,y-s*0.85],'#4a2a5a',d,0.02),E(k,x,y-s*1.5,0.04,0.04,0,ac);});
+  const [hx,hy]=seg[5];c.save();c.translate(hx+0.25,hy-0.08);
+  E(k,0,0,0.3,0.27,0,b,d);
+  const op=k.wind?0.4:0.1;
+  for(const s of [1,-1]){c.save();c.rotate(s*op);S(k,[0.15,s*0.08,0.45,s*0.05,0.5,-s*0.12],d,0.1);S(k,[0.15,s*0.08,0.45,s*0.05,0.5,-s*0.12],'#c8b8d8',0.06);c.restore();}
+  P(k,[-0.22,-0.2,-0.2,-0.48,-0.1,-0.3,0.0,-0.55,0.1,-0.3,0.2,-0.48,0.22,-0.2],gold,'#8a6a10');
+  for(const [x,y] of [[0.1,-0.08],[0.18,0.02],[0.02,-0.12]])eye(k,x,y,0.035,'#e0f040');
+  c.fillStyle=k.c(ac);const dy=(k.t*0.8)%1;c.beginPath();c.arc(0.5,0.0+dy*0.4,0.04,0,TAU);c.fill();
+  c.restore();
+};
+BossArt.A.mireGiant=(k,{E,P,L,S,T})=>{ // 腐敗の沼巨人：泥でできた猫背の巨人、光る目、苔と滴る泥
+  const b='#5e5a3a',d='#24220e',ms='#6a8a3a',gl='#d8f060',c=k.ctx,sw=Math.sin(k.t*2)*0.05;
+  T(k,[-0.15,-0.5,-0.35,0.0,-0.3,0.45],'#4a4628',d,0.24);E(k,-0.3,0.55,0.2,0.14,0,'#4a4628',d);
+  for(const [x,ph] of [[-0.35,0],[0.1,3.1]]){const s=Math.sin(k.p*0.6+ph)*0.08;T(k,[x,0.15,x+s,0.6],b,d,0.26);E(k,x+s+0.06,0.66,0.18,0.08,0,b,d);}
+  c.beginPath();c.moveTo(-0.7,0.3);c.bezierCurveTo(-0.9,-0.5,-0.2,-1.15,0.4,-0.75);c.bezierCurveTo(0.7,-0.5,0.55,0.1,0.35,0.3);c.closePath();c.fillStyle=k.c(b);c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+  for(const [x,y,s] of [[-0.45,-0.55,0.14],[-0.1,-0.8,0.12],[0.25,-0.75,0.1],[-0.6,-0.1,0.1]])E(k,x,y,s,s*0.55,0,ms);
+  E(k,0.42,-0.6+sw,0.24,0.2,0,b,d);
+  for(const x of [0.42,0.56]){E(k,x,-0.64+sw,0.04,0.035,0,k.ph2?'#ff3a2a':gl);}
+  P(k,[0.42,-0.5+sw,0.62,-0.52+sw,0.55,-0.44+sw],'#1a180a');
+  S(k,[0.3,-0.8+sw,0.28,-0.98+sw,0.36,-1.05+sw],'#4a7a2a',0.04);E(k,0.38,-1.06+sw,0.07,0.035,0.4,'#6ab040');
+  const up=k.wind?-0.7:0;
+  T(k,[0.3,-0.45,0.62,-0.05+up,0.78,0.4+up],b,d,0.26);
+  E(k,0.82,0.52+up,0.22,0.15,0.3,b,d);for(let i=0;i<3;i++)L(k,[0.85+i*0.05,0.6+up,0.9+i*0.07,0.7+up],d,0.06);
+  c.fillStyle=k.c('#3e3a20');for(let i=0;i<4;i++){const y=((k.t*0.7+i*0.25)%1);c.beginPath();c.arc(-0.5+i*0.3,0.2+y*0.45,0.035,0,TAU);c.fill();}
+};
+BossArt.A.queen_bee=(k,{E,P,L,S,eye})=>{ // 毒霧の女王蜂：縞の腹と毒針、羽音を立てる翅、王冠
+  const ye='#e8b830',bl='#24180e',th='#6a4418',d='#140c04',gold='#f4d040',pu='#a060c0',c=k.ctx;
+  const y=-0.42+Math.sin(k.t*5)*0.05,bz=Math.sin(k.t*40)*0.15;
+  c.fillStyle='rgba(160,96,192,.18)';for(let i=0;i<4;i++){c.beginPath();c.arc(-0.9+i*0.2,y+0.3+Math.sin(k.t+i)*0.1,0.18,0,TAU);c.fill();}
+  c.save();c.translate(-0.05,y-0.2);c.rotate(-2.3+bz);E(k,0.45,0,0.48,0.16,0,'rgba(220,240,255,.45)','rgba(120,140,170,.7)',0.02);c.restore();
+  for(let i=0;i<3;i++)S(k,[-0.05+i*0.12,y+0.18,-0.02+i*0.14,y+0.4,0.02+i*0.14,y+0.58],d,0.035);
+  c.save();c.translate(-0.55,y+0.12);c.rotate(-0.35);E(k,0,0,0.55,0.34,0,ye,d);
+  c.beginPath();c.ellipse(0,0,0.55,0.34,0,0,TAU);c.clip();for(const x of [-0.3,-0.05,0.2])c.fillStyle=k.c(bl),c.fillRect(x,-0.4,0.12,0.8);c.restore();
+  c.save();c.translate(-0.55,y+0.12);c.rotate(-0.35);P(k,[-0.5,-0.08,-0.85,0.02,-0.5,0.08],'#2a2a2a',d);c.fillStyle=pu;c.beginPath();c.arc(-0.87,0.06+((k.t*0.7)%1)*0.2,0.035,0,TAU);c.fill();c.restore();
+  E(k,0.0,y-0.05,0.3,0.28,0,th,d);c.fillStyle='rgba(240,200,80,.6)';for(let i=0;i<6;i++){c.beginPath();c.arc(-0.15+i*0.06,y-0.2+Math.sin(i*2)*0.08,0.025,0,TAU);c.fill();}
+  E(k,0.32,y-0.12,0.2,0.22,0,bl,d);
+  E(k,0.37,y-0.17,0.1,0.14,0.2,k.ph2?'#a01a1a':'#3a2a1a','#000',0.02);c.fillStyle='rgba(255,255,255,.6)';c.beginPath();c.arc(0.4,y-0.24,0.03,0,TAU);c.fill();
+  P(k,[0.48,y-0.02,0.58,y+0.05,0.48,y+0.08],'#3a2a1a');
+  S(k,[0.36,y-0.32,0.42,y-0.55,0.62,y-0.58],d,0.03);S(k,[0.3,y-0.32,0.3,y-0.58,0.48,y-0.68],d,0.03);
+  P(k,[0.16,y-0.28,0.18,y-0.5,0.25,y-0.38,0.32,y-0.55,0.36,y-0.36,0.42,y-0.48,0.42,y-0.28],gold,'#8a6a10',0.02);
+  c.save();c.translate(0.0,y-0.22);c.rotate(-2.0-bz);E(k,0.5,0,0.55,0.18,0,'rgba(230,245,255,.55)','rgba(120,140,170,.8)',0.02);L(k,[0.05,0,0.95,0],'rgba(120,140,170,.6)',0.015);c.restore();
+};
+BossArt.A.aquarios=(k,{E,P,L,S,T,along,eye})=>{ // 蒼海竜アクアリオス：うねる海蛇の体、背びれ、角とひれ耳の竜の頭
+  const b='#2a7ac8',d='#0e3260',be='#a8e0f0',fn='#60c8e8',c=k.ctx,sw=Math.sin(k.t*2)*0.08;
+  E(k,-0.3,0.62,1.1,0.14,0,'rgba(140,210,255,.35)');
+  const body=[-1.25,0.55,-0.9,0.15+sw,-0.45,0.5,-0.05,0.25-sw,0.25,-0.25,0.4,-0.7];
+  for(let i=0;i<7;i++){const [x,y,a]=along(body,0.12+i*0.12);c.save();c.translate(x,y);c.rotate(a);P(k,[-0.1,-0.12,0.05,-0.36,0.12,-0.12],fn,d,0.025);c.restore();}
+  T(k,body,b,d,0.3);
+  S(k,body.map((v,i)=>i%2?v+0.07:v+0.03),be,0.08);
+  P(k,[-1.25,0.55,-1.5,0.3,-1.42,0.62,-1.55,0.8],fn,d);
+  c.save();c.translate(0.42,-0.82+sw*0.3);c.rotate(0.1);
+  P(k,[-0.3,-0.12,-0.5,-0.08,-0.25,0.02],fn,d);
+  E(k,0,0,0.26,0.2,0,b,d);
+  const op=k.wind?0.14:0.03;
+  P(k,[0.1,0.04,0.6,0.1+op,0.55,0.18+op,0.08,0.16],be,d);
+  P(k,[0.1,-0.14,0.62,-0.02,0.62,0.08,0.1,0.06],b,d);
+  for(const s of [0,1])P(k,[-0.05+s*0.1,-0.14,-0.42+s*0.1,-0.5-s*0.05,-0.08+s*0.1,-0.2],s?'#d8f0ff':'#a8d0e8',d);
+  S(k,[0.55,0.05,0.75,0.25,0.95,0.2],fn,0.025);
+  eye(k,0.14,-0.06,0.045,'#f0e040');
+  c.restore();
+};
+BossArt.A.turtle=(k,{E,P,L,S,T,leg,eye})=>{ // 水瀑の大亀：亀甲模様の大きな甲羅、流れ落ちる水、くちばし
+  const sh='#4a7a5a',hx='#2a4a36',sk='#8ab08a',d='#1e3424',rim='#c8b070',c=k.ctx;
+  for(const [x,ph] of [[-0.5,0],[0.35,1.6]])leg(k,x,0.25,ph,'#6a906a',0.22,{paw:'#6a906a',ol:d,sw:0.08,knee:0});
+  S(k,[-0.85,0.25,-1.05,0.38],sk,0.1);
+  c.beginPath();c.moveTo(-1.0,0.3);c.bezierCurveTo(-1.0,-0.95,0.72,-0.95,0.72,0.3);c.closePath();c.fillStyle=k.c(sh);c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+  c.save();c.clip();
+  for(const [x,y] of [[-0.5,-0.4],[-0.14,-0.55],[0.22,-0.4],[-0.7,0.0],[-0.32,-0.1],[0.05,-0.1],[0.42,0.0]]){const pts=[];for(let i=0;i<6;i++){const a=i/6*TAU;pts.push(x+Math.cos(a)*0.17,y+Math.sin(a)*0.15);}P(k,pts,'#5a8a68',hx,0.04);}
+  c.strokeStyle='rgba(180,230,255,.75)';c.lineWidth=0.04;for(let i=0;i<5;i++){const o=(k.t*1.2+i*0.2)%1;c.beginPath();c.moveTo(-0.8+i*0.35,-0.7+o*0.2);c.lineTo(-0.82+i*0.35,-0.2+o*0.6);c.stroke();}
+  c.restore();
+  E(k,-0.14,0.28,0.88,0.1,0,rim,d);
+  for(const [x,ph] of [[-0.35,3.1],[0.5,4.7]])leg(k,x,0.25,ph,sk,0.22,{paw:sk,ol:d,sw:0.08,knee:0});
+  T(k,[0.6,0.12,0.85,-0.05,0.95,-0.12],sk,d,0.2);
+  c.save();c.translate(1.05,-0.14);
+  E(k,0,0,0.22,0.16,0,sk,d);P(k,[0.12,-0.06,0.3,0.02,0.16,0.1],'#d0c070',d);
+  eye(k,0.04,-0.05,0.04);c.restore();
+  c.fillStyle='rgba(180,230,255,.7)';for(let i=0;i<3;i++){const y=((k.t*1.5+i*0.33)%1);c.beginPath();c.arc(-0.9+i*0.8,0.3+y*0.35,0.03,0,TAU);c.fill();}
+};
+BossArt.A.thunderEel=(k,{E,P,L,S,T,along,eye})=>{ // 雷鳴の大鰻：長くうねる体、黄色い腹、まとう稲妻
+  const b='#2a3a8a',be='#e8e070',d='#0c1440',fn='#5a70c8',c=k.ctx;
+  const pts=[];for(let i=0;i<9;i++){const x=-1.25+i*0.28,y=0.2+Math.sin(k.t*4-i*0.9)*0.16-Math.max(0,i-6)*0.18;pts.push(x,y);}
+  S(k,pts.map((v,i)=>i%2?v-0.17:v),fn,0.1);
+  T(k,pts,b,d,0.3);
+  S(k,pts.map((v,i)=>i%2?v+0.08:v),be,0.08);
+  const hx=pts[16],hy=pts[17];c.save();c.translate(hx,hy);c.rotate(-0.3);
+  E(k,0.05,0,0.25,0.18,0,b,d);
+  const op=k.wind?0.15:0.04;P(k,[0.05,0.03,0.48,0.08+op,0.05,0.14],be,d);P(k,[0.05,-0.15,0.5,-0.02,0.5,0.06,0.05,0.04],b,d);
+  eye(k,0.15,-0.07,0.045,'#f8f060');S(k,[0.45,0.04,0.62,0.18,0.75,0.12],be,0.02);c.restore();
+  const n=k.ph2?4:2;c.strokeStyle='#fff070';c.lineWidth=0.04;c.shadowColor='#fff070';c.shadowBlur=8;
+  for(let j=0;j<n;j++){const [x,y]=along(pts,Math.random());c.beginPath();c.moveTo(x,y);let X=x,Y=y;for(let i=0;i<4;i++){X+=(Math.random()-0.5)*0.4;Y+=-0.12-Math.random()*0.12;c.lineTo(X,Y);}c.stroke();}
+  c.shadowBlur=0;
+};
+BossArt.A.giantWorm=(k,{E,P,L,S,T,along})=>{ // 滝つぼの大蚯蚓：地面の穴から伸び上がる体節の体、環帯、歯の並ぶ丸い口
+  const b='#d08c8c',d='#6a3434',bd='#a85a6a',c=k.ctx,sw=Math.sin(k.t*2)*0.1;
+  E(k,-0.35,0.64,0.55,0.15,0,'#2a1a14','#1a0e0a');
+  const pts=[-0.35,0.66,-0.4,0.15,-0.2,-0.45,0.25+sw,-0.72,0.7+sw,-0.5];
+  T(k,pts,b,d,0.46);
+  for(let i=1;i<12;i++){const [x,y,a]=along(pts,i/12);c.save();c.translate(x,y);c.rotate(a);L(k,[0,-0.22,0.03,0.22],d,0.022);c.restore();}
+  {const [x,y,a]=along(pts,0.45);c.save();c.translate(x,y);c.rotate(a);E(k,0,0,0.16,0.25,0,bd,d);c.restore();}
+  const [hx,hy,ha]=along(pts,1);c.save();c.translate(hx,hy);c.rotate(ha);
+  E(k,0.05,0,0.1,0.25,0,'#3a0a10',d);
+  for(let i=0;i<8;i++){const a=i/8*TAU;P(k,[0.05+Math.cos(a)*0.06,Math.sin(a)*0.22,0.05,Math.sin(a)*0.1,0.05+Math.cos(a)*0.02,Math.sin(a+0.3)*0.2],'#f4ece0');}
+  c.restore();
+  c.fillStyle='rgba(170,220,255,.7)';for(let i=0;i<4;i++){const y=((k.t*1.2+i*0.25)%1);c.beginPath();c.arc(-0.6+i*0.3,-0.3+y*0.9,0.035,0,TAU);c.fill();}
+};
+BossArt.A.twin_shark=(k,{E,P,L,S,eye})=>{ // 双頭鮫：一つの胴から二つに分かれた鮫の頭
+  const b='#5a6a8a',be='#dcdfe8',d='#1a2034',c=k.ctx,y=-0.2+Math.sin(k.t*2.5)*0.05,tw=Math.sin(k.t*6)*0.12;
+  P(k,[-0.85,y,-1.3,y-0.5+tw,-1.15,y+tw*0.5,-1.25,y+0.35+tw],b,d);
+  P(k,[-0.25,y-0.25,-0.05,y-0.7,0.2,y-0.25],b,d);P(k,[-0.7,y-0.15,-0.62,y-0.32,-0.5,y-0.15],b,d);
+  E(k,-0.25,y,0.72,0.28,0,b,d);
+  c.save();E(k,-0.25,y,0.72,0.28,0,null,null);c.clip();E(k,-0.2,y+0.22,0.75,0.2,0,be);c.restore();
+  P(k,[-0.05,y+0.15,0.1,y+0.5,0.25,y+0.15],b,d);
+  for(const s of [-1,1]){c.save();c.translate(0.35,y+s*0.06);c.rotate(s*0.38+(k.wind?s*0.12:0));
+    P(k,[0,-0.2,0.45,-0.12,0.72,0.02,0.45,0.14,0,0.2],s<0?b:'#4a5a78',d);
+    c.save();c.beginPath();c.moveTo(0,0.04);c.lineTo(0.72,0.02);c.lineTo(0.45,0.14);c.lineTo(0,0.2);c.closePath();c.fillStyle=k.c(be);c.fill();c.restore();
+    L(k,[0.25,0.07,0.62,0.05],d,0.03);for(let i=0;i<4;i++)P(k,[0.3+i*0.08,0.06,0.33+i*0.08,0.11,0.36+i*0.08,0.06],'#fff');
+    eye(k,0.42,-0.04,0.035);for(let i=0;i<3;i++)L(k,[0.1+i*0.05,-0.1,0.08+i*0.05,0.05],d,0.015);c.restore();}
+};
+BossArt.A.mola_fish=(k,{E,P,L,eye})=>{ // 巨大マンボウ：まるい円盤の体、高い背びれと尻びれ、尾のない後ろの縁
+  const b='#8aa8c8',d='#30486a',be='#dce6f2',c=k.ctx,y=-0.3+Math.sin(k.t*1.5)*0.05;
+  c.save();c.translate(0,y);c.rotate(Math.sin(k.t*1.2)*0.06);
+  const f=Math.sin(k.t*3)*0.12;
+  P(k,[-0.1,-0.55,-0.32+f,-1.05,-0.48+f,-1.0,-0.45,-0.5],b,d);
+  P(k,[-0.1,0.55,-0.32-f,0.88,-0.48-f,0.84,-0.45,0.5],b,d);
+  E(k,0,0,0.75,0.66,0,b,d);
+  c.save();E(k,0,0,0.75,0.66,0,null,null);c.clip();E(k,0.1,0.35,0.75,0.35,0,be);c.restore();
+  for(let i=0;i<6;i++)E(k,-0.72,-0.45+i*0.18,0.1,0.1,0,b,d);
+  E(k,-0.62,0,0.08,0.62,0,b);
+  c.fillStyle='rgba(255,255,255,.25)';for(const [x,yy] of [[-0.2,-0.3],[0.1,-0.4],[-0.35,0.1],[0.2,0.1]]){c.beginPath();c.arc(x,yy,0.06,0,TAU);c.fill();}
+  E(k,0.74,0.05,0.06,0.05,0,'#4a6a8a',d);
+  eye(k,0.48,-0.12,0.065);
+  E(k,0.28,0.05,0.14,0.07,0.6+f,b,d);
+  c.restore();
+};
+BossArt.A.deep_octopus=(k,{E,P,L,S,tube})=>{ // 深淵の大蛸：大きな頭（外套）、横長の瞳、吸盤のある8本の腕
+  const b='#a83a5a',d='#4a0e22',su='#f4c4cc',c=k.ctx;
+  const arm=(i,back)=>{const bx=-0.15+i*0.16,ph=k.t*3+i;const pts=[bx,0.1,bx+(i-2.5)*0.12,0.45,bx+(i-2.5)*0.28+Math.sin(ph)*0.1,0.68,bx+(i-2.5)*0.4+Math.sin(ph+1)*0.15,0.5+Math.cos(ph)*0.08,bx+(i-2.5)*0.35+Math.sin(ph+2)*0.15,0.32];
+    tube(k,pts,0.17,0.05,back?'#8a2a48':b,d);
+    if(!back){c.fillStyle=k.c(su);for(let j=1;j<4;j++){c.beginPath();c.arc(pts[j*2],pts[j*2+1]+0.05,0.03,0,TAU);c.fill();}}};
+  for(let i=0;i<6;i+=2)arm(i,true);
+  c.save();c.translate(-0.25,-0.55);c.rotate(-0.55+Math.sin(k.t*1.5)*0.06);E(k,0,0,0.5,0.65,0,b,d);
+  c.fillStyle='rgba(255,200,210,.35)';for(const [x,y] of [[-0.15,-0.2],[0.1,-0.35],[0.05,0.1],[-0.2,0.25]]){c.beginPath();c.arc(x,y,0.06,0,TAU);c.fill();}c.restore();
+  E(k,0.15,-0.08,0.38,0.32,0,b,d);
+  E(k,0.3,-0.2,0.13,0.1,0,k.ph2?'#ff6a3a':'#f0d040',d,0.02);P(k,[0.2,-0.22,0.4,-0.22,0.4,-0.18,0.2,-0.18],'#111');
+  S(k,[0.4,0.05,0.55,0.0,0.62,0.08],d,0.06);
+  for(let i=1;i<6;i+=2)arm(i,false);
+};
+// --- 洞窟・結晶・地底・火山 ---
+BossArt.A.mole=(k,{E,P,L,S,eye})=>{ // 結晶喰いの土竜：ずんぐりした体、ピンクの長い鼻、大きな掘る手、背中に生えた結晶
+  const b='#4a3e4a',d='#181218',ns='#f0a0b0',cl='#efe6d6',cr='#8ae0f0',c=k.ctx;
+  for(const [x,h,a] of [[-0.55,0.45,-0.3],[-0.25,0.6,0.0],[0.05,0.42,0.3]]){P(k,[x-0.1,-0.3,x+Math.sin(a)*h*0.4,-0.3-h,x+0.12,-0.3],cr,'#2a8aa8');P(k,[x-0.02,-0.32,x+Math.sin(a)*h*0.4,-0.3-h,x+0.04,-0.32],'#d8f8ff');}
+  E(k,-0.55,0.55,0.18,0.12,0,'#d8b8b0',d);
+  E(k,-0.12,0.1,0.78,0.55,0,b,d);
+  c.fillStyle='rgba(140,120,140,.3)';c.beginPath();c.ellipse(-0.2,-0.15,0.5,0.16,0,0,TAU);c.fill();
+  P(k,[0.45,-0.18,1.05,0.1,1.02,0.18,0.45,0.32],b,d);
+  E(k,1.05,0.14,0.08,0.08,0,ns,d,0.02);
+  for(let i=0;i<3;i++)L(k,[0.9,0.1,1.15,0.0+i*0.1],'#e8e0e0',0.012);
+  E(k,0.62,-0.02,0.025,0.025,0,k.ph2?'#ff3a2a':'#111');
+  const dig=k.wind||k.fast>1?Math.sin(k.t*18)*0.4:Math.sin(k.t*3)*0.1;
+  c.save();c.translate(0.5,0.42);c.rotate(-0.3+dig);
+  E(k,0.05,0,0.26,0.18,0,'#d8b8b0',d);
+  for(let i=0;i<5;i++)P(k,[0.18,-0.14+i*0.07,0.48,-0.18+i*0.09,0.2,-0.1+i*0.07],cl,'#8a8070',0.02);
+  c.restore();
+};
+BossArt.A.grados=(k,{E,P,L,S,T})=>{ // 地底王グラドス：岩の巨体、王冠、光る核、地面を叩く巨大な拳
+  const st='#7a7068',d='#2a2622',core='#ffa040',gold='#e0b840',ms='#5a7a3a',c=k.ctx,up=k.wind?-0.9:0;
+  T(k,[-0.4,-0.5,-0.6,0.0,-0.65,0.35],'#5e5650',d,0.3);E(k,-0.65,0.48,0.24,0.2,0,'#5e5650',d);
+  for(const x of [-0.35,0.1])P(k,[x-0.14,0.1,x+0.14,0.1,x+0.17,0.7,x-0.17,0.7],'#6a625a',d);
+  P(k,[-0.78,-0.05,-0.62,-0.85,0.05,-1.02,0.62,-0.72,0.72,0.05,0.38,0.32,-0.5,0.32],st,d);
+  c.strokeStyle=core;c.lineWidth=0.04;c.shadowColor=core;c.shadowBlur=10;
+  S(k,[-0.4,-0.7,-0.2,-0.4,-0.3,-0.1],core,0.04);S(k,[0.3,-0.6,0.15,-0.3,0.35,0.0],core,0.04);
+  const g=c.createRadialGradient(0,-0.35,0.02,0,-0.35,0.22);g.addColorStop(0,'#fff0c0');g.addColorStop(1,core);E(k,0,-0.35,0.18,0.18,0,g);c.shadowBlur=0;
+  for(const [x,y] of [[-0.55,-0.6],[0.4,-0.75]])E(k,x,y,0.14,0.07,0,ms);
+  P(k,[0.12,-0.98,0.48,-0.98,0.52,-0.65,0.1,-0.65],'#8a8078',d);
+  P(k,[0.1,-0.98,0.12,-1.25,0.2,-1.08,0.3,-1.32,0.4,-1.08,0.48,-1.25,0.5,-0.98],gold,'#7a5a10');
+  E(k,0.3,-1.24,0.035,0.035,0,'#e04040');
+  for(const x of [0.24,0.42])P(k,[x-0.06,-0.84,x+0.06,-0.82,x+0.05,-0.78,x-0.06,-0.8],k.ph2?'#ff3a2a':core);
+  T(k,[0.45,-0.55,0.75,-0.2+up*0.5,0.85,0.25+up],st,d,0.34);
+  P(k,[0.65,0.2+up,1.08,0.2+up,1.12,0.6+up,0.62,0.62+up],'#8a8078',d);
+  for(let i=0;i<3;i++)L(k,[0.72+i*0.12,0.25+up,0.72+i*0.12,0.55+up],d,0.025);
+};
+BossArt.A.crystal_guardian=(k,{E,P,L})=>{ // 結晶の大守護者：浮かぶ結晶の体、まわる結晶片、結晶の腕と爪
+  const cr='#8a6ad8',lt='#dccaff',d='#2e1e62',c=k.ctx,y=-0.32+Math.sin(k.t*2)*0.07;
+  const orb=front=>{for(let i=0;i<4;i++){const a=k.t*1.5+i*TAU/4,z=Math.sin(a);if((z>0)!==front)continue;const x=Math.cos(a)*0.95,yy=y+z*0.18-0.1;P(k,[x,yy-0.14,x+0.07,yy,x,yy+0.14,x-0.07,yy],front?lt:'#6a4ab8',d,0.02);}};
+  orb(false);
+  const g=c.createRadialGradient(0,y,0.05,0,y,1.2);g.addColorStop(0,'rgba(200,170,255,.35)');g.addColorStop(1,'rgba(200,170,255,0)');c.fillStyle=g;c.beginPath();c.arc(0,y,1.2,0,TAU);c.fill();
+  P(k,[-0.4,y-0.45,-0.75,y-0.25,-0.45,y-0.05],'#6a4ab8',d);
+  P(k,[0,y-0.9,0.42,y-0.1,0,y+0.75,-0.42,y-0.1],cr,d);
+  P(k,[0,y-0.9,0.42,y-0.1,0,y-0.05],lt,d,0.02);P(k,[0,y-0.05,0.42,y-0.1,0,y+0.75],'#6a4ab8',d,0.02);
+  P(k,[0.05,y-1.2,0.2,y-1.0,0.05,y-0.85,-0.1,y-1.0],lt,d);
+  const ge=c.createRadialGradient(0.12,y-0.25,0.01,0.12,y-0.25,0.1);ge.addColorStop(0,'#fff');ge.addColorStop(1,k.ph2?'#ff3a2a':'#80f0ff');E(k,0.12,y-0.25,0.09,0.09,0,ge);
+  P(k,[0.35,y-0.45,0.72,y-0.3,0.45,y-0.1],lt,d);
+  const up=k.wind?-0.6:Math.sin(k.t*2)*0.06;
+  for(let i=0;i<3;i++){const x=0.6+i*0.22,yy=y-0.1+i*(0.15+up*0.4);P(k,[x,yy-0.08,x+0.1,yy,x,yy+0.08,x-0.1,yy],cr,d,0.02);}
+  const cx=1.25,cy=y+0.42+up*1.1;for(let i=0;i<3;i++)P(k,[cx-0.05,cy-0.05,cx+0.3,cy-0.2+i*0.15,cx,cy+0.05],lt,d,0.02);
+  orb(true);
+};
+BossArt.A.quake_dragon=(k,{E,P,L,S,T,leg,eye})=>{ // 地底の轟音竜：岩の背板、重い四肢、鼻先の角、尾の先の岩の塊
+  const b='#7a6a52',d='#2a2216',rk='#9a8c70',be='#c0b088',c=k.ctx;
+  if(k.wind){c.strokeStyle='rgba(40,30,20,.8)';c.lineWidth=0.04;for(let i=0;i<5;i++){c.beginPath();c.moveTo(0.3,0.7);c.lineTo(0.3+Math.cos(i*1.2)*0.9,0.7+Math.sin(i*1.2)*0.12);c.stroke();}}
+  T(k,[-0.65,-0.05,-1.0,0.1,-1.3,0.35],b,d,0.26);
+  E(k,-1.35,0.38,0.17,0.15,0,rk,d);for(let i=0;i<4;i++){const a=i*1.6;P(k,[-1.35+Math.cos(a)*0.12,0.38+Math.sin(a)*0.12,-1.35+Math.cos(a)*0.26,0.38+Math.sin(a)*0.24,-1.35+Math.cos(a+0.4)*0.14,0.38+Math.sin(a+0.4)*0.13],rk,d,0.02);}
+  for(const [x,ph] of [[-0.55,0],[0.3,1.6]])leg(k,x,0.15,ph,'#5e5240',0.2,{paw:d,sw:0.12,knee:0});
+  E(k,-0.12,-0.05,0.8,0.46,0,b,d);E(k,-0.1,0.25,0.62,0.15,0,be);
+  for(const [x,h] of [[-0.65,0.3],[-0.35,0.42],[-0.02,0.45],[0.3,0.35]])P(k,[x-0.15,-0.4,x-0.05,-0.4-h,x+0.12,-0.42-h*0.6,x+0.16,-0.38],rk,d);
+  for(const [x,ph] of [[-0.38,3.1],[0.45,4.7]])leg(k,x,0.15,ph,b,0.2,{paw:d,sw:0.12,knee:0});
+  T(k,[0.5,-0.2,0.75,-0.3],b,d,0.34);
+  c.save();c.translate(0.9,-0.32);
+  P(k,[-0.15,-0.22,0.45,-0.12,0.55,0.05,0.45,0.12,-0.15,0.2],b,d);
+  const op=k.wind?0.2:0.03;P(k,[-0.1,0.1,0.45,0.12+op,0.42,0.22+op,-0.1,0.24],be,d);
+  P(k,[0.35,-0.12,0.48,-0.42,0.52,-0.1],rk,d);
+  P(k,[-0.05,-0.2,-0.38,-0.42,-0.1,-0.1],rk,d);
+  eye(k,0.12,-0.06,0.045,'#f0a020');
+  if(k.wind){c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=0.03;for(let i=1;i<4;i++){c.beginPath();c.arc(0.55,0.1,0.15*i+((k.t*3)%1)*0.15,-0.6,0.6);c.stroke();}}
+  c.restore();
+};
+BossArt.A.fire_phoenix=(k,{E,P,L,S,wing,flame,eye})=>{ // 焦土の不死鳥：炎の翼、炎の冠羽、たなびく長い尾羽
+  const b='#e85a1e',lt='#ffd040',d='#6a1a04',c=k.ctx,y=-0.45+Math.sin(k.t*4)*0.06,fl=Math.sin(k.t*7);
+  for(let i=0;i<3;i++){const tw=Math.sin(k.t*3+i)*0.1,a=[-0.35,y+0.1,-0.8,y+0.3+i*0.1+tw,-1.2,y+0.15+i*0.18-tw,-1.45,y+0.35+i*0.15];S(k,a,i===1?lt:b,0.06);flame(k,-1.45,y+0.42+i*0.15,0.22,0.08,b,lt);}
+  wing(k,-0.05,y-0.12,1.15,-2.4+fl*0.5,'#c83a10',d,6,lt);
+  for(const s of [0,1])L(k,[0.0+s*0.1,y+0.2,0.05+s*0.1,y+0.45],'#e0a020',0.04);
+  E(k,0,y,0.42,0.27,-0.3,b,d);E(k,0.15,y+0.06,0.24,0.16,-0.4,'#ffb040');
+  E(k,0.38,y-0.36,0.18,0.16,0,b,d);
+  for(let i=0;i<3;i++)flame(k,0.28+i*0.07,y-0.48,0.3+i*0.06,0.06,b,lt);
+  P(k,[0.52,y-0.4,0.72,y-0.32,0.52,y-0.28],'#f0c030',d,0.02);
+  eye(k,0.44,y-0.38,0.035,'#3a0a00');
+  wing(k,0.02,y-0.15,1.25,-1.95+fl*0.6,b,d,6,lt);
+  c.fillStyle='rgba(255,180,60,.8)';for(let i=0;i<6;i++){const o=(k.t*0.6+i/6)%1;c.beginPath();c.arc(-0.6+Math.sin(i*2.3)*0.8,y+0.4-o*1.2,0.03*(1-o),0,TAU);c.fill();}
+};
+BossArt.A.fire_griffon=(k,{E,P,L,S,T,leg,wing,flame,eye})=>{ // 火口の翼獅子：獅子の体、燃えるたてがみ、背の翼、炎の尾先
+  const b='#c88a3a',d='#4a2808',be='#ecc890',mn='#e8501e',ml='#ffb040',c=k.ctx,fl=Math.sin(k.t*6);
+  wing(k,-0.15,-0.42,1.1,-2.5+fl*0.4,'#8a3010',d,6,ml);
+  for(const [x,ph] of [[-0.55,0],[0.3,1.6]])leg(k,x,-0.05,ph,'#a8702a',0.14,{paw:'#a8702a',ol:d,sw:0.18,knee:-0.05});
+  const tl=[-0.75,-0.15,-1.05,-0.05,-1.2,-0.35];S(k,tl,d,0.07);S(k,tl,b,0.045);flame(k,-1.2,-0.32,0.25,0.08,mn,ml);
+  E(k,-0.12,-0.1,0.72,0.36,0,b,d);E(k,-0.08,0.08,0.5,0.15,0,be);
+  for(const [x,ph] of [[-0.4,3.1],[0.45,4.7]])leg(k,x,-0.05,ph,b,0.14,{paw:b,ol:d,sw:0.18,knee:0.05});
+  for(let i=0;i<9;i++){const a=-2.6+i*0.5;flame(k,0.55+Math.cos(a)*0.32,-0.5+Math.sin(a)*0.32,0.28,0.1,mn,ml);}
+  E(k,0.55,-0.5,0.32,0.32,0,mn);
+  E(k,0.65,-0.48,0.22,0.2,0,b,d);P(k,[0.7,-0.5,0.98,-0.42,0.98,-0.32,0.72,-0.3],be,d);
+  E(k,0.98,-0.42,0.04,0.03,0,'#3a1a0a');const op=k.wind?0.1:0.0;P(k,[0.75,-0.3,0.95,-0.3+op,0.75,-0.25],'#8a1a0a');
+  eye(k,0.74,-0.56,0.04,'#f0c020');
+  wing(k,-0.05,-0.45,1.2,-2.15+fl*0.5,'#c84a18',d,6,ml);
+};
+BossArt.A.lava_giant=(k,{E,P,L,S,T})=>{ // 溶岩の巨人：黒い岩の体に走る溶岩の割れ目、燃える目、滴る溶岩
+  const rk='#3a2a26',lv='#ff6a1e',gl='#ffd060',d='#120806',c=k.ctx,up=k.wind?-0.9:Math.sin(k.t*2)*0.04;
+  T(k,[-0.35,-0.55,-0.6,-0.1,-0.65,0.3],'#2a1e1a',d,0.28);E(k,-0.66,0.42,0.2,0.17,0,'#2a1e1a',d);
+  for(const x of [-0.3,0.12])P(k,[x-0.15,0.05,x+0.15,0.05,x+0.18,0.7,x-0.18,0.7],'#2e221e',d);
+  P(k,[-0.7,0.1,-0.6,-0.75,-0.1,-0.95,0.5,-0.8,0.62,0.05,0.3,0.25,-0.5,0.25],rk,d);
+  const crack=a=>{S(k,a,'rgba(255,106,30,.5)',0.1);S(k,a,lv,0.05);S(k,a,gl,0.02);};
+  crack([-0.5,-0.6,-0.3,-0.3,-0.45,0.05]);crack([0.2,-0.75,0.05,-0.4,0.3,-0.1,0.2,0.15]);crack([-0.2,-0.85,-0.05,-0.6]);
+  P(k,[0.05,-0.95,0.42,-0.98,0.48,-0.65,0.05,-0.62],rk,d);
+  for(const x of [0.2,0.38])E(k,x,-0.82,0.05,0.035,0,k.ph2?'#ff2a10':gl);
+  P(k,[0.15,-0.7,0.42,-0.7,0.38,-0.66,0.18,-0.66],lv);
+  T(k,[0.4,-0.6,0.72,-0.25+up*0.5,0.82,0.2+up],rk,d,0.3);
+  E(k,0.85,0.32+up,0.25,0.22,0,rk,d);crack([0.72,0.25+up,0.85,0.35+up,0.98,0.3+up]);
+  c.fillStyle=lv;for(let i=0;i<3;i++){const o=(k.t*0.9+i*0.33)%1;c.beginPath();c.arc(0.8+i*0.08,0.5+up+o*0.25,0.035*(1-o*0.5),0,TAU);c.fill();}
+};
+BossArt.A.volcano_dragon=(k,{E,P,L,S,T,leg,bwing,eye})=>{ // 炎獄竜ヴォルカノス：大きな翼、角の生えた竜の頭、炎を溜める顎、トゲの尾
+  const b='#a82a1a',d='#300804',be='#e8a040',hn='#2a1a14',mem='#6a1408',c=k.ctx,fl=Math.sin(k.t*4);
+  bwing(k,-0.15,-0.45,1.3,-2.6+fl*0.3,'#4a0e06','#2a0a04',d);
+  const tl=[-0.65,0.0,-1.0,0.15,-1.25,0.0,-1.5,0.12];T(k,tl,b,d,0.2);for(let i=0;i<3;i++)P(k,[-0.85-i*0.22,0.0,-0.95-i*0.22,-0.2,-1.02-i*0.22,0.02],hn);
+  for(const [x,ph] of [[-0.45,0],[0.3,1.6]])leg(k,x,0.1,ph,'#7a1a10',0.17,{paw:hn,sw:0.12,knee:-0.05});
+  E(k,-0.1,-0.05,0.7,0.42,0,b,d);E(k,-0.05,0.2,0.55,0.15,0,be);for(let i=0;i<5;i++)L(k,[-0.45+i*0.18,0.1,-0.45+i*0.18,0.32],'#b87830',0.02);
+  c.fillStyle='rgba(255,160,40,.6)';for(const [x,y] of [[-0.4,-0.25],[0.0,-0.3],[-0.2,-0.05]]){c.beginPath();c.arc(x,y,0.05,0,TAU);c.fill();}
+  for(const [x,ph] of [[-0.3,3.1],[0.45,4.7]])leg(k,x,0.1,ph,b,0.17,{paw:hn,sw:0.12,knee:0.05});
+  T(k,[0.45,-0.25,0.6,-0.6,0.75,-0.85],b,d,0.26);
+  for(let i=0;i<3;i++)P(k,[0.45+i*0.1,-0.4-i*0.18,0.38+i*0.1,-0.55-i*0.18,0.5+i*0.1,-0.45-i*0.18],hn);
+  c.save();c.translate(0.85,-0.92);
+  E(k,0,0,0.25,0.2,0,b,d);
+  const op=k.wind?0.18:0.04;
+  P(k,[0.05,0.04,0.58,0.1+op,0.52,0.2+op,0.02,0.16],be,d);
+  if(k.wind){const g=c.createRadialGradient(0.45,0.08+op/2,0.01,0.45,0.08+op/2,0.25);g.addColorStop(0,'#fff0a0');g.addColorStop(1,'rgba(255,120,20,0)');c.fillStyle=g;c.beginPath();c.arc(0.45,0.08,0.25,0,TAU);c.fill();}
+  P(k,[0.05,-0.15,0.6,-0.04,0.6,0.07,0.05,0.06],b,d);
+  for(let i=0;i<3;i++)P(k,[0.25+i*0.1,0.06,0.28+i*0.1,0.12,0.31+i*0.1,0.06],'#fff');
+  for(const s of [0,1])S(k,[-0.05+s*0.08,-0.14,-0.35+s*0.1,-0.45-s*0.05,-0.55+s*0.1,-0.4-s*0.1],hn,0.08-s*0.02);
+  eye(k,0.14,-0.07,0.045,'#ffd040');
+  c.restore();
+  bwing(k,-0.05,-0.5,1.35,-2.15+fl*0.35,mem,'#3a0a04',d);
+};
+BossArt.A.felgnas=(k,{E,P,L,S,T,leg,eye})=>{ // 熔鉄の魔獣フェルグナス：鉄の装甲をまとった獣、継ぎ目から光る溶けた鉄、金属の角
+  const ir='#4a4a54',d='#121216',mt='#ff8a2a',ht='#ffe080',c=k.ctx;
+  const seam=a=>{S(k,a,'rgba(255,138,42,.45)',0.08);S(k,a,mt,0.035);};
+  for(const [x,ph] of [[-0.55,0],[0.32,1.6]])leg(k,x,-0.05,ph,'#3a3a42',0.15,{paw:d,sw:0.2,knee:-0.08});
+  const tl=[-0.75,-0.15,-1.1,-0.35,-1.35,-0.2];T(k,tl,ir,d,0.12);P(k,[-1.35,-0.32,-1.6,-0.18,-1.35,-0.08],mt,d);
+  E(k,-0.12,-0.1,0.78,0.38,0,ir,d);
+  for(const [x,w] of [[-0.6,0.28],[-0.25,0.32],[0.12,0.3]])P(k,[x-w/2,-0.3,x,-0.55,x+w/2,-0.32,x+w/2,-0.1,x-w/2,-0.08],'#5a5a66',d);
+  seam([-0.75,-0.1,-0.4,-0.05,0.0,-0.08,0.4,-0.05]);seam([-0.43,-0.38,-0.4,0.0]);seam([-0.08,-0.4,-0.05,0.0]);
+  for(const [x,ph] of [[-0.38,3.1],[0.5,4.7]])leg(k,x,-0.05,ph,ir,0.15,{paw:d,sw:0.2,knee:0.08});
+  c.save();c.translate(0.72,-0.38);c.rotate(k.wind?0.2:0);
+  P(k,[-0.2,-0.2,0.25,-0.18,0.55,0.0,0.5,0.12,-0.2,0.2],ir,d);
+  const op=k.wind?0.14:0.02;P(k,[-0.1,0.1,0.5,0.1+op,0.45,0.2+op,-0.1,0.2],'#3a3a42',d);
+  if(k.wind||k.ph2){c.fillStyle=mt;const o=(k.t*1.2)%1;c.beginPath();c.arc(0.4,0.22+op+o*0.3,0.035,0,TAU);c.fill();}
+  for(const s of [0,1])S(k,[-0.05+s*0.1,-0.18,-0.3+s*0.1,-0.5,-0.45+s*0.12,-0.35],s?'#8a8a96':'#6a6a76',0.07);
+  seam([-0.15,-0.05,0.2,-0.02]);
+  E(k,0.2,-0.08,0.05,0.035,0,k.ph2?'#ff3a2a':ht);
+  c.restore();
+};
+BossArt.A.crimson_serpent=(k,{E,P,L,S,T,along,eye})=>{ // 紅蓮の大蛇：とぐろを巻く体、鎌首、裂けた舌、炎のような襟
+  const b='#c8281e',be='#f0c060',d='#3a0604',sc='#8a1410',c=k.ctx,sw=Math.sin(k.t*2)*0.06;
+  for(const [x,y,rx,ry] of [[-0.3,0.5,0.8,0.18],[-0.25,0.3,0.62,0.16]]){c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c.strokeStyle=d;c.lineWidth=0.34;c.stroke();c.strokeStyle=k.c(b);c.lineWidth=0.26;c.stroke();c.strokeStyle=k.c(sc);c.lineWidth=0.03;c.setLineDash([0.06,0.08]);c.stroke();c.setLineDash([]);}
+  const nk=[0.1,0.28,0.35,-0.05,0.2+sw,-0.45,0.45+sw,-0.85];T(k,nk,b,d,0.26);
+  S(k,nk.map((v,i)=>i%2?v:v+0.08),be,0.07);
+  c.save();c.translate(0.42+sw,-0.85);
+  for(let i=0;i<7;i++){const a=-2.9+i*0.35;P(k,[Math.cos(a)*0.12,Math.sin(a)*0.12,Math.cos(a+0.17)*0.42,Math.sin(a+0.17)*0.42+Math.sin(k.t*8+i)*0.03,Math.cos(a+0.34)*0.12,Math.sin(a+0.34)*0.12],i%2?'#ff8a20':'#e8401a',d,0.02);}
+  E(k,0.12,0,0.26,0.18,0.1,b,d);
+  const op=k.wind?0.16:0.03;
+  P(k,[0.15,0.02,0.55,0.08+op,0.15,0.14],be,d);P(k,[0.12,-0.15,0.58,-0.04,0.55,0.06,0.12,0.06],b,d);
+  if(k.wind){P(k,[0.32,0.05,0.34,0.16,0.37,0.05],'#fff');}
+  if(Math.sin(k.t*5)>0.3)S(k,[0.55,0.04,0.75,0.06,0.82,0.0],'#ff3a5a',0.02),L(k,[0.75,0.06,0.84,0.1],'#ff3a5a',0.02);
+  E(k,0.28,-0.08,0.05,0.04,0,k.ph2?'#ff3a2a':'#f0d020',d,0.015);E(k,0.28,-0.08,0.012,0.035,0,'#111');
+  c.restore();
+};
+// --- 上から見た姿（虫・コウモリ・蛾）：進行方向が +x ---
+function topLegs(k,H,xs,len,col,w,ph0){ // 左右に張り出す節のある脚
+  const {L}=H;xs.forEach((x,i)=>{for(const s of [-1,1]){const p=k.p+i*2.1+(s>0?Math.PI:0)+(ph0||0),sw=Math.sin(p)*0.12;
+    const kx=x+(i-1)*0.12+sw*0.5,ky=s*len*0.55,fx=x+(i-1)*0.3+sw,fy=s*len;L(k,[x,s*0.15,kx,ky,fx,fy],col,w);}});
+}
+BossArt.top.stag_beetle=1;
+BossArt.A.stag_beetle=(k,H)=>{ // 大顎クワガタ（上から）：左右に開く大顎、つやのある背中
+  const {E,P,L,S}=H,b='#3a2618',hl='#8a6040',d='#0e0804',m='#5a3818',c=k.ctx;
+  topLegs(k,H,[-0.45,-0.05,0.3],0.75,d,0.06);
+  E(k,-0.38,0,0.62,0.44,0,b,d);
+  L(k,[0.2,0,-1.0,0],'#000',0.03);
+  c.fillStyle='rgba(255,220,170,.28)';for(const s of [-1,1]){c.beginPath();c.ellipse(-0.42,s*0.2,0.38,0.07,0,0,TAU);c.fill();}
+  E(k,0.33,0,0.24,0.38,0,b,d);E(k,0.36,0,0.1,0.25,0,'rgba(255,220,170,.18)');
+  E(k,0.64,0,0.18,0.26,0,b,d);
+  for(const s of [-1,1])E(k,0.72,s*0.2,0.05,0.04,0,'#c8a040');
+  const op=k.wind?0.35:0.08+Math.sin(k.t*3)*0.05;
+  for(const s of [-1,1]){c.save();c.translate(0.76,s*0.13);c.rotate(s*op);
+    const a=[0,0,0.3,s*0.25,0.62,s*0.22,0.78,s*0.02];S(k,a,d,0.15);S(k,a,m,0.1);
+    P(k,[0.42,s*0.22,0.46,s*0.08,0.52,s*0.21],m,d,0.02);P(k,[0.76,s*0.03,0.86,-s*0.05,0.7,-s*0.0],m,d,0.02);c.restore();}
+  for(const s of [-1,1])S(k,[0.7,s*0.22,0.85,s*0.45,1.05,s*0.42],d,0.025);
+};
+BossArt.top.scarab=1;
+BossArt.A.scarab=(k,H)=>{ // 灼熱の大甲虫（上から）：赤金の丸い背、熊手のような頭、前へ伸びる角
+  const {E,P,L,S}=H,sh='#b8401e',hl='#f0a040',d='#3e0e04',gold='#e8c040',c=k.ctx;
+  topLegs(k,H,[-0.4,-0.05,0.3],0.78,d,0.07);
+  for(let i=0;i<3;i++)for(const s of [-1,1])L(k,[-0.4+i*0.35,s*0.5,-0.36+i*0.35,s*0.58],d,0.04);
+  const g=c.createRadialGradient(-0.35,-0.15,0.05,-0.25,0,0.7);g.addColorStop(0,k.c(hl));g.addColorStop(0.5,k.c(sh));g.addColorStop(1,k.c('#6a1a08'));
+  E(k,-0.25,0,0.62,0.55,0,g,d);L(k,[0.3,0,-0.85,0],d,0.03);
+  E(k,0.42,0,0.28,0.45,0,sh,d);E(k,0.38,-0.12,0.1,0.15,0,'rgba(255,220,150,.3)');
+  const rake=[];for(let i=0;i<7;i++){const a=-0.9+i*0.3,rr=i%2?0.38:0.3;rake.push(0.62+Math.cos(a)*rr,Math.sin(a)*rr);}
+  P(k,[0.62,-0.3,...rake,0.62,0.3],sh,d);
+  S(k,[0.62,0,0.9,0,1.12,0],d,0.15);S(k,[0.62,0,0.9,0,1.12,0],'#7a2a10',0.1);E(k,1.14,0,0.07,0.06,0,'#7a2a10',d);
+  for(const s of [-1,1])E(k,0.66,s*0.24,0.04,0.04,0,k.ph2?'#ff3a2a':gold);
+  c.lineWidth=0.025;for(let i=0;i<3;i++){const o=(k.t*0.8+i*0.33)%1;c.strokeStyle=`rgba(255,180,90,${0.3*(1-o)})`;c.beginPath();c.arc(-0.25,0,0.7+o*0.35,0,TAU);c.stroke();}
+};
+BossArt.top.crystal_scorpion=1;
+BossArt.A.crystal_scorpion=(k,H)=>{ // 晶毒の大蠍（上から）：前へ伸びる二つのハサミ、8本の脚、背に結晶、振り上げる尾と毒針
+  const {E,P,L,claw,along}=H,b='#4a3a6a',d='#160e26',cr='#c8a0ff',c=k.ctx;
+  topLegs(k,H,[-0.5,-0.25,0.0,0.22],0.72,d,0.055);
+  const sw=Math.sin(k.t*3)*0.08,fw=k.wind?1:0;
+  const tail=[-0.6,0,-0.95,sw,-1.25-0.0*fw,sw*1.5,-1.3+fw*0.9,0.05,-1.0+fw*1.25,0.0];
+  for(let i=0;i<7;i++){const [x,y]=along(tail,i/7);E(k,x,y,0.13-i*0.008,0.12-i*0.008,0,b,d);}
+  for(let i=0;i<4;i++)E(k,-0.4+i*0.2,0,0.16,0.3-i*0.01,0,b,d);
+  for(const [x,y] of [[-0.45,0],[-0.2,0.12],[-0.2,-0.12],[0.05,0]])P(k,[x-0.08,y,x,y-0.1,x+0.08,y,x,y+0.1],cr,'#6a40c0',0.02);
+  const [sx,sy,sa]=along(tail,1);c.save();c.translate(sx,sy);c.rotate(sa);P(k,[-0.05,-0.08,0.28,0,-0.05,0.08],cr,'#6a40c0');c.fillStyle='rgba(220,190,255,.7)';c.beginPath();c.arc(0.28,0,0.05,0,TAU);c.fill();c.restore();
+  E(k,0.35,0,0.24,0.28,0,b,d);
+  for(const [x,y] of [[0.52,-0.06],[0.52,0.06],[0.45,-0.12],[0.45,0.12]])E(k,x,y,0.03,0.03,0,k.ph2?'#ff3a2a':'#ff7aa8');
+  const op=k.wind?0.45:0.12+Math.sin(k.t*3)*0.06;
+  for(const s of [-1,1]){H.L(k,[0.4,s*0.2,0.6,s*0.45,0.85,s*0.45],d,0.12);H.L(k,[0.4,s*0.2,0.6,s*0.45,0.85,s*0.45],b,0.08);c.save();c.scale(1,s);claw(k,0.95,0.45,0.4,-0.25,op,b,d);c.restore();}
+};
+BossArt.top.centipede=1;
+BossArt.A.centipede=(k,H)=>{ // 晶殻の大百足（上から）：くねる体節、左右にずらりと並ぶ脚、結晶の殻
+  const {E,P,L,S}=H,b='#6a2e22',d='#200a06',cr='#a0d8f0',c=k.ctx;
+  const seg=[];for(let i=0;i<11;i++){const x=-1.3+i*0.22,y=Math.sin(k.t*5-i*0.7)*0.18*(1-i/14);seg.push([x,y]);}
+  seg.forEach(([x,y],i)=>{for(const s of [-1,1]){const sw=Math.sin(k.p*1.6+i*1.1+(s>0?1.5:0))*0.07;L(k,[x,y+s*0.1,x+sw,y+s*0.3,x+0.05+sw,y+s*0.4],'#a85a3a',0.035);}});
+  seg.forEach(([x,y],i)=>{E(k,x,y,0.13,0.18,0,i%2?b:'#7a3a28',d);P(k,[x-0.07,y,x,y-0.1,x+0.07,y,x,y+0.1],cr,'#3a8ab0',0.02);});
+  const [hx,hy]=seg[10];c.save();c.translate(hx+0.15,hy);
+  E(k,0,0,0.18,0.2,0,b,d);
+  for(const s of [-1,1])S(k,[0.1,s*0.1,0.35,s*0.35,0.6,s*0.32],d,0.03);
+  const op=k.wind?0.4:0.12;
+  for(const s of [-1,1]){c.save();c.translate(0.12,s*0.08);c.rotate(s*op);S(k,[0,0,0.2,s*0.06,0.3,-s*0.04],'#c8a050',0.06);c.restore();}
+  for(const s of [-1,1])E(k,0.08,s*0.1,0.035,0.035,0,k.ph2?'#ff3a2a':'#f0d040');c.restore();
+  const [tx,ty]=seg[0];for(const s of [-1,1])S(k,[tx,ty,tx-0.2,ty+s*0.12,tx-0.35,ty+s*0.08],'#a88040',0.04);
+};
+BossArt.top.abyss_spider=1;
+BossArt.A.abyss_spider=(k,H)=>{ // 冥府の大蜘蛛（上から）：8本の長い脚、髑髏模様の大きな腹、赤く光る目の群れ
+  const {E,P,L,S}=H,b='#2a2234',d='#08060c',mk='#e8e0d0',c=k.ctx;
+  for(let i=0;i<4;i++)for(const s of [-1,1]){const p=k.p+i*1.7+(s>0?Math.PI:0),sw=Math.sin(p)*0.15;const a=0.55+i*0.62,bx=0.1;
+    const kx=bx+Math.cos(a)*0.62+sw*0.4,ky=s*Math.sin(a)*0.62,fx=bx+Math.cos(a+0.2)*1.1+sw,fy=s*Math.sin(a+0.2)*1.1;
+    L(k,[bx,s*0.08,kx,ky,fx,fy],d,0.1);L(k,[bx,s*0.08,kx,ky,fx,fy],'#3e3448',0.06);}
+  E(k,-0.45,0,0.55,0.45,0,b,d);
+  c.fillStyle=k.c(mk);c.beginPath();c.ellipse(-0.42,0,0.2,0.22,0,0,TAU);c.fill();c.fillRect(-0.68,-0.1,0.12,0.2);
+  for(const s of [-1,1]){c.fillStyle='#08060c';c.beginPath();c.arc(-0.38,s*0.08,0.06,0,TAU);c.fill();}
+  P(k,[-0.28,-0.02,-0.22,0,-0.28,0.02],'#08060c');
+  for(let i=0;i<3;i++)L(k,[-0.66,-0.06+i*0.06,-0.6,-0.06+i*0.06],'#08060c',0.02);
+  E(k,0.2,0,0.3,0.27,0,b,d);
+  for(const [x,y,s] of [[0.42,-0.06,0.04],[0.42,0.06,0.04],[0.36,-0.13,0.03],[0.36,0.13,0.03],[0.47,0,0.025]])E(k,x,y,s,s,0,k.ph2?'#ff1a1a':'#e83030');
+  const op=k.wind?0.25:0.05;for(const s of [-1,1]){c.save();c.translate(0.48,s*0.06);c.rotate(s*op);S(k,[0,0,0.14,s*0.03,0.18,-s*0.04],'#5a4a60',0.05);c.restore();}
+};
+BossArt.top.giant_bat=1;
+BossArt.A.giant_bat=(k,H)=>{ // 洞窟の大蝙蝠（上から）：左右に広げた皮膜の翼、大きな耳
+  const {E,P,L}=H,b='#4a3a5a',d='#1a1222',mem='#5e426e',bone='#2e2240',c=k.ctx,fl=0.55+0.45*Math.abs(Math.cos(k.t*(k.fast>1?16:10)));
+  for(const s of [-1,1]){c.save();c.scale(1,s*fl);
+    const f=[[0.45,1.25],[0.0,1.4],[-0.35,1.15],[-0.55,0.7]];
+    c.beginPath();c.moveTo(0.1,0.15);c.lineTo(0.25,0.5);c.lineTo(f[0][0],f[0][1]);
+    for(let i=1;i<f.length;i++){const p=f[i-1],q=f[i];c.quadraticCurveTo((p[0]+q[0])/2*0.55,(p[1]+q[1])/2*0.72,q[0],q[1]);}
+    c.quadraticCurveTo(-0.45,0.3,-0.25,0.1);c.closePath();c.fillStyle=k.c(mem);c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+    L(k,[0.1,0.15,0.25,0.5,f[0][0],f[0][1]],bone,0.06);for(let i=1;i<4;i++)L(k,[0.25,0.5,f[i][0],f[i][1]],bone,0.035);
+    c.restore();}
+  E(k,-0.05,0,0.3,0.2,0,b,d);
+  E(k,0.28,0,0.17,0.16,0,b,d);
+  for(const s of [-1,1]){P(k,[0.26,s*0.04,0.56,s*0.32,0.18,s*0.18],b,d);P(k,[0.28,s*0.07,0.5,s*0.28,0.22,s*0.16],'#c87a9a');}
+  for(const s of [-1,1])E(k,0.38,s*0.06,0.03,0.03,0,k.ph2?'#ff1a1a':'#e83a3a');
+  P(k,[0.44,-0.04,0.5,0,0.44,0.04],'#7a5a7a');
+};
+BossArt.top.ghost_moth=1;
+BossArt.A.ghost_moth=(k,H)=>{ // 死霊の大蛾（上から）：大きな翅と目玉模様、羽毛のような触角、青白い霊気
+  const {E,P,L,S}=H,w1='#8a8ab8',w2='#6a6a9a',d='#2a2a48',c=k.ctx,fl=0.6+0.4*Math.abs(Math.cos(k.t*6));
+  const g=c.createRadialGradient(0,0,0.1,0,0,1.3);g.addColorStop(0,'rgba(200,210,255,.3)');g.addColorStop(1,'rgba(200,210,255,0)');c.fillStyle=g;c.beginPath();c.arc(0,0,1.3,0,TAU);c.fill();
+  c.globalAlpha*=0.9;
+  for(const s of [-1,1]){c.save();c.scale(1,s*fl);
+    P(k,[-0.05,0.1,-0.85,0.55,-0.8,0.95,-0.3,0.85,-0.1,0.4],w2,d);
+    E(k,-0.55,0.72,0.1,0.1,0,'#3a2a5a');
+    P(k,[0.2,0.1,0.85,0.95,0.3,1.3,-0.35,1.0,-0.15,0.15],w1,d);
+    E(k,0.22,0.8,0.2,0.2,0,'#e8e0ff',d,0.02);E(k,0.22,0.8,0.12,0.12,0,k.ph2?'#c01a1a':'#3a2a5a');E(k,0.25,0.76,0.035,0.035,0,'#fff');
+    S(k,[0.05,0.25,0.15,0.5,0.35,0.95],'rgba(220,220,255,.5)',0.02);
+    c.restore();}
+  c.globalAlpha/=0.9;
+  E(k,-0.15,0,0.38,0.12,0,'#5a5a7a',d);for(let i=0;i<4;i++)L(k,[-0.4+i*0.1,-0.1,-0.4+i*0.1,0.1],d,0.015);
+  E(k,0.22,0,0.13,0.13,0,'#7a7a9a',d);
+  for(const s of [-1,1]){S(k,[0.3,s*0.05,0.5,s*0.2,0.65,s*0.35],d,0.025);for(let i=1;i<5;i++){const x=0.3+i*0.07,y=s*(0.05+i*0.06);L(k,[x,y,x+0.06,y-s*0.05],d,0.012);}}
+  c.fillStyle='rgba(220,220,255,.6)';for(let i=0;i<4;i++){const o=(k.t*0.5+i/4)%1;c.beginPath();c.arc(-0.6-o*0.6,Math.sin(i*2.1)*0.6,0.025,0,TAU);c.fill();}
+};
+// --- 氷の地 ---
+BossArt.A.ice_bear=(k,{E,P,L,S,leg,eye})=>{ // 氷河の大白熊：白い毛並み、長めの鼻づら、黒い鼻、太い前脚
+  const f='#eef4f8',sh='#c4d4e0',d='#5a7080',ns='#22252a',c=k.ctx,up=k.wind?-0.35:0;
+  for(const [x,ph] of [[-0.6,0],[0.25,1.6]])leg(k,x,0.05,ph,sh,0.22,{paw:sh,ol:d,sw:0.13,knee:-0.03});
+  E(k,-0.1,-0.12,0.86,0.55,0,f,d);E(k,0.25,-0.42,0.42,0.3,-0.2,f);
+  c.fillStyle='rgba(160,200,230,.5)';for(const [x,y] of [[-0.5,-0.55],[-0.2,-0.62],[0.1,-0.55]])P(k,[x-0.06,y+0.05,x,y-0.08,x+0.06,y+0.05],'#bfe6fa');
+  for(const [x,ph] of [[-0.42,3.1]])leg(k,x,0.05,ph,f,0.22,{paw:f,ol:d,sw:0.13,knee:0.03});
+  c.save();c.translate(0.45,0.0);c.rotate(up);L(k,[0,0,0.06,0.35,0.08,0.62],d,0.28);L(k,[0,0,0.06,0.35,0.08,0.62],f,0.22);
+  for(let i=0;i<3;i++)L(k,[0.12+i*0.04,0.66,0.18+i*0.04,0.72],ns,0.03);c.restore();
+  c.save();c.translate(0.78,-0.3);
+  E(k,0,0,0.27,0.22,0,f,d);P(k,[0.1,-0.1,0.48,0.02,0.48,0.12,0.1,0.16],f,d);
+  E(k,0.48,0.05,0.06,0.05,0,ns);E(k,-0.05,-0.2,0.08,0.07,0,f,d);E(k,-0.05,-0.2,0.04,0.035,0,'#9aa8b4');
+  eye(k,0.14,-0.06,0.035);if(k.wind)P(k,[0.15,0.12,0.45,0.15,0.15,0.22],'#7a2a2a',d);
+  c.restore();
+};
+BossArt.A.ice_unicorn=(k,{E,P,L,S,T,leg,eye})=>{ // 雪原の氷角獣：細い脚と蹄、弓なりの首、氷の螺旋の角、流れるたてがみ
+  const b='#dcecf8',d='#4a6a88',mn='#8ad8ff',hn='#c8f4ff',hf='#5a6a88',c=k.ctx;
+  for(const [x,ph] of [[-0.55,0],[0.22,1.6]])leg(k,x,-0.05,ph,'#bcd0e4',0.1,{paw:hf,ol:d,sw:0.25,knee:-0.06,lift:0.18});
+  for(let i=0;i<3;i++){const tw=Math.sin(k.t*3+i)*0.08;S(k,[-0.75,-0.35,-1.0,-0.3+i*0.1+tw,-1.2,0.0+i*0.12],i===1?'#bfefff':mn,0.08);}
+  E(k,-0.15,-0.2,0.66,0.34,0,b,d);
+  for(const [x,ph] of [[-0.4,3.1],[0.38,4.7]])leg(k,x,-0.05,ph,b,0.1,{paw:hf,ol:d,sw:0.25,knee:0.06,lift:0.18});
+  T(k,[0.32,-0.3,0.5,-0.6,0.62,-0.85],b,d,0.26);
+  for(let i=0;i<5;i++){const tw=Math.sin(k.t*4+i)*0.05;S(k,[0.48-i*0.03,-0.95+i*0.15,0.3-i*0.05+tw,-0.8+i*0.15,0.2-i*0.04+tw,-0.6+i*0.15],i%2?'#bfefff':mn,0.07);}
+  c.save();c.translate(0.68,-0.95);c.rotate(0.55);
+  P(k,[-0.12,-0.12,0.42,-0.08,0.48,0.08,-0.05,0.14],b,d);E(k,0.44,0.0,0.03,0.025,0,'#3a4a5a');
+  P(k,[-0.08,-0.12,-0.12,-0.3,0.0,-0.13],b,d);
+  eye(k,0.08,-0.03,0.035,'#3a5a9a');
+  c.save();c.translate(0.08,-0.13);c.rotate(-1.15);P(k,[-0.05,0,0.6,0,-0.05,0.0,0.0,-0.06,0.6,0,0.0,0.06],hn,'#5ab8e0',0.02);
+  for(let i=1;i<5;i++)L(k,[i*0.11,-0.05+i*0.008,i*0.11+0.05,0.05-i*0.008],'#5ab8e0',0.015);c.restore();
+  c.restore();
+  c.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<4;i++){const a=k.t*2+i*1.6;c.beginPath();c.arc(1.0+Math.cos(a)*0.2,-1.4+Math.sin(a)*0.15,0.025,0,TAU);c.fill();}
+};
+BossArt.A.eternal_beast=(k,{E,P,L,S,T,leg,eye})=>{ // 永久凍土の巨象（マンモス）：長い毛、盛り上がった頭、巻いた鼻、長く反った牙
+  const fr='#7a5a44',d='#2a1a0e',tk='#f4ecd8',fs='#e0f0f8',c=k.ctx;
+  for(const [x,ph] of [[-0.6,0],[0.25,1.6]])leg(k,x,0.05,ph,'#5e4434',0.24,{paw:'#3a2a1e',sw:0.1,knee:0});
+  E(k,-0.15,-0.2,0.85,0.58,0,fr,d);
+  E(k,0.55,-0.55,0.38,0.42,0,fr,d);E(k,0.45,-0.85,0.25,0.2,0,fr);
+  const fringe=[];for(let i=0;i<=14;i++){const x=-0.95+i*0.12;fringe.push(x,0.25+(i%2?0.14:0));}
+  P(k,[-0.95,0.1,...fringe,0.75,0.1],'#6a4a36',d);
+  c.fillStyle=k.c(fs);for(const [x,y,w] of [[-0.6,-0.68,0.25],[-0.15,-0.75,0.3],[0.35,-0.95,0.15]]){c.beginPath();c.ellipse(x,y,w,0.06,0,0,TAU);c.fill();}
+  for(let i=0;i<4;i++)P(k,[-0.7+i*0.4,0.3,-0.66+i*0.4,0.44,-0.62+i*0.4,0.3],'#cfeaf8');
+  for(const [x,ph] of [[-0.42,3.1],[0.4,4.7]])leg(k,x,0.05,ph,fr,0.24,{paw:'#3a2a1e',sw:0.1,knee:0});
+  E(k,0.42,-0.5,0.1,0.18,0.2,'#6a4a36',d);
+  const sw=Math.sin(k.t*2)*0.08+(k.wind?-0.35:0);
+  T(k,[0.82,-0.42,0.98,-0.05,0.92+sw,0.3,1.08+sw,0.45],fr,d,0.15);
+  for(const s of [1,0]){const a=[0.75,-0.25+s*0.04,1.0,0.12,1.32,0.02-s*0.04,1.3,-0.3];S(k,a,d,0.12);S(k,a,s?'#d8d0bc':tk,0.08);}
+  eye(k,0.7,-0.58,0.035);
+};
+BossArt.A.frost_cat=(k,{E,P,L,S,leg,eye})=>{ // 白霜の大山猫：耳の先の黒い房、頬の飾り毛、短い尾、斑点
+  const b='#e8eef4',sp='#8a9aae',d='#4a5a6a',c=k.ctx,pn=k.fast>1?0.1:0;
+  for(const [x,ph] of [[-0.5,0],[0.3,1.6]])leg(k,x,-0.05,ph,'#c8d4e0',0.13,{paw:'#c8d4e0',ol:d,sw:0.22,knee:-0.08});
+  S(k,[-0.7,-0.25,-0.9,-0.35],d,0.18);S(k,[-0.7,-0.25,-0.88,-0.34],b,0.13);E(k,-0.92,-0.36,0.06,0.06,0,'#222');
+  E(k,-0.1,-0.12-pn,0.68,0.32,0,b,d);
+  c.fillStyle=k.c(sp);for(const [x,y] of [[-0.5,-0.2],[-0.3,-0.3],[-0.1,-0.18],[0.1,-0.28],[-0.35,-0.05],[0.25,-0.12]]){c.beginPath();c.arc(x,y-pn,0.04,0,TAU);c.fill();}
+  for(const [x,ph] of [[-0.35,3.1],[0.45,4.7]])leg(k,x,-0.05,ph,b,0.13,{paw:b,ol:d,sw:0.22,knee:0.08});
+  c.save();c.translate(0.62,-0.45-pn);
+  const rf=[];for(let i=0;i<=8;i++){const a=0.3+i*0.3,rr=i%2?0.36:0.28;rf.push(Math.cos(a)*rr-0.05,Math.sin(a)*rr*0.9);}P(k,rf,b,d);
+  for(const s of [0,1]){const x=-0.12+s*0.16;P(k,[x-0.08,-0.15,x,-0.5,x+0.08,-0.15],s?b:'#c8d4e0',d);L(k,[x,-0.5,x+0.02,-0.66],'#222',0.035);}
+  E(k,0,0,0.27,0.24,0,b,d);
+  P(k,[0.18,0.02,0.32,0.06,0.2,0.12],'#e0a0a8');
+  c.save();c.translate(0.12,-0.06);c.rotate(-0.15);E(k,0,0,0.07,0.045,0,k.ph2?'#ff3a2a':'#c8e040');E(k,0,0,0.018,0.04,0,'#111');c.restore();
+  for(let i=0;i<3;i++)L(k,[0.25,0.08,0.5,0.0+i*0.07],'#8a9aa8',0.012);
+  if(k.wind){c.fillStyle='rgba(220,240,255,.6)';for(let i=0;i<3;i++){c.beginPath();c.arc(0.45+i*0.12,0.12,0.05+i*0.02,0,TAU);c.fill();}}
+  c.restore();
+};
+BossArt.A.ice_deer=(k,{E,P,L,S,T,leg,eye})=>{ // 氷冠の大鹿：細い脚、長い首、氷でできた大きく枝分かれした角
+  const b='#a8c0d4',d='#3e5a74',be='#eef6fc',an='#d8f6ff',ad='#5aa8d0',c=k.ctx;
+  for(const [x,ph] of [[-0.5,0],[0.22,1.6]])leg(k,x,-0.1,ph,'#8aa4b8',0.1,{paw:'#3a4a5a',ol:d,sw:0.22,knee:-0.06,lift:0.16});
+  E(k,-0.68,-0.38,0.1,0.08,0,be,d);
+  E(k,-0.12,-0.25,0.62,0.32,0,b,d);E(k,-0.1,-0.08,0.45,0.12,0,be);
+  for(const [x,ph] of [[-0.35,3.1],[0.36,4.7]])leg(k,x,-0.1,ph,b,0.1,{paw:'#3a4a5a',ol:d,sw:0.22,knee:0.06,lift:0.16});
+  T(k,[0.3,-0.35,0.45,-0.65,0.55,-0.85],b,d,0.22);
+  c.save();c.translate(0.6,-0.92);
+  const ant=s=>{const o=s*0.1;const main=[0.0+o,-0.1,-0.15+o,-0.45,-0.35+o*2,-0.75];T(k,main,an,ad,0.06);
+    for(const [x,y,ex,ey] of [[-0.07+o,-0.28,0.1+o,-0.5],[-0.2+o*1.5,-0.55,-0.05+o*2,-0.8],[-0.27+o*2,-0.65,-0.5+o*2,-0.75]])T(k,[x,y,ex,ey],an,ad,0.045);};
+  ant(-1);
+  P(k,[-0.1,-0.1,0.38,0.0,0.42,0.12,-0.05,0.12],b,d);E(k,0.4,0.05,0.03,0.025,0,'#2a3a4a');
+  P(k,[-0.12,-0.06,-0.28,-0.2,-0.08,0.0],b,d);
+  eye(k,0.08,-0.02,0.035);
+  ant(1);
+  c.fillStyle='rgba(255,255,255,.9)';for(let i=0;i<3;i++){const a=k.t*3+i*2;c.beginPath();c.arc(-0.3+Math.cos(a)*0.2,-0.6+Math.sin(a)*0.15,0.02,0,TAU);c.fill();}
+  c.restore();
+};
+BossArt.A.frost_wyvern=(k,{E,P,L,S,T,leg,bwing,eye})=>{ // 永冬竜フロストレイン：腕と一体の大きな翼、二本脚、角のある頭、氷の息
+  const b='#5a9ad8',d='#163a64',be='#d8eef8',mem='#9ad0f0',c=k.ctx,fl=Math.sin(k.t*4);
+  bwing(k,-0.1,-0.45,1.3,-2.55+fl*0.4,'#6aa8d8','#2a5a8a',d);
+  const tl=[-0.5,0.0,-0.9,0.15,-1.2,0.0,-1.5,-0.1];T(k,tl,b,d,0.16);for(let i=0;i<3;i++)P(k,[-0.75-i*0.25,0.02,-0.85-i*0.25,-0.18,-0.9-i*0.25,0.02],'#d8f6ff',d,0.02);
+  for(const [x,ph] of [[-0.2,0],[0.1,3.1]]){const p=k.p+ph,sw=Math.sin(p)*0.15;L(k,[x,0.0,x-0.15+sw*0.5,0.35,x+sw,0.68],d,0.16);L(k,[x,0.0,x-0.15+sw*0.5,0.35,x+sw,0.68],x<0?'#4a88c4':b,0.11);for(let i=0;i<3;i++)L(k,[x+sw,0.68,x+sw+0.06+i*0.04,0.72],d,0.03);}
+  E(k,-0.05,-0.15,0.55,0.38,0,b,d);E(k,0.05,0.0,0.38,0.15,0,be);
+  T(k,[0.35,-0.3,0.55,-0.6,0.7,-0.8],b,d,0.22);
+  c.save();c.translate(0.8,-0.86);
+  E(k,0,0,0.22,0.17,0,b,d);
+  P(k,[0.05,-0.12,0.52,-0.02,0.52,0.07,0.05,0.07],b,d);
+  const op=k.wind?0.12:0.03;P(k,[0.05,0.05,0.48,0.09+op,0.05,0.14],be,d);
+  for(const s of [0,1])S(k,[-0.05+s*0.08,-0.12,-0.3+s*0.1,-0.4,-0.45+s*0.1,-0.42],'#e8f8ff',0.06-s*0.015);
+  eye(k,0.12,-0.05,0.04,'#e0f8ff');
+  if(k.wind){const g=c.createRadialGradient(0.6,0.1,0.01,0.6,0.1,0.35);g.addColorStop(0,'rgba(230,250,255,.9)');g.addColorStop(1,'rgba(160,220,255,0)');c.fillStyle=g;c.beginPath();c.arc(0.6,0.1,0.35,0,TAU);c.fill();}
+  c.restore();
+  bwing(k,0.0,-0.5,1.35,-2.1+fl*0.5,mem,'#2a5a8a',d);
+  for(let i=0;i<3;i++){const a=-2.1+fl*0.5;P(k,[Math.cos(a)*1.35*(0.5+i*0.15),-0.5+Math.sin(a)*1.35*(0.5+i*0.15),Math.cos(a)*1.35*(0.5+i*0.15)+0.04,-0.5+Math.sin(a)*1.35*(0.5+i*0.15)-0.15,Math.cos(a)*1.35*(0.5+i*0.15)+0.08,-0.5+Math.sin(a)*1.35*(0.5+i*0.15)],'#e8faff',d,0.015);}
+};
+BossArt.A.ice_ape=(k,{E,P,L,S,T,eye})=>{ // 氷嶺の剛猿：白い毛の巨大なゴリラ、太い腕を地面につく、眉の張った顔、肩の氷
+  const f='#e6eef4',d='#5a6a7a',sk='#5a6a7a',ic='#9ad8f0',c=k.ctx,up=k.wind?1:0,bt=up?Math.sin(k.t*14)*0.08:0;
+  T(k,[-0.3,-0.55,-0.4,-0.1+0*up,-0.35,0.5-up*1.0],'#c8d4de',d,0.28);E(k,-0.33,0.6-up*1.0,0.18,0.12,0,'#c8d4de',d);
+  for(const x of [-0.45,-0.1]){const s=Math.sin(k.p*0.7+x*5)*0.06;T(k,[x,0.1,x+s,0.62],'#d0dae4',d,0.24);E(k,x+s+0.06,0.66,0.16,0.07,0,sk);}
+  E(k,-0.1,-0.35,0.62,0.6,0.3,f,d);
+  E(k,0.2,-0.2,0.25,0.3,0.3,'#b8c4d0');
+  for(const [x,y] of [[-0.2,-0.85],[0.05,-0.8],[-0.4,-0.7]])P(k,[x-0.07,y+0.06,x,y-0.18,x+0.07,y+0.06],ic,'#3a8ab0',0.02);
+  c.save();c.translate(0.42,-0.75);
+  E(k,0,0,0.25,0.24,0,f,d);E(k,0.1,0.04,0.17,0.16,0,sk);
+  L(k,[0.0,-0.08,0.26,-0.06],'#2a3440',0.06);
+  for(const x of [0.08,0.18])E(k,x,-0.01,0.025,0.025,0,k.ph2?'#ff3a2a':'#f0e0a0');
+  P(k,[0.12,0.1,0.24,0.1,0.22,0.14,0.13,0.14],'#2a3440');
+  c.restore();
+  T(k,[0.3,-0.45,0.65,-0.1-up*0.7+bt,0.75,0.45-up*1.0+bt],f,d,0.3);
+  E(k,0.78,0.55-up*1.0+bt,0.2,0.15,0,sk,d);
+};
+// --- 冥府・黄泉・墓 ---
+BossArt.A.headless_knight=(k,{E,P,L,S,T,flame})=>{ // 首狩り騎士（デュラハン）：首のない鎧、首から立つ霊の炎、脇に抱えた兜、大鎌
+  const ar='#6a6a7a',d='#1a1a22',ck='#3a1a3a',gf='#7af0c8',gold='#c8a040',c=k.ctx;
+  const wv=Math.sin(k.t*3)*0.06;const cl=[-0.15,-0.7,-0.55,-0.5,-0.75,0.35+wv,-0.6,0.25,-0.5,0.45+wv,-0.35,0.3,-0.25,0.45];P(k,cl,ck,'#12060f');
+  for(const x of [-0.2,0.1]){const s=Math.sin(k.p*0.8+x*9)*0.08;T(k,[x,0.0,x+s,0.6],ar,d,0.15);P(k,[x+s-0.08,0.58,x+s+0.18,0.6,x+s+0.15,0.7,x+s-0.08,0.7],'#4a4a58',d);}
+  P(k,[-0.35,-0.75,0.3,-0.75,0.28,-0.1,0.18,0.05,-0.28,0.05,-0.36,-0.1],ar,d);
+  L(k,[-0.05,-0.75,-0.05,0.05],'#8a8a9a',0.03);P(k,[-0.32,0.05,0.25,0.05,0.3,0.25,-0.36,0.25],'#55556a',d);
+  for(const x of [-0.35,0.25])E(k,x,-0.7,0.18,0.12,0,'#7a7a8a',d);
+  E(k,-0.05,-0.8,0.12,0.04,0,'#2a1a22');
+  for(let i=0;i<3;i++)flame(k,-0.1+i*0.06,-0.8,0.35+i*0.05,0.06,'#3ac8a0',gf);
+  c.save();c.translate(-0.25,-0.1);E(k,0,0,0.16,0.15,0,ar,d);P(k,[-0.12,-0.02,0.14,-0.04,0.14,0.02,-0.12,0.04],'#111');
+  E(k,0.02,-0.01,0.03,0.015,0,k.ph2?'#ff3a2a':gf);P(k,[-0.02,-0.15,0.04,-0.28,0.08,-0.14],'#8a2020');c.restore();
+  const sw=k.wind?-1.0:Math.sin(k.t*1.5)*0.05;
+  c.save();c.translate(0.32,-0.35);c.rotate(sw);
+  L(k,[0.0,0.9,0.15,-0.95],'#3a2a1e',0.06);
+  c.beginPath();c.moveTo(0.14,-0.92);c.quadraticCurveTo(0.7,-1.15,1.0,-0.6);c.quadraticCurveTo(0.6,-0.9,0.13,-0.78);c.closePath();c.fillStyle=k.c('#c8ccd8');c.fill();c.strokeStyle=d;c.lineWidth=k.lw;c.stroke();
+  L(k,[0.25,-0.88,0.85,-0.68],'rgba(255,255,255,.5)',0.02);
+  E(k,0.08,-0.2,0.1,0.08,0,'#55556a',d);
+  c.restore();
+  E(k,0.3,-0.55,0.1,0.18,0.3,ar,d);
+};
+BossArt.A.yomi_samurai=(k,{E,P,L,S,T,flame})=>{ // 黄泉の怨霊武者：鎧兜（鍬形の前立て）、面頬の光る目、刀、霊体の下半身、人魂
+  const ar='#2e2e4a',d='#0c0c1a',lc='#b83a3a',gold='#e8c040',gh='#a8b8ff',c=k.ctx,y=-0.15+Math.sin(k.t*2)*0.05;
+  for(let i=0;i<2;i++){const a=k.t*1.5+i*Math.PI,x=Math.cos(a)*0.9,yy=y-0.5+Math.sin(a)*0.2;if(Math.sin(a)<0)flame(k,x,yy+0.1,0.25,0.08,'#5a6ae8','#c8d8ff');}
+  const g=c.createLinearGradient(0,y+0.2,0,0.75);g.addColorStop(0,'rgba(168,184,255,.8)');g.addColorStop(1,'rgba(168,184,255,0)');
+  c.beginPath();c.moveTo(-0.32,y+0.2);c.quadraticCurveTo(-0.4,y+0.6,-0.7+Math.sin(k.t*3)*0.1,0.7);c.quadraticCurveTo(-0.1,y+0.6,0.25,y+0.2);c.closePath();c.fillStyle=g;c.fill();
+  for(let i=0;i<4;i++)P(k,[-0.32+i*0.15,y+0.05,-0.18+i*0.15,y+0.05,-0.2+i*0.15,y+0.38,-0.34+i*0.15,y+0.35],i%2?ar:'#3a3a5a',d,0.02);
+  P(k,[-0.3,y-0.7,0.28,y-0.7,0.25,y+0.08,-0.3,y+0.08],ar,d);
+  for(let i=0;i<5;i++)L(k,[-0.28,y-0.6+i*0.13,0.24,y-0.6+i*0.13],lc,0.03);
+  for(let i=0;i<4;i++)P(k,[-0.48,y-0.72+i*0.12,-0.2,y-0.72+i*0.12,-0.2,y-0.62+i*0.12,-0.5,y-0.6+i*0.12],i%2?ar:'#3a3a5a',d,0.02);
+  c.save();c.translate(0.0,y-0.92);
+  P(k,[-0.3,0.0,-0.35,0.18,0.25,0.15,0.22,0.0],'#3a3a5a',d);
+  E(k,0,-0.08,0.24,0.2,0,ar,d);
+  P(k,[0.05,0.0,0.24,0.0,0.26,0.18,0.06,0.2],'#7a1a1a',d);
+  for(const x of [0.12,0.2])E(k,x,0.06,0.03,0.018,0,k.ph2?'#ff3a2a':gh);
+  for(const s of [0,1])S(k,[0.1,-0.18,0.1+s*0.15-0.1,-0.45,0.25+s*0.1-0.2,-0.6],gold,0.05);
+  E(k,0.1,-0.17,0.05,0.05,0,gold);
+  c.restore();
+  const sw=k.wind?-1.3:-0.35+Math.sin(k.t*1.5)*0.05;
+  c.save();c.translate(0.25,y-0.35);c.rotate(sw);
+  T(k,[0,0,0.25,0.15],ar,d,0.12);
+  L(k,[0.25,0.15,0.35,0.2],'#3a2a1a',0.07);P(k,[0.3,0.1,0.36,0.08,0.4,0.25,0.34,0.27],gold);
+  c.beginPath();c.moveTo(0.38,0.2);c.quadraticCurveTo(0.9,0.2,1.3,0.0);c.lineTo(1.32,0.04);c.quadraticCurveTo(0.9,0.26,0.38,0.25);c.closePath();c.fillStyle=k.c('#dce0ec');c.fill();c.strokeStyle=d;c.lineWidth=0.02;c.stroke();
+  c.restore();
+  for(let i=0;i<2;i++){const a=k.t*1.5+i*Math.PI,x=Math.cos(a)*0.9,yy=y-0.5+Math.sin(a)*0.2;if(Math.sin(a)>=0)flame(k,x,yy+0.1,0.25,0.08,'#5a6ae8','#c8d8ff');}
+};
+BossArt.A.grave_rat=(k,{E,P,L,S,leg,eye})=>{ // 墓穴の大鼠：とがった鼻先、大きな丸い耳、長く毛のない尾、前歯、赤い目
+  const b='#5a4a44',d='#1a1210',be='#8a7a70',tl='#c8a0a0',ea='#d89a9a',c=k.ctx;
+  const tw=Math.sin(k.t*3)*0.1;S(k,[-0.65,0.15,-1.1,0.4,-1.45,0.2+tw,-1.35,-0.15+tw],d,0.09);S(k,[-0.65,0.15,-1.1,0.4,-1.45,0.2+tw,-1.35,-0.15+tw],tl,0.06);
+  for(const [x,ph] of [[-0.45,0],[0.28,1.6]])leg(k,x,0.15,ph,'#4a3a34',0.12,{paw:ea,sw:0.18,knee:-0.05});
+  E(k,-0.25,-0.1,0.55,0.45,0,b,d);E(k,0.1,0.0,0.45,0.36,0,b,d);
+  const tuft=[];for(let i=0;i<=8;i++){const x=-0.7+i*0.12;tuft.push(x,-0.45-Math.sin(i/8*Math.PI)*0.12+(i%2?-0.08:0));}
+  P(k,[-0.75,-0.3,...tuft,0.3,-0.3],'#4a3c36',d);
+  E(k,0.0,0.18,0.35,0.15,0,be);
+  for(const [x,ph] of [[-0.3,3.1],[0.42,4.7]])leg(k,x,0.15,ph,b,0.1,{paw:ea,sw:0.18,knee:0.05});
+  P(k,[0.42,-0.3,1.1,0.08,1.08,0.14,0.45,0.25],b,d);
+  E(k,1.1,0.1,0.05,0.045,0,ea);
+  P(k,[0.95,0.15,1.02,0.15,1.02,0.26,0.95,0.26],'#f0d860','#8a7020',0.015);
+  for(let i=0;i<3;i++)L(k,[1.0,0.08,1.35,-0.05+i*0.08],'#c8c0b8',0.012);
+  E(k,0.45,-0.42,0.17,0.19,0,b,d);E(k,0.46,-0.42,0.1,0.12,0,ea);
+  eye(k,0.72,-0.08,0.04,'#e01a1a');
+};
+BossArt.A.bone_dragon=(k,{E,P,L,S,T,along,eye})=>{ // 冥府の骨竜：背骨・肋骨・骨の翼と破れた皮膜・角のある頭骨、青く光る眼窩
+  const bn='#e8e0cc',d='#5a5040',gl='#8af0ff',c=k.ctx,fl=Math.sin(k.t*3);
+  const bw=(ang,al)=>{c.save();c.translate(-0.05,-0.45);c.rotate(ang);const len=1.25;
+    c.globalAlpha*=al;c.beginPath();c.moveTo(0,0);c.lineTo(len*0.35,-0.05);c.lineTo(len,0);c.lineTo(len*0.75,len*0.25);c.lineTo(len*0.6,len*0.18);c.lineTo(len*0.45,len*0.45);c.lineTo(len*0.3,len*0.3);c.lineTo(len*0.1,len*0.4);c.closePath();c.fillStyle='rgba(80,70,100,.45)';c.fill();c.globalAlpha/=al;
+    L(k,[0,0,len*0.35,-0.05,len,0],d,0.08);L(k,[0,0,len*0.35,-0.05,len,0],bn,0.05);
+    for(const [x,y] of [[len*0.75,len*0.25],[len*0.45,len*0.45],[len*0.1,len*0.4]]){L(k,[len*0.35,-0.05,x,y],d,0.05);L(k,[len*0.35,-0.05,x,y],bn,0.03);}
+    c.restore();};
+  bw(-2.55+fl*0.3,1);
+  const sp=[-1.45,0.2,-1.0,0.0,-0.55,-0.25,0.0,-0.3,0.4,-0.35,0.6,-0.7,0.75,-0.9];
+  for(const [x,ph] of [[-0.5,0],[0.15,3.1]]){const p=k.p+ph,s=Math.sin(p)*0.12;L(k,[x,-0.15,x-0.12+s*0.5,0.25,x+s,0.65],d,0.09);L(k,[x,-0.15,x-0.12+s*0.5,0.25,x+s,0.65],bn,0.06);for(let i=0;i<3;i++)L(k,[x+s,0.65,x+s+0.04+i*0.05,0.72],bn,0.025);}
+  for(let i=0;i<6;i++){const x=-0.35+i*0.13;S(k,[x,-0.3,x+0.12,-0.05,x+0.02,0.2-Math.abs(i-2.5)*0.04],d,0.05);S(k,[x,-0.3,x+0.12,-0.05,x+0.02,0.2-Math.abs(i-2.5)*0.04],bn,0.03);}
+  const g=c.createRadialGradient(-0.05,-0.05,0.02,-0.05,-0.05,0.35);g.addColorStop(0,'rgba(138,240,255,.45)');g.addColorStop(1,'rgba(138,240,255,0)');c.fillStyle=g;c.beginPath();c.arc(-0.05,-0.05,0.35,0,TAU);c.fill();
+  for(let i=0;i<=20;i++){const [x,y]=along(sp,i/20);const s=0.07-Math.abs(i-12)*0.002;E(k,x,y,s,s,0,bn,d,0.02);}
+  E(k,-0.6,-0.18,0.15,0.1,0,bn,d,0.02);
+  c.save();c.translate(0.88,-0.98);
+  P(k,[-0.15,-0.12,0.15,-0.15,0.52,-0.02,0.5,0.06,-0.1,0.08],bn,d);
+  const op=k.wind?0.14:0.04;P(k,[-0.05,0.08,0.45,0.1+op,0.42,0.16+op,-0.05,0.16],bn,d);
+  for(let i=0;i<4;i++){P(k,[0.15+i*0.08,0.06,0.18+i*0.08,0.11,0.21+i*0.08,0.06],bn,d,0.01);}
+  E(k,0.08,-0.04,0.06,0.05,0,'#111');E(k,0.08,-0.04,0.03,0.03,0,k.ph2?'#ff3a2a':gl);
+  E(k,0.38,0.0,0.025,0.02,0,'#111');
+  for(const s of [0,1])S(k,[-0.08+s*0.06,-0.12,-0.3+s*0.08,-0.35,-0.5+s*0.08,-0.32-s*0.05],bn,0.05);
+  c.restore();
+  bw(-2.1+fl*0.4,1);
+};
+// ===== BOSSART END =====
 const Renderer={
   cv:null,ctx:null,dpr:1,w:0,h:0,scale:1,cam:{x:0,y:0},camInit:false,mapCanvas:null,mapVersion:-1,mapRef:null,
   particles:[],floaters:[],rings:[],shake:0,banner:null,time:0,
@@ -7262,7 +8242,7 @@ const Renderer={
       ctx.save();ctx.globalAlpha=0.35+0.2*Math.sin(this.time*9+e.id);ctx.strokeStyle='#c070ff';ctx.lineWidth=3;ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.arc(0,0,e.r+4,this.time*2,this.time*2+TAU);ctx.stroke();ctx.restore();
     }
-    switch(ed.look||ed.ai){
+    if(!(ed.boss&&BossArt.draw(ctx,e,hurt)))switch(ed.look||ed.ai){
       case 'goblin':this.drawGoblin(ctx,e,hurt,ed.pal);break;
       case 'archer':case 'garcher':this.drawArcher(ctx,e,hurt,ed.pal,ed.aimTime||0.8);break;
       case 'wolf':this.drawWolf(ctx,e,hurt,ed.pal);break;
