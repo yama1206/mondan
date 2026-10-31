@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.85',date:'2026/10/31'};
+const GAME_VERSION={no:'1.86',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3122,8 +3122,6 @@ const LOOKS=[
 ];
 /* 見た目の色違い：1つの見た目に4色（基本色＋色違い3つ）。色は色相をずらして作る */
 const LOOK_VARIANTS=[{name:'基本色',hue:0},{name:'色違い1',hue:110},{name:'色違い2',hue:220},{name:'色違い3',hue:300}];
-/* ガチャ：最初の1回は必ずペット。以後はペット8%、それ以外は首輪（レア度 N60・R30・SR10） */
-const GACHA_PET_RATE=8;
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
 const PET_MAX=1;
 /* 首輪の効果量はレア度で変わる（ノーマル×1、レア×1.5、スーパーレア×2） */
@@ -9933,22 +9931,24 @@ const Ops={
     const names=rs.map(f=>f.name).join(' ／ ');
     return {changed:true,msg:`手紙10連：${names}`,color:best.color,fx:{rar:best.rar,text:`手紙10連結果：${names}`}};
   },
+  /** ペットガチャ（3コイン）：見た目と色を抽選。同じ見た目の同じ色がかぶったらコイン1枚 */
   gacha(p,who,a){
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
-    const first=!p.gachaN;p.gachaN=(p.gachaN||0)+1;
-    // ペットは見た目と色を抽選（見た目×色）。同じ見た目の同じ色がかぶったらコイン1枚
-    if(first||RNG.next()*100<GACHA_PET_RATE){
-      const lk=pick(LOOKS),v=randInt(0,LOOK_VARIANTS.length-1),vn=LOOK_VARIANTS[v].name;
-      const have=p.looks[lk.id]||[];
-      if(!have.includes(v)){
-        p.looks[lk.id]=[...have,v].sort();
-        return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
-      }
-      p.coins=(p.coins||0)+1;
-      return {changed:true,msg:`${lk.name}（${vn}）がかぶった → コイン +1`,color:'#ffd23a',fx:{rar:'N',text:`${lk.name}（${vn}）がかぶった → コイン +1`}};
+    p.gachaN=(p.gachaN||0)+1;
+    const lk=pick(LOOKS),v=randInt(0,LOOK_VARIANTS.length-1),vn=LOOK_VARIANTS[v].name;
+    const have=p.looks[lk.id]||[];
+    if(!have.includes(v)){
+      p.looks[lk.id]=[...have,v].sort();
+      return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
     }
-    // 首輪はレア度で抽選してから種類を選ぶ
+    p.coins=(p.coins||0)+1;
+    return {changed:true,msg:`${lk.name}（${vn}）がかぶった → コイン +1`,color:'#ffd23a',fx:{rar:'N',text:`${lk.name}（${vn}）がかぶった → コイン +1`}};
+  },
+  /** 首輪ガチャ（1コイン）：レア度で抽選してから種類を選ぶ。かぶったらコイン1枚戻る */
+  collarGacha(p,who,a){
+    if((p.coins||0)<1)return {msg:'コインが足りません（1コイン必要）',color:'#ff8060'};
+    p.coins-=1;
     let roll=RNG.next()*100,tier='N';
     for(const k of ['N','R','SR']){roll-=RARITY[k].w;if(roll<0){tier=k;break;}}
     const pt=pick(PETS.filter(x=>x.rar===tier));
@@ -11163,6 +11163,7 @@ const App={
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
       case 'gachaTab':this.gachaSub=ds.t;this.refreshPanel();break;
+      case 'collarGacha':this.doOp('collarGacha',{});break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookSel':this.inv.lookAsk=ds.id;this.inv.petSel=ds.id;this.renderInventory();break;
       case 'lookAskNo':this.inv.lookAsk=null;this.renderInventory();break;
@@ -11268,9 +11269,9 @@ const App={
     const show=()=>{
       if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
       if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look,r.fx.lookV);
-      if(r.fx&&['gacha','gacha10','letterGacha','letterGacha10','decoGacha'].includes(act))Sound.gachaResult(r.fx.rar);
+      if(r.fx&&['gacha','gacha10','collarGacha','letterGacha','letterGacha10','decoGacha'].includes(act))Sound.gachaResult(r.fx.rar);
     };
-    const tame=['gacha','gacha10','letterGacha','letterGacha10','decoGacha'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
+    const tame=['gacha','gacha10','collarGacha','letterGacha','letterGacha10','decoGacha'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
     if(tame){this.gachaBusy=true;Sound.gachaRoll(tame);setTimeout(()=>{this.gachaBusy=false;show();},tame*1000);}
     else show();
     if(r.sel)this.inv.sel=r.sel;
@@ -11541,11 +11542,13 @@ const App={
     const letter=letters+deco;
     // ガチャはタブごとに分けて、選んだものだけを広く出す
     const sub=this.gachaSub||'pet';
-    const tabs=[['pet','ペット＆首輪'],['letter','手紙'],['deco','装飾品']];
+    const tabs=[['pet','ペット'],['collar','首輪'],['letter','手紙'],['deco','装飾品']];
     const tabBar=`<div class="filters">${tabs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="gachaTab" data-t="${k}">${n}</button>`).join('')}</div>`;
-    const petCard=`<div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットは見た目と色の組み合わせがかぶるとコイン1枚。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
+    const petCard=`<div class="recipe"><div class="rn">ペットガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペット（見た目と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
-    const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:`<div class="recipes">${petCard}</div>`;
+    const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます。レア度で出る種類が変わります。かぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
+      <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button></div></div>`;
+    const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:sub==='collar'?`<div class="recipes">${collarCard}</div>`:`<div class="recipes">${petCard}</div>`;
     return `${tabBar}${body}`;
   },
   shopBuyHTML(){
