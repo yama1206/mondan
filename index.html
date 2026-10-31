@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.83',date:'2026/10/31'};
+const GAME_VERSION={no:'1.84',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9905,14 +9905,15 @@ const Ops={
     if(uids.length!==DECO_GACHA.need)return {msg:`装飾品を${DECO_GACHA.need}個選んでください`,color:'#888'};
     const used=uids.map(u=>Profile.getDeco(p,u));
     if(used.some(d=>!d||Profile.decoOwner(p,d.uid)))return {msg:'装着中の装飾品は使えません',color:'#ff8060'};
-    const minR=Math.min(...used.map(d=>d.rarity));
+    const minR=Math.min(...used.map(d=>d.rarity)),maxR=Math.max(...used.map(d=>d.rarity));
     p.decos=p.decos.filter(d=>!uids.includes(d.uid));
-    const rarity=Items.rollRarity(1.3,minR);
+    // 出るレア度は、使った中で一番低い以上・一番高い以下
+    const rarity=weightedPick(DATA.rarities.map((r,i)=>({w:(i<minR||i>maxR)?0:r.dropW*Math.pow(1.3,i),v:i})));
     const d=Profile.addDeco(p,Items.createDeco(pick(Object.keys(DATA.decorations)),rarity));
     const r=DATA.rarities[rarity],dd=DATA.decorations[d.decoId];
     const rar=['N','R','SR','SR','SSR'][rarity];
     const label=`${r.name}：${dd.name}`;
-    return {changed:true,msg:`${label}を手に入れた！（使った${DECO_GACHA.need}個の最低 ${DATA.rarities[minR].name} 以上）`,color:r.color,fx:{rar,text:label}};
+    return {changed:true,msg:`${label}を手に入れた！（使った${DECO_GACHA.need}個の ${DATA.rarities[minR].name}〜${DATA.rarities[maxR].name} の範囲）`,color:r.color,fx:{rar,text:label}};
   },
   letterGacha(p,who,a){
     const band=letterBandOf(p,a);if(!band)return {msg:'まだ解放されていません',color:'#888'};
@@ -11533,7 +11534,7 @@ const App={
     const free=(p.decos||[]).filter(d=>!Profile.decoOwner(p,d.uid));
     const chips=free.length?free.map(d=>{const on=sel.includes(d.uid);
       return `<button class="${on?'primary':''}" data-act="decoGachaPick" data-uid="${d.uid}">${DATA.rarities[d.rarity].name} ${DATA.decorations[d.decoId].name}</button>`;}).join(''):'<div class="muted small">使える装飾品がありません</div>';
-    const deco=`<div class="recipe"><div class="rn">装飾品ガチャ</div><div class="muted">持っている装飾品を${DECO_GACHA.need}個使って、ランダムな装飾品を1個もらえます。使った中で一番低いレア度以上が出ます。</div>
+    const deco=`<div class="recipe"><div class="rn">装飾品ガチャ</div><div class="muted">持っている装飾品を${DECO_GACHA.need}個使って、ランダムな装飾品を1個もらえます。出るレア度は、使った中で一番低いレア度以上・一番高いレア度以下です。</div>
       <div class="small" style="margin:6px 0">選択中 ${sel.length}/${DECO_GACHA.need}</div><div class="btnrow" style="flex-wrap:wrap">${chips}</div>
       <div class="btnrow"><button class="${sel.length===DECO_GACHA.need?'primary':''}" data-act="decoGacha" ${sel.length===DECO_GACHA.need?'':'disabled'}>${DECO_GACHA.need}個使って回す</button></div></div>`;
     const letter=letters+deco;
