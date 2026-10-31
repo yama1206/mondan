@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.58',date:'2026/10/31'};
+const GAME_VERSION={no:'1.59',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -7974,6 +7974,18 @@ const Renderer={
   drawPlayer(ctx,p){
     const r=p.r,s=p.stats;
     ctx.save();ctx.translate(p.x,p.y);
+    // スキル使用中：体のまわりに光るオーラを出す（脈打つ輪と、回る光の粒）
+    if(p.ws&&!p.dead){
+      const t=this.time||0,k=0.5+0.5*Math.sin(t*8),R=r+24+k*6;
+      ctx.save();
+      const g=ctx.createRadialGradient(0,0,r*0.5,0,0,R);
+      g.addColorStop(0,'rgba(168,255,138,0.05)');g.addColorStop(0.65,`rgba(168,255,138,${0.3+0.2*k})`);g.addColorStop(1,'rgba(168,255,138,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();
+      ctx.strokeStyle=`rgba(210,255,190,${0.7+0.3*k})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,r+14+k*4,0,TAU);ctx.stroke();
+      ctx.fillStyle='rgba(230,255,220,0.9)';
+      for(let i=0;i<4;i++){const a=t*3+i*TAU/4;ctx.beginPath();ctx.arc(Math.cos(a)*(r+18),Math.sin(a)*(r+18)*0.8,2.5,0,TAU);ctx.fill();}
+      ctx.restore();
+    }
     if(p.guarding&&!p.dead){ // ガード中：周りに構えの輪を出す
       ctx.save();ctx.strokeStyle='rgba(150,220,255,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,r+12,0,TAU);ctx.stroke();ctx.restore();
     }
