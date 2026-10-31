@@ -214,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.37',date:'2026/10/31'};
+const GAME_VERSION={no:'1.38',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8721,6 +8721,14 @@ const BGM_DATA={
     B:{chords:'F#m G# C#m A F#m G# A G#',inst:'strings',mel2:['horn',-1],pad:'choir',ost:true,bass:'8',drums:'rage2',crash:2,fill:true,
       mel:'A5:2 G#5:2|G#5:4|E5:1 G#5:1 C#6:2|E6:2 C#6:2|A5:1.5 B5:.5 C#6:1 A5:1|C6:2 G#5:2|A5:1 C#6:1 E6:1 C#6:1|C6:3 r:1'},
   }},
+  // ガチャ画面：明るくテンポの早いファンファーレ風の曲
+  gacha:{name:'ガチャのファンファーレ',bpm:156,vol:0.9,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'C G',pad:'pad',bass:'8',drums:'march'},
+    A:{chords:'C G Am F C G F G',inst:'horn',pad:'pad',arp:'pizz8',bass:'8',drums:'march',fill:true,
+      mel:'E5:.5 G5:.5 C6:1 B5:.5 A5:.5 G5:1|F5:.5 E5:.5 D5:1 C5:1 D5:.5 E5:.5|E5:1 G5:1 A5:1 G5:1|C5:.5 E5:.5 F5:1 G5:.5 A5:.5 C6:1|G5:.5 A5:.5 C6:1 B5:.5 A5:.5 G5:1|D5:1 G5:1 B5:1 D6:1|C6:.5 A5:.5 F5:1 A5:1 C6:1|G5:.5 B5:.5 D6:.5 B5:.5 G5:2'},
+    B:{chords:'Am F C G Am F G C',inst:'strings',pad:'pad',arp:'pizz8',bass:'8',drums:'march2',fill:true,
+      mel:'A5:.5 C6:.5 E6:1 D6:.5 C6:.5 A5:1|F5:1 A5:1 C6:1 A5:1|G5:.5 E5:.5 G5:.5 C6:.5 E6:2|D6:1 B5:1 G5:1 B5:1|A5:1 C6:1 E6:1 C6:1|F6:.5 E6:.5 D6:1 C6:1 A5:1|G5:.5 B5:.5 D6:.5 G6:.5 D6:2|C6:4'},
+  }},
 };
 // 解析済みのデータ（メロディ・コード）
 for(const id in BGM_DATA){const T=BGM_DATA[id];for(const k in T.parts){const P=T.parts[k];P._ch=P.chords.split(/\s+/).map(chordOf);P._mel=parseMelody(P.mel);}}
@@ -8906,6 +8914,34 @@ const Sound={
       mel([['G4',1],['Eb4',1],['D4',1],['C4',3]],'horn',t);
       for(const m of [36,48,51,55])this.voice(o,'pad',t+3*b,m,b*3,1.3);
       this.timpani(o,t+3*b,36,1.2);
+    }
+  },
+
+  /** ガチャの溜め：太鼓がだんだん速くなる */
+  gachaRoll(){
+    if(!this.ready||this.ctx.state!=='running')return;
+    let tt=this.now()+0.02;
+    for(let i=0;i<14;i++){this.timpani(this.sfx,tt,43,0.35+i*0.04);tt+=0.09-i*0.004;}
+    this.timpani(this.sfx,tt,48,1.1);
+  },
+  /** ガチャの結果。レア度が高いほど派手な音 */
+  gachaResult(rar){
+    if(!this.ready||this.ctx.state!=='running')return;
+    const t=this.now()+0.01,d=this.sfx;
+    const note=(m,tt,dur,v)=>this.voice(d,'horn',tt,m,dur,v==null?1:v);
+    if(rar==='N'){
+      this.tone(d,t,midiFreq(72),0.18,{type:'triangle',vol:0.3});
+    }else if(rar==='R'){
+      note(72,t,0.2,0.9);note(76,t+0.12,0.3,0.9);
+    }else if(rar==='SR'){
+      [72,76,79,84].forEach((m,i)=>note(m,t+i*0.07,0.35,1));
+      this.voice(d,'strings',t+0.3,60,1,0.9);this.crash(d,t+0.28,0.5);
+    }else{
+      // SSR（ペット含む）：ファンファーレ
+      let tt=t;
+      for(const [m,dd] of [[72,0.2],[76,0.2],[79,0.2],[84,0.5],[83,0.2],[84,0.8]]){note(m,tt,dd*0.95,1);tt+=dd;}
+      for(const m of [48,60,64,67])this.voice(d,'pad',t+1.0,m,1.2,1.0);
+      this.timpani(d,t,48,1);this.crash(d,t+0.9,1.1);
     }
   },
 
@@ -10268,6 +10304,7 @@ const App={
       if(q.boss==='fighting'&&b&&!b.dead)id=b.phase===2?'rage':'boss';
       else if(q.boss!=='defeated')id=stageById(w.diff.level).bgm||'forest';
     }else if((!w||w.status!=='playing'||['camp','lobby','board','online'].includes(this.state))&&!['clear','gameover'].includes(this.state))id='camp';
+    if(this.state==='shop'&&this.shopCat==='gacha')id='gacha';
     if(id||Sound.cur)Sound.playMusic(id,id==='rage'?0.6:1.0);
     // 大剣・ハンマーのチャージ：段階が上がるたびに音（自分のキャラだけ）
     if(w){
@@ -10873,7 +10910,7 @@ const App={
       case 'filter':this.inv.filter=ds.f;this.renderInventory();break;
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
-      case 'gacha':this.doOp('gacha',{});break;
+      case 'gacha':this.gachaRoll();break;
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
@@ -10931,6 +10968,13 @@ const App={
 
   /* ---------- 装備操作 ---------- */
   /** 装備・製作の操作を実行する。オンライン参加者はホストに依頼し、結果のデータが届いたら画面を更新する */
+  /** ガチャを回す。溜めの太鼓を鳴らしてから結果を出す（ソロで足りない時は溜めなし） */
+  gachaRoll(){
+    if(this.gachaBusy)return;
+    if(!Net.role&&(this.profile.coins||0)<3){this.doOp('gacha',{});return;}
+    this.gachaBusy=true;Sound.gachaRoll();
+    setTimeout(()=>{this.gachaBusy=false;this.doOp('gacha',{});},1000);
+  },
   /** ガチャの演出。レア度が高いほど大きく・長く出す */
   gachaFx(rar,text){
     try{
@@ -10947,6 +10991,7 @@ const App={
     const r=Ops[act](this.profile,this.inv.who||0,args)||{};
     if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
     if(r.fx)this.gachaFx(r.fx.rar,r.fx.text);
+    if(r.fx&&act==='gacha')Sound.gachaResult(r.fx.rar);
     if(r.sel)this.inv.sel=r.sel;
     if(r.cleared&&this.inv.sel===r.cleared)this.inv.sel=null;
     if(r.changed){this.syncPotions(Net.role?'p1':undefined);this.onEquipChanged();}
