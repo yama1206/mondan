@@ -223,7 +223,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.70',date:'2026/10/31'};
+const GAME_VERSION={no:'1.72',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2054,11 +2054,6 @@ const DATA={
     {id:'pit_trap',name:'落とし穴',desc:'踏んだ敵を足止めする罠',price:100,type:'item',item:'pit_trap'},
     {id:'shock_trap',name:'シビレ罠',desc:'踏むと周りの敵をしびれさせる罠',price:110,type:'item',item:'shock_trap'},
     {id:'bomb',name:'大タル爆弾',desc:'3秒後に爆発する大型の爆弾',price:75,type:'item',item:'bomb'},
-    {id:'m_scrap',name:'粗い鉄片',desc:'武器の補強に使う基本素材',price:8,type:'mat',mat:'scrap_iron'},
-    {id:'m_hide',name:'ゴブリンの皮',desc:'防具や薬に使う基本素材',price:6,type:'mat',mat:'goblin_hide'},
-    {id:'m_bone',name:'古びた骨',desc:'兜や薬に使う基本素材',price:6,type:'mat',mat:'old_bone'},
-    {id:'m_arrow',name:'鋭い矢じり',desc:'小手や靴に使う素材',price:10,type:'mat',mat:'arrowhead'},
-    {id:'m_hard',name:'硬い鉄塊',desc:'ステージ5の武器・防具に使う素材',price:22,type:'mat',mat:'hard_iron',stage:8},
     {id:'jewel',name:'珠の原石',desc:'ランダムな装飾品が1つ手に入る',price:125,type:'deco'},
   ],
   /* ステージ：各依頼で使うダンジョンの敵・難易度。enemySet の melee / ranged / boss が配置される */
@@ -11408,8 +11403,12 @@ const App={
   },
   shopGachaHTML(){
     const p=this.profile,coins=p.coins||0;
+    // 珠の原石（ショップのデータ jewel）をガチャの画面に置く。購入処理はショップと同じ
+    const jw=DATA.shop.find(x=>x.id==='jewel'),gold=p.gold||0;
+    const jewel=jw?`<div class="recipe"><div class="rn">${jw.name}　<span style="color:#ffd23a">${jw.price}G</span></div><div class="muted">${jw.desc}</div>
+      <div class="btnrow"><button class="${gold>=jw.price?'primary':''}" data-act="buy" data-id="jewel" data-n="1" ${gold>=jw.price?'':'disabled'}>1個買う（${jw.price}G）</button></div></div>`:'';
     return `<div class="recipes"><div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットはかぶりなし。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
-      <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div></div>`;
+      <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>${jewel}</div>`;
   },
   shopBuyHTML(){
     const p=this.profile,gold=p.gold||0;
@@ -11417,7 +11416,7 @@ const App={
     const gift=p.coinGiftGiven?'':`<div class="recipe"><div class="rn">コインのプレゼント　<span style="color:#ffd23a">0G</span></div><div class="muted">コインを30枚もらえます。1人1回だけ。</div>
       <div class="btnrow"><button class="primary" data-act="coinGift">30コインを受け取る（0G）</button></div></div>`;
     return `<div class="col-t">商品</div><div class="recipes">${gift||'<div class="muted">いまのところ商品はありません</div>'}</div>
-      <div class="recipes shop-items">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
+      <div class="recipes shop-items">${DATA.shop.filter(s=>s.id!=='jewel'&&(!s.stage||QuestRules.stage(p)>=s.stage)).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
           return `<button class="${ok?'primary':''}" data-act="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${s.type==='equip'?'1本もらう（無料）':n+'個買う（'+s.price*n+'G）'}</button>`;};
