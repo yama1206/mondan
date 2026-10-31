@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.77',date:'2026/10/31'};
+const GAME_VERSION={no:'1.78',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2958,6 +2958,12 @@ function lootLabel(l){
     override={slot:item} を渡すと「その装備に替えた場合」を計算できる（比較表示用） */
 /** 2Pの最初の石の剣。持ち物には入れず、装備として持っている扱い（石の剣は1Pの最初の1本だけインベントリに入る） */
 const P2_STARTER_SWORD={kind:'equip',uid:null,baseId:'iron_sword',slot:'weapon',rarity:0,atk:10,def:0,crit:5,affixes:[],slots:[],effects:[]};
+/** 重ね着の設定を読み込み用に整える（部位ごとの装備の基本ID。部位が合わないものは捨てる） */
+function costumeOf(src){
+  const out={};
+  if(src&&typeof src==='object')for(const sl of SLOTS){if(sl==='charm')continue;const b=src[sl];if(typeof b==='string'&&DATA.equipment[b]&&DATA.equipment[b].slot===sl)out[sl]=b;}
+  return out;
+}
 function computeStats(profile,override,who){
   const P=CONFIG.player,ch=charOf(profile,who||0);
   const s={maxHp:P.baseHp,atk:P.baseAtk,def:P.baseDef,
@@ -2991,6 +2997,8 @@ function computeStats(profile,override,who){
     else{const sr=DATA.seriesRes[item.baseId==='fang_king'?'fang':item.baseId.split('_')[0]];if(sr)for(const k in sr)s.elemRes[k]+=sr[k];armor.push(item);} // 防具の属性耐性
   }
   s.look=Object.assign({},wearing); // 見た目（部位→装備ID）。描画とオンラインの表示に使う
+  // 重ね着：設定した部位は、装備していなくても設定した見た目を出す（未設定の部位は装備中の見た目）
+  const cos=ch.costume||{};for(const sl of SLOTS)if(cos[sl])s.look[sl]=cos[sl];
   // 防具スキル（ポイントの合算 → 発動判定 → 効果の適用）
   s.skillPts=armorSkillPoints(armor);
   for(const k in decoPts)s.skillPts[k]=(s.skillPts[k]||0)+decoPts[k]; // 装飾品のポイント
@@ -3327,6 +3335,7 @@ const Save={
     const roles=Companion.normalizeRoles(cmpSrc);
     p.companions=roles.map(role=>({role,equipped:emptyEquip()}));
     p.compGiven=!!d.compGiven;
+    for(let i=0;i<COMP_COUNT;i++)charOf(p,CHAR_COUNT+i).costume=costumeOf(cmpSrc[i]&&cmpSrc[i].costume);
     for(let i=0;i<COMP_COUNT;i++){
       const eq=charOf(p,CHAR_COUNT+i).equipped,src=cmpSrc[i]&&cmpSrc[i].equipped;
       if(src&&typeof src==='object')for(const s of SLOTS){
@@ -3336,6 +3345,8 @@ const Save={
     }
     const p2src=(d.p2&&typeof d.p2==='object')?d.p2:null;
     const srcEquip=[d.equipped,p2src?p2src.equipped:null];
+    const srcCos=[d.costume,p2src?p2src.costume:null];
+    for(let who=0;who<CHAR_COUNT;who++)charOf(p,who).costume=costumeOf(srcCos[who]);
     for(let who=0;who<CHAR_COUNT;who++){
       const eq=charOf(p,who).equipped,src=srcEquip[who];
       if(src&&typeof src==='object')for(const s of SLOTS){
@@ -9919,6 +9930,18 @@ const Ops={
     p.equipped.pet=p.equipped.pet===a.id?null:a.id;
     return {changed:true};
   },
+  /** 重ね着：部位ごとに持っている装備の見た目を設定（base を空にすると外す、all で全部外す） */
+  costume(p,who,a){
+    const ch=charOf(p,who);if(!ch)return {};
+    ch.costume=ch.costume||{};
+    if(a.all){ch.costume={};return {changed:true,msg:'重ね着をすべて外しました',color:'#ffd23a'};}
+    const sl=a.slot;if(!SLOTS.includes(sl)||sl==='charm')return {};
+    if(!a.base){delete ch.costume[sl];return {changed:true,msg:`${SLOT_NAMES[sl]}の重ね着を外しました`,color:'#ffd23a'};}
+    const b=DATA.equipment[a.base];
+    if(!b||b.slot!==sl||!p.items.some(i=>i.baseId===a.base))return {msg:'持っている装備だけ重ね着できます',color:'#888'};
+    ch.costume[sl]=a.base;
+    return {changed:true,msg:`${b.name}を重ね着に設定しました`,color:'#ffd23a'};
+  },
   lookEquip(p,who,a){
     const v=a.v|0;
     if(!(p.looks[a.id]||[]).includes(v))return {};
@@ -10892,7 +10915,7 @@ const App={
   /** 参加者から届いた装備・製作の操作を、その人のデータに対して実行する */
   hostCmd(pid,d){
     const m=Net.member(pid);
-    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','enchant','sellMany'];
+    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','enchant','sellMany','costume'];
     if(!m||!allowed.includes(d.act))return;
     const args=(d.args&&typeof d.args==='object')?d.args:{};
     let r={};
@@ -11109,6 +11132,8 @@ const App={
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookSel':this.inv.lookAsk=ds.id;this.inv.petSel=ds.id;this.renderInventory();break;
       case 'lookAskNo':this.inv.lookAsk=null;this.renderInventory();break;
+      case 'costumeSet':this.doOp('costume',{slot:ds.slot,base:ds.base||null});break;
+      case 'costumeClear':this.doOp('costume',{all:true});break;
       case 'lookEquip':this.inv.lookAsk=null;this.doOp('lookEquip',{id:ds.id,v:+ds.v});break;
       case 'bulkMode':this.inv.bulk=!this.inv.bulk;this.inv.bulkSel=[];this.renderInventory();break;
       case 'bulkTog':{const p=this.profile,u=ds.uid;
@@ -11558,6 +11583,22 @@ const App={
       +`<div class="eqslot ${this.inv.filter==='pet'?'sel':''}" data-act="filter" data-f="pet"><span class="sl">首輪</span>${pt?`<span style="color:#9fe0ff">${pt.name} Lv${p.pets[pt.id].level}</span>`:'<span class="muted">なし</span>'}</div>`;
   },
   /** 色を選ぶボタン：持っている色ごとに。いま付けている色は「外す」 */
+  /** 重ね着の一覧：部位ごとに、持っている装備の見た目から選ぶ */
+  costumeListHTML(p,who){
+    const cos=charOf(p,who).costume||{};
+    return `<div class="small muted" style="margin-bottom:6px">部位ごとに持っている装備の見た目を選びます。設定した見た目は常に表示されます。</div>`+SLOTS.filter(x=>x!=='charm').map(sl=>{
+      const bases=[...new Set(p.items.filter(i=>i.slot===sl).map(i=>i.baseId))].sort((a,b)=>DATA.equipment[a].name.localeCompare(DATA.equipment[b].name,'ja'));
+      const cur=cos[sl];
+      const none=`<div class="itemrow ${cur?'':'sel'}" data-act="costumeSet" data-slot="${sl}" data-base=""><span class="sl">${SLOT_NAMES[sl]}</span><span class="nm">装備と同じ見た目</span>${cur?'':'<span class="tag">表示中</span>'}</div>`;
+      const rows=bases.map(b=>`<div class="itemrow ${cur===b?'sel':''}" data-act="costumeSet" data-slot="${sl}" data-base="${b}"><span class="sl">${SLOT_NAMES[sl]}</span><span class="nm">${DATA.equipment[b].name}</span>${cur===b?'<span class="tag">重ね着中</span>':''}</div>`).join('');
+      return `<div class="col-t" style="margin-top:8px">${SLOT_NAMES[sl]}</div>${none}${rows}`;
+    }).join('');
+  },
+  costumeDetailHTML(p,who){
+    const n=Object.keys(charOf(p,who).costume||{}).length;
+    return `<div class="iname">重ね着</div><div class="small muted" style="margin:6px 0">設定した部位は、装備していなくても設定した見た目が出ます。設定していない部位は、装備中の装備の見た目です。性能は変わりません。</div>
+      <div class="small">重ね着中：${n}部位</div><div class="btnrow"><button data-act="costumeClear" ${n?'':'disabled'}>重ね着をすべて外す</button></div>`;
+  },
   lookColorBtns(p,id){
     const eq=p.equipped.look===id,cur=p.equipped.lookV|0;
     return (p.looks[id]||[]).map(v=>{const on=eq&&cur===v;
@@ -11614,7 +11655,7 @@ const App={
       return ea-eb||order[a.slot]-order[b.slot]||b.rarity-a.rarity||(b.atk+b.def)-(a.atk+a.def);
     });
     const bulk=!!this.inv.bulk,bsel=this.inv.bulkSel||[];
-    const filters=SLOTS.map(s=>[s,SLOT_NAMES[s]]).concat(who===0?[['pet','首輪'],['look','ペット']]:[]);
+    const filters=SLOTS.map(s=>[s,SLOT_NAMES[s]]).concat([['costume','重ね着']]).concat(who===0?[['pet','首輪'],['look','ペット']]:[]);
     // 防具・手紙はスキルで絞り込めるように、持ち物にあるスキルだけ並べる
     const skillKeys=(f==='pet'||f==='look'||f==='all'||f==='weapon')?[]:[...new Set(p.items.filter(i=>i.slot===f).flatMap(i=>Object.keys(skOf(i)).filter(k=>DATA.armorSkills[k])))];
     const skillBar=skillKeys.length?`<div class="filters skillfilters"><button class="${sk?'':'on'}" data-act="skillFilter" data-k="">スキル：すべて</button>${skillKeys.map(k=>`<button class="${sk===k?'on':''}" data-act="skillFilter" data-k="${k}">${DATA.armorSkills[k].name}</button>`).join('')}</div>`:'';
@@ -11624,9 +11665,9 @@ const App={
         <span class="sl">${SLOT_NAMES[it.slot]}</span><span class="nm" style="color:${eqColor(it)}">${itemName(it)}</span>
         ${it.effects.length?'<span title="特殊効果あり" style="color:#ffcf6a">★</span>':''}
         <small>${it.slot==='weapon'?'攻'+it.atk+' 会'+it.crit+'%':it.slot==='charm'?skillPtsText(it.skills||{}):'防'+it.def}</small><small class="muted">${slotDots(it)}</small>
-        ${this.equipTag(it.uid)}</div>`).join('')||(f==='pet'?this.petListHTML():f==='look'?this.lookListHTML():'<div class="muted">該当する装備がありません</div>')}</div>`;
+        ${this.equipTag(it.uid)}</div>`).join('')||(f==='pet'?this.petListHTML():f==='look'?this.lookListHTML():f==='costume'?this.costumeListHTML(p,who):'<div class="muted">該当する装備がありません</div>')}</div>`;
     const sel=Profile.getItem(p,this.inv.sel);
-    const right=`<div class="col col-right" data-scroll="right">${this.inv.decoPick?this.decoPickHTML():f==='pet'?this.petDetailHTML():f==='look'?this.lookDetailHTML():(sel?this.itemDetailHTML(sel):'<div class="muted">装備を選択すると詳細と性能比較が表示されます。</div>')}</div>`;
+    const right=`<div class="col col-right" data-scroll="right">${this.inv.decoPick?this.decoPickHTML():f==='costume'?this.costumeDetailHTML(p,who):f==='pet'?this.petDetailHTML():f==='look'?this.lookDetailHTML():(sel?this.itemDetailHTML(sel):'<div class="muted">装備を選択すると詳細と性能比較が表示されます。</div>')}</div>`;
     return left+mid+right;
   },
   /** 装備画面で、まだ装備していない装備品を選んだら「装備しますか？」と性能差を出して確認する */
