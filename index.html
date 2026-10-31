@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.39',date:'2026/10/31'};
+const GAME_VERSION={no:'1.40',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10916,7 +10916,9 @@ const App={
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
-      case 'lookEquip':this.doOp('lookEquip',{id:ds.id});break;
+      case 'lookSel':this.inv.lookAsk=ds.id;this.inv.petSel=ds.id;this.renderInventory();break;
+      case 'lookAskNo':this.inv.lookAsk=null;this.renderInventory();break;
+      case 'lookEquip':this.inv.lookAsk=null;this.doOp('lookEquip',{id:ds.id});break;
       case 'bulkMode':this.inv.bulk=!this.inv.bulk;this.inv.bulkSel=[];this.renderInventory();break;
       case 'bulkTog':{const p=this.profile,u=ds.uid;
         if(Profile.equippedBy(p,u)>=0){UI.notify('装備中のものは選べません','#ff8060',2);break;}
@@ -11348,7 +11350,13 @@ const App={
     const p=this.profile;
     const own=LOOKS.filter(x=>p.looks[x.id]);
     if(!own.length)return '<div class="muted">まだペットの見た目がありません（ショップのガチャで出ます）</div>';
-    return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="petSel" data-id="${x.id}"><span class="nm">${x.name}</span>${p.equipped.look===x.id?'<span class="tag">装備中</span>':''}</div>`).join('');
+    return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>{
+      const eq=p.equipped.look===x.id,ask=this.inv.lookAsk===x.id;
+      const row=`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="lookSel" data-id="${x.id}"><span class="nm">${x.name}</span>${eq?'<span class="tag">装備中</span>':''}</div>`;
+      if(!ask)return row;
+      // タップした見た目の直下に確認を出す（下までスクロールしなくても決められる）
+      return row+`<div class="itemrow sel" style="flex-wrap:wrap;gap:6px;justify-content:space-between"><span>${eq?`${x.name}の見た目を外しますか？`:`${x.name}の見た目にしますか？`}</span><span class="btnrow" style="margin:0"><button class="${eq?'':'primary'}" data-act="lookEquip" data-id="${x.id}">${eq?'はい（外す）':'はい'}</button><button data-act="lookAskNo">いいえ</button></span></div>`;
+    }).join('');
   },
   lookDetailHTML(){
     const p=this.profile,id=this.inv.petSel,x=LOOKS.find(q=>q.id===id);
