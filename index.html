@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.9.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.9.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11537,7 +11537,9 @@ const App={
       case 'bestStage':this.bestStage=Number(ds.s)||1;this.bestSel=null;this.goto('bestiary');break;
       case 'bestiaryBack':this.goto(this.bestiaryFrom||'camp');break;
       case 'smithCat':this.smithCat=ds.c;this.smithSub='all';this.goto('smith');break;
-      case 'smithSub':this.smithSub=ds.s;this.goto('smith');break;
+      case 'smithSub':{const inS=this.smithSub==='series'||String(this.smithSub||'').startsWith('set:');
+        // シリーズのタブは、開いているときにもう一度押すと閉じる（部位の先頭に戻る）
+        this.smithSub=(ds.s==='series'&&inS)?'slot:head':ds.s;this.goto('smith');break;}
       case 'smithSkill':this.smithSkillF=(this.smithSkillF===ds.s)?null:ds.s;this.goto('smith');break;
       case 'reinforce':this.doOp('reinforce',{uid:ds.uid});break;
       case 'enchant':this.doOp('enchant',{uid:ds.uid,t:Number(ds.t)});break;
