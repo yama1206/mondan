@@ -241,7 +241,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.6.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.6.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -5144,7 +5144,7 @@ function updateBossPattern(w,e,p,dt){
           e.state='windup';e.action=mv.k;e.timer=wind;
           if(mv.k==='sweep')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:mv.r,arc:mv.arc,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
           else if(mv.k==='slam')addTelegraph(w,{shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
-          else if(mv.k==='shot'&&mv.kind==='feather')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+200,arc:(mv.spread||0)+0.2,total:wind,dmg:0,owner:e.id,small:true}); // 羽根：飛ばす前に扇の範囲を予告
+          else if(mv.k==='shot')addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+(mv.kind==='feather'?200:240),arc:(mv.spread||0)+0.2,total:wind,dmg:0,owner:e.id,small:true}); // 飛び道具（羽根・石・弾）：飛ばす前に扇の範囲を予告
           else if(mv.k==='pool'){ // 狙った場所に毒の沼（hz指定で炎の溜まりにもなる）：予告のあと、その場に残る
             addTelegraph(w,{shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:e.atk*mv.dmg,owner:e.id,el:mv.el,st:mv.st});
             w.hazards.push({id:w.nextId++,kind:mv.hz||'poison',x:p.x,y:p.y,r:mv.r,t:0,life:mv.life,tick:0.5,acc:0,dmg:e.atk*0.15,delay:wind,el:mv.el,st:mv.st});
