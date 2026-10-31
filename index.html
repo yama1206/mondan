@@ -96,6 +96,11 @@ button.danger:hover{background:#6e2a3a}
 .recipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
 .recipe{background:#191524;border:1px solid #2e2840;border-radius:8px;padding:10px;font-size:13px;line-height:1.6}
 .recipe .rn{font-weight:bold;font-size:15px}
+/* ショップの商品一覧：カードを小さくして多く見せる */
+.shop-items{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.shop-items .recipe{padding:6px 8px;font-size:12px;line-height:1.45}
+.shop-items .recipe .rn{font-size:13px}
+.shop-items .recipe button{padding:3px 6px;font-size:12px}
 .cost span{display:inline-block;margin-right:10px}
 .reward-list{text-align:left;background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px 14px;max-height:280px;overflow:auto;line-height:1.8;margin-top:10px}
 .setting{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2a2438;cursor:pointer}
@@ -218,7 +223,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.69',date:'2026/10/31'};
+const GAME_VERSION={no:'1.70',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11412,7 +11417,7 @@ const App={
     const gift=p.coinGiftGiven?'':`<div class="recipe"><div class="rn">コインのプレゼント　<span style="color:#ffd23a">0G</span></div><div class="muted">コインを30枚もらえます。1人1回だけ。</div>
       <div class="btnrow"><button class="primary" data-act="coinGift">30コインを受け取る（0G）</button></div></div>`;
     return `<div class="col-t">商品</div><div class="recipes">${gift||'<div class="muted">いまのところ商品はありません</div>'}</div>
-      <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
+      <div class="recipes shop-items">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
           return `<button class="${ok?'primary':''}" data-act="buy" data-id="${s.id}" data-n="${n}" ${ok?'':'disabled'}>${s.type==='equip'?'1本もらう（無料）':n+'個買う（'+s.price*n+'G）'}</button>`;};
