@@ -215,7 +215,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.49',date:'2026/10/31'};
+const GAME_VERSION={no:'1.50',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2043,7 +2043,7 @@ const DATA={
     {id:1,name:'風渡る草原',desc:'開けた草原と、風に揺れる丈の長い草むら。獣たちの縄張りが点在する、冒険の始まりの地。最奥の「暴角の広場」には、角を持つ巨獣が待ち構えている。',
       enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'meadow_bull'},hp:1.0,atk:1.0,density:0.3,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'meadow'}, // density：魔物の出現数の倍率（1が標準）
     {id:2,name:'緑風の森林',desc:'風が木々を揺らす深い森。さまざまな魔物が潜み、最奥の「古森の広場」には森の主が棲みつく。',
-      enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
+      enemySet:{melee:'forest_wolf',ranged:'mushroom',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
     {id:3,name:'腐毒の沼地',desc:'毒の霧がたちこめる沼地。足元の泥と、ぬめる水辺に気をつけて。最奥の「沼の中心」には、恐ろしい主が棲みついている。',
       enemySet:{melee:'leech',ranged:'carnivore_plant',boss:'hydra'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'swamp',bgm:'swamp'},
     {id:4,name:'蒼流の水辺',desc:'澄んだ川と、落ちる滝の音が響く水辺。水の底から雷の気配が漂う。最奥の「滝つぼ」には、水底を統べる主が潜んでいる。',
@@ -2076,19 +2076,19 @@ const DATA={
         {id:'hollow',name:'草むらの窪地',spawn:[['slime',0,1]],gather:[3,4]},
         {id:'lair',name:'猪の寝床',spawn:[['wild_boar',1,1],['goblin',0,1]],elite:1,chest:1},
       ]},
-    forest:{theme:'forest',obstacle:'trees',wander:['goblin','forest_wolf','slime'],
+    forest:{theme:'forest',obstacle:'trees',wander:['forest_wolf','beetle','mushroom'],
       start:{id:'entrance',name:'森林の入口'},
-      boss:{id:'arena',name:'古森の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['forest_wolf',1,1]]},
+      boss:{id:'arena',name:'古森の広場',spawn:[['forest_wolf',2,3],['beetle',1,2],['mushroom',1,1]]},
       main:[
-        {id:'path',name:'森の小道',spawn:[['goblin',3,4],['slime',0,1]]},
-        {id:'watch',name:'見張り台',spawn:[['goblin_archer',2,2],['goblin',1,1]],obstacle:'rocks'},
+        {id:'path',name:'森の小道',spawn:[['forest_wolf',3,4],['mushroom',0,1]]},
+        {id:'watch',name:'見張り台',spawn:[['beetle',2,2],['mushroom',1,1]],obstacle:'rocks'},
         {id:'trail',name:'獣道',spawn:[['forest_wolf',2,3]]},
-        {id:'ruins',name:'苔むした遺跡',spawn:[['beetle',1,2],['slime',1,2],['mushroom',1,2]],obstacle:'pillars'},
-        {id:'camp',name:'ゴブリンの野営地',spawn:[['goblin',2,3],['goblin_archer',1,2],['beetle',0,1]],obstacle:'rocks'},
+        {id:'ruins',name:'苔むした遺跡',spawn:[['beetle',1,2],['forest_wolf',1,2],['mushroom',1,2]],obstacle:'pillars'},
+        {id:'camp',name:'獣の野営地',spawn:[['forest_wolf',2,3],['beetle',1,2]],obstacle:'rocks'},
       ],
       side:[
         {id:'grove',name:'古木の採取場',spawn:[['mushroom',0,1]],gather:[3,4]},
-        {id:'nest',name:'強敵の巣',spawn:[['forest_wolf',1,1],['beetle',1,1],['slime',0,1]],elite:2,chest:1},
+        {id:'nest',name:'強敵の巣',spawn:[['forest_wolf',1,1],['beetle',1,1],['mushroom',0,1]],elite:2,chest:1},
       ]},
     swamp:{theme:'swamp',obstacle:'pillars',wander:['poison_frog','leech'],
       start:{id:'shore',name:'沼のほとり'},
@@ -2192,7 +2192,7 @@ const DATA={
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'甲虫狩り',desc:'森甲虫が森で増えすぎている。10体退治してほしい。',goal:{type:'kill',target:'beetle',count:10},reward:{gold:240,mats:{hard_shell:2,scrap_iron:1}}},
     {id:'s1_bug',stage:2,key:true,name:'キノコと虫の退治',desc:'森に増えた毒胞子キノコと森甲虫を、合わせて10体退治してほしい。',goal:{type:'kill',target:'mushbug',count:10},reward:{gold:300,mats:{forest_mushroom:3,old_bone:1}}},
-    {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'ゴブリンとスケルトンを合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:320,mats:{goblin_hide:2,old_bone:2}}},
+    {id:'s1_hunt',stage:2,name:'素材集め：森林',desc:'森の魔物を合わせて18体倒せ。素材集めにどうぞ。',goal:{type:'kill',target:'any',count:18},reward:{gold:320,mats:{goblin_hide:2,old_bone:2}}},
     {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:800,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
     {id:'sw_frog',stage:3,key:true,name:'毒沼の討伐',desc:'沼地に潜む毒の蛙を12体倒せ。',goal:{type:'kill',target:'poison_frog',count:12},reward:{gold:360,mats:{toxic_gland:2}}},
     {id:'sw_plant',stage:3,key:true,name:'花食いの刈り取り',desc:'沼地に根を張る食虫の花を8体刈り取れ。',goal:{type:'kill',target:'carnivore_plant',count:8},reward:{gold:360,mats:{swamp_moss:2}}},
