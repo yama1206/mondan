@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.9.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.9.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3055,6 +3055,16 @@ function bossOnlyMats(){
   BOSS_ONLY_MATS=new Set([...boss].filter(m=>!other.has(m)));return BOSS_ONLY_MATS;
 }
 /** 武器・防具の製作素材にボス素材を1つでも使うか（装飾品の手紙は対象外） */
+/** ボスからしか手に入らない素材（ボスが落とす・ほかの敵や店・採取では手に入らない）。一度だけ計算する */
+let BOSS_ONLY_CACHE=null;
+function bossOnlyMats(){
+  if(BOSS_ONLY_CACHE)return BOSS_ONLY_CACHE;
+  const boss=new Set(),other=new Set();
+  for(const k in DATA.dropTables){const isB=!!(DATA.enemies[k]&&DATA.enemies[k].boss);for(const rl of (DATA.dropTables[k].rolls||[]))if(rl.type==='mat')(isB?boss:other).add(rl.id);}
+  for(const s of DATA.shop)if(s.type==='mat')other.add(s.mat);
+  BOSS_ONLY_CACHE=new Set([...boss].filter(m=>!other.has(m)));
+  return BOSS_ONLY_CACHE;
+}
 /** 防具が属するシリーズのキー（属さなければ undefined） */
 function armorSeriesOf(id){return Object.keys(DATA.armorSets).find(k=>Object.values(DATA.armorSets[k].pieces).includes(id));}
 function isBossWeapon(baseId){
@@ -12563,22 +12573,13 @@ const App={
   /** レシピが鍛冶屋に並ぶか：ステージに届いていて、必要な素材をすべて一度は手に入れたことがある（ボス装備はボス素材を入手してから） */
   recipeKnown(r){
     const p=this.profile;
-    // 防具のシリーズのボス素材を一度でも手に入れたら、そのシリーズの防具は全部見れる（素材がそろっていなくても）
-    if(r.out&&r.out.type==='equip'&&(!r.stage||QuestRules.stage(p)>=r.stage)){
-      const se=armorSeriesOf(r.out.id);
-      if(se&&this.seriesUnlocked(p,se))return true;
+    const stageOk=!r.stage||QuestRules.stage(p)>=r.stage;
+    // ボス防具（作るのにボスからしか手に入らない素材が要る防具）は、そのボス素材を一度でも手に入れた防具だけ見れる
+    if(r.out&&r.out.type==='equip'&&DATA.equipment[r.out.id].slot!=='weapon'&&DATA.equipment[r.out.id].slot!=='charm'){
+      const bm=Object.keys(r.cost).filter(k=>bossOnlyMats().has(k));
+      if(bm.length)return stageOk&&bm.some(k=>(p.materials[k]||0)>0||!!(p.matSeen&&p.matSeen[k]));
     }
-    return (!r.stage||QuestRules.stage(p)>=r.stage)&&Object.keys(r.cost).every(k=>(p.materials[k]||0)>0||(p.matSeen&&p.matSeen[k]));
-  },
-  /** シリーズのボス素材（その防具の作り方に使う素材のうち、ボスが落とすもの）を一度でも手に入れたか */
-  seriesUnlocked(p,setKey){
-    const set=DATA.armorSets[setKey];if(!set)return false;
-    const ids=Object.values(set.pieces);
-    const mats=new Set();
-    for(const r of DATA.recipes)if(r.out.type==='equip'&&ids.includes(r.out.id))for(const k of Object.keys(r.cost))mats.add(k);
-    const bossMats=new Set();
-    for(const k in DATA.dropTables)if(DATA.enemies[k]&&DATA.enemies[k].boss)for(const rl of (DATA.dropTables[k].rolls||[]))if(rl.type==='mat')bossMats.add(rl.id);
-    return [...mats].some(m=>bossMats.has(m)&&((p.materials[m]||0)>0||!!(p.matSeen&&p.matSeen[m])));
+    return stageOk&&Object.keys(r.cost).every(k=>(p.materials[k]||0)>0||(p.matSeen&&p.matSeen[k]));
   },
   recipeListHTML(filter,sortEquip){
     const p=this.profile;
