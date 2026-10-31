@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.4.6',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1182,6 +1182,11 @@ const DATA={
     fire:{name:'火',color:'#ff6a3a'},water:{name:'水',color:'#4aa8ff'},thunder:{name:'雷',color:'#ffe040'},
     ice:{name:'氷',color:'#a8ecff'},mei:{name:'冥',color:'#a070ff'},
   },
+  // プレゼント：ここに追加すると、キャンプ画面の「プレゼント」から受け取れる（1人1回）。
+  // items の type：coin（コイン）／gold（G）／item（消耗品・id）／mat（素材・id）／equip（装備・id、n本）／deco（装飾品・id、rarity）
+  gifts:[
+    {id:'thanks_coin_100',reason:'運営からの感謝の気持ちです',items:[{type:'coin',n:100}]},
+  ],
   elemShare:0.5,
   seriesRes:{
     beast:{ice:2,fire:-1},goblin:{fire:1,mei:-1},beetle:{water:2,fire:-2},bone:{mei:2,thunder:-1},
@@ -3247,7 +3252,7 @@ const Profile={
       bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
-      bestiary:{}}; // モンスター図鑑：魔物ごとの討伐数（1以上で登録済み）
+      bestiary:{},giftsGot:{}}; // モンスター図鑑：魔物ごとの討伐数（1以上で登録済み）／giftsGot：受け取ったプレゼント
   },
   create(){
     const p=Profile.blank();
@@ -3466,6 +3471,7 @@ const Save={
     Profile.grantCompanionStarter(p);
     // コイン・ペット
     p.coins=Math.max(0,d.coins|0);p.petEssence=Math.max(0,d.petEssence|0);p.coinGiftGiven=!!d.coinGiftGiven;
+    if(d.giftsGot&&typeof d.giftsGot==='object')for(const k in d.giftsGot)if(d.giftsGot[k])p.giftsGot[k]=true;
     p.pets={};
     if(d.pets&&typeof d.pets==='object')for(const id in d.pets)if(PETS.some(x=>x.id===id))p.pets[id]={level:clamp((d.pets[id]&&d.pets[id].level)|0,1,PET_MAX)};
     const eqPet=d.equipped&&d.equipped.pet;
@@ -10065,6 +10071,24 @@ const Ops={
     Profile.attachDeco(p,a.uid,Number(a.idx)|0,a.deco||null);
     return {changed:true};
   },
+  /** プレゼントの受け取り（1つ1回）。持ち物があふれるときは受け取らない */
+  claimGift(p,who,a){
+    const g=DATA.gifts.find(x=>x.id===a.id);
+    if(!g)return {};
+    if(p.giftsGot[g.id])return {msg:'このプレゼントはもう受け取り済みです',color:'#888'};
+    for(const it of g.items)if(it.type==='item'){const c=DATA.consumables[it.id];if((p.bag[it.id]||0)+it.n>c.max)return {msg:`${c.name}は${c.max}個までしか持てません`,color:'#ff8060'};}
+    for(const it of g.items){
+      const n=Math.max(1,it.n|0);
+      if(it.type==='coin')p.coins=(p.coins||0)+n;
+      else if(it.type==='gold')p.gold=(p.gold||0)+n;
+      else if(it.type==='item')p.bag[it.id]=(p.bag[it.id]||0)+n;
+      else if(it.type==='mat'){p.materials[it.id]=(p.materials[it.id]||0)+n;(p.matSeen=p.matSeen||{})[it.id]=1;}
+      else if(it.type==='equip'){for(let i=0;i<n;i++)Profile.addItem(p,Items.createEquipment(it.id));}
+      else if(it.type==='deco'){Profile.addDeco(p,Items.createDeco(it.id,it.rarity||0));}
+    }
+    p.giftsGot[g.id]=true;
+    return {changed:true,msg:`プレゼントを受け取りました（${g.reason}）`,color:'#ffd23a'};
+  },
   /** コインの無料プレゼント（1人1回・30枚） */
   coinGift(p,who,a){
     if(p.coinGiftGiven)return {msg:'このコインはもう受け取り済みです',color:'#888'};
@@ -11211,6 +11235,7 @@ const App={
   refreshPanel(){
     if(this.state==='inventory')this.renderInventory();
     else if(this.state==='smith'||this.state==='shop')this.goto(this.state);
+    else if(this.state==='gifts')UI.show(this.giftsHTML());
   },
   enterGuest(profile){
     this.applyHostProfile(profile);
@@ -11279,6 +11304,7 @@ const App={
       case 'smith':case 'shop':if(code==='Escape')this.goto(this.facilityFrom);break;
       case 'bestiary':if(code==='Escape')this.goto(this.bestiaryFrom||'camp');break;
       case 'help':if(code==='Escape')this.goto(this.helpFrom||'camp');break;
+      case 'gifts':if(code==='Escape')this.goto(this.giftFrom||'camp');break;
     }
   },
   onBlur(){if(this.state==='playing')this.goto('pause');},
@@ -11333,6 +11359,7 @@ const App={
         break;
       case 'bestiary':UI.show(this.bestiaryHTML());break;
       case 'help':UI.show(this.helpHTML());break;
+      case 'gifts':UI.show(this.giftsHTML());break;
       case 'shop':
         if(was!=='shop')this.shopCart={buy:{},sell:{}};
         UI.show(this.shopHTML());
@@ -11369,6 +11396,9 @@ const App={
       case 'bindCancel':this.rebind=null;this.goto('settings');break;
       case 'bindReset':{const st=this.settings();delete st.binds;this.rebind=null;this.save();this.goto('settings');break;}
       case 'helpBack':this.goto(this.helpFrom||'camp');break;
+      case 'gifts':this.giftFrom=this.state;this.goto('gifts');break;
+      case 'giftBack':this.goto(this.giftFrom||'camp');break;
+      case 'giftClaim':this.doOp('claimGift',{id:ds.id});break;
       case 'helpTab':this.helpTab=ds.t;this.goto('help');break;
       case 'helpWeapon':this.helpWeapon=ds.w;this.goto('help');break;
       case 'helpPad':this.settings().padLabel=ds.v;this.save();this.goto('help');break;
@@ -11615,9 +11645,23 @@ const App={
     const nm=(Net.savedName()||'').trim();
     return `<span style="color:${pc.label}">${nm?esc(nm):(who+1)+'P'}</span>　${tail}`;
   },
+  /** プレゼント画面：運営が決めた贈り物を、1つずつ受け取る */
+  giftsHTML(){
+    const p=this.profile;
+    const nameOf=it=>it.type==='coin'?`${it.n}コイン`:it.type==='gold'?`${it.n}G`
+      :it.type==='item'?`${DATA.consumables[it.id].name} ×${it.n}`:it.type==='mat'?`${DATA.materials[it.id].name} ×${it.n}`
+      :it.type==='equip'?`${DATA.equipment[it.id].name}${it.n>1?' ×'+it.n:''}`:`${DATA.decorations[it.id].name}`;
+    const list=DATA.gifts.map(g=>{
+      const got=!!p.giftsGot[g.id];
+      return `<div class="recipe"><div class="rn">${g.items.map(nameOf).join('、')}　<small class="muted">（${esc(g.reason)}）</small></div>
+        <div class="btnrow"><button class="${got?'':'primary'}" data-act="giftClaim" data-id="${g.id}" ${got?'disabled':''}>${got?'受け取り済み':'受け取る'}</button></div></div>`;
+    }).join('');
+    return `<div class="panel inv-panel"><div class="inv-top"><button data-act="giftBack">戻る（Esc）</button><h2 style="margin:0">プレゼント</h2></div>
+      <div class="inv-body">${list||'<div class="muted">プレゼントはまだありません</div>'}</div></div>`;
+  },
   campHTML(){
     const p=this.profile;
-    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}</div><div class="panel camp"><h1>モンスターダンジョンズ</h1>      <div class="campinfo">${this.charLine(0)}</div>
+    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}<br><button data-act="gifts">🎁 プレゼント</button></div><div class="panel camp"><h1>モンスターダンジョンズ</h1>      <div class="campinfo">${this.charLine(0)}</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button data-act="training" style="background:#3a5a8a;border-color:#7aa8e0">🏋 訓練場（報酬なし・時間制限なし）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
