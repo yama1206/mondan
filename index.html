@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.7.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.8.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10981,7 +10981,22 @@ const App={
   },
   /** 画面左上の通知の位置を、HP欄の下にそろえる（表示の大きさに合わせる） */
   placeNotes(n){UI.notes.style.top=Math.round(12+(Net.role?108+(n-1)*40+4:n*108)*(this.settings().hudScale||CONFIG.hud.scale)+4)+'px';},
+  /** 出撃前の自動補充（設定でオンのとき）：足りない消耗品を、持っているゴールドで店の順に買い足す。一回きりの商品は対象外 */
+  autoRestock(p){
+    if(!this.settings().autoRestock)return;
+    let spent=0,bought=0;
+    for(const s of DATA.shop){
+      if(s.type!=='item'||s.once)continue;
+      if(s.stage&&QuestRules.stage(p)<s.stage)continue;
+      const c=DATA.consumables[s.item];
+      const need=c.max-(p.bag[s.item]||0),can=Math.floor((p.gold||0)/s.price),n=Math.min(need,can);
+      if(n<=0)continue;
+      p.gold-=s.price*n;p.bag[s.item]=(p.bag[s.item]||0)+n;spent+=s.price*n;bought+=n;
+    }
+    if(bought>0)UI.notify(`ゴールドで${bought}個補充しました（-${spent}G）`,'#e0c060',2.5);
+  },
   beginRun(n){
+    if(!this.training&&Net.role!=='guest')this.autoRestock(this.profile);
     Renderer.resetForWorld();
     Renderer.focusId=Net.role?(Net.role==='guest'?Net.myPid:'p1'):null;
     this.placeNotes(n);
@@ -11895,7 +11910,7 @@ const App={
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
-      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
         <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
