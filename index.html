@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.101',date:'2026/10/31'};
+const GAME_VERSION={no:'1.102',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2877,6 +2877,50 @@ const DATA={
 };
 
 /* ===================== 3. アイテム生成・ステータス計算 ===================== */
+/* ---------- 操作説明 ---------- */
+/** コントローラーのボタン名（Gamepad の標準の番号で引く） */
+const PAD_NAMES={
+  xbox:{0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',6:'LT',7:'RT',8:'BACK',9:'START'},
+  ps:{0:'×',1:'○',2:'□',3:'△',4:'L1',5:'R1',6:'L2',7:'R2',8:'SHARE',9:'OPTIONS'},
+  switch:{0:'B',1:'A',2:'Y',3:'X',4:'L',5:'R',6:'ZL',7:'ZR',8:'−',9:'+'}
+};
+const PAD_TYPE_NAMES={xbox:'Xbox',ps:'PlayStation',switch:'Switch'};
+/** 接続中のコントローラーの種類（見つからなければ Xbox 式） */
+function detectPadType(){
+  try{
+    const pads=(navigator.getGamepads&&navigator.getGamepads())||[];
+    for(const g of pads){if(!g||!g.id)continue;const id=g.id.toLowerCase();
+      if(/playstation|dualshock|dualsense|sony|wireless controller/.test(id))return 'ps';
+      if(/nintendo|switch|pro controller|joy-con/.test(id))return 'switch';
+      return 'xbox';}
+  }catch(e){}
+  return 'xbox';
+}
+/** 基本操作：kb＝キーボード、pad＝コントローラーのボタン番号（null は割り当てなし） */
+const HELP_BASIC=[
+  {name:'移動',kb:'WASD / 矢印キー',pad:null,padText:'左スティック'},
+  {name:'攻撃',kb:'左クリック（押しっぱなしで溜め）',pad:7},
+  {name:'ガード',kb:'右クリック / G',pad:6},
+  {name:'回避',kb:'Space',pad:0},
+  {name:'武器スキル',kb:'Q',pad:1},
+  {name:'納刀・抜刀',kb:'F',pad:3},
+  {name:'持ち物を使う',kb:'E',pad:4},
+  {name:'持ち物の切り替え',kb:'R（短く押す＝次へ、長く押す＝一覧）',pad:5},
+  {name:'持ち物を番号で選ぶ',kb:'1〜9',pad:null},
+  {name:'装備画面',kb:'I',pad:8},
+  {name:'メニュー',kb:'Esc',pad:9}
+];
+/** 武器スキルの説明（DATA.weaponSkills の ID ごと） */
+const HELP_WS={
+  medic:'回復アイテムの効果1.5倍、蘇生にかかる時間を2秒短縮。回復薬の効果の半分を近くの味方にも回復する',
+  fudou:'チャージ中の被ダメージを75%軽減（通常50%）、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない',
+  iai:'見切りの判定時間が1.5倍、見切りの攻撃力アップが25%から40%に',
+  kyodo:'回避のクールタイムが0.3秒短くなり、攻撃力が10%上がる',
+  taunt:'発動中はボスのヘイトが最大になり、狙われやすくなる。全方向の90%ガードと、回避距離1.3倍',
+  sokusha:'攻撃力が1.3倍になる',
+  inmitsu:'敵から見つからなくなる。追いかけていた敵も追うのをやめる（ボスには効かない）',
+  gouwan:'ボスの頭へのスタン値が2倍。チャージ中も通常の速さで歩ける'
+};
 const Items={
   /** 上限（maxR）までのレア度から抽選する（製作の装飾品はレア以下） */
   rollRarityMax(boost=1,maxR=99){
@@ -11160,6 +11204,7 @@ const App={
       case 'board':if(code==='Escape')this.goto(this.boardFrom);break;
       case 'smith':case 'shop':if(code==='Escape')this.goto(this.facilityFrom);break;
       case 'bestiary':if(code==='Escape')this.goto(this.bestiaryFrom||'camp');break;
+      case 'help':if(code==='Escape')this.goto(this.helpFrom||'camp');break;
     }
   },
   onBlur(){if(this.state==='playing')this.goto('pause');},
@@ -11211,6 +11256,7 @@ const App={
         if(was!=='smith'&&Input.uiPad)UI.restoreFocus(UI.padKey({dataset:{act:'smithCat',c:'weapon'}}));
         break;
       case 'bestiary':UI.show(this.bestiaryHTML());break;
+      case 'help':UI.show(this.helpHTML());break;
       case 'shop':
         if(was!=='shop')this.shopCart={buy:{},sell:{}};
         UI.show(this.shopHTML());
@@ -11241,6 +11287,11 @@ const App={
       case 'smith':case 'shop':this.facilityFrom=this.state==='lobby'?'lobby':'camp';this.goto(act);break;
       case 'facilityBack':this.goto(this.facilityFrom||'camp');break;
       case 'bestiary':if(this.state!=='bestiary')this.bestiaryFrom=this.state==='lobby'?'lobby':'camp';this.goto('bestiary');break;
+      case 'help':if(this.state!=='help')this.helpFrom=this.state;this.helpTab='basic';this.helpWeapon=this.helpWeapon||'sword';this.goto('help');break;
+      case 'helpBack':this.goto(this.helpFrom||'camp');break;
+      case 'helpTab':this.helpTab=ds.t;this.goto('help');break;
+      case 'helpWeapon':this.helpWeapon=ds.w;this.goto('help');break;
+      case 'helpPad':this.settings().padLabel=ds.v;this.save();this.goto('help');break;
       case 'bestSel':this.bestSel=ds.id;this.goto('bestiary');break;
       case 'bestStage':this.bestStage=Number(ds.s)||1;this.bestSel=null;this.goto('bestiary');break;
       case 'bestiaryBack':this.goto(this.bestiaryFrom||'camp');break;
@@ -11491,6 +11542,7 @@ const App={
       <button data-act="inventory">装備・インベントリ</button>
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
+      <button data-act="help">📘 操作説明</button>
       <button data-act="settings">設定</button>
       <button class="danger" data-act="reset">セーブデータをリセット</button></div>
       ${this.howtoHTML()}
@@ -12097,6 +12149,33 @@ const App={
     return `<div class="col full" style="margin-bottom:10px"><div class="col-t">防具の強化</div><div class="small muted" style="margin-bottom:6px">強化玉（ボス・宝箱・依頼で入手）：所持 ${orbs}個。強化するたびに防御力が +1 され、最大 ${REINFORCE_MAX} 段階までです。</div><div class="recipes">${rows}</div></div>`;
   },
   /** モンスター図鑑：倒した魔物が登録される。ステージごとに一覧、選ぶと姿・特徴・攻略のヒント・素材 */
+  /** 操作説明：基本操作（キーボード・コントローラー）と、武器ごとの性能・スキル */
+  helpHTML(){
+    const sel=this.settings().padLabel||'auto',type=sel==='auto'?detectPadType():sel;
+    const tab=this.helpTab||'basic',wk=this.helpWeapon||'sword';
+    const padBtns=[['auto','自動'],['xbox','Xbox'],['ps','PS'],['switch','Switch']].map(([k,n])=>`<button class="${sel===k?'on':''}" data-act="helpPad" data-v="${k}">${n}</button>`).join('');
+    const tabs=`<div class="tabs"><button class="tab ${tab==='basic'?'on':''}" data-act="helpTab" data-t="basic">基本操作</button><button class="tab ${tab==='weapon'?'on':''}" data-act="helpTab" data-t="weapon">武器・スキル</button></div>`;
+    let body='';
+    if(tab==='basic'){
+      const head=`<div style="display:grid;grid-template-columns:150px 1fr 110px;gap:4px 10px;font-size:13px;color:#8a82a2;margin-bottom:4px"><span>操作</span><span>キーボード</span><span>${PAD_TYPE_NAMES[type]}</span></div>`;
+      const rows=HELP_BASIC.map(r=>{const pad=r.padText||(r.pad==null?'−':PAD_NAMES[type][r.pad]);
+        return `<div style="display:grid;grid-template-columns:150px 1fr 110px;gap:4px 10px;align-items:center;padding:4px 0;border-bottom:1px solid #2a2440"><span>${r.name}</span><span>${r.kb}</span><span style="color:#f3d48a">${pad}</span></div>`;}).join('');
+      body=`<div class="col full">${head}${rows}<div class="small muted" style="margin-top:8px">コントローラーの表示は、つないだ機器から自動で判定します。違うときは上のボタンで選んでください。</div></div>`;
+    }else{
+      const list=Object.keys(DATA.weaponTypes).map(k=>`<button class="${k===wk?'on':''}" data-act="helpWeapon" data-w="${k}">${DATA.weaponTypes[k].name}</button>`).join('');
+      const w=DATA.weaponTypes[wk],sk=DATA.weaponSkills[w.ws],m=w.marks||{};
+      body=`<div class="col full"><div class="filters">${list}</div>
+        <div class="recipe" style="margin-top:8px"><div class="rn">${w.name}</div><div class="muted">${w.feature||''}</div>
+        <div class="small" style="margin:6px 0">性能：移動 ${m.move||'−'}　攻撃速度 ${m.speed||'−'}　威力 ${m.power||'−'}　リーチ ${m.reach||'−'}　／　攻撃の間隔 約${w.interval}秒</div>
+        <div><b style="color:#f3d48a">スキル「${sk.name}」</b>（${PAD_NAMES[type][1]}／Q）</div>
+        <div class="small">${HELP_WS[w.ws]||''}</div>
+        <div class="small muted">効果は${sk.duration}秒間、使ったあと${sk.cd}秒は再使用できません</div></div></div>`;
+    }
+    return `<div class="panel inv-panel"><div class="inv-top"><button data-act="helpBack">戻る（Esc）</button><h2 style="margin:0">操作説明</h2><div class="inv-meta">表示：${PAD_TYPE_NAMES[type]}${sel==='auto'?'（自動）':''}</div></div>
+      <div class="small muted" style="margin:-4px 0 6px">コントローラーの表示：${padBtns}</div>
+      ${tabs}
+      <div class="inv-body">${body}</div></div>`;
+  },
   bestiaryHTML(){
     const p=this.profile,b=p.bestiary||{},st=clamp(this.bestStage||1,1,maxStageId());
     // まだ解放していないステージは、名前も中身も出さない（ネタバレ防止）
