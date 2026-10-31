@@ -239,7 +239,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.6',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.7',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11692,8 +11692,9 @@ const App={
     const tabs=DATA.stages.map(s=>s.id<=maxSt?`<button class="tab ${s.id===st?'on':''}" data-act="boardStage" data-s="${s.id}">ステージ${s.id}</button>`:`<button class="tab" disabled>🔒 ステージ${s.id}</button>`).join('');
     const mins=QuestRules.minions(st),md=QuestRules.minionsDone(p,st),mOpen=QuestRules.minionsOpen(p,st);
     const urgentNow=QuestRules.urgentOpen(p,st);
-    // 緊急の依頼は、そのステージの一覧の一番最後に出す（並びは元の順のまま）
-    const rows=DATA.quests.filter(q=>q.stage===st).sort((a,b)=>(a.urgent?1:0)-(b.urgent?1:0)).map(q=>{
+    // 並び：探索 → 雑魚の依頼 → 強敵 → 緊急（同じ種類の中は元の順のまま）
+    const rankQ=q=>q.explore?0:q.urgent?3:(q.goal&&q.goal.type==='kill')?1:2;
+    const rows=DATA.quests.filter(q=>q.stage===st).sort((a,b)=>rankQ(a)-rankQ(b)).map(q=>{
       const ok=QuestRules.available(p,q),n=QuestRules.done(p,q.id);
       if(!ok)return ''; // 緊急・強敵は条件を満たすまで一覧に出さない
       if(!ok&&q.after)return `<div class="itemrow" style="opacity:.55;cursor:default"><span class="nm">？？？　<small class="muted">「${esc(questById(q.after).name)}」を達成すると出現</small></span><span class="tag" style="background:#6a3a9a">強敵</span></div>`;
