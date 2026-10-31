@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.92',date:'2026/10/31'};
+const GAME_VERSION={no:'1.93',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -404,7 +404,7 @@ const DATA={
   consumables:{
     potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（毒・呪いも治る）'},
     good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ffa0d0',effect:{type:'heal',ratio:0.6},desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）'},
-    heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#7fe09a',effect:{type:'heal',ratio:0.3,radius:220},desc:'周囲の味方全員のHPを最大HPの30%回復（毒・呪いも治る）'},
+    heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#ffb6d6',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
     // 狩りの道具（effect.type：flash＝閃光 / place＝足元に設置）
@@ -2054,7 +2054,7 @@ const DATA={
     {id:'free_sword',name:'鉄の剣',desc:'無料。1人につき1度だけ買える（武器の持ち物に入る）',price:0,type:'equip',item:'iron_sword',once:true},
     {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
     {id:'good_potion',name:'良い回復薬',desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
-    {id:'heal_all',name:'癒しの香',desc:'周囲の味方全員のHPを最大HPの30%回復',price:60,type:'item',item:'heal_all'},
+    {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:60,type:'item',item:'heal_all'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:75,type:'item',item:'atk_horn'},
     {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:75,type:'item',item:'def_horn'},
     {id:'flash',name:'閃光玉',desc:'周りの敵の目をくらませる',price:40,type:'item',item:'flash'},
@@ -4617,6 +4617,22 @@ function updatePlaced(w,dt){
       }
       continue;
     }
+    // 癒しの香：10秒間、範囲の味方を1秒ごとに最大HPの10%回復（毒と呪いも治る）
+    if(o.kind==='heal'){
+      if(o.t>=ef.life){o.done=true;continue;}
+      o.acc=(o.acc||0)+dt;
+      while(o.acc>=1){
+        o.acc-=1;
+        const owner=w.players[o.owner],mul=owner?(owner.stats.healMult||1)*(wsActive(owner,'medic')?1.5:1):1;
+        for(const id in w.players){const q=w.players[id];if(q.dead||Math.hypot(q.x-o.x,q.y-o.y)>=o.r)continue;
+          const hl=Math.round(q.stats.maxHp*ef.rate*mul);
+          q.hp=Math.min(q.stats.maxHp,q.hp+hl);
+          emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
+          if(q.poisonT>0||q.curseT>0){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+        }
+      }
+      continue;
+    }
     if(o.t<ef.arm)continue; // 設置してすぐは作動しない
     const victim=w.enemies.find(e=>!e.dead&&e.state!=='sleep'&&!(e.trapT>0)&&Math.hypot(e.x-o.x,e.y-o.y)<o.r+e.r*0.9); // 体が罠に重なったら作動
     if(!victim)continue;
@@ -6934,6 +6950,14 @@ const Renderer={
       ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';
       ctx.strokeText(left.toFixed(1),0,-28);ctx.fillStyle='#ff8a6a';ctx.fillText(left.toFixed(1),0,-28);
       ctx.globalAlpha=0.12;ctx.fillStyle='#ff4020';ctx.beginPath();ctx.arc(0,0,ef.area||110,0,TAU);ctx.fill();
+    }else if(o.kind==='heal'){
+      // 薄いピンクの範囲と残り時間
+      const pulse=0.5+0.5*Math.sin(this.time*4),left=Math.max(0,(ef.life||10)-o.t);
+      ctx.globalAlpha=0.2+0.08*pulse;ctx.fillStyle='#ffb6d6';ctx.beginPath();ctx.arc(0,0,o.r,0,TAU);ctx.fill();
+      ctx.globalAlpha=0.75;ctx.strokeStyle='#ffd0e6';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(0,0,o.r,0,TAU);ctx.stroke();ctx.setLineDash([]);
+      ctx.globalAlpha=1;ctx.fillStyle='#ffe0f0';ctx.beginPath();ctx.arc(0,0,6,0,TAU);ctx.fill();
+      ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';
+      ctx.strokeText(left.toFixed(1),0,-14);ctx.fillStyle='#ffd0e6';ctx.fillText(left.toFixed(1),0,-14);
     }
     ctx.restore();
   },
