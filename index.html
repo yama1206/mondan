@@ -241,7 +241,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.10',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.11',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4018,8 +4018,32 @@ function urgentBossBoost(type,stageNo){
   const f=(need,own)=>own>0?Math.max(1,need*URGENT_MARGIN/own):1;
   return {hp:f(mh,d.hp),atk:f(ma,d.atk),def:md>0?f(md,d.def||0):1};
 }
+/** 状態異常攻撃をしてくる雑魚（ボス以外）は、フロアに同時に1体だけ。いなくなると少し後に1体わく */
+const STATUS_RESPAWN=5; // 秒
+function isStatusMinion(type){const d=DATA.enemies[type];return !!(DATA.enemyStatus[type]&&d&&!d.boss);}
+function statusMinionAlive(w){return w.enemies.some(x=>!x.dead&&isStatusMinion(x.type));}
+function updateStatusRespawn(w,dt){
+  if(w.quest&&w.quest.training)return;
+  if(statusMinionAlive(w)){w.statusRespawnT=STATUS_RESPAWN;return;}
+  w.statusRespawnT=(w.statusRespawnT===undefined?STATUS_RESPAWN:w.statusRespawnT)-dt;
+  if(w.statusRespawnT>0)return;
+  w.statusRespawnT=STATUS_RESPAWN;
+  const types=stageRoster(stageById(w.stageId)).filter(isStatusMinion);
+  if(!types.length)return;
+  const rooms=(w.map.roomList||[]).filter(rm=>rm.kind!=='start'&&rm.kind!=='boss');
+  const alive=Object.values(w.players).filter(q=>!q.dead);
+  for(const rm of shuffle(rooms.slice())){
+    for(let k=0;k<6;k++){
+      const p=randomFloor(w.map,rm.rect,2);
+      if(!p||alive.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<300))continue;
+      spawnEnemy(w,pick(types),p.x,p.y);return;
+    }
+  }
+}
 function spawnEnemy(w,type,x,y,opt){
   opt=opt||{};
+  // 状態異常の雑魚は、同時に1体まで（呼び出し・復活・ボスの子分は除く）
+  if(!opt.summoned&&!opt.revived&&!opt.bossMinion&&isStatusMinion(type)&&statusMinionAlive(w))return null;
   const d=DATA.enemies[type],E=CONFIG.elite,M=CONFIG.midBoss,mid=!!opt.mid&&!d.boss,el=!!opt.elite&&!d.boss&&!mid;
   const ub=d.boss&&opt.urgentStage?urgentBossBoost(type,opt.urgentStage):{hp:1,atk:1,def:1};
   // 1人プレイのボスは体力1.5倍（仲間がいても1人プレイ扱い。訓練場のカカシは除く）
@@ -5941,6 +5965,7 @@ function updateRevive(w,dt){
 function updateWorld(w,dt,inputs){
   if(w.status!=='playing')return;
   w.time+=dt;
+  updateStatusRespawn(w,dt);
   if(w.questId==='training')trainingTick(w,dt);
   if(!questById(w.questId).explore&&w.time>=CONFIG.questTimeLimit){w.failReason='time';w.status='gameover';return;}
   w.flowTimer-=dt;if(w.flowTimer<=0){computeFlow(w);w.flowTimer=0.25;}
