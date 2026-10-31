@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.80',date:'2026/10/31'};
+const GAME_VERSION={no:'1.81',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3981,7 +3981,7 @@ function addHate(e,p,amount){
   if(!e.hate)e.hate={};
   e.hate[p.id]=(e.hate[p.id]||0)+Math.max(0,amount);
 }
-const HATE_RESET=15; // この秒数ごとに、ヘイトを完全にリセット（一番近い相手を狙い直す）
+const HATE_RESET=10; // この秒数ごとに、ヘイトを完全にリセット（一番近い相手を狙い直す）
 function decayHate(e,dt){
   e.hateT=(e.hateT||0)+dt;
   if(e.hateT>=HATE_RESET){e.hateT=0;e.hate={};return;}
