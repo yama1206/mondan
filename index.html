@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.10.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.11.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -7839,29 +7839,33 @@ const Renderer={
     ctx.restore();
   },
   drawRabbit(ctx,e,hurt,pal){
+    // 横顔の跳ね兎：耳は常に上向き、進行方向へ左右反転して向きを表す
     const r=e.r,ph2=e.phase===2,b=hurt?'#ffffff':(ph2?pal.rage:pal.body),d=ph2?pal.rageDark:pal.dark;
-    const charging=e.state==='charge',hop=Math.abs(Math.sin(e.anim*(charging?14:5)))*r*0.12;
-    ctx.save();ctx.rotate(e.facing);
-    // 長い耳：後ろへ倒れて、ゆれる
-    for(const s of [-1,1]){const sw=Math.sin(e.anim*3+s)*0.12;
-      ctx.save();ctx.translate(-r*0.3,s*r*0.45);ctx.rotate(s*(0.45+sw)*(charging?0.5:1));
-      ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(-r*0.25,s*r*0.5,r*0.22,r*0.75,0,0,TAU);ctx.fill();ctx.stroke();
-      ctx.fillStyle=pal.ear;ctx.beginPath();ctx.ellipse(-r*0.25,s*r*0.52,r*0.1,r*0.55,0,0,TAU);ctx.fill();
-      ctx.restore();}
-    // 後ろ足（跳ねるとゆれる）
-    ctx.fillStyle=d;for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(-r*0.55,s*r*0.55+hop*0.3,r*0.32,r*0.2,0,0,TAU);ctx.fill();}
-    // 丸い尾
-    ctx.fillStyle='#ffffff';ctx.strokeStyle=d;ctx.lineWidth=2;ctx.beginPath();ctx.arc(-r*1.0,0,r*0.26,0,TAU);ctx.fill();ctx.stroke();
-    // 体（ふっくら）
-    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(-r*0.15,-hop*0.3,r*0.85,r*0.7,0,0,TAU);ctx.fill();ctx.stroke();
+    const charging=e.state==='charge',hopP=Math.abs(Math.sin(e.anim*(charging?14:5)));
+    const hop=hopP*r*0.2,tuck=hopP*r*0.12;
+    const dir=Math.cos(e.facing)<0?-1:1;
+    ctx.save();ctx.scale(dir,1);ctx.lineWidth=2.5;
+    // 尾：ふわっとした白い綿毛
+    ctx.fillStyle='#ffffff';ctx.strokeStyle=d;ctx.beginPath();ctx.arc(-r*0.95,-r*0.2-hop,r*0.2,0,TAU);ctx.fill();ctx.stroke();
+    // 後ろ足（大きく、跳ねると縮む）
+    ctx.fillStyle=d;ctx.beginPath();ctx.ellipse(-r*0.4,r*0.3-tuck,r*0.42,r*0.22,-0.2,0,TAU);ctx.fill();
+    // 奥の耳（少し後ろに倒れる）
+    ctx.fillStyle=d;ctx.beginPath();ctx.ellipse(r*0.12,-r*1.0-hop,r*0.12,r*0.5,-0.3,0,TAU);ctx.fill();
+    // 体（横長の楕円）
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.ellipse(-r*0.1,-r*0.18-hop,r*0.72,r*0.5,0,0,TAU);ctx.fill();ctx.stroke();
+    // 前足
+    ctx.beginPath();ctx.ellipse(r*0.42,r*0.22-tuck*0.5,r*0.2,r*0.1,0,0,TAU);ctx.fill();ctx.stroke();
+    // 手前の耳（長く、ピンクの内側つき）
+    ctx.fillStyle=b;ctx.beginPath();ctx.ellipse(r*0.3,-r*1.05-hop,r*0.14,r*0.56,-0.12,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=pal.ear;ctx.beginPath();ctx.ellipse(r*0.31,-r*1.05-hop,r*0.06,r*0.44,-0.12,0,TAU);ctx.fill();
     // 頭
-    ctx.beginPath();ctx.ellipse(r*0.55,-hop*0.3,r*0.5,r*0.46,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=b;ctx.strokeStyle=d;ctx.beginPath();ctx.arc(r*0.5,-r*0.38-hop,r*0.42,0,TAU);ctx.fill();ctx.stroke();
     // ほっぺ・目・鼻・ひげ
-    ctx.globalAlpha*=0.7;ctx.fillStyle=pal.cheek;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.6,s*r*0.26,r*0.13,0,TAU);ctx.fill();}ctx.globalAlpha/=0.7;
-    ctx.fillStyle=ph2?pal.rageEye:pal.eye;for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.78,s*r*0.16,r*0.075,0,TAU);ctx.fill();}
-    ctx.fillStyle='#ffffff';for(const s of [-1,1]){ctx.beginPath();ctx.arc(r*0.8,s*r*0.19,r*0.022,0,TAU);ctx.fill();}
-    ctx.fillStyle=pal.ear;ctx.beginPath();ctx.moveTo(r*0.98,-r*0.04);ctx.lineTo(r*1.06,r*0.04);ctx.lineTo(r*0.98,r*0.08);ctx.closePath();ctx.fill(); // 鼻
-    ctx.strokeStyle=d;ctx.lineWidth=1;for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(r*0.98,s*r*0.06);ctx.lineTo(r*1.3,s*r*0.16);ctx.moveTo(r*0.98,s*r*0.1);ctx.lineTo(r*1.3,s*r*0.1);ctx.stroke();}
+    ctx.globalAlpha*=0.6;ctx.fillStyle=pal.cheek;ctx.beginPath();ctx.arc(r*0.62,-r*0.2-hop,r*0.12,0,TAU);ctx.fill();ctx.globalAlpha/=0.6;
+    ctx.fillStyle=ph2?pal.rageEye:pal.eye;ctx.beginPath();ctx.arc(r*0.66,-r*0.44-hop,r*0.08,0,TAU);ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(r*0.69,-r*0.47-hop,r*0.025,0,TAU);ctx.fill();
+    ctx.fillStyle=pal.ear;ctx.beginPath();ctx.moveTo(r*0.9,-r*0.3-hop);ctx.lineTo(r*0.98,-r*0.24-hop);ctx.lineTo(r*0.9,-r*0.18-hop);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=d;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(r*0.88,-r*0.24-hop);ctx.lineTo(r*1.22,-r*0.3-hop);ctx.moveTo(r*0.88,-r*0.22-hop);ctx.lineTo(r*1.22,-r*0.2-hop);ctx.stroke();
     ctx.restore();
   },
   drawHydra(ctx,e,hurt,pal){
