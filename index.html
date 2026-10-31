@@ -73,6 +73,7 @@ button.danger:hover{background:#6e2a3a}
 .eqslot:hover,.itemrow:hover{background:#221d30}
 .eqslot.sel,.itemrow.sel{border-color:#8a7ac0;background:#26203a}
 .sl{display:inline-block;width:30px;color:#8a82a2;font-size:12px}
+.sdots{font-size:11px;letter-spacing:1px;margin-right:4px;white-space:nowrap}
 .itemrow .nm{flex:1}
 .tag{font-size:11px;background:#3c5fd0;color:#fff;padding:1px 6px;border-radius:9px}
 .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
@@ -105,6 +106,8 @@ button.danger:hover{background:#6e2a3a}
 .padfocus{outline:3px solid #ffd23a!important;outline-offset:2px;box-shadow:0 0 12px rgba(255,210,58,.5)}
 .padfocus:disabled{outline-color:#a99a6a!important;box-shadow:none}
 body.pad #game{cursor:none}
+/* 装備画面の装備中一覧：デスクトップでは少し広く（スロットのダイヤを見やすくする） */
+.eq-body>.col-left{width:340px;flex-shrink:0}
 @media (max-width:900px){.inv-body{flex-direction:column}.col-left,.col-right{width:auto}.inv-panel{height:94vh}
 /* 依頼選択：スマホでも左に一覧、右に説明を並べる */
 .board-body{flex-direction:row}.board-body .col-mid{flex:0 0 42%;min-width:0}.board-body .col-right{width:auto!important;flex:1;min-width:0}
@@ -215,7 +218,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.68',date:'2026/10/31'};
+const GAME_VERSION={no:'1.69',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9683,6 +9686,8 @@ const sec=(t,body)=>`<div class="sec"><div class="sec-t">${t}</div>${body}</div>
 /** 属性耐性の表示（例：火+3 水-2）。全部0なら「なし」 */
 function elemResText(r){const a=Object.keys(DATA.elements).filter(k=>r[k]).map(k=>`<span style="color:${DATA.elements[k].color}">${DATA.elements[k].name}${r[k]>0?'+':''}${r[k]}</span>`);return a.length?a.join(' '):'なし';}
 function slotDots(it){return it.slots.map(u=>u?'◆':'◇').join('');}
+/** 装備中一覧の部位の隣：空きスロットは灰色の◇、使用済みは金色の◆ */
+function slotDotsColored(it){return it.slots.map(u=>u?'<span style="color:#ffd23a">◆</span>':'<span style="color:#6a6480">◇</span>').join('');}
 function itemName(it){return DATA.equipment[it.baseId].name;}
 
 /* ===================== 9. 装備・製作の操作（データだけを変更する純粋な処理） =====================
@@ -11520,7 +11525,7 @@ const App={
     const left=`<div class="col col-left" data-scroll="left"><div class="col-t">装備中</div>${SLOTS.map(sl=>{
       const it=Profile.getItem(p,ch.equipped[sl]);
       const sk=it&&sl!=='weapon'?skillPtsText(DATA.equipment[it.baseId].skills):'';
-      return it?`<div class="eqslot ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}"><span class="sl">${SLOT_NAMES[sl]}</span><span style="color:${eqColor(it)}">${itemName(it)}</span><small class="muted">${slotDots(it)}</small>${sk?`<div class="small" style="width:100%;color:#9ad8ff;padding-left:2.6em">${sk}</div>`:''}</div>`
+      return it?`<div class="eqslot ${it.uid===this.inv.sel?'sel':''}" data-act="selItem" data-uid="${it.uid}"><span class="sl">${SLOT_NAMES[sl]}</span><span class="sdots">${slotDotsColored(it)}</span><span style="color:${eqColor(it)}">${itemName(it)}</span>${sk?`<div class="small" style="width:100%;color:#9ad8ff;padding-left:2.6em">${sk}</div>`:''}</div>`
         :`<div class="eqslot" data-act="filter" data-f="${sl}"><span class="sl">${SLOT_NAMES[sl]}</span><span class="muted">なし</span></div>`;
     }).join('')}${who===0?this.petSlotHTML():''}<div class="col-t">ステータス</div>${this.statsBlockHTML(st)}</div>`;
     const order={weapon:0,head:1,body:2,arms:3,waist:4,legs:5};
