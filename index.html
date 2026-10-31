@@ -114,9 +114,9 @@ button.danger:hover{background:#6e2a3a}
 .sell-list .recipe .rn{font-size:12px}
 .sell-list .recipe button{padding:2px 5px;font-size:11px}
 .cost span{display:inline-block;margin-right:10px}
-[data-scroll="craft"] .rn{color:#fff}
-[data-scroll="craft"] .cost .ok{color:#fff}
-[data-scroll="craft"] .cost .ng{color:#888}
+[data-scroll="craft"] .rn,[data-scroll="smith"] .rn{color:#fff}
+.recipes .cost .ok{color:#fff}
+.recipes .cost .ng{color:#888}
 .reward-list{text-align:left;background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px 14px;max-height:280px;overflow:auto;line-height:1.8;margin-top:10px}
 .setting{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2a2438;cursor:pointer}
 .setting input{width:18px;height:18px}
@@ -239,7 +239,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.4',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.5',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
