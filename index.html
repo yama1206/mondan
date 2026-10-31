@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.0.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.1.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11336,7 +11336,8 @@ const App={
       case 'back':this.goto(this.returnState);break;
       case 'backSettings':this.goto(this.settingsReturn);break;
       case 'tab':this.inv.tab=ds.tab;this.inv.decoPick=null;this.renderInventory();break;
-      case 'filter':this.inv.filter=ds.f;this.inv.skill=null;this.renderInventory();break;
+      case 'filter':this.inv.filter=ds.f;this.inv.skill=null;this.inv.worn=false;this.renderInventory();break;
+      case 'worn':this.inv.worn=!this.inv.worn;this.renderInventory();break;
       case 'skillFilter':this.inv.skill=ds.k||null;this.renderInventory();break;
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
@@ -11935,8 +11936,20 @@ const App={
       <div class="eff">首輪：${x.fmt.replace('{v}',petValue(x,1).toFixed(x.stat==='dodgeIframe'?2:1))}（マルチプレイで連れ歩くと効果）</div>
       <div style="margin-top:8px"><button data-act="petEquip" data-id="${id}">${eq?'首輪を外す':'首輪をはめる'}</button></div>`;
   },
+  /** 装備中の表示：左＝装備中の防具、真ん中＝ステータス、右＝合計スキルポイントと発動中のスキル */
+  wornViewHTML(p,who,ch,st){
+    const armorSl=SLOTS.filter(sl=>sl!=='weapon'&&sl!=='charm');
+    const left=`<div class="col col-left" data-scroll="left"><div class="filters"><button data-act="worn">← 一覧に戻る</button></div><div class="col-t">装備中の防具</div>${armorSl.map(sl=>{
+      const it=Profile.getItem(p,ch.equipped[sl]);
+      return it?`<div class="eqslot"><span class="sl">${SLOT_NAMES[sl]}</span><span class="sdots">${slotDotsColored(it)}</span><span style="color:${eqColor(it)}">${itemName(it)}</span><small class="muted">防${it.def}</small></div>`
+        :`<div class="eqslot"><span class="sl">${SLOT_NAMES[sl]}</span><span class="muted">なし</span></div>`;}).join('')}</div>`;
+    const mid=`<div class="col col-mid" data-scroll="mid"><div class="col-t">ステータス</div>${this.statsBlockHTML(st)}</div>`;
+    const right=`<div class="col col-right" data-scroll="right"><div class="col-t">合計スキルポイント・発動中のスキル</div>${this.skillBlockHTML(st)}</div>`;
+    return left+mid+right;
+  },
   equipTabHTML(){
     const p=this.profile,who=this.inv.who||0,ch=charOf(p,who),st=computeStats(p,null,who),f=(who!==0&&this.inv.filter==='pet')?'weapon':this.inv.filter;
+    if(this.inv.worn)return this.wornViewHTML(p,who,ch,st);
     const left=`<div class="col col-left" data-scroll="left"><div class="col-t">装備中</div>${SLOTS.map(sl=>{
       const it=Profile.getItem(p,ch.equipped[sl]);
       const sk=it&&sl!=='weapon'?skillPtsText(DATA.equipment[it.baseId].skills):'';
@@ -11959,7 +11972,7 @@ const App={
     // 防具・手紙はスキルで絞り込めるように、持ち物にあるスキルだけ並べる
     const skillKeys=(f==='pet'||f==='look'||f==='all'||f==='weapon')?[]:[...new Set(p.items.filter(i=>i.slot===f).flatMap(i=>Object.keys(skOf(i)).filter(k=>DATA.armorSkills[k])))];
     const skillBar=skillKeys.length?`<div class="filters skillfilters"><button class="${sk?'':'on'}" data-act="skillFilter" data-k="">スキル：すべて</button>${skillKeys.map(k=>`<button class="${sk===k?'on':''}" data-act="skillFilter" data-k="${k}">${DATA.armorSkills[k].name}</button>`).join('')}</div>`:'';
-    const mid=`<div class="col col-mid" data-scroll="mid"><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>${skillBar}
+    const mid=`<div class="col col-mid" data-scroll="mid"><div class="filters"><button data-act="worn" style="background:#2d4a6a;border-color:#6a9ad0">装備中（防具・ステータス・スキル）</button></div><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>${skillBar}
       <div class="small muted" style="margin-bottom:6px">所持装備 ${p.items.length}件　◇=空きスロット ◆=装飾品</div>
       ${this.bulkBarHTML(bulk)}${items.map(it=>`<div class="itemrow ${bulk?(bsel.includes(it.uid)?'sel':''):(it.uid===this.inv.sel?'sel':'')}" data-act="${bulk?'bulkTog':'selItem'}" data-uid="${it.uid}">${bulk?`<span class="bx">${bsel.includes(it.uid)?'☑':'☐'}</span>`:''}
         <span class="sl">${SLOT_NAMES[it.slot]}</span><span class="nm" style="color:${eqColor(it)}">${itemName(it)}</span>
