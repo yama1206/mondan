@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.73',date:'2026/10/31'};
+const GAME_VERSION={no:'1.74',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9845,23 +9845,28 @@ const Ops={
       fx:{rar:best.rar,text:`10連結果（${rs.length}回）：${names}`,look:(rs.find(f=>f.look)||{}).look}};
   },
   /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出はペットと同じ3段階の表示） */
-  letterPull(p){
-    const tier=Items.rollLetterTier(1,DATA.letterCap(QuestRules.stage(p)));
+  letterPull(p,stage){
+    const tier=Items.rollLetterTier(1,DATA.letterCap(stage));
     Profile.addItem(p,Items.createLetter(tier));
     const r=DATA.rarities[tier],name=DATA.letters[tier].name;
     const rar=['N','R','SR','SR','SR'][tier];
     return {rar,color:r.color,name,label:`${r.name}：${name}`};
   },
+  /** ステージごとの手紙ガチャ：そのステージまで進んだら使える。レア度はそのステージの上限まで */
   letterGacha(p,who,a){
+    const st=Number(a.stage)||QuestRules.stage(p);
+    if(st<1||st>QuestRules.stage(p))return {msg:'まだ解放されていません',color:'#888'};
     if((p.gold||0)<LETTER_GACHA.price)return {msg:`ゴールドが足りません（${LETTER_GACHA.price}G必要）`,color:'#ff8060'};
     p.gold-=LETTER_GACHA.price;
-    const f=Ops.letterPull(p);
+    const f=Ops.letterPull(p,st);
     return {changed:true,msg:`${f.label}を手に入れた！`,color:f.color,fx:{rar:f.rar,text:f.label}};
   },
   letterGacha10(p,who,a){
+    const st=Number(a.stage)||QuestRules.stage(p);
+    if(st<1||st>QuestRules.stage(p))return {msg:'まだ解放されていません',color:'#888'};
     if((p.gold||0)<LETTER_GACHA.price10)return {msg:`ゴールドが足りません（10連は${LETTER_GACHA.price10}G必要）`,color:'#ff8060'};
     p.gold-=LETTER_GACHA.price10;
-    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p));
+    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p,st));
     const rank={N:0,R:1,SR:2};
     const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
     const names=rs.map(f=>f.name).join(' ／ ');
@@ -11071,8 +11076,8 @@ const App={
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
       case 'gacha':this.gachaRoll();break;
-      case 'letterGacha':this.doOp('letterGacha',{});break;
-      case 'letterGacha10':this.doOp('letterGacha10',{});break;
+      case 'letterGacha':this.doOp('letterGacha',{stage:+ds.stage});break;
+      case 'letterGacha10':this.doOp('letterGacha10',{stage:+ds.stage});break;
       case 'gacha10':this.gachaRoll10();break;
       case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
@@ -11434,9 +11439,12 @@ const App={
   },
   shopGachaHTML(){
     const p=this.profile,coins=p.coins||0;
-    const gl=p.gold||0,lp=LETTER_GACHA.price,lp10=LETTER_GACHA.price10;
-    const letter=`<div class="recipe"><div class="rn">手紙ガチャ</div><div class="muted">ランダムな手紙が手に入ります。レア度は今のステージまで出ます。</div>
-      <div class="btnrow"><button class="${gl>=lp?'primary':''}" data-act="letterGacha" ${gl>=lp?'':'disabled'}>1回（${lp}G）</button><button class="${gl>=lp10?'primary':''}" data-act="letterGacha10" ${gl>=lp10?'':'disabled'}>10連（${lp10}G）</button></div></div>`;
+    const gl=p.gold||0,lp=LETTER_GACHA.price,lp10=LETTER_GACHA.price10,now=QuestRules.stage(p);
+    // ステージごとの手紙ガチャ（進んだステージの分だけ増える）
+    const letters=Array.from({length:now},(_,i)=>{const st=i+1,cap=DATA.letterCap(st);
+      return `<div class="recipe"><div class="rn">手紙ガチャ（ステージ${st}）</div><div class="muted">${DATA.rarities[0].name}〜${DATA.rarities[cap].name}の手紙がランダムに出ます。</div>
+      <div class="btnrow"><button class="${gl>=lp?'primary':''}" data-act="letterGacha" data-stage="${st}" ${gl>=lp?'':'disabled'}>1回（${lp}G）</button><button class="${gl>=lp10?'primary':''}" data-act="letterGacha10" data-stage="${st}" ${gl>=lp10?'':'disabled'}>10連（${lp10}G）</button></div></div>`;}).join('');
+    const letter=letters;
     return `<div class="recipes"><div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットはかぶりなし。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>${letter}</div>`;
   },
