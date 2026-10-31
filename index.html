@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.76',date:'2026/10/31'};
+const GAME_VERSION={no:'1.77',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3108,6 +3108,8 @@ const LOOKS=[
   {id:'l_hamster',name:'ハムスター',col:'#f0c070'},
   {id:'l_bird',name:'小鳥',col:'#60b0ff'},
 ];
+/* 見た目の色違い：1つの見た目に4色（基本色＋色違い3つ）。色は色相をずらして作る */
+const LOOK_VARIANTS=[{name:'基本色',hue:0},{name:'色違い1',hue:110},{name:'色違い2',hue:220},{name:'色違い3',hue:300}];
 /* ガチャ：最初の1回は必ずペット。以後はペット8%、それ以外は首輪（レア度 N60・R30・SR10） */
 const GACHA_PET_RATE=8;
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
@@ -3358,9 +3360,18 @@ const Save={
     const eqPet=d.equipped&&d.equipped.pet;
     p.equipped.pet=(eqPet&&p.pets[eqPet])?eqPet:null;
     p.looks={};
-    if(d.looks&&typeof d.looks==='object')for(const id in d.looks)if(LOOKS.some(x=>x.id===id))p.looks[id]=true;
+    if(d.looks&&typeof d.looks==='object')for(const id in d.looks){
+      if(!LOOKS.some(x=>x.id===id))continue;
+      const v=d.looks[id];
+      // 旧データは true（基本色のみ）。新しいデータは持っている色の番号の配列
+      const arr=v===true?[0]:Array.isArray(v)?[...new Set(v.map(x=>x|0))].filter(x=>x>=0&&x<LOOK_VARIANTS.length).sort():[];
+      if(arr.length)p.looks[id]=arr;
+    }
     p.gachaN=Math.max(0,d.gachaN|0);
-    const lk=d.equipped&&d.equipped.look;p.equipped.look=(lk&&p.looks[lk])?lk:null;
+    const lk=d.equipped&&d.equipped.look,lv=(d.equipped&&d.equipped.lookV)|0;
+    const owned=lk?(p.looks[lk]||[]):[];
+    p.equipped.look=owned.length?lk:null;
+    p.equipped.lookV=p.equipped.look?(owned.includes(lv)?lv:owned[0]):0;
     return p;
   },
   reset(){try{localStorage.removeItem(this.KEY);}catch(e){}},
@@ -8202,6 +8213,8 @@ const Renderer={
     const r=p.r*0.45,lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
     const id=lk.id;
     ctx.save();ctx.translate(pp.x,pp.y);
+    const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0];
+    if(hv.hue&&'filter' in ctx)ctx.filter=`hue-rotate(${hv.hue}deg)`;
     const C=lk.col;ctx.fillStyle=C;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;
     const eyes=(y,sp)=>{ctx.fillStyle='#111';ctx.beginPath();ctx.arc(-r*0.35,y,r*sp,0,Math.PI*2);ctx.arc(r*0.35,y,r*sp,0,Math.PI*2);ctx.fill();ctx.fillStyle=C;};
     const body=()=>{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();};
@@ -9849,7 +9862,7 @@ const Ops={
     const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
     const names=rs.map(f=>f.text).join(' ／ ');
     return {changed:true,msg:`10連：${rs.length}回回した（${names}）`,color:RARITY[best.rar].color,
-      fx:{rar:best.rar,text:`10連結果（${rs.length}回）：${names}`,look:(rs.find(f=>f.look)||{}).look}};
+      fx:{rar:best.rar,text:`10連結果（${rs.length}回）：${names}`,look:(rs.find(f=>f.look)||{}).look,lookV:(rs.find(f=>f.look)||{}).lookV}};
   },
   /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出はペットと同じ3段階の表示） */
   letterPull(p,cap){
@@ -9882,12 +9895,16 @@ const Ops={
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
     const first=!p.gachaN;p.gachaN=(p.gachaN||0)+1;
-    // ペットの見た目は一度手に入れたら以後は出ない（まだ持っていないものからだけ出る）
-    const rest=LOOKS.filter(x=>!p.looks[x.id]);
-    if(rest.length&&(first||RNG.next()*100<GACHA_PET_RATE)){
-      const lk=pick(rest);
-      p.looks[lk.id]=true;
-      return {changed:true,msg:`${lk.name}（ペット）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}が仲間になった！`,look:lk.id}};
+    // ペットは見た目と色を抽選（見た目×色）。同じ見た目の同じ色がかぶったらコイン1枚
+    if(first||RNG.next()*100<GACHA_PET_RATE){
+      const lk=pick(LOOKS),v=randInt(0,LOOK_VARIANTS.length-1),vn=LOOK_VARIANTS[v].name;
+      const have=p.looks[lk.id]||[];
+      if(!have.includes(v)){
+        p.looks[lk.id]=[...have,v].sort();
+        return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
+      }
+      p.coins=(p.coins||0)+1;
+      return {changed:true,msg:`${lk.name}（${vn}）がかぶった → コイン +1`,color:'#ffd23a',fx:{rar:'N',text:`${lk.name}（${vn}）がかぶった → コイン +1`}};
     }
     // 首輪はレア度で抽選してから種類を選ぶ
     let roll=RNG.next()*100,tier='N';
@@ -9903,8 +9920,10 @@ const Ops={
     return {changed:true};
   },
   lookEquip(p,who,a){
-    if(!p.looks[a.id])return {};
-    p.equipped.look=p.equipped.look===a.id?null:a.id;
+    const v=a.v|0;
+    if(!(p.looks[a.id]||[]).includes(v))return {};
+    const same=p.equipped.look===a.id&&(p.equipped.lookV|0)===v;
+    p.equipped.look=same?null:a.id;p.equipped.lookV=same?0:v;
     return {changed:true};
   },
   buy(p,who,a){
@@ -10238,7 +10257,7 @@ const Net={
     this.statT+=1/NET.SNAP_HZ;
     if(this.statT>=2){this.statT=0;full=true;}
     const s={t:'s',time:r1(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
-      players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,look:p.petLook||null,collar:p.petCollar||null,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
+      players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,look:p.petLook||null,lookV:p.petLookV||0,collar:p.petCollar||null,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,ws:p.ws?{id:p.ws.id,t:r1(p.ws.t)}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
@@ -10555,7 +10574,7 @@ const App={
     this.world=createWorld({quest:q,players:n,leash:n>1?CONFIG.coop.leash:0});
     for(let who=0;who<n;who++)addPlayer(this.world,this.pidOf(who),computeStats(p,null,who),p.bag);
     Companion.spawn(this.world,p);
-    if(this.world.players.p1){this.world.players.p1.petLook=p.equipped.look||null;this.world.players.p1.petCollar=p.equipped.pet||null;}
+    if(this.world.players.p1){this.world.players.p1.petLook=p.equipped.look||null;this.world.players.p1.petLookV=p.equipped.lookV||0;this.world.players.p1.petCollar=p.equipped.pet||null;}
     this.syncPotions();
     this.beginRun(n);
     if(n>1){
@@ -10605,7 +10624,7 @@ const App={
       pr.stats.sorties++;
       const pl=addPlayer(this.world,m.pid,computeStats(pr,null,0),pr.bag);
       pl.slot=slotOfPid(m.pid);
-      pl.petLook=pr.equipped.look||null;pl.petCollar=pr.equipped.pet||null; // ペット（見た目）と首輪は他の人にも見せる
+      pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null; // ペット（見た目）と首輪は他の人にも見せる
     });
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
@@ -10620,7 +10639,7 @@ const App={
     const pr=m.profile;
     const pl=addPlayer(w,m.pid,computeStats(pr,null,0),pr.bag);
     pl.slot=slotOfPid(m.pid);
-    pl.petLook=pr.equipped.look||null;pl.petCollar=pr.equipped.pet||null;
+    pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null;
     const h=w.players.p1;if(h){pl.x=h.x;pl.y=h.y;}
     delete Net.statCache[m.pid]; // 他の参加者にも新しいメンバーのステータスを送る
     this.refreshInfo();
@@ -11090,7 +11109,7 @@ const App={
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookSel':this.inv.lookAsk=ds.id;this.inv.petSel=ds.id;this.renderInventory();break;
       case 'lookAskNo':this.inv.lookAsk=null;this.renderInventory();break;
-      case 'lookEquip':this.inv.lookAsk=null;this.doOp('lookEquip',{id:ds.id});break;
+      case 'lookEquip':this.inv.lookAsk=null;this.doOp('lookEquip',{id:ds.id,v:+ds.v});break;
       case 'bulkMode':this.inv.bulk=!this.inv.bulk;this.inv.bulkSel=[];this.renderInventory();break;
       case 'bulkTog':{const p=this.profile,u=ds.uid;
         if(Profile.equippedBy(p,u)>=0){UI.notify('装備中のものは選べません','#ff8060',2);break;}
@@ -11162,7 +11181,7 @@ const App={
     this.doOp('gacha10',{});
   },
   /** ガチャの演出。レア度が高いほど大きく・長く出す */
-  gachaFx(rar,text,look){
+  gachaFx(rar,text,look,lookV){
     try{
       const el=document.createElement('div');
       el.className='gfx gfx-'+rar;
@@ -11172,7 +11191,7 @@ const App={
         try{
           const cv=document.createElement('canvas');cv.width=240;cv.height=160;cv.className='gfx-pet';
           const cx=cv.getContext('2d');
-          Renderer.drawPet(cx,{id:'__gacha',x:240,y:64,r:80,facing:0,petLook:look,preview:true});
+          Renderer.drawPet(cx,{id:'__gacha',x:240,y:64,r:80,facing:0,petLook:look,petLookV:lookV|0,preview:true});
           el.querySelector('.gfx-in').insertBefore(cv,el.querySelector('.gfx-r'));
         }catch(e){}
       }
@@ -11189,7 +11208,7 @@ const App={
     // ガチャの結果は、レア度に応じた溜めのあとで出す（最高レアは3秒）
     const show=()=>{
       if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
-      if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look);
+      if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look,r.fx.lookV);
       if(r.fx&&['gacha','gacha10','letterGacha','letterGacha10'].includes(act))Sound.gachaResult(r.fx.rar);
     };
     const tame=['gacha','gacha10','letterGacha','letterGacha10'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
@@ -11453,7 +11472,7 @@ const App={
       return `<div class="recipe"><div class="rn">手紙ガチャ（${name}）</div><div class="muted">${DATA.rarities[0].name}〜${DATA.rarities[cap].name}の手紙がランダムに出ます。</div>
       <div class="btnrow"><button class="${gl>=lp?'primary':''}" data-act="letterGacha" data-stage="${b.start}" ${gl>=lp?'':'disabled'}>1回（${lp}G）</button><button class="${gl>=lp10?'primary':''}" data-act="letterGacha10" data-stage="${b.start}" ${gl>=lp10?'':'disabled'}>10連（${lp10}G）</button></div></div>`;}).join('');
     const letter=letters;
-    return `<div class="recipes"><div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットはかぶりなし。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
+    return `<div class="recipes"><div class="recipe"><div class="rn">ペット＆首輪ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペットは見た目と色の組み合わせがかぶるとコイン1枚。首輪がかぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>${letter}</div>`;
   },
   shopBuyHTML(){
@@ -11535,27 +11554,32 @@ const App={
   /** 装備画面の「ペット」枠（プレイヤーのみ） */
   petSlotHTML(){
     const p=this.profile,lk=LOOKS.find(x=>x.id===p.equipped.look),pt=PETS.find(x=>x.id===p.equipped.pet);
-    return `<div class="eqslot ${this.inv.filter==='look'?'sel':''}" data-act="filter" data-f="look"><span class="sl">ペット</span>${lk?`<span style="color:#9fe0ff">${lk.name}（見た目）</span>`:'<span class="muted">なし</span>'}</div>`
+    return `<div class="eqslot ${this.inv.filter==='look'?'sel':''}" data-act="filter" data-f="look"><span class="sl">ペット</span>${lk?`<span style="color:#9fe0ff">${lk.name}（${LOOK_VARIANTS[p.equipped.lookV|0].name}）</span>`:'<span class="muted">なし</span>'}</div>`
       +`<div class="eqslot ${this.inv.filter==='pet'?'sel':''}" data-act="filter" data-f="pet"><span class="sl">首輪</span>${pt?`<span style="color:#9fe0ff">${pt.name} Lv${p.pets[pt.id].level}</span>`:'<span class="muted">なし</span>'}</div>`;
+  },
+  /** 色を選ぶボタン：持っている色ごとに。いま付けている色は「外す」 */
+  lookColorBtns(p,id){
+    const eq=p.equipped.look===id,cur=p.equipped.lookV|0;
+    return (p.looks[id]||[]).map(v=>{const on=eq&&cur===v;
+      return `<button class="${on?'':'primary'}" data-act="lookEquip" data-id="${id}" data-v="${v}">${LOOK_VARIANTS[v].name}${on?'（外す）':''}</button>`;}).join('');
   },
   lookListHTML(){
     const p=this.profile;
-    const own=LOOKS.filter(x=>p.looks[x.id]);
+    const own=LOOKS.filter(x=>(p.looks[x.id]||[]).length);
     if(!own.length)return '<div class="muted">まだペットの見た目がありません（ショップのガチャで出ます）</div>';
     return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>{
       const eq=p.equipped.look===x.id,ask=this.inv.lookAsk===x.id;
-      const row=`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="lookSel" data-id="${x.id}"><span class="nm">${x.name}</span>${eq?'<span class="tag">装備中</span>':''}</div>`;
+      const row=`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="lookSel" data-id="${x.id}"><span class="nm">${x.name}</span>${eq?`<span class="tag">装備中（${LOOK_VARIANTS[p.equipped.lookV|0].name}）</span>`:''}<span class="small muted">${(p.looks[x.id]||[]).length}色</span></div>`;
       if(!ask)return row;
       // タップした見た目の直下に確認を出す（下までスクロールしなくても決められる）
-      return row+`<div class="itemrow sel" style="flex-wrap:wrap;gap:6px;justify-content:space-between"><span>${eq?`${x.name}の見た目を外しますか？`:`${x.name}の見た目にしますか？`}</span><span class="btnrow" style="margin:0"><button class="${eq?'':'primary'}" data-act="lookEquip" data-id="${x.id}">${eq?'はい（外す）':'はい'}</button><button data-act="lookAskNo">いいえ</button></span></div>`;
+      return row+`<div class="itemrow sel" style="flex-wrap:wrap;gap:6px;justify-content:space-between"><span>${x.name}の色を選ぶ（${eq?'いまの色をタップで外す':'色をタップで付ける'}）</span><span class="btnrow" style="margin:0">${this.lookColorBtns(p,x.id)}</span></div>`;
     }).join('');
   },
   lookDetailHTML(){
     const p=this.profile,id=this.inv.petSel,x=LOOKS.find(q=>q.id===id);
     if(!x||!p.looks[id])return '<div class="muted">見た目を選ぶと詳細が出ます。</div>';
-    const eq=p.equipped.look===id;
-    return `<div class="iname">${x.name}（見た目）</div><div class="small muted" style="margin:6px 0">連れ歩くときの姿です。性能には影響しません。</div>
-      <button data-act="lookEquip" data-id="${id}">${eq?'見た目を外す':'この見た目にする'}</button>`;
+    return `<div class="iname">${x.name}（見た目）</div><div class="small muted" style="margin:6px 0">連れ歩くときの姿です。色を選べます。性能には影響しません。</div>
+      <div class="btnrow">${this.lookColorBtns(p,id)}</div>`;
   },
   petListHTML(){
     const p=this.profile,own=PETS.filter(x=>p.pets[x.id]);
