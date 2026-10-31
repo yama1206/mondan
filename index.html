@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.8.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.8.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -399,7 +399,7 @@ const DATA={
   weaponSkills:{
     medic:{name:'医療の心得',duration:20,cd:120},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）、回復薬の効果の半分を近くの味方（220の範囲）にも
     fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージ中の被ダメージ軽減を75%に（通常50%）、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない
-    iai:{name:'居合の極意',duration:20,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
+    iai:{name:'居合の極意',duration:4,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
     kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
     taunt:{name:'挑発',duration:20,cd:120},         // 槍：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
     sokusha:{name:'速射',duration:20,cd:120},       // 弓：攻撃力1.3倍（火力アップ）
@@ -4233,6 +4233,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   if(p.sleepT>0){p.sleepT=0;p.sleepImmune=DATA.playerStatus.sleep.immune;} // 睡眠は攻撃を受けると目が覚める
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
   emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,hitEl});
+  p.drip=null; // 回復薬を飲んでいる最中にダメージを受けたら、回復は止まる（残りは回復しない）
   // アイテム使用中に被弾：アイテムは消費して不発。チャージも中断
   if(p.using){
     const id=p.using.item;p.using=null;
@@ -4339,7 +4340,7 @@ function damageEnemy(w,p,e,mult,src){
   dmg*=1+(e.boss?s.bossDmgPct:s.minionDmgPct)/100;
   // 正面からの攻撃に強い魔物（森甲虫）：側面・背後からなら通常どおり
   const ed=DATA.enemies[e.type];let guarded=false;
-  if(ed.guard&&e.state!=='stunned'&&!(e.trapT>0)&&(part&&part.guard!=='dir'?!!part.guard:Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2)){dmg*=ed.guard.mult;guarded=true;}
+  if(ed.guard&&s.weaponType!=='hammer'&&e.state!=='stunned'&&!(e.trapT>0)&&(part&&part.guard!=='dir'?!!part.guard:Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=ed.guard.arc/2)){dmg*=ed.guard.mult;guarded=true;}
   dmg=Math.max(1,Math.round(dmg-e.armor*0.5));
   if(ed.physRes)dmg=Math.max(1,Math.round(dmg*ed.physRes)); // 物理に硬い魔物（地底王）
   // 属性ダメージ：防御力で減らず、会心の影響も受けない。モーションの重さ（倍率）の平方根に比例
@@ -4557,7 +4558,7 @@ function updatePlayer(w,p,inp,dt){
     const d=DATA.playerStatus.poison;p.poisonT-=dt;p.poisonTick-=dt;
     if(p.poisonTick<=0){p.poisonTick+=d.tick;
       const dmg=Math.min(p.hp-1,Math.max(1,Math.round(s.maxHp*d.pct*(1-clamp(s.poisonRes||0,0,100)/100))));
-      if(dmg>0){p.hp-=dmg;emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,dot:true});}}
+      if(dmg>0){p.hp-=dmg;p.drip=null;emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,dot:true});}}
   }
   // 自動回復（防具スキル）：3秒ごとにまとめて回復
   if(s.regen>0){p.regenT=(p.regenT||0)+dt;if(p.regenT>=3){p.regenT-=3;if(p.hp<s.maxHp){const hl=Math.min(s.maxHp-p.hp,Math.round(s.regen*3));p.hp+=hl;emit(w,{type:'heal',x:p.x,y:p.y-20,amount:hl,drain:true});}}}
