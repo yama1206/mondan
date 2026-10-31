@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.4.3',date:'2026/10/31'};
+const GAME_VERSION={no:'1.4.4',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9856,7 +9856,9 @@ const UI={
       const edge=Math.max(0,dir==='right'?b.left-a.right:dir==='left'?a.left-b.right:dir==='down'?b.top-a.bottom:a.top-b.bottom);
       const cross=horiz?gap(a.top,a.bottom,b.top,b.bottom):gap(a.left,a.right,b.left,b.right);
       const off=Math.abs(horiz?dy:dx); // 同じくらい近いときは、まっすぐ先にあるものを優先
-      const s=edge+cross*2.5+off*0.05;
+      // 下に動くときは左側のボタンを優先する（右にずれた候補には少し余計な差をつける）
+      const leftBias=dir==='down'&&dx>0?dx*0.5:0;
+      const s=edge+cross*2.5+off*0.05+leftBias;
       if(s<bs){bs=s;best=el;}
     }
     if(best)this.setFocus(best);
