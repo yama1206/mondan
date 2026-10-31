@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.8.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.8.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11297,7 +11297,7 @@ const App={
   /** 参加者から届いた装備・製作の操作を、その人のデータに対して実行する */
   hostCmd(pid,d){
     const m=Net.member(pid);
-    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','enchant','sellMany','costume'];
+    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','enchant','sellMany','costume','petEquip','lookEquip','gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha'];
     if(!m||!allowed.includes(d.act))return;
     const args=(d.args&&typeof d.args==='object')?d.args:{};
     let r={};
@@ -11305,6 +11305,8 @@ const App={
     if(r.changed&&this.world&&this.world.players[pid]){
       setPlayerStats(this.world,pid,computeStats(m.profile,null,0));
       this.world.players[pid].bag=Object.assign(emptyBag(),m.profile.bag);
+      // ペット（見た目）と首輪は、ほかの人にも見せるので world にも反映する
+      const wp=this.world.players[pid];wp.petLook=m.profile.equipped.look||null;wp.petLookV=m.profile.equipped.lookV||0;wp.petCollar=m.profile.equipped.pet||null;
     }
     Net.sendTo(pid,{t:'profile',profile:m.profile});
     if(r.sel)Net.sendTo(pid,{t:'sel',uid:r.sel});
