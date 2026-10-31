@@ -230,7 +230,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.93',date:'2026/10/31'};
+const GAME_VERSION={no:'1.94',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -270,7 +270,7 @@ const CONFIG={
 
 const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝手紙（モンハンのお守り）
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
-const ITEM_ORDER=['potion','good_potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
+const ITEM_ORDER=['potion','good_potion','heal_all','antidote','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 /** 持っている消耗品のID（ITEM_ORDER の順）。切り替えの輪や表示はこれだけを使う */
 const ownedItemIds=bag=>ITEM_ORDER.filter(id=>(bag[id]||0)>0);
 const emptyBag=()=>{const b={};for(const id of ITEM_ORDER)b[id]=0;return b;};
@@ -385,7 +385,7 @@ const DATA={
   },
   // 武器スキル（Qで発動。効果は duration 秒、再使用まで cd 秒）。武器種の ws に ID を入れる
   weaponSkills:{
-    medic:{name:'医療の心得',duration:20,cd:120},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）
+    medic:{name:'医療の心得',duration:20,cd:120},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）、回復薬の効果の半分を近くの味方（220の範囲）にも
     fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージ中の被ダメージ軽減を75%に（通常50%）、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない
     iai:{name:'居合の極意',duration:20,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
     kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
@@ -402,9 +402,10 @@ const DATA={
   // effect.type：heal（ratio＝最大HPに対する回復割合、radius があれば範囲内の味方全員）
   //             buff（stat＝atk/def、pct＝%、time＝秒、radius＝範囲）
   consumables:{
-    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（毒・呪いも治る）'},
+    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4},desc:'自分のHPを最大HPの40%回復（半分はその場、残りは1秒後）。片手剣の医療の心得中は近くの味方にも半分'},
     good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ffa0d0',effect:{type:'heal',ratio:0.6},desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）'},
     heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#ffb6d6',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
+    antidote:{name:'解毒薬',short:'解毒薬',delay:1.0,max:5,color:'#9ff0d0',effect:{type:'cure'},desc:'毒・麻痺・睡眠・呪いを解除する。状態異常になったときに出る「解毒薬を使う」からは、すぐ使える'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
     // 狩りの道具（effect.type：flash＝閃光 / place＝足元に設置）
@@ -2055,6 +2056,7 @@ const DATA={
     {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
     {id:'good_potion',name:'良い回復薬',desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
     {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:60,type:'item',item:'heal_all'},
+    {id:'antidote',name:'解毒薬',desc:'毒・麻痺・睡眠・呪いを解除する',price:25,type:'item',item:'antidote'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:75,type:'item',item:'atk_horn'},
     {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:75,type:'item',item:'def_horn'},
     {id:'flash',name:'閃光玉',desc:'周りの敵の目をくらませる',price:40,type:'item',item:'flash'},
@@ -2840,6 +2842,7 @@ const DATA={
     {id:'r_haro_legs',out:{type:'equip',id:'haro_greaves'},cost:{oldwood_pelt:2,beast_hide:2,wolf_claw:1}},
     {id:'r_deco',out:{type:'deco'},cost:{wolf_claw:2,wolf_pelt:1}}, // 装飾品：ボス素材で作れるのはレア以下まで
     {id:'r_potion',out:{type:'item',id:'potion',n:2},cost:{herb:2}},
+    {id:'r_antidote',out:{type:'item',id:'antidote',n:2},cost:{herb:2}},
     {id:'r_heal_all',out:{type:'item',id:'heal_all',n:1},cost:{herb:3,forest_mushroom:2}},
     {id:'r_atk_horn',out:{type:'item',id:'atk_horn',n:1},cost:{poison_spore:2,herb:1}},
     {id:'r_def_horn',out:{type:'item',id:'def_horn',n:1},cost:{wood:3,herb:1}},
@@ -4416,6 +4419,8 @@ function updatePlayer(w,p,inp,dt){
   p.guarding=false;
   if(p.dead&&p.out){updateSpirit(w,p,inp,dt);return;}
   if(p.dead){p.using=null;p.charging=false;p.pendingHeals=null;return;}
+  // 解毒薬の即時使用（状態異常の表示から押したとき）：麻痺・睡眠中でも使える
+  if(inp.cure&&(p.bag.antidote||0)>0&&cureStatus(w,p)){p.bag.antidote--;emit(w,{type:'itemUsed',pid:p.id,item:'antidote'});}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
@@ -4543,6 +4548,13 @@ function updatePlayer(w,p,inp,dt){
     }
   }
 }
+/** 解毒：毒・麻痺・睡眠・呪いを治す。治したら true */
+function cureStatus(w,p){
+  if(!(p.poisonT>0||p.curseT>0||p.paraT>0||p.sleepT>0))return false;
+  p.poisonT=0;p.poisonTick=0;p.poisoned=0;p.curseT=0;p.paraT=0;p.sleepT=0;
+  emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-34,text:'解毒！',color:'#9ff0d0'});
+  return true;
+}
 /** アイテムの効果を出す（範囲付きなら範囲内の生きている味方全員） */
 function applyItem(w,p,id){
   const c=DATA.consumables[id],ef=c.effect,ip=1+(p.stats.itemPowerPct||0)/100;
@@ -4558,7 +4570,12 @@ function applyItem(w,p,id){
       q.hp=Math.min(q.stats.maxHp,q.hp+now);
       emit(w,{type:'heal',x:q.x,y:q.y-20,amount:now});
       if(split&&hl-now>0)(q.pendingHeals=q.pendingHeals||[]).push({t:1,amt:hl-now});
-      if(q.poisonT>0||q.curseT>0){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+      // 回復薬は状態異常を治さない（解毒薬の役目）。良い回復薬・癒しの香は治す
+      if(id!=='potion'&&(q.poisonT>0||q.curseT>0)){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+      // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
+      if(id==='potion'&&q===p&&wsActive(p,'medic')){const share=Math.round(hl/2);for(const id2 in w.players){const a=w.players[id2];if(a===p||a.dead||Math.hypot(a.x-p.x,a.y-p.y)>220)continue;a.hp=Math.min(a.stats.maxHp,a.hp+share);emit(w,{type:'heal',x:a.x,y:a.y-20,amount:share});}}
+    }else if(ef.type==='cure'){
+      cureStatus(w,p);
     }else if(ef.type==='coat'){
       q.coat={status:ef.status,shots:ef.shots};
       emit(w,{type:'info',pid:q.id,text:`${c.short}を装填（矢${ef.shots}本）`});
@@ -9273,7 +9290,7 @@ const SFX={
 /* ===================== 7. 入力 ===================== */
 /* 入力はプレイヤーID（'p1','p2'）ごとにまとめ、ワールドへは {p1:入力, p2:入力} の形で渡す。
    オンライン化時はこの入力を通信で送受信すればよい。 */
-const newEdges=()=>({dodge:false,skill:false,heal:false,cycle:0,pick:-1,sheathe:false});
+const newEdges=()=>({dodge:false,skill:false,heal:false,cycle:0,pick:-1,sheathe:false,cure:false});
 const Input={
   keys:Object.create(null),mouse:{x:0,y:0,down:false},
   edges:{p1:newEdges(),p2:newEdges()},
@@ -9618,7 +9635,7 @@ const Input={
     const holdAim=!!(p&&DATA.weaponTypes[p.stats.weaponType]&&DATA.weaponTypes[p.stats.weaponType].holdAim); // 弓・手裏剣：攻撃を押したまま狙いを変えられる
     if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.swipeAng!=null&&holdAim)aim=this.touch.swipeAng;}
     const E=this.edges[pid]||newEdges();
-    const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe};
+    const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe,cure:!!E.cure};
     if(p){
       if(isP1&&this.aimMode.p1==='mouse'){const wp=Renderer.screenToWorld(this.mouse.x,this.mouse.y);inp.aim=Math.atan2(wp.y-p.y,wp.x-p.x);}
       else if(this.aimMode[pid]==='pad'&&aim!==null)inp.aim=aim;
@@ -10280,6 +10297,7 @@ const Net={
       if(d.dodge)e.dodge=true;if(d.skill)e.skill=true;if(d.heal)e.heal=true;
       if(d.cycle)e.cycle=d.cycle<0?-1:1;
       if(d.sheathe)e.sheathe=true;
+      if(d.cure)e.cure=true;
       if(typeof d.pick==='number'&&d.pick>=0&&d.pick<ITEM_ORDER.length)e.pick=d.pick|0;
     }else if(d.t==='cmd')App.hostCmd(m.pid,d);
   },
@@ -10305,7 +10323,7 @@ const Net={
     const d=this.inputs[pid];if(!d)return EMPTY_INPUT;
     const e=this.edges[pid]||{};
     const num=v=>clamp(Number(v)||0,-1,1);
-    const r={mx:num(d.mx),my:num(d.my),attack:!!d.attack,guard:!!d.guard,dodge:!!e.dodge,skill:!!e.skill,heal:!!e.heal,cycle:e.cycle||0,pick:typeof e.pick==='number'?e.pick:-1,sheathe:!!e.sheathe};
+    const r={mx:num(d.mx),my:num(d.my),attack:!!d.attack,guard:!!d.guard,dodge:!!e.dodge,skill:!!e.skill,heal:!!e.heal,cycle:e.cycle||0,pick:typeof e.pick==='number'?e.pick:-1,sheathe:!!e.sheathe,cure:!!e.cure};
     if(typeof d.aim==='number'&&isFinite(d.aim))r.aim=d.aim;
     this.edges[pid]=newEdges();
     return r;
@@ -10483,7 +10501,7 @@ const Net={
       const me=w.players[this.myPid];
       const inp=(App.state==='playing'&&me&&(!me.dead||me.out))?Input.sample('p1',me):{mx:0,my:0,attack:false};
       this.send({t:'i',mx:r3(inp.mx||0),my:r3(inp.my||0),attack:!!inp.attack,guard:!!inp.guard,aim:typeof inp.aim==='number'?r3(inp.aim):undefined,
-        dodge:!!inp.dodge,skill:!!inp.skill,heal:!!inp.heal,cycle:inp.cycle|0,pick:typeof inp.pick==='number'?inp.pick:-1,sheathe:!!inp.sheathe});
+        dodge:!!inp.dodge,skill:!!inp.skill,heal:!!inp.heal,cycle:inp.cycle|0,pick:typeof inp.pick==='number'?inp.pick:-1,sheathe:!!inp.sheathe,cure:!!inp.cure});
       Input.consumeEdges();
     }
   },
@@ -10558,6 +10576,7 @@ const App={
         updateWorld(w,CONFIG.step,inputs);
         Input.consumeEdges();
         this.processEvents();
+        this.cureWatch();
         this.acc-=CONFIG.step;n++;
         if(!this.world)break;
       }
@@ -11018,6 +11037,25 @@ const App={
     this.refreshPanel();
   },
   /** 装備画面・鍛冶屋・ショップを開いていれば描き直す */
+  /** 状態異常になった時、解毒薬を持っていれば2秒だけ「解毒薬を使う」を出す */
+  cureWatch(){
+    const w=this.world,me=w&&w.players[this.myPid];
+    const has=!!(me&&!me.dead&&(me.poisonT>0||me.curseT>0||me.paraT>0||me.sleepT>0));
+    if(has&&!this.cureHad&&((me.bag&&me.bag.antidote)||0)>0)this.showCurePop();
+    if(!has&&this.cureHad)this.hideCurePop();
+    this.cureHad=has;
+  },
+  showCurePop(){
+    let el=document.getElementById('curePop');
+    if(!el){
+      el=document.createElement('button');el.id='curePop';el.textContent='解毒薬を使う';
+      el.style.cssText='position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:60;padding:3px 10px;font-size:12px;border-radius:12px;border:1px solid #9ff0d0;background:rgba(16,36,32,.9);color:#c8fff0;display:none;touch-action:manipulation';
+      el.onclick=()=>{this.hideCurePop();const e=this.edges[this.myPid]||(this.edges[this.myPid]=newEdges());e.cure=true;};
+      document.body.appendChild(el);
+    }
+    el.style.display='block';clearTimeout(this.curePopT);this.curePopT=setTimeout(()=>this.hideCurePop(),2000);
+  },
+  hideCurePop(){const el=document.getElementById('curePop');if(el)el.style.display='none';clearTimeout(this.curePopT);},
   refreshPanel(){
     if(this.state==='inventory')this.renderInventory();
     else if(this.state==='smith'||this.state==='shop')this.goto(this.state);
