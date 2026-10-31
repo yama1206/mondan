@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.2.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.3.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11284,7 +11284,7 @@ const App={
     else if(i===9){if(this.state==='pause')this.onKey('Escape');}
     else if(i===8)this.onKey('KeyI');
     else if((i===4||i===5)&&this.state==='inventory'){
-      const tabs=['equip','mats','decos'];
+      const tabs=['equip','mats','decos','items'];
       const n=(tabs.indexOf(this.inv.tab)+(i===5?1:-1)+tabs.length)%tabs.length;
       this.inv.tab=tabs[n];this.inv.decoPick=null;this.renderInventory();
       UI.restoreFocus('tab||'+tabs[n]+'|||||');
@@ -11354,6 +11354,7 @@ const App={
       case 'enchant':this.doOp('enchant',{uid:ds.uid,t:Number(ds.t)});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
       case 'retry':if(Net.role==='host')this.startOnline();else this.startSortie(this.lastPlayers||1);break;
+      case 'itemList':this.inv.tab='items';this.openInventory(this.state);break;
       case 'inventory':this.openInventory(this.state);break; // 鍛冶屋・ショップから開いた場合は閉じると施設に戻る
       case 'settings':this.settingsReturn=this.state;this.goto('settings');break;
       case 'reset':UI.confirm('セーブデータをすべて削除して最初からやり直します。<br><b>この操作は取り消せません。</b>よろしいですか？',()=>this.resetSave());break;
@@ -11588,12 +11589,11 @@ const App={
   campHTML(){
     const p=this.profile;
     return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}</div><div class="panel camp"><h1>モンスターダンジョンズ</h1><p class="sub">略して「モンダン」　見下ろし型ハック＆スラッシュ・アクションRPG</p>
-      <div class="campinfo">${this.charLine(0)}<br>${bagText(p)}　<span style="color:#ffd23a">所持金 ${p.gold||0}G</span><br>
-      解放済み：ステージ${QuestRules.stage(p)}「${stageById(QuestRules.stage(p)).name}」　依頼達成 ${p.stats.clears}回</div>
+      <div class="campinfo">${this.charLine(0)}</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button data-act="training" style="background:#3a5a8a;border-color:#7aa8e0">🏋 訓練場（報酬なし・時間制限なし）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
-      <button data-act="inventory">装備・インベントリ</button>
+      <div class="row" style="margin:0"><button data-act="inventory" style="flex:1">装備・インベントリ</button><button data-act="itemList" style="flex:1">🎒 アイテム</button></div>
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
       <button data-act="help">📘 操作説明</button>
@@ -11878,9 +11878,9 @@ const App={
   },
   renderInventory(){
     const p=this.profile,tab=this.inv.tab;
-    if(!['equip','mats','decos'].includes(tab))this.inv.tab='equip';
-    const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品']];
-    const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.decosTabHTML();
+    if(!['equip','mats','decos','items'].includes(tab))this.inv.tab='equip';
+    const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品'],['items','アイテム']];
+    const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.inv.tab==='items'?this.itemsTabHTML():this.decosTabHTML();
     UI.show(`<div class="panel inv-panel"><div class="inv-top"><button data-act="back">閉じる（I / Esc）</button><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
       ${this.inv.tab==='equip'?this.whoSelectHTML():''}
       <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div></div>
@@ -12114,6 +12114,13 @@ const App={
     }).join('')||'<div class="muted">装飾品を持っていません。敵や宝箱から入手できます。</div>';
     h+=`<div class="btnrow"><button data-act="cancelPick">キャンセル</button></div>`;
     return h;
+  },
+  /** 所有アイテム（戦闘で使う消耗品の所持数） */
+  itemsTabHTML(){
+    const p=this.profile;
+    return `<div class="col full" data-scroll="items"><div class="col-t">所有アイテム（戦闘で使う消耗品）</div><div class="grid-mats">${ITEM_ORDER.map(id=>{const c=DATA.consumables[id],n=p.bag[id]||0;
+      return `<div class="mat ${n?'':'zero'}"><span class="gem" style="background:${c.color};color:${c.color}"></span>${c.name}<b>×${n} / ${c.max}</b><div class="small muted">${c.desc}。使ってから${c.delay}秒で発動</div></div>`;}).join('')}</div>
+    <div class="small muted" style="margin-top:6px">素材は「素材」タブで確認できます</div></div>`;
   },
   matsTabHTML(){
     const p=this.profile;
