@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.3.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.4.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11284,14 +11284,15 @@ const App={
     else if(i===9){if(this.state==='pause')this.onKey('Escape');}
     else if(i===8)this.onKey('KeyI');
     else if((i===4||i===5)&&this.state==='inventory'){
-      const tabs=['equip','mats','decos','items'];
+      const tabs=this.inv.mode==='items'?['items','mats']:['equip','decos'];
       const n=(tabs.indexOf(this.inv.tab)+(i===5?1:-1)+tabs.length)%tabs.length;
       this.inv.tab=tabs[n];this.inv.decoPick=null;this.renderInventory();
       UI.restoreFocus('tab||'+tabs[n]+'|||||');
     }
   },
   onPadNav(dir){if(this.state!=='playing')UI.padNav(dir);},
-  openInventory(from){this.returnState=from;this.inv.decoPick=null;this.goto('inventory');},
+  /** mode：'equip'（装備・装飾品）か 'items'（アイテム・素材）。省略時は装備 */
+  openInventory(from,mode){this.returnState=from;this.inv.decoPick=null;this.inv.mode=mode==='items'?'items':'equip';this.inv.tab=this.inv.mode==='items'?'items':'equip';this.goto('inventory');},
   goto(st){
     const was=this.state;
     this.state=st;
@@ -11354,7 +11355,8 @@ const App={
       case 'enchant':this.doOp('enchant',{uid:ds.uid,t:Number(ds.t)});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
       case 'retry':if(Net.role==='host')this.startOnline();else this.startSortie(this.lastPlayers||1);break;
-      case 'itemList':this.inv.tab='items';this.openInventory(this.state);break;
+      case 'openEquip':this.openInventory(this.state,'equip');break;
+      case 'openItems':this.openInventory(this.state,'items');break;
       case 'inventory':this.openInventory(this.state);break; // 鍛冶屋・ショップから開いた場合は閉じると施設に戻る
       case 'settings':this.settingsReturn=this.state;this.goto('settings');break;
       case 'reset':UI.confirm('セーブデータをすべて削除して最初からやり直します。<br><b>この操作は取り消せません。</b>よろしいですか？',()=>this.resetSave());break;
@@ -11584,7 +11586,8 @@ const App={
     const st=computeStats(this.profile,null,who),pc=PLAYER_COLORS[who];
     const tail=`<span style="color:${rarColor(st.weaponRarity)}">${st.weaponName}</span>　攻撃 ${st.atk}　防御 ${st.def}　最大HP ${st.maxHp}`;
     if(Net.role)return `<span style="color:#7fe09a">オンラインのキャラ</span>　${tail}`;
-    return `<span style="color:${pc.label}">${who+1}P</span>　${tail}`;
+    const nm=(Net.savedName()||'').trim();
+    return `<span style="color:${pc.label}">${nm?esc(nm):(who+1)+'P'}</span>　${tail}`;
   },
   campHTML(){
     const p=this.profile;
@@ -11592,7 +11595,8 @@ const App={
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button data-act="training" style="background:#3a5a8a;border-color:#7aa8e0">🏋 訓練場（報酬なし・時間制限なし）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
-      <div class="row" style="margin:0"><button data-act="inventory" style="flex:1">装備・インベントリ</button><button data-act="itemList" style="flex:1">🎒 アイテム</button></div>
+      <button data-act="openEquip">🛡 装備</button>
+      <button data-act="openItems">🎒 アイテム・インベントリ</button>
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
       <button data-act="help">📘 操作説明</button>
@@ -11670,7 +11674,8 @@ const App={
       <div class="menu-col">${host?`<button data-act="board">依頼を選ぶ</button><button class="primary" data-act="netStart">${waiting?'準備中の人がいます（'+waiting+'人）':(list.length>1?'この依頼でみんなで出発':'ひとりで出発（参加を待たずに）')}</button>`:`<button class="primary" data-act="netReady">${myReady?'準備OKを取り消す':'準備OK'}</button>`}
       <div class="row" style="margin:0"><button data-act="smith" style="flex:1">⚒ 鍛冶屋</button><button data-act="shop" style="flex:1">🛒 ショップ</button></div>
       <button data-act="bestiary">📖 モンスター図鑑</button>
-      <button data-act="inventory">装備・インベントリ</button>
+      <button data-act="openEquip">🛡 装備</button>
+      <button data-act="openItems">🎒 アイテム・インベントリ</button>
       <button data-act="settings">設定</button>
       <button class="danger" data-act="netLeave">${host?'部屋を閉じる':'部屋を抜ける'}</button></div>
       <p class="small muted">${host?'依頼はホストの進行状況から選びます。':'あなたのいつものキャラクターで参加しています。入手したものはあなたのPCに保存されます。'}</p></div>`;
@@ -11876,14 +11881,16 @@ const App={
 </div>`;
   },
   renderInventory(){
-    const p=this.profile,tab=this.inv.tab;
-    if(!['equip','mats','decos','items'].includes(tab))this.inv.tab='equip';
-    const tabs=[['equip','装備'],['mats','素材'],['decos','装飾品'],['items','アイテム']];
-    const body=this.inv.tab==='equip'?this.equipTabHTML():this.inv.tab==='mats'?this.matsTabHTML():this.inv.tab==='items'?this.itemsTabHTML():this.decosTabHTML();
-    UI.show(`<div class="panel inv-panel"><div class="inv-top"><button data-act="back">閉じる（I / Esc）</button><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
-      ${this.inv.tab==='equip'?this.whoSelectHTML():''}
+    const p=this.profile;
+    const itemsMode=this.inv.mode==='items';
+    const tabs=itemsMode?[['items','アイテム'],['mats','素材']]:[['equip','装備'],['decos','装飾品']];
+    if(!tabs.some(([k])=>k===this.inv.tab))this.inv.tab=tabs[0][0];
+    const tab=this.inv.tab;
+    const body=tab==='equip'?this.equipTabHTML():tab==='mats'?this.matsTabHTML():tab==='items'?this.itemsTabHTML():this.decosTabHTML();
+    UI.show(`<div class="panel inv-panel"><div class="inv-top"><button data-act="back">閉じる（I / Esc）</button><b style="margin-right:6px">${itemsMode?'アイテム・インベントリ':'装備'}</b><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-tab="${k}">${n}</button>`).join('')}</div>
+      ${tab==='equip'?this.whoSelectHTML():''}
       <div class="inv-meta">${this.charLine(0)}　${bagText(p)}　<span style="color:#ffd23a">${p.gold||0}G</span>　${this.world?(Net.role?'（探索中・ゲームは進行中）':'（探索中・一時停止）'):''}</div></div>
-      <div class="inv-body ${this.inv.tab==='equip'?'eq-body':''}">${body}</div></div>`);
+      <div class="inv-body ${tab==='equip'?'eq-body':''}">${body}</div></div>`);
   },
   statsBlockHTML(st){
     let h=row('最大HP',st.maxHp)+row('攻撃力',st.atk)+row('防御力',st.def)+row('会心率',st.crit+'%')+row('会心ダメージ','+'+st.critDmg+'%')
