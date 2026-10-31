@@ -231,7 +231,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.2.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.2.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11598,10 +11598,8 @@ const App={
       <button data-act="bestiary">📖 モンスター図鑑</button>
       <button data-act="help">📘 操作説明</button>
       <button data-act="settings">設定</button>
-      <button class="danger" data-act="reset">セーブデータをリセット</button></div>
-      ${this.howtoHTML()}
-      ${this.updateBarHTML()}
-      <p class="small muted" style="margin-top:10px">進行状況はブラウザ（localStorage）に自動保存されます。回復薬は自動では補充されません。出発前に「ショップ」で買うか調合して用意しましょう。</p></div>`;
+      </div>
+      ${this.updateBarHTML()}</div>`;
   },
   lobbyQuestHTML(){
     let q;
@@ -11725,6 +11723,7 @@ const App={
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
         <div class="filters" style="margin-top:6px">${[0,1,2,3,4,5,6,7,8,9,10].map(i=>i/10).map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100)+'%'}</button>`).join('')}</div></div>`).join('')}
+      <div class="row" style="margin-top:14px"><button class="danger" data-act="reset">セーブデータをリセット</button></div>
       <div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div></div>`;
   },
   gameoverHTML(){
