@@ -226,7 +226,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.75',date:'2026/10/31'};
+const GAME_VERSION={no:'1.76',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -9777,10 +9777,9 @@ function matSellPrice(id){
   if(MAT_TIER.mob.has(id))return 6;
   return 5;
 }
-/** 手紙ガチャの値段（ゴールド）：1回・10連 */
-const LETTER_GACHA={price:125,price10:1000};
-/** 手紙ガチャの区切り（3ステージごと）。その区切りの最後のステージのレア度まで出る */
-const LETTER_BANDS=[{start:1,end:3},{start:4,end:6},{start:7,end:8}];
+/** 手紙ガチャの区切り（3ステージごと）。end：その区切りの最後のステージ（レア度の上限）。price：1回のゴールド。10連は1回の9倍 */
+const LETTER_BANDS=[{start:1,end:3,price:200},{start:4,end:6,price:300},{start:7,end:8,price:400}];
+const LETTER_TEN_MUL=9;
 /** 指定の区切りの手紙ガチャが使えるか（そのステージまで進んでいれば区切りを返す） */
 function letterBandOf(p,a){
   const start=Number(a.stage)||LETTER_BANDS[0].start;
@@ -9863,15 +9862,16 @@ const Ops={
   /** ステージごとの手紙ガチャ：そのステージまで進んだら使える。レア度はそのステージの上限まで */
   letterGacha(p,who,a){
     const band=letterBandOf(p,a);if(!band)return {msg:'まだ解放されていません',color:'#888'};
-    if((p.gold||0)<LETTER_GACHA.price)return {msg:`ゴールドが足りません（${LETTER_GACHA.price}G必要）`,color:'#ff8060'};
-    p.gold-=LETTER_GACHA.price;
+    if((p.gold||0)<band.price)return {msg:`ゴールドが足りません（${band.price}G必要）`,color:'#ff8060'};
+    p.gold-=band.price;
     const f=Ops.letterPull(p,DATA.letterCap(band.end));
     return {changed:true,msg:`${f.label}を手に入れた！`,color:f.color,fx:{rar:f.rar,text:f.label}};
   },
   letterGacha10(p,who,a){
     const band=letterBandOf(p,a);if(!band)return {msg:'まだ解放されていません',color:'#888'};
-    if((p.gold||0)<LETTER_GACHA.price10)return {msg:`ゴールドが足りません（10連は${LETTER_GACHA.price10}G必要）`,color:'#ff8060'};
-    p.gold-=LETTER_GACHA.price10;
+    const cost=band.price*LETTER_TEN_MUL;
+    if((p.gold||0)<cost)return {msg:`ゴールドが足りません（10連は${cost}G必要）`,color:'#ff8060'};
+    p.gold-=cost;
     const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p,DATA.letterCap(band.end)));
     const rank={N:0,R:1,SR:2};
     const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
@@ -11445,10 +11445,11 @@ const App={
   },
   shopGachaHTML(){
     const p=this.profile,coins=p.coins||0;
-    const gl=p.gold||0,lp=LETTER_GACHA.price,lp10=LETTER_GACHA.price10,now=QuestRules.stage(p);
+    const gl=p.gold||0,now=QuestRules.stage(p);
     // 3ステージごとの区切りで、手紙ガチャが1つずつ増える
     const letters=LETTER_BANDS.filter(b=>now>=b.start).map(b=>{const cap=DATA.letterCap(b.end);
       const name=b.start===b.end?`ステージ${b.start}`:`ステージ${b.start}〜${b.end}`;
+      const lp=b.price,lp10=b.price*LETTER_TEN_MUL;
       return `<div class="recipe"><div class="rn">手紙ガチャ（${name}）</div><div class="muted">${DATA.rarities[0].name}〜${DATA.rarities[cap].name}の手紙がランダムに出ます。</div>
       <div class="btnrow"><button class="${gl>=lp?'primary':''}" data-act="letterGacha" data-stage="${b.start}" ${gl>=lp?'':'disabled'}>1回（${lp}G）</button><button class="${gl>=lp10?'primary':''}" data-act="letterGacha10" data-stage="${b.start}" ${gl>=lp10?'':'disabled'}>10連（${lp10}G）</button></div></div>`;}).join('');
     const letter=letters;
