@@ -34,6 +34,9 @@ button.danger:hover{background:#6e2a3a}
 .camp{width:min(560px,94vw);text-align:center}
 .gver{position:fixed;top:8px;right:12px;font-size:12px;color:#8a8298;pointer-events:none;z-index:5;text-align:right}
 .gver button{pointer-events:auto;font-size:12px;padding:3px 8px}
+.gver>button,.gver .updbar button{width:112px;font-size:12px;text-align:center}
+.gver .updbar{margin-top:4px;text-align:right}
+.gver #updateMsg{display:block}
 .updbar{margin-top:10px;text-align:center}
 .updbar button{font-size:13px}
 .campinfo{background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px;color:#cfc7e6;line-height:1.7}
@@ -231,7 +234,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -2058,7 +2061,6 @@ const DATA={
   // ショップ（拠点・ロビー・装備画面の「ショップ」タブ）。ゴールドで買える
   // stage：そのステージが解放されると並ぶ
   shop:[
-    {id:'free_sword',name:'鉄の剣',desc:'無料。1人につき1度だけ買える（武器の持ち物に入る）',price:0,type:'equip',item:'iron_sword',once:true},
     {id:'potion',name:'回復薬',desc:'自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
     {id:'good_potion',name:'良い回復薬',desc:'自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
     {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:60,type:'item',item:'heal_all'},
@@ -10089,12 +10091,6 @@ const Ops={
     p.giftsGot[g.id]=true;
     return {changed:true,msg:`プレゼントを受け取りました（${g.reason}）`,color:'#ffd23a'};
   },
-  /** コインの無料プレゼント（1人1回・30枚） */
-  coinGift(p,who,a){
-    if(p.coinGiftGiven)return {msg:'このコインはもう受け取り済みです',color:'#888'};
-    p.coinGiftGiven=true;p.coins=(p.coins||0)+30;
-    return {changed:true,msg:'コインを30枚受け取りました',color:'#ffd23a'};
-  },
   /** 10連：1回ずつ回した結果をまとめる（コインが足りなくなったところで止まる） */
   gacha10(p,who,a){
     if((p.coins||0)<30)return {msg:'コインが足りません（10連は30コイン必要）',color:'#ff8060'};
@@ -11460,7 +11456,6 @@ const App={
       case 'decoGachaPick':{const u=ds.uid,cur=this.decoGachaSel||[];this.decoGachaSel=cur.includes(u)?cur.filter(x=>x!==u):(cur.length<DECO_GACHA.need?[...cur,u]:cur);this.refreshPanel();break;}
       case 'decoGacha':this.doOp('decoGacha',{uids:[...(this.decoGachaSel||[])]});this.decoGachaSel=[];break;
       case 'gacha10':this.gachaRoll10();break;
-      case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
       case 'decoRarFilter':this.inv.decoRar=ds.r===''?null:+ds.r;this.renderInventory();break;
       case 'decoSort':this.inv.decoSort=ds.s;this.renderInventory();break;
@@ -11927,10 +11922,7 @@ const App={
   },
   shopBuyHTML(){
     const p=this.profile,gold=p.gold||0;
-    // 受け取ったらプレゼントは表示から消える
-    const gift=p.coinGiftGiven?'':`<div class="recipe"><div class="rn">コインのプレゼント　<span style="color:#ffd23a">0G</span></div><div class="muted">コインを30枚もらえます。1人1回だけ。</div>
-      <div class="btnrow"><button class="primary" data-act="coinGift">30コインを受け取る（0G）</button></div></div>`;
-    return `<div class="col-t">商品</div><div class="recipes">${gift}</div>
+    return `<div class="col-t">商品</div>
       <div class="recipes shop-items">${DATA.shop.filter(s=>(!s.stage||QuestRules.stage(p)>=s.stage)&&!(s.once&&(p.shopOnce||{})[s.id])).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
