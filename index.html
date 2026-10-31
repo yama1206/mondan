@@ -214,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.31',date:'2026/10/30'};
+const GAME_VERSION={no:'1.32',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10812,6 +10812,7 @@ const App={
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
       case 'gacha':this.doOp('gacha',{});break;
+      case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookEquip':this.doOp('lookEquip',{id:ds.id});break;
       case 'bulkMode':this.inv.bulk=!this.inv.bulk;this.inv.bulkSel=[];this.renderInventory();break;
@@ -11120,12 +11121,22 @@ const App={
         ${Net.role==='host'?'':'<p class="small muted">報酬はあなたのPCに保存されました。ホストが出発すると自動で始まります</p>'}`
       :`<div class="row"><button class="primary" data-act="retry">同じ依頼をもう一度</button><button data-act="board">依頼ボードへ</button><button data-act="camp">拠点に戻る</button></div>`}</div>`;
   },
+  /** ショップのカテゴリ切り替え：購入・売却・ガチャ（ボタンを押すとその項目が開く） */
   shopTabHTML(){
+    const cat=this.shopCat||'buy';
+    const cats=[['buy','購入'],['sell','売却'],['gacha','ガチャ']];
+    const tabs=`<div class="tabs shop-tabs">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="shopCat" data-cat="${k}">${n}</button>`).join('')}</div>`;
+    const body=cat==='sell'?this.shopSellHTML():cat==='gacha'?this.shopGachaHTML():this.shopBuyHTML();
+    return `<div class="col full" data-scroll="shop">${tabs}${body}</div>`;
+  },
+  shopGachaHTML(){
+    const p=this.profile,coins=p.coins||0;
+    return `<div class="recipes"><div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。首輪（レア度あり）とペットの見た目から出ます。ペットは一度出ると以後は出ません。首輪のダブりはコイン1枚に戻ります。</div>
+      <button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button></div></div>`;
+  },
+  shopBuyHTML(){
     const p=this.profile,gold=p.gold||0;
-    const coins=p.coins||0;
-    const gacha=`<div class="recipe"><div class="rn">ペットガチャ　<span style="color:#ffd23a">3コイン</span></div><div class="muted">ボスを倒すとコインが1つもらえます。所持 ${coins}枚。首輪（レア度あり）とペットの見た目から出ます。ペットは一度出ると以後は出ません。首輪のダブりはコイン1枚に戻ります。</div>
-      <button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button></div>`;
-    return `<div class="col full" data-scroll="shop">${gacha}<div class="col-t">商品</div>
+    return `<div class="col-t">商品</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
@@ -11133,14 +11144,16 @@ const App={
         return `<div class="recipe"><div class="rn">${s.name}　<span style="color:#ffd23a">${s.price}G</span></div><div class="muted">${s.desc}</div>
           ${s.type==='item'?`<div>所持 ${p.bag[s.item]||0} / ${DATA.consumables[s.item].max}　発動まで${DATA.consumables[s.item].delay}秒</div>`:s.type==='mat'?`<div>所持 ${p.materials[s.mat]||0}</div>`:''}
           <div class="btnrow">${s.type==='deco'||s.type==='equip'?btn(1):s.type==='mat'?btn(1)+btn(5):btn(1)+btn(3)}</div></div>`;}).join('')}</div>
-      <div class="col-t" style="margin-top:14px">素材を売る（ボス素材ほど高く売れます）</div>
+      </div>`;
+  },
+  shopSellHTML(){
+    const p=this.profile;
+    return `<div class="col-t">素材を売る（ボス素材ほど高く売れます）</div>
       <div class="recipes">${Object.keys(DATA.materials).filter(id=>(p.materials[id]||0)>0&&matSellPrice(id)>0).map(id=>{
         const n=p.materials[id];
         return `<div class="recipe"><div class="rn">${DATA.materials[id].name}　<span style="color:#ffd23a">${matSellPrice(id)}G</span>　<small class="muted">所持 ${n}</small></div>
           <div class="btnrow"><button data-act="sellMat" data-id="${id}" data-n="1">1個売る</button><button data-act="sellMatAll" data-id="${id}">全部売る（${matSellPrice(id)*n}G）</button></div></div>`;}).join('')||'<div class="muted small">売れる素材がありません</div>'}</div>
-      <div class="col-t" style="margin-top:14px">調合（素材から作る）</div>
-      ${this.recipeListHTML(r=>r.out.type==='item').replace('class="col full" data-scroll="craft"','')}
-      <div class="small muted" style="margin-top:10px">ステージが進むと品揃えが増えます。</div></div>`;
+</div>`;
   },
   renderInventory(){
     const p=this.profile,tab=this.inv.tab;
