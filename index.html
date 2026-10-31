@@ -214,7 +214,7 @@ const $=sel=>document.querySelector(sel);
 /* ===================== 2. 設定・ゲームデータ ===================== */
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
-const GAME_VERSION={no:'1.36',date:'2026/10/31'};
+const GAME_VERSION={no:'1.37',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3297,7 +3297,7 @@ const Save={
     if(p.p2&&p.p2.equipped&&!Profile.getItem(p,p.p2.equipped.weapon))p.p2.equipped.weapon=null;
     Profile.grantCompanionStarter(p);
     // コイン・ペット
-    p.coins=Math.max(0,d.coins|0);p.petEssence=Math.max(0,d.petEssence|0);
+    p.coins=Math.max(0,d.coins|0);p.petEssence=Math.max(0,d.petEssence|0);p.coinGiftGiven=!!d.coinGiftGiven;
     p.pets={};
     if(d.pets&&typeof d.pets==='object')for(const id in d.pets)if(PETS.some(x=>x.id===id))p.pets[id]={level:clamp((d.pets[id]&&d.pets[id].level)|0,1,PET_MAX)};
     const eqPet=d.equipped&&d.equipped.pet;
@@ -9667,6 +9667,11 @@ const Ops={
     Profile.attachDeco(p,a.uid,Number(a.idx)|0,a.deco||null);
     return {changed:true};
   },
+  coinGift(p,who,a){
+    if(p.coinGiftGiven)return {msg:'このコインはもう受け取り済みです',color:'#888'};
+    p.coinGiftGiven=true;p.coins=(p.coins||0)+3;
+    return {changed:true,msg:'コインを3枚受け取りました',color:'#ffd23a'};
+  },
   gacha(p,who,a){
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
@@ -10869,6 +10874,7 @@ const App={
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
       case 'gacha':this.doOp('gacha',{});break;
+      case 'coinGift':this.doOp('coinGift',{});break;
       case 'shopCat':this.shopCat=ds.cat;this.refreshPanel();break;
       case 'petEquip':this.doOp('petEquip',{id:ds.id});break;
       case 'lookEquip':this.doOp('lookEquip',{id:ds.id});break;
@@ -11195,7 +11201,9 @@ const App={
   },
   shopBuyHTML(){
     const p=this.profile,gold=p.gold||0;
-    return `<div class="col-t">商品</div>
+    const gift=`<div class="recipe"><div class="rn">ガチャのコイン　<span style="color:#ffd23a">0G</span></div><div class="muted">ガチャ用のコインを3枚もらえます。1人1回だけ。${p.coinGiftGiven?'（受け取り済み）':''}</div>
+      <div class="btnrow"><button class="${p.coinGiftGiven?'':'primary'}" data-act="coinGift" ${p.coinGiftGiven?'disabled':''}>${p.coinGiftGiven?'受け取り済み':'3コインを受け取る（0G）'}</button></div></div>`;
+    return `<div class="col-t">商品</div><div class="recipes">${gift}</div>
       <div class="recipes">${DATA.shop.filter(s=>!s.stage||QuestRules.stage(p)>=s.stage).map(s=>{
         const done=!!(s.once&&(p.shopOnce||{})[s.id]);
         const btn=n=>{if(done)return `<button disabled>購入済み</button>`;const ok=gold>=s.price*n&&!(s.type==='item'&&(p.bag[s.item]||0)+n>DATA.consumables[s.item].max);
