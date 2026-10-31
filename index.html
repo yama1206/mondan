@@ -109,6 +109,8 @@ button.danger:hover{background:#6e2a3a}
 .shop-items .recipe{padding:6px 8px;font-size:12px;line-height:1.45}
 .shop-items .recipe .rn{font-size:13px}
 .shop-items .recipe button{padding:3px 6px;font-size:12px}
+.shop-items .recipe{display:flex;flex-direction:column}
+.shop-items .recipe .btnrow{margin-top:auto;padding-top:8px}
 .sell-list{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:4px}
 .sell-list .recipe{padding:4px 6px;font-size:12px;line-height:1.35}
 .sell-list .recipe .rn{font-size:12px}
@@ -239,7 +241,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.9',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.10',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
