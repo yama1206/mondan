@@ -112,6 +112,9 @@ button.danger:hover{background:#6e2a3a}
 .sell-list .recipe .rn{font-size:12px}
 .sell-list .recipe button{padding:2px 5px;font-size:11px}
 .cost span{display:inline-block;margin-right:10px}
+[data-scroll="craft"] .rn{color:#fff}
+[data-scroll="craft"] .cost .ok{color:#fff}
+[data-scroll="craft"] .cost .ng{color:#888}
 .reward-list{text-align:left;background:#100e17;border:1px solid #2e2840;border-radius:6px;padding:10px 14px;max-height:280px;overflow:auto;line-height:1.8;margin-top:10px}
 .setting{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2a2438;cursor:pointer}
 .setting input{width:18px;height:18px}
@@ -234,7 +237,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.5.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.5.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -12423,7 +12426,7 @@ const App={
       if(r.out.type==='equip'){
         const b=DATA.equipment[r.out.id];name=isBossWeapon(r.out.id)?`<span style="color:${BOSS_WEAPON_COLOR}">${b.name}</span>`:b.name;
         const set=b.slot!=='weapon'?Object.values(DATA.armorSets).find(s=>s.pieces[b.slot]===r.out.id):null;
-        info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk}前後 / 会心率 ${b.crit}%前後${b.el?` / <span style="color:${DATA.elements[b.el.k].color}">${DATA.elements[b.el.k].name}属性 ${b.el.v}</span>`:''}${b.st?` / <span style="color:${DATA.playerStatus[b.st.k].color}">${DATA.playerStatus[b.st.k].name}（状態異常・蓄積 ${b.st.buildup}）</span>`:''}`:`防御力 ${b.def}前後 / 装飾品スロット ${b.slots||0}`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（一式で「${set.bonus}」）</span>`:''}`;
+        info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk} / 会心率 ${b.crit}%${b.el?` / ${DATA.elements[b.el.k].name}属性 ${b.el.v}`:''}${b.st?` / ${DATA.playerStatus[b.st.k].name}（状態異常・蓄積 ${b.st.buildup}）`:''}`:`防御力 ${b.def} / 装飾品スロット ${b.slots||0}`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（一式で「${set.bonus}」）</span>`:''}`;
       }else if(r.out.type==='deco'){
         // 装飾品は種類ごとに選んで作る（レアリティはレア以下の中からランダム）
         const g0=craftGold(r),can0=Profile.hasMats(p,r.cost)&&(p.gold||0)>=g0;
