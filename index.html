@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.28.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.28.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -6348,7 +6348,7 @@ const PET_ACTS={
   owl:{name:'羽根飛ばし',desc:'離れた所からボスを優先して羽根を飛ばす（飼い主の攻撃力の40%）',cd:5,attack:{mult:0.4,range:440,ranged:true,boss:true}},
   dragonling:{name:'火の息',desc:'離れた所から近くの敵に火を吐く（飼い主の攻撃力の60%）',cd:6,attack:{mult:0.6,range:380,ranged:true}},
 };
-function petsActive(w){return w.questId==='training'||(typeof Net!=='undefined'&&!!Net.role);}
+function petsActive(w){return true;} // 1人プレイでも連れ歩けて、サポート行動もする
 function petHeal(w,o,ratio){const amt=Math.min(o.stats.maxHp-o.hp,Math.round(o.stats.maxHp*ratio));if(amt>0){o.hp+=amt;emit(w,{type:'heal',x:o.x,y:o.y-20,amount:amt});}}
 function petGuard(o,t,pct){if(!(o.buffs.def&&o.buffs.def.t>0&&o.buffs.def.pct>=pct))o.buffs.def={t,pct};}
 function petTarget(w,o,at){
@@ -9914,7 +9914,7 @@ const Renderer={
   /** 連れ歩くペット（マルチプレイと訓練場）。横から見た全身の姿で、進む向きに合わせて左右を反転する。
       位置はホストのペットAI（p.pet）に合わせ、無いとき（結果画面の見本など）は飼い主の後ろにつく */
   drawPet(ctx,p){
-    if(!(Net.role||App.training||p.preview)||!p.petLook||p.dead)return;
+    if(!p.petLook||p.dead)return;
     const lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
     this.petPos=this.petPos||{};
     const pp=this.petPos[p.id]||(this.petPos[p.id]={x:p.x,y:p.y,f:0});
