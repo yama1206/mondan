@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.24.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.25.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -323,7 +323,7 @@ const DATA={
     crit:{stat:'crit',min:3,max:8},
     hp:{stat:'maxHp',min:10,max:30},
     def:{stat:'def',min:2,max:6},
-    spd:{stat:'moveSpd',min:3,max:8},
+    spd:{stat:'dodgeDistPct',min:3,max:8},
     aspd:{stat:'atkSpd',min:4,max:10},
   },
   /* 防具スキル（スキルポイントで発動するパッシブ）
@@ -345,7 +345,6 @@ const DATA={
     status_res:{name:'状態異常耐性',cat:'耐性',max:2,vals:[50,100],fmt:'状態異常（鈍足・毒・麻痺・呪い）の時間 -{v}%',apply:(s,v)=>{s.statusRes+=v;}},
     heal_up:{name:'回復量',cat:'回復',max:2,vals:[20,40],fmt:'回復アイテムの回復量 +{v}%',apply:(s,v)=>{s.healPct+=v;}},
     regen:{name:'自動回復',cat:'回復',max:2,vals:[0.5,1],fmt:'HPが毎秒 {v} ずつ回復',apply:(s,v)=>{s.regen+=v;}},
-    move_up:{name:'移動速度',cat:'移動・回避',max:2,vals:[8,15],fmt:'移動速度 +{v}%',apply:(s,v)=>{s.moveSpd+=v;}},
     dodge_dist:{name:'回避距離',cat:'移動・回避',max:2,vals:[20,40],fmt:'回避距離 +{v}%',apply:(s,v)=>{s.dodgeDistPct+=v;}},
     charge_up:{name:'短縮',cat:'攻撃',max:2,vals:[20,40],fmt:'チャージが速くたまる +{v}%',apply:(s,v)=>{s.chargeSpdPct+=v;}},
     evade:{name:'回避性能',cat:'移動・回避',max:3,vals:[0.05,0.1,0.15],fmt:'回避後の無敵 +{v}秒',apply:(s,v)=>{s.dodgeIframe+=v;}},
@@ -508,14 +507,14 @@ const DATA={
     wolf_helm:{name:'古狼の頭甲',slot:'head',def:9,skills:{weakness:4,crit_up:3},slots:1},
     cloth:{name:'布の服',slot:'body',def:3},
     leather_vest:{name:'革の胴着',slot:'body',def:6,skills:{evade:3,gather_up:1}},
-    wolf_mail:{name:'古狼の胴鎧',slot:'body',def:12,skills:{weakness:5,move_up:2},slots:1},
+    wolf_mail:{name:'古狼の胴鎧',slot:'body',def:12,skills:{weakness:5,dodge_dist:2},slots:1},
     leather_gloves:{name:'革の小手',slot:'arms',def:3,skills:{evade:2,item_speed:2}},
-    wolf_vambrace:{name:'古狼の腕甲',slot:'arms',def:8,skills:{weakness:4,crit_up:2,move_up:1},slots:1},
+    wolf_vambrace:{name:'古狼の腕甲',slot:'arms',def:8,skills:{weakness:4,crit_up:2,dodge_dist:1},slots:1},
     // 腰（追加した部位）
     leather_belt:{name:'革の腰当て',slot:'waist',def:3,skills:{evade:2,gather_up:2}},
-    wolf_faulds:{name:'古狼の腰甲',slot:'waist',def:8,skills:{weakness:3,crit_up:3,move_up:1},slots:1},
-    leather_boots:{name:'革の靴',slot:'legs',def:3,skills:{evade:1,move_up:2,gather_up:1}},
-    wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,skills:{weakness:4,crit_up:2,move_up:1},slots:1},
+    wolf_faulds:{name:'古狼の腰甲',slot:'waist',def:8,skills:{weakness:3,crit_up:3,dodge_dist:1},slots:1},
+    leather_boots:{name:'革の靴',slot:'legs',def:3,skills:{evade:1,dodge_dist:2,gather_up:1}},
+    wolf_greaves:{name:'古狼の脚甲',slot:'legs',def:9,skills:{weakness:4,crit_up:2,dodge_dist:1},slots:1},
     // ステージ5：黒狼シリーズ
     bwolf_helm:{name:'黒狼の頭甲',slot:'head',def:20,skills:{crit_dmg:4,boss_hunter:3},slots:2},
     bwolf_mail:{name:'黒狼の胴鎧',slot:'body',def:25,skills:{crit_dmg:5,atk_up:2},slots:2},
@@ -554,11 +553,11 @@ const DATA={
     /* ---- ザコ素材の防具（各ステージ2シリーズ）：同じステージのボス装備より一段弱く、一式効果はなし ---- */
     // 草原：獣皮シリーズ（森狼）
     beast_db:{name:'獣牙の双剣',slot:'weapon',wtype:'dual',atk:15,crit:14,},
-    beast_hood:{name:'獣皮のフード',slot:'head',def:5,skills:{move_up:2,evade:2}},
-    beast_vest:{name:'獣皮の胴着',slot:'body',def:6,skills:{move_up:3,evade:1}},
+    beast_hood:{name:'獣皮のフード',slot:'head',def:5,skills:{dodge_dist:2,evade:2}},
+    beast_vest:{name:'獣皮の胴着',slot:'body',def:6,skills:{dodge_dist:3,evade:1}},
     beast_gloves:{name:'獣皮の手甲',slot:'arms',def:4,skills:{evade:2,crit_up:1}},
-    beast_belt:{name:'獣皮の腰巻き',slot:'waist',def:4,skills:{rescue:2,move_up:2,evade:2}},
-    beast_boots:{name:'獣皮の靴',slot:'legs',def:5,skills:{move_up:3,evade:1}},
+    beast_belt:{name:'獣皮の腰巻き',slot:'waist',def:4,skills:{rescue:2,dodge_dist:2,evade:2}},
+    beast_boots:{name:'獣皮の靴',slot:'legs',def:5,skills:{dodge_dist:3,evade:1}},
     // 草原：ゴブリンシリーズ（ゴブリン・ゴブリン弓兵・スライム）
     goblin_bow:{name:'ゴブリンの弓',slot:'weapon',wtype:'bow',atk:14,crit:10,},
     goblin_cap:{name:'ゴブリンの耳当て帽',slot:'head',def:5,skills:{gather_up:3,minion_hunter:2}},
@@ -606,11 +605,11 @@ const DATA={
     gale_sword:{name:'疾風の剣',slot:'weapon',el:{k:'thunder',v:5},wtype:'sword',atk:15,crit:10,slots:1},
     gale_db:{name:'疾風の双剣',slot:'weapon',el:{k:'thunder',v:5},wtype:'dual',atk:14,crit:14,slots:1},
     gale_bow:{name:'疾風の弓',slot:'weapon',el:{k:'thunder',v:7},wtype:'bow',atk:17,crit:10,slots:1},
-    gale_helm:{name:'疾風の羽冠',slot:'head',def:7,skills:{evade:4,move_up:3},slots:1},
+    gale_helm:{name:'疾風の羽冠',slot:'head',def:7,skills:{evade:4,dodge_dist:3},slots:1},
     gale_mail:{name:'疾風の羽衣',slot:'body',def:8,skills:{evade:5,dodge_dist:2},slots:1},
-    gale_vambrace:{name:'疾風の翼手',slot:'arms',def:6,skills:{evade:4,move_up:2,dodge_dist:1},slots:1},
-    gale_faulds:{name:'疾風の尾羽',slot:'waist',def:6,skills:{evade:3,move_up:3,dodge_dist:1},slots:1},
-    gale_greaves:{name:'疾風の鉤爪',slot:'legs',def:7,skills:{evade:4,move_up:2,dodge_dist:1},slots:1},
+    gale_vambrace:{name:'疾風の翼手',slot:'arms',def:6,skills:{evade:4,dodge_dist:3},slots:1},
+    gale_faulds:{name:'疾風の尾羽',slot:'waist',def:6,skills:{evade:3,dodge_dist:4},slots:1},
+    gale_greaves:{name:'疾風の鉤爪',slot:'legs',def:7,skills:{evade:4,dodge_dist:3},slots:1},
     // ---- 大蜥蜴シリーズ（岩肌の大蜥蜴・草原）：体力と自動回復 ----
     lizard_tachi:{name:'大蜥蜴の太刀',slot:'weapon',el:{k:'fire',v:7},wtype:'tachi',atk:19,crit:12,slots:1},
     lizard_lance:{name:'大蜥蜴の尾槍',slot:'weapon',el:{k:'fire',v:7},wtype:'lance',atk:19,crit:10,slots:1},
@@ -639,10 +638,10 @@ const DATA={
     felg_faulds:{name:'熔鉄の腰甲',slot:'waist',def:14,skills:{crit_dmg:3,flinch_free:3,charge_up:1},slots:2},
     felg_greaves:{name:'熔鉄の脚甲',slot:'legs',def:16,skills:{crit_dmg:4,flinch_free:2,charge_up:1},slots:2},
     deer_helm:{name:'氷冠の角兜',slot:'head',def:18,skills:{heal_up:4,rescue:3},slots:2},
-    deer_mail:{name:'氷冠の毛皮胴',slot:'body',def:25,skills:{heal_up:5,move_up:2},slots:2},
-    deer_vambrace:{name:'氷冠の腕甲',slot:'arms',def:17,skills:{heal_up:4,rescue:2,move_up:1},slots:2},
-    deer_faulds:{name:'氷冠の腰布',slot:'waist',def:17,skills:{heal_up:3,rescue:3,move_up:1},slots:2},
-    deer_greaves:{name:'氷冠の脚甲',slot:'legs',def:18,skills:{heal_up:4,rescue:2,move_up:1},slots:2},
+    deer_mail:{name:'氷冠の毛皮胴',slot:'body',def:25,skills:{heal_up:5,dodge_dist:2},slots:2},
+    deer_vambrace:{name:'氷冠の腕甲',slot:'arms',def:17,skills:{heal_up:4,rescue:2,dodge_dist:1},slots:2},
+    deer_faulds:{name:'氷冠の腰布',slot:'waist',def:17,skills:{heal_up:3,rescue:3,dodge_dist:1},slots:2},
+    deer_greaves:{name:'氷冠の脚甲',slot:'legs',def:18,skills:{heal_up:4,rescue:2,dodge_dist:1},slots:2},
     wyv_helm:{name:'永冬の竜兜',slot:'head',def:18,skills:{boss_hunter:4,evade:3},slots:2},
     wyv_mail:{name:'永冬の竜鱗鎧',slot:'body',def:25,skills:{boss_hunter:5,elem_up:2},slots:2},
     wyv_vambrace:{name:'永冬の腕鱗',slot:'arms',def:17,skills:{boss_hunter:4,evade:2,elem_up:1},slots:2},
@@ -658,7 +657,7 @@ const DATA={
     fox_mail:{name:'雪狐のふわ胴着',slot:'body',def:9,skills:{hp_up:2},slots:1},
     fox_vambrace:{name:'雪狐の手袋',slot:'arms',def:6,skills:{atk_up:2},slots:1},
     fox_faulds:{name:'雪狐のしっぽ飾り',slot:'waist',def:6,skills:{dodge_dist:2},slots:1},
-    fox_greaves:{name:'雪狐の足袋',slot:'legs',def:6,skills:{move_up:2},slots:1},
+    fox_greaves:{name:'雪狐の足袋',slot:'legs',def:6,skills:{dodge_dist:2},slots:1},
     owl_helm:{name:'フクロウの羽毛帽',slot:'head',def:6,skills:{crit_up:2},slots:1},
     owl_mail:{name:'フクロウの羽毛着',slot:'body',def:9,skills:{def_up:2},slots:1},
     owl_vambrace:{name:'フクロウの翼袖',slot:'arms',def:6,skills:{crit_dmg:2},slots:1},
@@ -668,8 +667,8 @@ const DATA={
     bat_helm:{name:'コウモリの頭巾',slot:'head',def:7,skills:{dodge_dist:2},slots:1},
     bat_mail:{name:'翼膜の胴着',slot:'body',def:11,skills:{hp_up:2},slots:1},
     bat_vambrace:{name:'翼膜の篭手',slot:'arms',def:7,skills:{atk_up:2},slots:1},
-    bat_faulds:{name:'翼膜の腰布',slot:'waist',def:7,skills:{move_up:2},slots:1},
-    bat_greaves:{name:'翼膜の脚絆',slot:'legs',def:7,skills:{move_up:2,dodge_dist:1},slots:1},
+    bat_faulds:{name:'翼膜の腰布',slot:'waist',def:7,skills:{dodge_dist:2},slots:1},
+    bat_greaves:{name:'翼膜の脚絆',slot:'legs',def:7,skills:{dodge_dist:3},slots:1},
     spider_helm:{name:'蜘蛛の糸帽',slot:'head',def:7,skills:{weakness:2},slots:1},
     spider_mail:{name:'蜘蛛の糸衣',slot:'body',def:11,skills:{def_up:2},slots:1},
     spider_vambrace:{name:'蜘蛛の糸篭手',slot:'arms',def:7,skills:{atk_up:2},slots:1},
@@ -692,11 +691,11 @@ const DATA={
     grados_faulds:{name:'鉱石の腰盤',slot:'waist',def:17,skills:{def_up:3,boss_hunter:3,dmg_cut:1},slots:2},
     grados_greaves:{name:'王の具足',slot:'legs',def:18,skills:{def_up:4,boss_hunter:2,dmg_cut:1},slots:2},
     // 跳ね兎シリーズ（森の白うさぎ）：防具の性能は回避距離（跳ねる距離）
-    rabbit_helm:{name:'跳ね耳の帽子',slot:'head',def:6,skills:{dodge_dist:4,move_up:3},slots:1},
+    rabbit_helm:{name:'跳ね耳の帽子',slot:'head',def:6,skills:{dodge_dist:7},slots:1},
     rabbit_mail:{name:'綿毛の胴着',slot:'body',def:8,skills:{dodge_dist:5,evade:2},slots:1},
-    rabbit_vambrace:{name:'ぽんぽんの手首飾り',slot:'arms',def:5,skills:{dodge_dist:4,move_up:2,evade:1},slots:1},
-    rabbit_faulds:{name:'まるい尾の腰飾り',slot:'waist',def:6,skills:{dodge_dist:3,move_up:3,evade:1},slots:1},
-    rabbit_greaves:{name:'跳ね足の脚甲',slot:'legs',def:7,skills:{dodge_dist:4,move_up:2,evade:1},slots:1},
+    rabbit_vambrace:{name:'ぽんぽんの手首飾り',slot:'arms',def:5,skills:{dodge_dist:6,evade:1},slots:1},
+    rabbit_faulds:{name:'まるい尾の腰飾り',slot:'waist',def:6,skills:{dodge_dist:6,evade:1},slots:1},
+    rabbit_greaves:{name:'跳ね足の脚甲',slot:'legs',def:7,skills:{dodge_dist:6,evade:1},slots:1},
     stag_gs:{name:'大顎の大剣',slot:'weapon',wtype:'greatsword',atk:21,crit:4,slots:2},
     stag_hammer:{name:'大顎の槌',slot:'weapon',el:{k:'ice',v:7},wtype:'hammer',atk:22,crit:0,slots:2},
     stag_shuriken:{name:'大顎の手裏剣',slot:'weapon',el:{k:'ice',v:7},wtype:'shuriken',atk:17,crit:11,slots:1},
@@ -737,11 +736,11 @@ const DATA={
     rhino_vambrace:{name:'鎧犀の甲手',slot:'arms',def:7,skills:{flinch_free:4,def_up:2,dmg_cut:1},slots:1},
     rhino_faulds:{name:'鎧犀の腰甲',slot:'waist',def:7,skills:{flinch_free:3,def_up:3,dmg_cut:1},slots:1},
     rhino_greaves:{name:'鎧犀の脚甲',slot:'legs',def:8,skills:{flinch_free:4,def_up:2,dmg_cut:1},slots:1},
-    boar_helm:{name:'轟牙の猪頭兜',slot:'head',def:7,skills:{atk_up:4,move_up:3},slots:1},
+    boar_helm:{name:'轟牙の猪頭兜',slot:'head',def:7,skills:{atk_up:4,dodge_dist:3},slots:1},
     boar_mail:{name:'轟牙の毛皮鎧',slot:'body',def:10,skills:{atk_up:5,charge_up:2},slots:1},
-    boar_vambrace:{name:'轟牙の牙腕',slot:'arms',def:6,skills:{atk_up:4,move_up:2,charge_up:1},slots:1},
-    boar_faulds:{name:'轟牙の腰毛',slot:'waist',def:6,skills:{atk_up:3,move_up:3,charge_up:1},slots:1},
-    boar_greaves:{name:'轟牙の蹄脚',slot:'legs',def:7,skills:{atk_up:4,move_up:2,charge_up:1},slots:1},
+    boar_vambrace:{name:'轟牙の牙腕',slot:'arms',def:6,skills:{atk_up:4,dodge_dist:2,charge_up:1},slots:1},
+    boar_faulds:{name:'轟牙の腰毛',slot:'waist',def:6,skills:{atk_up:3,dodge_dist:3,charge_up:1},slots:1},
+    boar_greaves:{name:'轟牙の蹄脚',slot:'legs',def:7,skills:{atk_up:4,dodge_dist:2,charge_up:1},slots:1},
     sanshou_helm:{name:'大山椒の頭笠',slot:'head',def:7,skills:{regen:4,status_res:3},slots:1},
     sanshou_mail:{name:'大山椒の粘皮鎧',slot:'body',def:10,skills:{regen:5,item_speed:2},slots:1},
     sanshou_vambrace:{name:'大山椒の水かき腕',slot:'arms',def:6,skills:{regen:4,status_res:2,item_speed:1},slots:1},
@@ -758,10 +757,10 @@ const DATA={
     turtle_faulds:{name:'大亀の甲腰',slot:'waist',def:8,skills:{dmg_cut:3,regen:3,def_up:1},slots:1},
     turtle_greaves:{name:'大亀の爪脚',slot:'legs',def:9,skills:{dmg_cut:4,regen:2,def_up:1},slots:1},
     eel_helm:{name:'雷鰻の兜',slot:'head',def:7,skills:{elem_up:4,item_speed:3},slots:1},
-    eel_mail:{name:'雷鰻の帯電鎧',slot:'body',def:9,skills:{elem_up:5,move_up:2},slots:1},
-    eel_vambrace:{name:'雷鰻の籠手',slot:'arms',def:6,skills:{elem_up:4,item_speed:2,move_up:1},slots:1},
-    eel_faulds:{name:'雷鰻の腰布',slot:'waist',def:6,skills:{elem_up:3,item_speed:3,move_up:1},slots:1},
-    eel_greaves:{name:'雷鰻の尾脚',slot:'legs',def:7,skills:{elem_up:4,item_speed:2,move_up:1},slots:1},
+    eel_mail:{name:'雷鰻の帯電鎧',slot:'body',def:9,skills:{elem_up:5,dodge_dist:2},slots:1},
+    eel_vambrace:{name:'雷鰻の籠手',slot:'arms',def:6,skills:{elem_up:4,item_speed:2,dodge_dist:1},slots:1},
+    eel_faulds:{name:'雷鰻の腰布',slot:'waist',def:6,skills:{elem_up:3,item_speed:3,dodge_dist:1},slots:1},
+    eel_greaves:{name:'雷鰻の尾脚',slot:'legs',def:7,skills:{elem_up:4,item_speed:2,dodge_dist:1},slots:1},
     worm_helm:{name:'大蚯蚓の頭巾',slot:'head',def:6,skills:{gather_up:4,hp_up:3},slots:1},
     worm_mail:{name:'大蚯蚓の環節鎧',slot:'body',def:9,skills:{gather_up:5,rare_up:2},slots:1},
     worm_vambrace:{name:'大蚯蚓の腕輪',slot:'arms',def:6,skills:{gather_up:4,hp_up:2,rare_up:1},slots:1},
@@ -956,11 +955,11 @@ const DATA={
     shiro_arms:{name:'白熊の腕甲',slot:'arms',def:36,skills:{hp_up:4,dmg_cut:2,atk_up:1},slots:2},
     shiro_waist:{name:'白熊の腰当て',slot:'waist',def:35,skills:{hp_up:3,dmg_cut:3,atk_up:1},slots:2},
     shiro_legs:{name:'白熊の脚甲',slot:'legs',def:36,skills:{hp_up:4,dmg_cut:2,atk_up:1},slots:2},
-    tsuno_head:{name:'氷角獣の兜',slot:'head',def:36,skills:{move_up:4,elem_up:3},slots:2},
-    tsuno_body:{name:'氷角獣の鎧',slot:'body',def:42,skills:{move_up:5,evade:2},slots:2},
-    tsuno_arms:{name:'氷角獣の腕甲',slot:'arms',def:36,skills:{move_up:4,elem_up:2,evade:1},slots:2},
-    tsuno_waist:{name:'氷角獣の腰当て',slot:'waist',def:35,skills:{move_up:3,elem_up:3,evade:1},slots:2},
-    tsuno_legs:{name:'氷角獣の脚甲',slot:'legs',def:36,skills:{move_up:4,elem_up:2,evade:1},slots:2},
+    tsuno_head:{name:'氷角獣の兜',slot:'head',def:36,skills:{dodge_dist:4,elem_up:3},slots:2},
+    tsuno_body:{name:'氷角獣の鎧',slot:'body',def:42,skills:{dodge_dist:5,evade:2},slots:2},
+    tsuno_arms:{name:'氷角獣の腕甲',slot:'arms',def:36,skills:{dodge_dist:4,elem_up:2,evade:1},slots:2},
+    tsuno_waist:{name:'氷角獣の腰当て',slot:'waist',def:35,skills:{dodge_dist:3,elem_up:3,evade:1},slots:2},
+    tsuno_legs:{name:'氷角獣の脚甲',slot:'legs',def:36,skills:{dodge_dist:4,elem_up:2,evade:1},slots:2},
     kubi_head:{name:'首狩りの兜',slot:'head',def:39,skills:{boss_hunter:4,weakness:3},slots:2},
     kubi_body:{name:'首狩りの鎧',slot:'body',def:45,skills:{boss_hunter:5,crit_dmg:2},slots:2},
     kubi_arms:{name:'首狩りの腕甲',slot:'arms',def:39,skills:{boss_hunter:4,weakness:2,crit_dmg:1},slots:2},
@@ -1202,7 +1201,7 @@ const DATA={
     resist_jewel:{name:'耐性珠',color:'#b0b0e0',skill:'status_res'},
     heal_jewel:{name:'回復珠',color:'#7fe09a',skill:'heal_up'},
     regen_jewel:{name:'再生珠',color:'#3ac080',skill:'regen'},
-    swift_jewel:{name:'疾走珠',color:'#4ad8c0',skill:'move_up'},
+    swift_jewel:{name:'疾走珠',color:'#4ad8c0',skill:'dodge_dist'},
     leap_jewel:{name:'跳躍珠',color:'#60b0ff',skill:'dodge_dist'},
     evade_jewel:{name:'回避珠',color:'#4ad8ff',skill:'evade'},
     horn_jewel:{name:'笛吹珠',color:'#ff9a4a',skill:'item_power'},
@@ -1222,11 +1221,11 @@ const DATA={
       pool:{evade:3,hp_up:3,def_up:2,dodge_dist:2,regen:2,rescue:2,minion_hunter:2,item_speed:2,heal_up:2,poison_res:1,status_res:1}},
     // 移動速度アップは騎士の手紙から
     {name:'騎士の手紙',pts:[4,6],pts2:[2,4],two:0.65,slotW:[0.6,0.4,0],
-      pool:{atk_up:3,def_up:3,move_up:3,dmg_cut:2,flinch_free:2,crit_up:2,hp_up:2,minion_hunter:2,elem_up:2,regen:1,evade:1}},
+      pool:{atk_up:3,def_up:3,dodge_dist:3,dmg_cut:2,flinch_free:2,crit_up:2,hp_up:2,minion_hunter:2,elem_up:2,regen:1,evade:1}},
     {name:'賢者の手紙',pts:[5,8],pts2:[3,5],two:0.85,slotW:[0.2,0.7,0.1],
-      pool:{crit_up:3,crit_dmg:2,weakness:2,atk_up:3,elem_up:3,move_up:2,item_power:2,dmg_cut:2,boss_hunter:2,rare_up:1,evade:1}},
+      pool:{crit_up:3,crit_dmg:2,weakness:2,atk_up:3,elem_up:3,dodge_dist:2,item_power:2,dmg_cut:2,boss_hunter:2,rare_up:1,evade:1}},
     {name:'王家の手紙',pts:[7,10],pts2:[4,7],two:1,slotW:[0,0.5,0.5],
-      pool:{crit_dmg:3,weakness:3,boss_hunter:3,atk_up:3,elem_up:2,move_up:2,rescue:1,rare_up:2,evade:2,dmg_cut:1}},
+      pool:{crit_dmg:3,weakness:3,boss_hunter:3,atk_up:3,elem_up:2,dodge_dist:2,rescue:1,rare_up:2,evade:2,dmg_cut:1}},
   ],
   // ステージごとに出る手紙のレア度の上限：1〜2＝旅人まで、3〜4＝騎士まで、5〜6＝賢者まで、7以降＝王家まで
   letterCap:s=>Math.min(4,Math.floor((Math.max(1,s)-1)/2)+1),
@@ -3484,7 +3483,7 @@ const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,goo
 /* ペット：ガチャで出る（全10種・レア度なし）。プレイヤーだけがペット枠に1匹はめられる。
    効果はマルチプレイで連れ歩いているときだけ乗る。stat：maxHpPct／atkPct／potionHealPct（％）、他は加算値 */
 const PETS=[
-  {id:'rabbit',name:'移動速度',rar:'N',stat:'moveSpd',base:3,fmt:'移動速度 +{v}%',col:'#f4f0ff'},
+  {id:'rabbit',name:'回避距離',rar:'N',stat:'dodgeDistPct',base:3,fmt:'回避距離 +{v}%',col:'#f4f0ff'},
   {id:'slime',name:'最大HP',rar:'N',stat:'maxHpPct',base:3,fmt:'最大HP +{v}%',col:'#7fe09a'},
   {id:'fox',name:'会心率',rar:'N',stat:'crit',base:2,fmt:'会心率 +{v}%',col:'#f0a040'},
   {id:'owl',name:'会心ダメージ',rar:'R',stat:'critDmg',base:5,fmt:'会心ダメージ +{v}%',col:'#b09070'},
@@ -6266,8 +6265,8 @@ function updateRevive(w,dt){
    attack：敵に向かって攻撃する首輪（ranged は離れた所から撃つ、boss はボスを優先）
    ready／do：飼い主の様子を見て助ける首輪（回復・守り・応援） */
 const PET_ACTS={
-  rabbit:{name:'応援ダッシュ',desc:'飼い主が走っていると、まわりを跳ね回って足を速くする（移動速度+20%・5秒）',cd:14,
-    ready:(w,o)=>!!o.moving,do:(w,pt,o)=>{o.buffs.spd={t:5,pct:20};}},
+  rabbit:{name:'跳ね守り',desc:'飼い主が走っていると、まわりを跳ね回って身をかわす備えをする（受けるダメージ15%減・4秒）',cd:14,
+    ready:(w,o)=>!!o.moving,do:(w,pt,o)=>{petGuard(o,4,15);}},
   slime:{name:'ぷるぷる回復',desc:'飼い主のHPが8割を切ると、体を寄せて少し回復する（最大HPの6%）',cd:10,
     ready:(w,o)=>o.hp<o.stats.maxHp*0.8,do:(w,pt,o)=>petHeal(w,o,0.06)},
   bee:{name:'蜜の差し入れ',desc:'飼い主のHPが4割を切ると、蜜を運んで大きく回復する（最大HPの20%）',cd:30,
@@ -10147,7 +10146,7 @@ const Renderer={
     ctx.textAlign='left';ctx.fillStyle='#cfc7e6';ctx.font=`12px ${FONT}`;
     ctx.fillText(`攻撃 ${s.atk}  防御 ${s.def}  会心 ${s.crit}%  ${(1/s.attackInterval).toFixed(1)}回/秒`,x+10,y+46);
     ctx.fillStyle='#8a82a2';ctx.font=`11px ${FONT}`;
-    ctx.fillText(`移動 ${s.moveSpd>=0?'+':''}${s.moveSpd}%　回避後無敵 ${s.dodgeIframe.toFixed(2)}秒${s.drainChance?'　吸血 '+s.drainChance+'%':''}`,x+10,y+64);
+    ctx.fillText(`回避後無敵 ${s.dodgeIframe.toFixed(2)}秒${s.drainChance?'　吸血 '+s.drainChance+'%':''}`,x+10,y+64);
     ctx.fillStyle='#8a82a2';ctx.font=`11px ${FONT}`;ctx.fillText(DATA.weaponTypes[s.weaponType].name+'：',x+10,y+84);
     ctx.fillStyle=rarColor(s.weaponRarity);ctx.font=`bold 13px ${FONT}`;ctx.fillText(s.weaponName,x+56,y+84);
     const st=[];if(p.slowT>0)st.push(['鈍足','#9ad8ff']);if(p.poisoned>0||p.poisonT>0)st.push(['毒','#a8e060']);if(p.paraT>0)st.push(['麻痺','#ffe040']);if(p.sleepT>0)st.push(['睡眠','#b898ff']);if(p.curseT>0)st.push(['呪い','#c070ff']);
@@ -13588,7 +13587,7 @@ const App={
   },
   statsBlockHTML(st){
     let h=row('最大HP',st.maxHp)+row('攻撃力',st.atk)+row('防御力',st.def)+row('会心率',st.crit+'%')+row('会心ダメージ','+'+st.critDmg+'%')
-      +row('移動速度',(st.moveSpd>=0?'+':'')+st.moveSpd+'%')+row('攻撃速度',(1/st.attackInterval).toFixed(2)+'回/秒')
+      +row('攻撃速度',(1/st.attackInterval).toFixed(2)+'回/秒')
       +row('回避後無敵',st.dodgeIframe.toFixed(2)+'秒')+row('回避CT',st.dodgeCd.toFixed(2)+'秒')
       +row('武器種',(DATA.weaponTypes[st.weaponType]||{}).name||'')+row('威力倍率','×'+(st.power||1))
       +row('属性',st.elem?`<span style="color:${DATA.elements[st.elem.k].color}">${DATA.elements[st.elem.k].name} ${st.elem.v}</span>`:'なし')
@@ -13750,7 +13749,7 @@ const App={
       ()=>this.doOp('equip',{uid}),{yes:'装備する',no:'やめる',yesClass:'primary',focusYes:true});
   },
   compareHTML(cur,nxt,changedOnly){
-    const keys=['maxHp','atk','def','crit','critDmg','moveSpd','atkSpd','dodgeIframe'];
+    const keys=['maxHp','atk','def','crit','critDmg','atkSpd','dodgeIframe'];
     let h='';
     for(const k of keys){
       const a=cur[k],b=nxt[k],d=b-a;
