@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.60.4',date:'2026/11/01'};
+const GAME_VERSION={no:'1.61.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -9169,7 +9169,19 @@ const Renderer={
     const map=w.map;
     if(!this.explored||this.explored.length!==map.W*map.H)this.explored=new Uint8Array(map.W*map.H);
     this.visMul=w.narrowVision?0.85:1;
-    this.vis=Object.values(w.players).map(p=>this.castVision(map,p.x,p.y));
+    // 光線の計算はプレイヤー1人ごとにかなり重いので、動いたときだけ計算し直す。
+    // 画面から遠く離れた人の視野は画面に関係ないので、たまに（探索の記録用に）計算するだけにする
+    const VC=this.visCache,same=VC&&VC.map===map&&VC.ver===map.version&&VC.mul===this.visMul,cache=same?VC.c:{};
+    const sc=this.viewScale||1,cam=this.cam||{x:0,y:0},R=CONFIG.vision.radius*this.visMul,now=this.time||0;
+    const x0=cam.x-R,y0=cam.y-R,x1=cam.x+(this.w||0)/sc+R,y1=cam.y+(this.h||0)/sc+R,out=[];
+    for(const p of Object.values(w.players)){
+      const on=p.x>x0&&p.x<x1&&p.y>y0&&p.y<y1;let v=cache[p.id];
+      const moved=!v||Math.abs(v.x-p.x)>2||Math.abs(v.y-p.y)>2;
+      if(moved&&(on||!v||now-v.t>0.3)){v=this.castVision(map,p.x,p.y);v.t=now;cache[p.id]=v;}
+      if(on)out.push(v);
+    }
+    this.visCache={map,ver:map.version,mul:this.visMul,c:cache};
+    this.vis=out;
   },
   /** その位置が誰かの視野に入っているか（体の端が見えていれば見える扱い） */
   isVisible(w,x,y,r){
@@ -11145,11 +11157,24 @@ const Renderer={
     ctx.translate(0,-hop);
     const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0],ov=(LOOK_COLOR_OVERRIDE[lk.id]||{})[p.petLookV|0];
     if(ov)k.pal=ov; // 専用の色（色相をずらさず、決めた色で描く）
-    else if(hv.hue&&'filter' in ctx)ctx.filter=`hue-rotate(${hv.hue}deg)`;
-    ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.translate(0,0.18); // 体を下げて脚を短く見せる（足元の高さはそのまま）
     const draw=PET_ART[lk.id]||PET_ART.l_dog;
-    const neck=draw(k,H,(ov&&ov.col)||lk.col,moving)||[0.5,-0.2,0.32];
+    let neck;
+    if(!ov&&hv.hue&&'filter' in ctx){
+      // 色違い：線や塗りの1つずつに hue-rotate をかけるととても重い（マルチで人数分）ので、
+      // いったん小さな裏画面に普通の色で描き、その絵1枚にだけ色相フィルターをかけて貼る
+      const m=ctx.getTransform(),z=Math.max(0.5,Math.hypot(m.a,m.b)),half=r*2.2,px=Math.ceil(half*2*z);
+      const oc=this.petOff||(this.petOff=document.createElement('canvas'));
+      if(oc.width<px||oc.height<px){oc.width=Math.max(oc.width,px);oc.height=Math.max(oc.height,px);}
+      const g=oc.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,px,px);
+      g.setTransform(z,0,0,z,half*z,half*z);g.scale(dir*r,r);g.lineJoin='round';g.lineCap='round';g.translate(0,0.18);
+      k.ctx=g;neck=draw(k,H,lk.col,moving)||[0.5,-0.2,0.32];k.ctx=ctx;
+      ctx.filter=`hue-rotate(${hv.hue}deg)`;ctx.drawImage(oc,0,0,px,px,-half,-half,half*2,half*2);ctx.filter='none';
+      ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';ctx.translate(0,0.18);
+    }else{
+      ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';
+      ctx.translate(0,0.18); // 体を下げて脚を短く見せる（足元の高さはそのまま）
+      neck=draw(k,H,(ov&&ov.col)||lk.col,moving)||[0.5,-0.2,0.32];
+    }
     if(p.petCollar){const c=PETS.find(x=>x.id===p.petCollar);if(c){ctx.filter='none';ctx.strokeStyle=RARITY[c.rar].color;ctx.lineWidth=0.09;ctx.beginPath();ctx.ellipse(neck[0],neck[1],neck[2]*0.45,neck[2],0.2,0,TAU);ctx.stroke();ctx.fillStyle='#ffd23a';ctx.beginPath();ctx.arc(neck[0]+neck[2]*0.3,neck[1]+neck[2]*0.95,0.08,0,TAU);ctx.fill();}}
     ctx.restore();
   },
