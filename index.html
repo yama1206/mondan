@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.73.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.74.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -347,8 +347,7 @@ const DATA={
     hp_up:{name:'体力',cat:'防御',max:2,vals:[20,40],fmt:'最大HP +{v}',apply:(s,v)=>{s.maxHp+=v;}},
     dmg_cut:{name:'ダメージ軽減',cat:'防御',max:2,vals:[8,15],fmt:'受けるダメージ -{v}%',apply:(s,v)=>{s.dmgCut+=v;}},
     flinch_free:{name:'ひるみ軽減',cat:'防御',max:2,vals:[50,100],fmt:'攻撃を受けたときの吹き飛び -{v}%',apply:(s,v)=>{s.knockRes+=v;}},
-    poison_res:{name:'毒耐性',cat:'耐性',max:2,vals:[50,100],fmt:'毒の雲・毒から受けるダメージ -{v}%（100%なら毒にならない）',apply:(s,v)=>{s.poisonRes+=v;}},
-    status_res:{name:'状態異常耐性',cat:'耐性',max:2,vals:[50,100],fmt:'状態異常（鈍足・毒・麻痺・呪い）の時間 -{v}%',apply:(s,v)=>{s.statusRes+=v;}},
+    status_res:{name:'状態異常耐性',cat:'耐性',max:2,vals:[50,100],fmt:'状態異常（鈍足・毒・麻痺・睡眠・呪い）の時間と、毒の雲・毒のダメージ -{v}%（100%ならかからない）',apply:(s,v)=>{s.statusRes+=v;}},
     heal_up:{name:'回復量',cat:'回復',max:2,vals:[20,40],fmt:'回復アイテムの回復量 +{v}%',apply:(s,v)=>{s.healPct+=v;}},
     regen:{name:'自動回復',cat:'回復',max:2,vals:[0.5,1],fmt:'HPが毎秒 {v} ずつ回復',apply:(s,v)=>{s.regen+=v;}},
     dodge_dist:{name:'回避距離',cat:'移動・回避',max:2,vals:[20,40],fmt:'回避距離 +{v}%',apply:(s,v)=>{s.dodgeDistPct+=v;}},
@@ -468,12 +467,12 @@ const DATA={
     hana:{name:'毒花竜シリーズ',bonus:'冥花の香り',pieces:{head:'hana_head',body:'hana_body',arms:'hana_arms',waist:'hana_waist',legs:'hana_legs'},eff2:{statusRes:100},eff:{statusPct:30}},
     yado:{name:'巨大ヤドカリシリーズ',bonus:'殻の眠り守り',pieces:{head:'yado_head',body:'yado_body',arms:'yado_arms',waist:'yado_waist',legs:'yado_legs'},eff2:{statusRes:10},eff:{maxHp:15}},
     dorc:{name:'泥鯨シリーズ',bonus:'氷潮の守り',pieces:{head:'dorc_head',body:'dorc_body',arms:'dorc_arms',waist:'dorc_waist',legs:'dorc_legs'},eff2:{maxHp:13},eff:{def:2}},
-    hachi:{name:'女王蜂シリーズ',bonus:'女王の毒針',pieces:{head:'hachi_head',body:'hachi_body',arms:'hachi_arms',waist:'hachi_waist',legs:'hachi_legs'},eff2:{poisonRes:20},eff:{atk:2}},
+    hachi:{name:'女王蜂シリーズ',bonus:'女王の毒針',pieces:{head:'hachi_head',body:'hachi_body',arms:'hachi_arms',waist:'hachi_waist',legs:'hachi_legs'},eff2:{statusRes:20},eff:{atk:2}},
     shark:{name:'大鮫シリーズ',bonus:'大鮫の執念',pieces:{head:'shark_head',body:'shark_body',arms:'shark_arms',waist:'shark_waist',legs:'shark_legs'},eff2:{atk:2},eff:{elemAtk:{water:10}}},
     mola:{name:'蒼海マンボウシリーズ',bonus:'鱗の眠り返し',pieces:{head:'mola_head',body:'mola_body',arms:'mola_arms',waist:'mola_waist',legs:'mola_legs'},eff2:{statusRes:10},eff:{healPct:10}},
     guard:{name:'結晶守護者シリーズ',bonus:'結晶の守護',pieces:{head:'guard_head',body:'guard_body',arms:'guard_arms',waist:'guard_waist',legs:'guard_legs'},eff2:{def:3},eff:{elemAtk:{thunder:10}}},
     ondo:{name:'轟音竜シリーズ',bonus:'地鳴りの体幹',pieces:{head:'ondo_head',body:'ondo_body',arms:'ondo_arms',waist:'ondo_waist',legs:'ondo_legs'},eff2:{knockRes:30},eff:{def:2}},
-    syaku:{name:'灼熱甲虫シリーズ',bonus:'灼甲の毒耐性',pieces:{head:'syaku_head',body:'syaku_body',arms:'syaku_arms',waist:'syaku_waist',legs:'syaku_legs'},eff2:{atk:2},eff:{poisonRes:20}},
+    syaku:{name:'灼熱甲虫シリーズ',bonus:'灼甲の耐性',pieces:{head:'syaku_head',body:'syaku_body',arms:'syaku_arms',waist:'syaku_waist',legs:'syaku_legs'},eff2:{atk:2},eff:{statusRes:20}},
     phoenix:{name:'不死鳥シリーズ',bonus:'不死の翼',pieces:{head:'phoenix_head',body:'phoenix_body',arms:'phoenix_arms',waist:'phoenix_waist',legs:'phoenix_legs'},eff2:{maxHp:13},eff:{atk:2}},
     shiro:{name:'白熊シリーズ',bonus:'白熊の剛毛',pieces:{head:'shiro_head',body:'shiro_body',arms:'shiro_arms',waist:'shiro_waist',legs:'shiro_legs'},eff2:{def:3},eff:{maxHp:15}},
     tsuno:{name:'氷角獣シリーズ',bonus:'角の痺れ返し',pieces:{head:'tsuno_head',body:'tsuno_body',arms:'tsuno_arms',waist:'tsuno_waist',legs:'tsuno_legs'},eff2:{atk:2},eff:{statusPct:15}},
@@ -506,7 +505,7 @@ const DATA={
     wolf_sword:{name:'古狼の剣',slot:'weapon',wtype:'sword',atk:24,crit:10,slots:1,boss:'wolf'},
     fang_king:{name:'牙王の剣',slot:'weapon',wtype:'sword',atk:22,crit:10,slots:2},
     leather_cap:{name:'革の帽子',slot:'head',def:3,skills:{evade:2,gather_up:2}},
-    bone_helm:{name:'骨の兜',slot:'head',def:6,skills:{hp_up:4,poison_res:3,minion_hunter:3}},
+    bone_helm:{name:'骨の兜',slot:'head',def:6,skills:{hp_up:4,status_res:3,minion_hunter:3}},
     wolf_helm:{name:'古狼の頭甲',slot:'head',def:9,skills:{weakness:4,crit_up:3},slots:1},
     cloth:{name:'布の服',slot:'body',def:3},
     leather_vest:{name:'革の胴着',slot:'body',def:6,skills:{evade:3,gather_up:1}},
@@ -583,11 +582,11 @@ const DATA={
     bone_greaves:{name:'骨の脚当て',slot:'legs',def:7,skills:{hp_up:2,atk_up:3}},
     // 沼地：沼鰐シリーズ（沼喰いワニ・血吸いヒル）
     croc_tachi:{name:'鰐牙の太刀',slot:'weapon',el:{k:'water',v:8},wtype:'tachi',atk:19,crit:12,slots:1},
-    croc_helm:{name:'沼鰐の兜',slot:'head',def:10,skills:{def_up:2,poison_res:2},slots:1},
-    croc_mail:{name:'沼鰐の鱗鎧',slot:'body',def:12,skills:{def_up:3,poison_res:2},slots:1},
+    croc_helm:{name:'沼鰐の兜',slot:'head',def:10,skills:{def_up:2,status_res:2},slots:1},
+    croc_mail:{name:'沼鰐の鱗鎧',slot:'body',def:12,skills:{def_up:3,status_res:2},slots:1},
     croc_vambrace:{name:'沼鰐の肩甲',slot:'arms',def:9,skills:{def_up:2,atk_up:2},slots:1},
-    croc_faulds:{name:'沼鰐の尻尾',slot:'waist',def:9,skills:{poison_res:3,def_up:1},slots:1},
-    croc_greaves:{name:'沼鰐の脚甲',slot:'legs',def:10,skills:{def_up:2,poison_res:1,hp_up:2},slots:1},
+    croc_faulds:{name:'沼鰐の尻尾',slot:'waist',def:9,skills:{status_res:3,def_up:1},slots:1},
+    croc_greaves:{name:'沼鰐の脚甲',slot:'legs',def:10,skills:{def_up:2,status_res:1,hp_up:2},slots:1},
     // 沼地：毒蛙シリーズ（毒沼ガエル・膨張体・食虫花）
     frog_lance:{name:'毒蛙の舌槍',slot:'weapon',el:{k:'water',v:8},wtype:'lance',atk:19,crit:10,slots:1},
     frog_hood:{name:'毒蛙のフード',slot:'head',def:9,skills:{status_res:2,dodge_dist:2},slots:1},
@@ -708,24 +707,24 @@ const DATA={
     stag_vambrace:{name:'大顎の肩甲',slot:'arms',def:11,skills:{weakness:4,atk_up:2,flinch_free:1},slots:2},
     stag_faulds:{name:'大顎の腰甲',slot:'waist',def:11,skills:{weakness:3,atk_up:3,flinch_free:1},slots:2},
     stag_greaves:{name:'大顎の脚甲',slot:'legs',def:12,skills:{weakness:4,atk_up:2,flinch_free:1},slots:2},
-    // ---- 多頭竜シリーズ（ヒュドラ・沼地）：毒耐性と攻撃 ----
+    // ---- 多頭竜シリーズ（ヒュドラ・沼地）：状態異常耐性と攻撃 ----
     hydra_sword:{name:'多頭竜の剣',slot:'weapon',el:{k:'water',v:9},wtype:'sword',atk:26,crit:11,slots:2,boss:'hydra'},
     hydra_lance:{name:'多頭竜の槍',slot:'weapon',el:{k:'water',v:9},wtype:'lance',atk:28,crit:11,slots:2,boss:'hydra'},
     hydra_bow:{name:'多頭竜の弓',slot:'weapon',el:{k:'water',v:9},wtype:'bow',atk:23,crit:11,slots:2,boss:'hydra'},
-    hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,skills:{poison_res:4,regen:3},slots:2},
-    hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:17,skills:{poison_res:5,hp_up:2},slots:2},
-    hydra_vambrace:{name:'多頭竜の蛇肩',slot:'arms',def:12,skills:{poison_res:4,regen:2,hp_up:1},slots:2},
-    hydra_faulds:{name:'多頭竜の尾',slot:'waist',def:12,skills:{poison_res:3,regen:3,hp_up:1},slots:2},
-    hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,skills:{poison_res:4,regen:2,hp_up:1},slots:2},
+    hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,skills:{status_res:4,regen:3},slots:2},
+    hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:17,skills:{status_res:5,hp_up:2},slots:2},
+    hydra_vambrace:{name:'多頭竜の蛇肩',slot:'arms',def:12,skills:{status_res:4,regen:2,hp_up:1},slots:2},
+    hydra_faulds:{name:'多頭竜の尾',slot:'waist',def:12,skills:{status_res:3,regen:3,hp_up:1},slots:2},
+    hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,skills:{status_res:4,regen:2,hp_up:1},slots:2},
     // ---- 毒蟲シリーズ（毒蟲王・沼地）：会心と状態異常耐性 ----
     venom_db:{name:'毒蟲の双剣',slot:'weapon',el:{k:'water',v:7},wtype:'dual',atk:17,crit:14,slots:2,boss:'venomKing'},
     venom_tachi:{name:'毒蟲の太刀',slot:'weapon',st:{k:'poison',buildup:20},wtype:'tachi',atk:26,crit:12,slots:2,boss:'venomKing'},
     venom_bow:{name:'毒蟲の弓',slot:'weapon',st:{k:'poison',buildup:20},wtype:'bow',atk:22,crit:10,slots:2,boss:'venomKing'},
     venom_helm:{name:'毒蟲の触角兜',slot:'head',def:12,skills:{crit_up:4,status_res:3},slots:2},
-    venom_mail:{name:'毒蟲の甲殻',slot:'body',def:16,skills:{crit_up:5,poison_res:2},slots:2},
-    venom_vambrace:{name:'毒蟲の脚肩',slot:'arms',def:11,skills:{crit_up:4,status_res:2,poison_res:1},slots:2},
-    venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{crit_up:3,status_res:3,poison_res:1},slots:2},
-    venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,skills:{crit_up:4,status_res:2,poison_res:1},slots:2},
+    venom_mail:{name:'毒蟲の甲殻',slot:'body',def:16,skills:{crit_up:5,status_res:2},slots:2},
+    venom_vambrace:{name:'毒蟲の脚肩',slot:'arms',def:11,skills:{crit_up:4,status_res:3},slots:2},
+    venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{crit_up:3,status_res:4},slots:2},
+    venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,skills:{crit_up:4,status_res:3},slots:2},
     // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
     mire_hammer:{name:'沼巨人の槌',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:30,crit:0,slots:2,boss:'mireGiant'},
     mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:28,crit:4,slots:2,boss:'mireGiant'},
@@ -1084,11 +1083,11 @@ const DATA={
     armd_arms:{name:'大アルマジロの腕甲',slot:'arms',def:8,skills:{dmg_cut:4,dodge_dist:2,def_up:1},slots:2},
     armd_waist:{name:'大アルマジロの腰当て',slot:'waist',def:7,skills:{dmg_cut:3,dodge_dist:3,def_up:1},slots:2},
     armd_legs:{name:'大アルマジロの脚甲',slot:'legs',def:8,skills:{dmg_cut:4,dodge_dist:2,def_up:1},slots:2},
-    hana_head:{name:'毒花竜の兜',slot:'head',def:16,skills:{poison_res:4,elem_up:3},slots:2},
-    hana_body:{name:'毒花竜の鎧',slot:'body',def:20,skills:{poison_res:5,heal_up:2},slots:2},
-    hana_arms:{name:'毒花竜の腕甲',slot:'arms',def:16,skills:{poison_res:4,elem_up:2,heal_up:1},slots:2},
-    hana_waist:{name:'毒花竜の腰当て',slot:'waist',def:15,skills:{poison_res:3,elem_up:3,heal_up:1},slots:2},
-    hana_legs:{name:'毒花竜の脚甲',slot:'legs',def:16,skills:{poison_res:4,elem_up:2,heal_up:1},slots:2},
+    hana_head:{name:'毒花竜の兜',slot:'head',def:16,skills:{status_res:4,elem_up:3},slots:2},
+    hana_body:{name:'毒花竜の鎧',slot:'body',def:20,skills:{status_res:5,heal_up:2},slots:2},
+    hana_arms:{name:'毒花竜の腕甲',slot:'arms',def:16,skills:{status_res:4,elem_up:2,heal_up:1},slots:2},
+    hana_waist:{name:'毒花竜の腰当て',slot:'waist',def:15,skills:{status_res:3,elem_up:3,heal_up:1},slots:2},
+    hana_legs:{name:'毒花竜の脚甲',slot:'legs',def:16,skills:{status_res:4,elem_up:2,heal_up:1},slots:2},
     yado_head:{name:'巨大ヤドカリの兜',slot:'head',def:16,skills:{def_up:4,item_power:3},slots:2},
     yado_body:{name:'巨大ヤドカリの鎧',slot:'body',def:20,skills:{def_up:5,rescue:2},slots:2},
     yado_arms:{name:'巨大ヤドカリの腕甲',slot:'arms',def:16,skills:{def_up:4,item_power:2,rescue:1},slots:2},
@@ -1100,10 +1099,10 @@ const DATA={
     dorc_waist:{name:'泥鯨の腰当て',slot:'waist',def:17,skills:{hp_up:3,item_power:3,flinch_free:1},slots:2},
     dorc_legs:{name:'泥鯨の脚甲',slot:'legs',def:18,skills:{hp_up:4,item_power:2,flinch_free:1},slots:2},
     hachi_head:{name:'女王蜂の兜',slot:'head',def:18,skills:{crit_up:4,minion_hunter:3},slots:2},
-    hachi_body:{name:'女王蜂の鎧',slot:'body',def:22,skills:{crit_up:5,poison_res:2},slots:2},
-    hachi_arms:{name:'女王蜂の腕甲',slot:'arms',def:18,skills:{crit_up:4,minion_hunter:2,poison_res:1},slots:2},
-    hachi_waist:{name:'女王蜂の腰当て',slot:'waist',def:17,skills:{crit_up:3,minion_hunter:3,poison_res:1},slots:2},
-    hachi_legs:{name:'女王蜂の脚甲',slot:'legs',def:18,skills:{crit_up:4,minion_hunter:2,poison_res:1},slots:2},
+    hachi_body:{name:'女王蜂の鎧',slot:'body',def:22,skills:{crit_up:5,status_res:2},slots:2},
+    hachi_arms:{name:'女王蜂の腕甲',slot:'arms',def:18,skills:{crit_up:4,minion_hunter:2,status_res:1},slots:2},
+    hachi_waist:{name:'女王蜂の腰当て',slot:'waist',def:17,skills:{crit_up:3,minion_hunter:3,status_res:1},slots:2},
+    hachi_legs:{name:'女王蜂の脚甲',slot:'legs',def:18,skills:{crit_up:4,minion_hunter:2,status_res:1},slots:2},
     shark_head:{name:'大鮫の兜',slot:'head',def:24,skills:{atk_up:4,crit_up:3},slots:2},
     shark_body:{name:'大鮫の鎧',slot:'body',def:29,skills:{atk_up:5,weakness:2},slots:2},
     shark_arms:{name:'大鮫の腕甲',slot:'arms',def:24,skills:{atk_up:4,crit_up:2,weakness:1},slots:2},
@@ -1467,7 +1466,6 @@ const DATA={
     life_jewel:{name:'生命珠',color:'#4aff8a',skill:'hp_up'},
     guard_jewel:{name:'守護珠',color:'#5a8ae0',skill:'dmg_cut'},
     steady_jewel:{name:'不動珠',color:'#a08a6a',skill:'flinch_free'},
-    antidote_jewel:{name:'耐毒珠',color:'#a8e040',skill:'poison_res'},
     resist_jewel:{name:'耐性珠',color:'#b0b0e0',skill:'status_res'},
     heal_jewel:{name:'回復珠',color:'#7fe09a',skill:'heal_up'},
     regen_jewel:{name:'再生珠',color:'#3ac080',skill:'regen'},
@@ -1486,9 +1484,9 @@ const DATA={
      slotW：装飾品スロット数 0・1・2 の重み。drops：手紙が出る確率（宝箱・中ボス・ボス報酬） */
   letters:[
     {name:'走り書きの手紙',pts:[2,4],pts2:[1,2],two:0.35,slotW:[1,0,0],
-      pool:{gather_up:3,evade:2,hp_up:3,poison_res:3,status_res:3,item_speed:2,heal_up:2,rescue:1}},
+      pool:{gather_up:3,evade:2,hp_up:3,status_res:6,item_speed:2,heal_up:2,rescue:1}},
     {name:'旅人の手紙',pts:[3,5],pts2:[1,3],two:0.5,slotW:[0.8,0.2,0],
-      pool:{evade:3,hp_up:3,def_up:2,dodge_dist:2,regen:2,rescue:2,minion_hunter:2,item_speed:2,heal_up:2,poison_res:1,status_res:1}},
+      pool:{evade:3,hp_up:3,def_up:2,dodge_dist:2,regen:2,rescue:2,minion_hunter:2,item_speed:2,heal_up:2,status_res:2}},
     // 移動速度アップは騎士の手紙から
     {name:'騎士の手紙',pts:[4,6],pts2:[2,4],two:0.65,slotW:[0.6,0.4,0],
       pool:{atk_up:3,def_up:3,dodge_dist:3,dmg_cut:2,flinch_free:2,crit_up:2,hp_up:2,minion_hunter:2,elem_up:2,regen:1,evade:1}},
@@ -1557,7 +1555,7 @@ const DATA={
     black_wolf:{atk:'mei',weak:['thunder'],strong:['ice']},bone_dragon:{atk:'mei',weak:['mei','fire'],strong:['ice']},
   },
   /* プレイヤーにかかる状態異常。time：秒（防具スキル「状態異常耐性」で短くなる）
-     poison：毒（tick 秒ごとに最大HPの pct ずつ減る。毒ではHP1より下がらない。「毒耐性」で減る量が下がる）
+     poison：毒（tick 秒ごとに最大HPの pct ずつ減る。毒ではHP1より下がらない。「状態異常耐性」で減る量が下がる）
      paralysis：麻痺（その場で動けない。治ったあと immune 秒はもう一度かからない）
      curse：呪い（受けるダメージ +dmgUp%）。回復薬・癒しお香で毒と呪いは治る */
   playerStatus:{
@@ -4150,6 +4148,7 @@ const Save={
     const decoIds=new Set(),uidNums=[];
     const noteUid=u=>{const n=parseInt(String(u).slice(1),10);if(!isNaN(n))uidNums.push(n);};
     if(Array.isArray(d.decos))for(const x of d.decos){
+      if(x&&x.decoId==='antidote_jewel')x.decoId='resist_jewel'; // 耐毒珠は耐性珠にまとめた
       if(!x||!DATA.decorations[x.decoId]||typeof x.uid!=='string'||decoIds.has(x.uid))continue;
       p.decos.push({kind:'deco',uid:x.uid,decoId:x.decoId,rarity:clamp(x.rarity|0,0,4)});decoIds.add(x.uid);noteUid(x.uid);
     }
@@ -4162,8 +4161,8 @@ const Save={
         affixes:Array.isArray(x.affixes)?x.affixes.filter(a=>a&&DATA.affixes[a.id]&&typeof a.v==='number').map(a=>({id:a.id,v:a.v})):[],
         effects:Array.isArray(x.effects)?x.effects.filter(e=>DATA.effects[e]):[],
         slots:Array.isArray(x.slots)?x.slots.slice(0,3).map(u=>{if(u&&decoIds.has(u)&&!usedDecos.has(u)){usedDecos.add(u);return u;}return null;}):[]};
-      if(base.slot==='charm'){it.skills={};if(x.skills&&typeof x.skills==='object')for(const k in x.skills)if(DATA.armorSkills[k])it.skills[k]=clamp(x.skills[k]|0,1,15);it.def=0;}
-      if(base.slot!=='charm'&&base.slot!=='weapon'&&x.enchant&&typeof x.enchant==='object'){const sk={};if(x.enchant.skills&&typeof x.enchant.skills==='object')for(const k in x.enchant.skills)if(DATA.armorSkills[k])sk[k]=clamp(x.enchant.skills[k]|0,1,15);if(Object.keys(sk).length)it.enchant={t:clamp(x.enchant.t|0,1,3),skills:sk};}
+      if(base.slot==='charm'){it.skills={};if(x.skills&&typeof x.skills==='object')for(const k0 in x.skills){const k=k0==='poison_res'?'status_res':k0;if(DATA.armorSkills[k])it.skills[k]=clamp((it.skills[k]||0)+(x.skills[k0]|0),1,15);}it.def=0;} // 毒耐性は状態異常耐性にまとめた
+      if(base.slot!=='charm'&&base.slot!=='weapon'&&x.enchant&&typeof x.enchant==='object'){const sk={};if(x.enchant.skills&&typeof x.enchant.skills==='object')for(const k0 in x.enchant.skills){const k=k0==='poison_res'?'status_res':k0;if(DATA.armorSkills[k])sk[k]=clamp((sk[k]||0)+(x.enchant.skills[k0]|0),1,15);}if(Object.keys(sk).length)it.enchant={t:clamp(x.enchant.t|0,1,3),skills:sk};}
       // 持っている武器・防具の性能は、いつも鍛冶屋の今の数値に合わせる（強化・霊玉強化のぶんは上乗せして残す）
       if(base.slot==='weapon'){let ba=0,bc=0;for(let i=0;i<it.bossLv;i++){const st=BOSS_REINF_STATS[i]||{};ba+=st.atk||0;bc+=st.crit||0;}it.atk=(base.atk||0)+ba;it.crit=(base.crit||0)+bc;}
       else if(base.slot!=='charm')it.def=Math.max(1,base.def||0)+it.reinforce;
@@ -5063,7 +5062,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
 function inflictPlayer(w,p,k){
   if(TEST_MODE.invincible)return;
   const d=DATA.playerStatus[k];if(!d||p.dead)return;
-  if(k==='poison'&&(p.stats.poisonRes||0)>=100)return; // 毒耐性100%なら毒にならない
+  if((p.stats.statusRes||0)>=100)return; // 状態異常耐性100%なら、どの状態異常にもならない
   const time=d.time*(1-clamp(p.stats.statusRes||0,0,100)/100);if(time<=0.05)return;
   if(k==='poison'){if(!(p.poisonT>0))p.poisonTick=d.tick;p.poisonT=Math.max(p.poisonT||0,time);}
   else if(k==='paralysis'){if(p.paraT>0||p.paraImmune>0)return;p.paraT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
@@ -5083,7 +5082,7 @@ function dotPlayer(w,p,raw,el){
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
   if(p.stats.dmgCut)dmg*=1-p.stats.dmgCut/100;
   if(el&&el!=='none'){const r2=clamp(p.stats.elemRes[el]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-r2/100);}
-  const res=clamp(p.stats.poisonRes||0,0,100);if(res>=100)return;
+  const res=clamp(p.stats.statusRes||0,0,100);if(res>=100)return; // 毒の雲などのダメージも状態異常耐性で減る
   dmg=Math.max(1,Math.round(dmg*(1-res/100)));
   p.hp-=dmg;
   emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,dot:true});
@@ -5432,7 +5431,7 @@ function updatePlayer(w,p,inp,dt){
   if(p.poisonT>0){ // 毒：一定時間ごとに減る（HP1より下がらない）
     const d=DATA.playerStatus.poison;p.poisonT-=dt;p.poisonTick-=dt;
     if(p.poisonTick<=0){p.poisonTick+=d.tick;
-      const dmg=Math.min(p.hp-1,Math.max(1,Math.round(s.maxHp*d.pct*(1-clamp(s.poisonRes||0,0,100)/100))));
+      const dmg=Math.min(p.hp-1,Math.max(1,Math.round(s.maxHp*d.pct*(1-clamp(s.statusRes||0,0,100)/100))));
       if(dmg>0){p.hp-=dmg;p.drip=null;emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,dot:true});}}
   }
   // 自動回復（防具スキル）：3秒ごとにまとめて回復
@@ -13382,7 +13381,7 @@ function validateData(){
 }
 if(typeof window!=='undefined'&&window.addEventListener)window.addEventListener('load',()=>{const e=validateData();if(e.length)console.warn('データ確認:\n'+e.join('\n'));});
 /** 装飾品の製作素材：種類ごとに、ステージ1〜3のボスの素材を使う（指定の無い種類は r_deco の素材） */
-const DECO_COST={atk_jewel:{bull_horn:2,bull_hide:1},crit_jewel:{kama_scythe:2,cave_fang__kama_mantis:1},critdmg_jewel:{wolf_fang:2,wolf_pelt:1},weak_jewel:{gale_talon:2,gale_feather:1},boss_jewel:{hydra_scale:2,toxic_gland:1},minion_jewel:{queen_jelly:2,poison_spore:1},def_jewel:{armd_plate:2,rock_scale__armadillo:1},life_jewel:{sanshou_hide:2,sanshou_mucus:1},guard_jewel:{rhino_plate:2,rhino_horn:1},steady_jewel:{mire_giant_clay:2,mire_core:1},antidote_jewel:{venom_shell:2,venom_king_fang:1},resist_jewel:{hana_petal:2,flower_pollen:1},heal_jewel:{toad_gland:2,toxic_gland:1},regen_jewel:{slime_gel__bog_leech:2,poison_spore:1},swift_jewel:{boar_tusk:2,boar_hide:1},leap_jewel:{rabbit_fur:2,rabbit_tuft:1},evade_jewel:{lizard_scale:2,lizard_spine:1},horn_jewel:{stag_mandible:2,stag_shell:1},quick_jewel:{yado_shell:2,hard_shell:1},gather_jewel:{mud_whale_scale:2,mire_core:1},lucky_jewel:{wolf_claw:2,wolf_pelt:1},rescue_jewel:{bull_hide:2,bull_horn:1},elem_jewel:{flower_pollen:2,hana_petal:1}};
+const DECO_COST={atk_jewel:{bull_horn:2,bull_hide:1},crit_jewel:{kama_scythe:2,cave_fang__kama_mantis:1},critdmg_jewel:{wolf_fang:2,wolf_pelt:1},weak_jewel:{gale_talon:2,gale_feather:1},boss_jewel:{hydra_scale:2,toxic_gland:1},minion_jewel:{queen_jelly:2,poison_spore:1},def_jewel:{armd_plate:2,rock_scale__armadillo:1},life_jewel:{sanshou_hide:2,sanshou_mucus:1},guard_jewel:{rhino_plate:2,rhino_horn:1},steady_jewel:{mire_giant_clay:2,mire_core:1},resist_jewel:{hana_petal:2,flower_pollen:1},heal_jewel:{toad_gland:2,toxic_gland:1},regen_jewel:{slime_gel__bog_leech:2,poison_spore:1},swift_jewel:{boar_tusk:2,boar_hide:1},leap_jewel:{rabbit_fur:2,rabbit_tuft:1},evade_jewel:{lizard_scale:2,lizard_spine:1},horn_jewel:{stag_mandible:2,stag_shell:1},quick_jewel:{yado_shell:2,hard_shell:1},gather_jewel:{mud_whale_scale:2,mire_core:1},lucky_jewel:{wolf_claw:2,wolf_pelt:1},rescue_jewel:{bull_hide:2,bull_horn:1},elem_jewel:{flower_pollen:2,hana_petal:1}};
 function decoCost(id){return DECO_COST[id]||(DATA.recipes.find(r=>r.id==='r_deco')||{cost:{}}).cost;}
 /** 装備・装飾品の製作にかかるお金（素材の数で決まる。recipe に gold があればその値） */
 function craftGold(r){
