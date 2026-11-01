@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.27.3',date:'2026/10/31'};
+const GAME_VERSION={no:'1.27.4',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11485,9 +11485,9 @@ function sellPrice(it){
 }
 const ENCHANT_CAP=[1,1,2,2,3]; // 付与できる効果の数（レア度ごと）
 const REINFORCE_MAX=5,REINFORCE_GOLD=40;
-// 武器の霊玉強化：ボスごとの霊玉を3個と、段階ごとのお金で強化。1段階目は攻撃力 +1、2段階目は攻撃力 +2 上がり、3段階目では特殊効果が付く
-const BOSS_REINF_MAX=3,BOSS_REINF_COST=1,BOSS_REINF_GOLD=[300,600,900];
-const BOSS_REINF_STATS=[{atk:1,crit:0},{atk:2,crit:0},{atk:0,crit:0}];
+// 武器の霊玉強化：そのボスの霊玉1個とお金で1回だけ強化。攻撃力 +3 と特殊効果が付く
+const BOSS_REINF_MAX=1,BOSS_REINF_COST=1,BOSS_REINF_GOLD=[300];
+const BOSS_REINF_STATS=[{atk:3,crit:0}];
 const BOSS_REINF_EFFECTS=['hunter','critup','desperate','combo','guard','gale','medic','skillcd'];
  // 防具の強化：最大段階と、1段階ごとのお金（×段階数）
 /** データの参照ミスを見つける（魔物・素材・地図・依頼・レシピ・ショップの名前が実在するか） */
@@ -14034,7 +14034,7 @@ const App={
         ${full?'':`<div class="cost"><span class="${have>=BOSS_REINF_COST?'ok':'ng'}">${esc(mn)} ${have}/${BOSS_REINF_COST}</span><span class="${gold0>=gold?'ok':'ng'}">${gold}G（所持 ${gold0}G）</span></div>`}
         <div class="btnrow"><button class="${can?'primary':''}" data-act="bossReinforce" data-uid="${it.uid}" ${can?'':'disabled'}>${full?'強化済み':'霊玉で強化する'}</button></div></div>`;
     }).join(''):'<div class="muted">ボスの武器を持っていません。</div>';
-    return `<div class="col full" style="margin-bottom:10px"><div class="col-t">ボスの武器の強化（霊玉）</div><div class="small muted" style="margin-bottom:6px">各ボスの霊玉（そのボスからだけ10%で落ちる）を1個使って強化。1段階目は攻撃力 +1、2段階目は攻撃力 +2 上がり、3段階目で特殊効果が付きます。</div><div class="recipes">${rows}</div></div>`;
+    return `<div class="col full" style="margin-bottom:10px"><div class="col-t">ボスの武器の強化（霊玉）</div><div class="small muted" style="margin-bottom:6px">各ボスの霊玉（そのボスからだけ10%で落ちる）を1個使って強化。1回の強化で攻撃力 +3 と特殊効果が付きます。</div><div class="recipes">${rows}</div></div>`;
   },
   reinforceHTML(){
     const p=this.profile,orbs=p.materials.reinforce_orb||0,gold0=p.gold||0;
