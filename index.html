@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.74.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.74.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -439,16 +439,16 @@ const DATA={
     // シリーズスキル：2部位（基本）と5部位（追加）。値はすべて%（HP・防御・耐性・攻撃など）。耐性は1シリーズ1つまで
     wolf:{name:'古狼シリーズ',bonus:'古狼の加護',pieces:{head:'wolf_helm',body:'wolf_mail',arms:'wolf_vambrace',waist:'wolf_faulds',legs:'wolf_greaves'},eff2:{crit:5},eff:{critDmg:10}},
     bwolf:{name:'黒狼シリーズ',bonus:'黒狼の猛り',pieces:{head:'bwolf_helm',body:'bwolf_mail',arms:'bwolf_vambrace',waist:'bwolf_faulds',legs:'bwolf_greaves'},eff2:{atk:3},eff:{critDmg:15}},
-    bull:{name:'暴角シリーズ',bonus:'暴角の守り',pieces:{head:'bull_helm',body:'bull_mail',arms:'bull_vambrace',waist:'bull_faulds',legs:'bull_greaves'},eff2:{def:3},eff:{knockRes:20}},
+    bull:{name:'暴角シリーズ',bonus:'暴角の突撃',pieces:{head:'bull_helm',body:'bull_mail',arms:'bull_vambrace',waist:'bull_faulds',legs:'bull_greaves'},eff2:{def:3},eff:{bossDmgPct:10}},
     gale:{name:'疾風シリーズ',bonus:'疾風の翼',pieces:{head:'gale_helm',body:'gale_mail',arms:'gale_vambrace',waist:'gale_faulds',legs:'gale_greaves'},eff2:{dodgeDistPct:10},eff:{atk:2}},
     lizard:{name:'大蜥蜴シリーズ',bonus:'岩肌の生命力',pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},eff2:{maxHp:15},eff:{dmgCut:4}},
-    lava:{name:'溶岩の巨人シリーズ',bonus:'溶岩の鎧',pieces:{head:'lava_helm',body:'lava_mail',arms:'lava_vambrace',waist:'lava_faulds',legs:'lava_greaves'},eff2:{def:3},eff:{elemRes:{fire:15}}},
+    lava:{name:'溶岩の巨人シリーズ',bonus:'溶岩の熱撃',pieces:{head:'lava_helm',body:'lava_mail',arms:'lava_vambrace',waist:'lava_faulds',legs:'lava_greaves'},eff2:{def:3},eff:{elemAtk:{fire:12}}},
     dragon:{name:'炎獄竜シリーズ',bonus:'炎獄の加護',pieces:{head:'dragon_helm',body:'dragon_mail',arms:'dragon_vambrace',waist:'dragon_faulds',legs:'dragon_greaves'},eff2:{atk:4},eff:{elemAtk:{fire:10},crit:10}},
     felg:{name:'熔鉄の魔獣シリーズ',bonus:'熔鉄の突進',pieces:{head:'felg_helm',body:'felg_mail',arms:'felg_vambrace',waist:'felg_faulds',legs:'felg_greaves'},eff2:{atk:2},eff:{maxHp:13}},
-    deer:{name:'氷冠の大鹿シリーズ',bonus:'氷冠の守り',pieces:{head:'deer_helm',body:'deer_mail',arms:'deer_vambrace',waist:'deer_faulds',legs:'deer_greaves'},eff2:{def:3},eff:{elemRes:{ice:15}}},
-    wyv:{name:'永冬竜シリーズ',bonus:'永冬の加護',pieces:{head:'wyv_helm',body:'wyv_mail',arms:'wyv_vambrace',waist:'wyv_faulds',legs:'wyv_greaves'},eff2:{maxHp:13},eff:{statusRes:15}},
+    deer:{name:'氷冠の大鹿シリーズ',bonus:'氷冠の冷気',pieces:{head:'deer_helm',body:'deer_mail',arms:'deer_vambrace',waist:'deer_faulds',legs:'deer_greaves'},eff2:{def:3},eff:{elemAtk:{ice:12}}},
+    wyv:{name:'永冬竜シリーズ',bonus:'永冬の牙',pieces:{head:'wyv_helm',body:'wyv_mail',arms:'wyv_vambrace',waist:'wyv_faulds',legs:'wyv_greaves'},eff2:{maxHp:13},eff:{elemAtk:{ice:10},critDmg:10}},
     ape:{name:'氷嶺の剛猿シリーズ',bonus:'剛猿の剛力',pieces:{head:'ape_helm',body:'ape_mail',arms:'ape_vambrace',waist:'ape_faulds',legs:'ape_greaves'},eff2:{atk:2},eff:{def:2}},
-    mole:{name:'土竜シリーズ',bonus:'土竜の地ならし',pieces:{head:'mole_helm',body:'mole_mail',arms:'mole_vambrace',waist:'mole_faulds',legs:'mole_greaves'},eff2:{def:3},eff:{knockRes:20}},
+    mole:{name:'土竜シリーズ',bonus:'晶土竜の雷爪',pieces:{head:'mole_helm',body:'mole_mail',arms:'mole_vambrace',waist:'mole_faulds',legs:'mole_greaves'},eff2:{def:3},eff:{elemAtk:{thunder:10}}},
     centi:{name:'百足シリーズ',bonus:'晶炎の守り',pieces:{head:'centi_helm',body:'centi_mail',arms:'centi_vambrace',waist:'centi_faulds',legs:'centi_greaves'},eff2:{crit:4},eff:{elemAtk:{fire:8}}},
     grados:{name:'王シリーズ',bonus:'王の剛体',pieces:{head:'grados_helm',body:'grados_mail',arms:'grados_vambrace',waist:'grados_faulds',legs:'grados_greaves'},eff2:{maxHp:19},eff:{atk:2}},
     rabbit:{name:'跳ね兎シリーズ',bonus:'跳ね兎の跳躍',pieces:{head:'rabbit_helm',body:'rabbit_mail',arms:'rabbit_vambrace',waist:'rabbit_faulds',legs:'rabbit_greaves'},eff2:{dodgeDistPct:15},eff:{healPct:15}},
@@ -460,23 +460,23 @@ const DATA={
     octo:{name:'大蛸シリーズ',bonus:'深淵の潮流',pieces:{head:'octo_helm',body:'octo_mail',arms:'octo_vambrace',waist:'octo_faulds',legs:'octo_greaves'},eff2:{atk:2},eff:{elemAtk:{water:10}}},
     scorp:{name:'晶毒蠍シリーズ',bonus:'晶毒の鋭針',pieces:{head:'scorp_helm',body:'scorp_mail',arms:'scorp_vambrace',waist:'scorp_faulds',legs:'scorp_greaves'},eff2:{crit:4},eff:{critDmg:10}},
     serpent:{name:'紅蓮蛇シリーズ',bonus:'紅蓮の鱗',pieces:{head:'serpent_helm',body:'serpent_mail',arms:'serpent_vambrace',waist:'serpent_faulds',legs:'serpent_greaves'},eff2:{atk:2},eff:{elemAtk:{fire:8}}},
-    mammoth:{name:'巨象シリーズ',bonus:'巨象の剛体',pieces:{head:'mammoth_helm',body:'mammoth_mail',arms:'mammoth_vambrace',waist:'mammoth_faulds',legs:'mammoth_greaves'},eff2:{knockRes:25},eff:{maxHp:15}},
-    abyss:{name:'冥府蜘蛛シリーズ',bonus:'冥府の糸守り',pieces:{head:'abyss_helm',body:'abyss_mail',arms:'abyss_vambrace',waist:'abyss_faulds',legs:'abyss_greaves'},eff2:{statusRes:10},eff:{statusPct:15}},
+    mammoth:{name:'巨象シリーズ',bonus:'巨象の剛体',pieces:{head:'mammoth_helm',body:'mammoth_mail',arms:'mammoth_vambrace',waist:'mammoth_faulds',legs:'mammoth_greaves'},eff2:{atk:3},eff:{maxHp:20}},
+    abyss:{name:'冥府蜘蛛シリーズ',bonus:'冥府の毒糸',pieces:{head:'abyss_helm',body:'abyss_mail',arms:'abyss_vambrace',waist:'abyss_faulds',legs:'abyss_greaves'},eff2:{crit:4},eff:{statusPct:25}},
     kama:{name:'大鎌蟷螂シリーズ',bonus:'草原の疾風',pieces:{head:'kama_head',body:'kama_body',arms:'kama_arms',waist:'kama_waist',legs:'kama_legs'},eff2:{crit:3},eff:{weakCrit:10}},
-    armd:{name:'大アルマジロシリーズ',bonus:'甲殻の守り',pieces:{head:'armd_head',body:'armd_body',arms:'armd_arms',waist:'armd_waist',legs:'armd_legs'},eff2:{def:3},eff:{knockRes:20}},
-    hana:{name:'毒花竜シリーズ',bonus:'冥花の香り',pieces:{head:'hana_head',body:'hana_body',arms:'hana_arms',waist:'hana_waist',legs:'hana_legs'},eff2:{statusRes:100},eff:{statusPct:30}},
-    yado:{name:'巨大ヤドカリシリーズ',bonus:'殻の眠り守り',pieces:{head:'yado_head',body:'yado_body',arms:'yado_arms',waist:'yado_waist',legs:'yado_legs'},eff2:{statusRes:10},eff:{maxHp:15}},
+    armd:{name:'大アルマジロシリーズ',bonus:'甲殻の守り',pieces:{head:'armd_head',body:'armd_body',arms:'armd_arms',waist:'armd_waist',legs:'armd_legs'},eff2:{def:3},eff:{dmgCut:6}},
+    hana:{name:'毒花竜シリーズ',bonus:'冥花の香り',pieces:{head:'hana_head',body:'hana_body',arms:'hana_arms',waist:'hana_waist',legs:'hana_legs'},eff2:{elemAtk:{mei:10}},eff:{statusPct:30}},
+    yado:{name:'巨大ヤドカリシリーズ',bonus:'殻の眠り誘い',pieces:{head:'yado_head',body:'yado_body',arms:'yado_arms',waist:'yado_waist',legs:'yado_legs'},eff2:{def:3},eff:{statusPct:20}},
     dorc:{name:'泥鯨シリーズ',bonus:'氷潮の守り',pieces:{head:'dorc_head',body:'dorc_body',arms:'dorc_arms',waist:'dorc_waist',legs:'dorc_legs'},eff2:{maxHp:13},eff:{def:2}},
-    hachi:{name:'女王蜂シリーズ',bonus:'女王の毒針',pieces:{head:'hachi_head',body:'hachi_body',arms:'hachi_arms',waist:'hachi_waist',legs:'hachi_legs'},eff2:{statusRes:20},eff:{atk:2}},
+    hachi:{name:'女王蜂シリーズ',bonus:'女王の毒針',pieces:{head:'hachi_head',body:'hachi_body',arms:'hachi_arms',waist:'hachi_waist',legs:'hachi_legs'},eff2:{statusPct:20},eff:{minionDmgPct:20}},
     shark:{name:'大鮫シリーズ',bonus:'大鮫の執念',pieces:{head:'shark_head',body:'shark_body',arms:'shark_arms',waist:'shark_waist',legs:'shark_legs'},eff2:{atk:2},eff:{elemAtk:{water:10}}},
-    mola:{name:'蒼海マンボウシリーズ',bonus:'鱗の眠り返し',pieces:{head:'mola_head',body:'mola_body',arms:'mola_arms',waist:'mola_waist',legs:'mola_legs'},eff2:{statusRes:10},eff:{healPct:10}},
+    mola:{name:'蒼海マンボウシリーズ',bonus:'鱗の再生',pieces:{head:'mola_head',body:'mola_body',arms:'mola_arms',waist:'mola_waist',legs:'mola_legs'},eff2:{maxHp:13},eff:{regen:1}},
     guard:{name:'結晶守護者シリーズ',bonus:'結晶の守護',pieces:{head:'guard_head',body:'guard_body',arms:'guard_arms',waist:'guard_waist',legs:'guard_legs'},eff2:{def:3},eff:{elemAtk:{thunder:10}}},
-    ondo:{name:'轟音竜シリーズ',bonus:'地鳴りの体幹',pieces:{head:'ondo_head',body:'ondo_body',arms:'ondo_arms',waist:'ondo_waist',legs:'ondo_legs'},eff2:{knockRes:30},eff:{def:2}},
-    syaku:{name:'灼熱甲虫シリーズ',bonus:'灼甲の耐性',pieces:{head:'syaku_head',body:'syaku_body',arms:'syaku_arms',waist:'syaku_waist',legs:'syaku_legs'},eff2:{atk:2},eff:{statusRes:20}},
+    ondo:{name:'轟音竜シリーズ',bonus:'地鳴りの轟撃',pieces:{head:'ondo_head',body:'ondo_body',arms:'ondo_arms',waist:'ondo_waist',legs:'ondo_legs'},eff2:{atk:3},eff:{bossDmgPct:10}},
+    syaku:{name:'灼熱甲虫シリーズ',bonus:'灼甲の毒熱',pieces:{head:'syaku_head',body:'syaku_body',arms:'syaku_arms',waist:'syaku_waist',legs:'syaku_legs'},eff2:{atk:2},eff:{statusPct:20}},
     phoenix:{name:'不死鳥シリーズ',bonus:'不死の翼',pieces:{head:'phoenix_head',body:'phoenix_body',arms:'phoenix_arms',waist:'phoenix_waist',legs:'phoenix_legs'},eff2:{maxHp:13},eff:{atk:2}},
     shiro:{name:'白熊シリーズ',bonus:'白熊の剛毛',pieces:{head:'shiro_head',body:'shiro_body',arms:'shiro_arms',waist:'shiro_waist',legs:'shiro_legs'},eff2:{def:3},eff:{maxHp:15}},
     tsuno:{name:'氷角獣シリーズ',bonus:'角の痺れ返し',pieces:{head:'tsuno_head',body:'tsuno_body',arms:'tsuno_arms',waist:'tsuno_waist',legs:'tsuno_legs'},eff2:{atk:2},eff:{statusPct:15}},
-    kubi:{name:'首狩りシリーズ',bonus:'首狩りの眠り',pieces:{head:'kubi_head',body:'kubi_body',arms:'kubi_arms',waist:'kubi_waist',legs:'kubi_legs'},eff2:{critDmg:15},eff:{statusRes:10}},
+    kubi:{name:'首狩りシリーズ',bonus:'首狩りの一閃',pieces:{head:'kubi_head',body:'kubi_body',arms:'kubi_arms',waist:'kubi_waist',legs:'kubi_legs'},eff2:{critDmg:15},eff:{weakCrit:15}},
     onry:{name:'怨霊武者シリーズ',bonus:'怨霊の水鏡',pieces:{head:'onry_head',body:'onry_body',arms:'onry_arms',waist:'onry_waist',legs:'onry_legs'},eff2:{crit:4},eff:{elemAtk:{water:10}}},
     rhino:{name:'鎧犀シリーズ',bonus:'鎧犀の甲殻',pieces:{head:'rhino_helm',body:'rhino_mail',arms:'rhino_vambrace',waist:'rhino_faulds',legs:'rhino_greaves'},eff2:{def:3},eff:{dmgCut:4}},
     boar:{name:'轟牙シリーズ',bonus:'轟牙の突進',pieces:{head:'boar_helm',body:'boar_mail',arms:'boar_vambrace',waist:'boar_faulds',legs:'boar_greaves'},eff2:{atk:2},eff:{weakCrit:10}},
@@ -484,7 +484,7 @@ const DATA={
     aqua:{name:'蒼海竜シリーズ',bonus:'蒼海の鰭',pieces:{head:'aqua_helm',body:'aqua_mail',arms:'aqua_vambrace',waist:'aqua_faulds',legs:'aqua_greaves'},eff2:{dodgeDistPct:10},eff:{elemAtk:{water:8}}},
     turtle:{name:'水瀑大亀シリーズ',bonus:'大亀の甲羅',pieces:{head:'turtle_helm',body:'turtle_mail',arms:'turtle_vambrace',waist:'turtle_faulds',legs:'turtle_greaves'},eff2:{maxHp:15},eff:{def:2}},
     eel:{name:'雷鳴シリーズ',bonus:'雷鳴の帯電',pieces:{head:'eel_helm',body:'eel_mail',arms:'eel_vambrace',waist:'eel_faulds',legs:'eel_greaves'},eff2:{elemAtk:{thunder:8}},eff:{atk:2}},
-    worm:{name:'大蚯蚓シリーズ',bonus:'地を這う粘り',pieces:{head:'worm_helm',body:'worm_mail',arms:'worm_vambrace',waist:'worm_faulds',legs:'worm_greaves'},eff2:{statusRes:10},eff:{healPct:10}},
+    worm:{name:'大蚯蚓シリーズ',bonus:'地を這う粘り',pieces:{head:'worm_helm',body:'worm_mail',arms:'worm_vambrace',waist:'worm_faulds',legs:'worm_greaves'},eff2:{maxHp:13},eff:{regen:1}},
   },
   // slots：装飾品スロットの数（書かない装備は0。エピック以上のレアリティなら+1）
   equipment:{
