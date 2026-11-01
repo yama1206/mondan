@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.76.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.77.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -470,7 +470,6 @@ const DATA={
     hachi:{name:'女王蜂シリーズ',bonus:'女王の毒針',pieces:{head:'hachi_head',body:'hachi_body',arms:'hachi_arms',waist:'hachi_waist',legs:'hachi_legs'},eff2:{statusPct:20},eff:{minionDmgPct:20}},
     shark:{name:'大鮫シリーズ',bonus:'大鮫の執念',pieces:{head:'shark_head',body:'shark_body',arms:'shark_arms',waist:'shark_waist',legs:'shark_legs'},eff2:{atk:2},eff:{elemAtk:{water:10}}},
     mola:{name:'蒼海マンボウシリーズ',bonus:'鱗の再生',pieces:{head:'mola_head',body:'mola_body',arms:'mola_arms',waist:'mola_waist',legs:'mola_legs'},eff2:{maxHp:13},eff:{regen:1}},
-    guard:{name:'結晶守護者シリーズ',bonus:'結晶の守護',pieces:{head:'guard_head',body:'guard_body',arms:'guard_arms',waist:'guard_waist',legs:'guard_legs'},eff2:{def:3},eff:{elemAtk:{thunder:10}}},
     ondo:{name:'轟音竜シリーズ',bonus:'地鳴りの轟撃',pieces:{head:'ondo_head',body:'ondo_body',arms:'ondo_arms',waist:'ondo_waist',legs:'ondo_legs'},eff2:{atk:3},eff:{bossDmgPct:10}},
     syaku:{name:'灼熱甲虫シリーズ',bonus:'灼甲の毒熱',pieces:{head:'syaku_head',body:'syaku_body',arms:'syaku_arms',waist:'syaku_waist',legs:'syaku_legs'},eff2:{atk:2},eff:{statusPct:20}},
     phoenix:{name:'不死鳥シリーズ',bonus:'不死の翼',pieces:{head:'phoenix_head',body:'phoenix_body',arms:'phoenix_arms',waist:'phoenix_waist',legs:'phoenix_legs'},eff2:{maxHp:13},eff:{atk:2}},
@@ -783,8 +782,6 @@ const DATA={
     shark_dual:{name:'深淵の大鮫剣',slot:'weapon',el:{k:'water',v:11},wtype:'dual',atk:34,crit:15,slots:2,boss:'twin_shark'},
     mola_tachi:{name:'蒼海の太刀',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'tachi',atk:30,crit:13,slots:2,boss:'mola_fish'},
     mola_shuriken:{name:'蒼海の鱗手裏剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'shuriken',atk:28,crit:12,slots:2,boss:'mola_fish'},
-    guard_gs:{name:'結晶の大剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'greatsword',atk:36,crit:5,slots:2,boss:'crystal_guardian'},
-    guard_tachi:{name:'守護の太刀',slot:'weapon',el:{k:'thunder',v:11},wtype:'tachi',atk:34,crit:13,slots:2,boss:'crystal_guardian'},
     ondo_hammer:{name:'轟音の大槌',slot:'weapon',st:{k:'slow',buildup:15},wtype:'hammer',atk:38,crit:1,slots:2,boss:'quake_dragon'},
     ondo_bow:{name:'地鳴りの弓',slot:'weapon',st:{k:'slow',buildup:15},wtype:'bow',atk:32,crit:11,slots:2},
     syaku_dual:{name:'灼甲の双剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'dual',atk:38,crit:15,slots:2,boss:'scarab'},
@@ -825,22 +822,18 @@ const DATA={
     bw_deep_octopus_bow:{name:'大蛸の弓',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'bow',atk:28,crit:11,slots:2,boss:'deep_octopus'},
     bw_aquarios_shuriken:{name:'蒼海竜の手裏剣',slot:'weapon',el:{k:'water',v:11},wtype:'shuriken',atk:33,crit:12,slots:2,boss:'aquarios'},
     bw_twin_shark_shuriken:{name:'大鮫の手裏剣',slot:'weapon',el:{k:'water',v:9},wtype:'shuriken',atk:31,crit:12,slots:2,boss:'twin_shark'},
-    bw_crystal_guardian_sword:{name:'守護晶の剣',slot:'weapon',el:{k:'mei',v:11},wtype:'sword',atk:38,crit:11,slots:2,boss:'crystal_guardian'},
     bw_mole_sword:{name:'晶土竜の剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'sword',atk:38,crit:11,slots:2,boss:'mole'},
     bw_centipede_greatsword:{name:'晶百足の大剣',slot:'weapon',st:{k:'poison',buildup:20},wtype:'greatsword',atk:40,crit:5,slots:2,boss:'centipede'},
     bw_crystal_scorpion_greatsword:{name:'晶蠍の大剣',slot:'weapon',st:{k:'poison',buildup:20},wtype:'greatsword',atk:40,crit:5,slots:2,boss:'crystal_scorpion'},
     bw_grados_tachi:{name:'地底王の太刀',slot:'weapon',el:{k:'fire',v:12},wtype:'tachi',atk:43,crit:13,slots:2,boss:'grados'},
-    bw_crystal_guardian_tachi:{name:'守護晶の太刀',slot:'weapon',el:{k:'mei',v:11},wtype:'tachi',atk:38,crit:13,slots:2,boss:'crystal_guardian'},
     bw_mole_dual:{name:'晶土竜の双剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'dual',atk:33,crit:15,slots:2,boss:'mole'},
     bw_centipede_dual:{name:'晶百足の双剣',slot:'weapon',st:{k:'poison',buildup:20},wtype:'dual',atk:36,crit:15,slots:2,boss:'centipede'},
     bw_crystal_scorpion_hammer:{name:'晶蠍の槌',slot:'weapon',st:{k:'poison',buildup:20},wtype:'hammer',atk:41,crit:1,slots:2,boss:'crystal_scorpion'},
     bw_grados_hammer:{name:'地底王の槌',slot:'weapon',el:{k:'fire',v:12},wtype:'hammer',atk:46,crit:1,slots:2,boss:'grados'},
-    bw_crystal_guardian_lance:{name:'守護晶の槍',slot:'weapon',el:{k:'mei',v:11},wtype:'lance',atk:38,crit:11,slots:2,boss:'crystal_guardian'},
     bw_mole_lance:{name:'晶土竜の槍',slot:'weapon',el:{k:'thunder',v:11},wtype:'lance',atk:38,crit:11,slots:2,boss:'mole'},
     bw_centipede_bow:{name:'晶百足の弓',slot:'weapon',st:{k:'poison',buildup:20},wtype:'bow',atk:35,crit:11,slots:2,boss:'centipede'},
     bw_crystal_scorpion_bow:{name:'晶蠍の弓',slot:'weapon',st:{k:'poison',buildup:20},wtype:'bow',atk:35,crit:11,slots:2,boss:'crystal_scorpion'},
     bw_grados_shuriken:{name:'地底王の手裏剣',slot:'weapon',el:{k:'fire',v:12},wtype:'shuriken',atk:36,crit:12,slots:2,boss:'grados'},
-    bw_crystal_guardian_shuriken:{name:'守護晶の手裏剣',slot:'weapon',el:{k:'mei',v:11},wtype:'shuriken',atk:35,crit:12,slots:2,boss:'crystal_guardian'},
     bw_volcano_dragon_sword:{name:'炎獄竜の剣',slot:'weapon',el:{k:'fire',v:13},wtype:'sword',atk:40,crit:12,slots:2,boss:'volcano_dragon'},
     bw_felgnas_sword:{name:'熔鉄の剣',slot:'weapon',el:{k:'fire',v:12},wtype:'sword',atk:35,crit:11,slots:2,boss:'felgnas'},
     bw_lava_giant_greatsword:{name:'溶岩の大剣',slot:'weapon',el:{k:'fire',v:12},wtype:'greatsword',atk:38,crit:5,slots:2,boss:'lava_giant'},
@@ -889,9 +882,6 @@ const DATA={
     bw_mola_fish_greatsword:{name:'蒼海の大剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'greatsword',atk:38,crit:5,slots:2,boss:'mola_fish'},
     bw_mola_fish_hammer:{name:'蒼海の槌',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'hammer',atk:39,crit:1,slots:2,boss:'mola_fish'},
     bw_mola_fish_bow:{name:'蒼海の弓',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'bow',atk:34,crit:11,slots:2,boss:'mola_fish'},
-    bw_crystal_guardian_dual:{name:'守護晶の双剣',slot:'weapon',el:{k:'mei',v:11},wtype:'dual',atk:28,crit:15,slots:2,boss:'crystal_guardian'},
-    bw_crystal_guardian_hammer:{name:'守護晶の槌',slot:'weapon',el:{k:'mei',v:11},wtype:'hammer',atk:44,crit:1,slots:2,boss:'crystal_guardian'},
-    bw_crystal_guardian_bow:{name:'守護晶の弓',slot:'weapon',el:{k:'mei',v:11},wtype:'bow',atk:34,crit:11,slots:2,boss:'crystal_guardian'},
     bw_quake_dragon_sword:{name:'轟音の剣',slot:'weapon',st:{k:'slow',buildup:15},wtype:'sword',atk:41,crit:11,slots:2,boss:'quake_dragon'},
     bw_quake_dragon_greatsword:{name:'轟音の大剣',slot:'weapon',st:{k:'slow',buildup:15},wtype:'greatsword',atk:43,crit:5,slots:2,boss:'quake_dragon'},
     bw_quake_dragon_tachi:{name:'轟音の太刀',slot:'weapon',st:{k:'slow',buildup:15},wtype:'tachi',atk:41,crit:13,slots:2,boss:'quake_dragon'},
@@ -1113,11 +1103,6 @@ const DATA={
     mola_arms:{name:'蒼海マンボウの腕甲',slot:'arms',def:24,skills:{regen:4,heal_up:2,item_power:1},slots:2},
     mola_waist:{name:'蒼海マンボウの腰当て',slot:'waist',def:23,skills:{regen:3,heal_up:3,item_power:1},slots:2},
     mola_legs:{name:'蒼海マンボウの脚甲',slot:'legs',def:24,skills:{regen:4,heal_up:2,item_power:1},slots:2},
-    guard_head:{name:'結晶守護者の兜',slot:'head',def:26,skills:{elem_up:4,def_up:3},slots:2},
-    guard_body:{name:'結晶守護者の鎧',slot:'body',def:31,skills:{elem_up:5,rare_up:2},slots:2},
-    guard_arms:{name:'結晶守護者の腕甲',slot:'arms',def:26,skills:{elem_up:4,def_up:2,rare_up:1},slots:2},
-    guard_waist:{name:'結晶守護者の腰当て',slot:'waist',def:25,skills:{elem_up:3,def_up:3,rare_up:1},slots:2},
-    guard_legs:{name:'結晶守護者の脚甲',slot:'legs',def:26,skills:{elem_up:4,def_up:2,rare_up:1},slots:2},
     ondo_head:{name:'轟音竜の兜',slot:'head',def:26,skills:{flinch_free:4,minion_hunter:3},slots:2},
     ondo_body:{name:'轟音竜の鎧',slot:'body',def:31,skills:{flinch_free:5,def_up:2},slots:2},
     ondo_arms:{name:'轟音竜の腕甲',slot:'arms',def:26,skills:{flinch_free:4,minion_hunter:2,def_up:1},slots:2},
@@ -1232,7 +1217,6 @@ const DATA={
     queen_bee_spirit:{name:'女王蜂の霊玉',color:'#c8a8ff',desc:'毒霧の女王蜂からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     twin_shark_spirit:{name:'大鮫の霊玉',color:'#c8a8ff',desc:'深淵の大鮫からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     mola_fish_spirit:{name:'巨大マンボウの霊玉',color:'#c8a8ff',desc:'蒼海の巨大マンボウからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
-    crystal_guardian_spirit:{name:'大守護者の霊玉',color:'#c8a8ff',desc:'結晶の大守護者からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     quake_dragon_spirit:{name:'轟音竜の霊玉',color:'#c8a8ff',desc:'地底の轟音竜からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     scarab_spirit:{name:'大甲虫の霊玉',color:'#c8a8ff',desc:'灼熱の大甲虫からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     fire_phoenix_spirit:{name:'不死鳥の霊玉',color:'#c8a8ff',desc:'焦土の不死鳥からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
@@ -1329,7 +1313,6 @@ const DATA={
     yado_shell:{name:'巨大ヤドカリの殻',color:'#d0a070',desc:'巨大ヤドカリの大きな殻。（樹海）'},
     shark_fin:{name:'大鮫の背びれ',color:'#5a7aa0',desc:'深淵の大鮫の背びれ。（深淵）'},
     mola_scale:{name:'蒼海マンボウの鱗板',color:'#90c0e0',desc:'蒼海の巨大マンボウの大きな鱗板。（蒼流の水辺）'},
-    guard_core:{name:'結晶守護者の核晶',color:'#a090e0',desc:'結晶の大守護者の核になる晶石。（水晶の洞窟）'},
     shiro_pelt:{name:'白熊の白毛',color:'#f0f4ff',desc:'氷河の大白熊の厚い白毛。（氷雪地帯）'},
     tsuno_horn:{name:'氷角獣の氷角',color:'#bfeaf8',desc:'雪原の氷角獣の角。（氷雪地帯）'},
     kubi_armor:{name:'首狩り騎士の鎧片',color:'#5a5a6a',desc:'冥府の首狩り騎士の鎧の破片。（冥府）'},
@@ -1527,7 +1510,6 @@ const DATA={
     queen_bee:{weak:['fire'],strong:['thunder']},
     twin_shark:{weak:['thunder'],strong:['water']},
     mola_fish:{weak:['thunder'],strong:['water']},
-    crystal_guardian:{weak:['fire'],strong:['thunder']},
     quake_dragon:{weak:['ice'],strong:['fire']},
     scarab:{weak:['ice'],strong:['fire']},
     fire_phoenix:{weak:['ice'],strong:['mei']},
@@ -1663,7 +1645,6 @@ const DATA={
         {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'}, // ぬめりの水たまり
         {k:'charge',wind:0.9,cd:6,dmg:1.2}, // ゆったり体当たり
       ]},
-    crystal_guardian:{name:'結晶の大守護者',ai:'pattern',look:'gen',hp:3200,atk:27,def:8,r:42,speed:95,color:'#6a5ab0',drops:'crystal_guardian',boss:true,stunMax:145,stunTime:4,gen:{body:'round',legs:0,head:'crystal',arm:'claw'},pal:{body:'#6a5ab0',dark:'#2a2250',spot:'#c0f0ff',eye:'#ffe060'},
       pattern:[
         {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:12,ring:true,speed:260,el:'thunder',volleys:2,gap:0.5}, // 結晶片を全方位に放つ
         {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:44,el:'thunder'}, // 核から光線
@@ -2182,7 +2163,6 @@ const DATA={
     queen_bee:{rarityBoost:2.0,rolls:[{type:'mat',id:'queen_bee_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'queen_jelly',chance:1.0,min:1,max:2},{type:'mat',id:'poison_spore',chance:0.9,min:1,max:2},{type:'mat',id:'toxic_gland',chance:0.5,min:1,max:1}]},
     twin_shark:{rarityBoost:2.0,rolls:[{type:'mat',id:'twin_shark_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'shark_fin',chance:1.0,min:1,max:2},{type:'mat',id:'hard_shell__twin_shark',chance:0.9,min:1,max:2},{type:'mat',id:'curse_powder__twin_shark',chance:0.5,min:1,max:1}]},
     mola_fish:{rarityBoost:2.0,rolls:[{type:'mat',id:'mola_fish_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'mola_scale',chance:1.0,min:1,max:2},{type:'mat',id:'slime_gel__mola_fish',chance:0.9,min:1,max:2},{type:'mat',id:'hard_shell__mola_fish',chance:0.5,min:1,max:1}]},
-    crystal_guardian:{rarityBoost:2.0,rolls:[{type:'mat',id:'crystal_guardian_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'guard_core',chance:1.0,min:1,max:2},{type:'mat',id:'crystal_shard',chance:0.9,min:1,max:2},{type:'mat',id:'cave_fang',chance:0.5,min:1,max:1}]},
     quake_dragon:{rarityBoost:2.0,rolls:[{type:'mat',id:'quake_dragon_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'quake_horn',chance:1.0,min:1,max:2},{type:'mat',id:'rock_scale',chance:0.9,min:1,max:2},{type:'mat',id:'mire_core__quake_dragon',chance:0.5,min:1,max:1}]},
     scarab:{rarityBoost:2.0,rolls:[{type:'mat',id:'scarab_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'centi_shell__scarab',chance:0.9,min:1,max:2},{type:'mat',id:'poison_spore',chance:0.5,min:1,max:1}]},
     fire_phoenix:{rarityBoost:2.0,rolls:[{type:'mat',id:'fire_phoenix_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'spider_silk__fire_phoenix',chance:0.9,min:1,max:2},{type:'mat',id:'centi_ember__fire_phoenix',chance:0.5,min:1,max:1}]},
@@ -2647,8 +2627,7 @@ const DATA={
     {id:'s2_boss',stage:8,urgent:true,boss:'yomi_samurai',name:'【緊急】黄泉の怨霊武者',desc:'墓地の奥で、黄泉の怨霊武者が目を覚ました。この地の脅威の元凶だ。',goal:{type:'boss'},reward:{gold:1800,mats:{bwolf_core:1,reinforce_orb:2},decos:2}},
     // 追加：強敵依頼。after の依頼を達成すると出現する。boss：この依頼で戦うボス（省略時はステージのボス）
     {id:'s6_bat',stage:5,key:true,name:'洞窟コウモリの掃討',desc:'素早く飛び回り、上空から襲いかかるコウモリを12体倒せ。',goal:{type:'kill',target:'cave_bat',count:12},reward:{gold:760,mats:{cave_fang:3}}},
-    {id:'ex_crystal_guardian',stage:5,after:'cr_scorp',boss:'crystal_guardian',name:'【強敵】結晶の大守護者',desc:'洞窟の結晶を守る巨大な守護者。結晶の腕で薙ぎ払い、雷の光線を放ち、地面に結晶柱を生やす。',goal:{type:'boss'},reward:{gold:1800,mats:{crystal_shard:2,cave_fang:2}}},
-    {id:'ex_quake_dragon',stage:5,after:'ex_crystal_guardian',boss:'quake_dragon',name:'【強敵】地底の轟音竜',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',goal:{type:'boss'},reward:{gold:1800,mats:{rock_scale:2,mire_core__quake_dragon:2}}},
+    {id:'ex_quake_dragon',stage:5,after:'cr_scorp',boss:'quake_dragon',name:'【強敵】地底の轟音竜',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',goal:{type:'boss'},reward:{gold:1800,mats:{rock_scale:2,mire_core__quake_dragon:2}}},
     {id:'s6_crystal',stage:5,key:true,name:'輝晶スライムの採取',desc:'結晶をまとったスライムを10体倒し、輝晶の欠片を集めろ。',goal:{type:'kill',target:'crystal_slime',count:10},reward:{gold:720,mats:{crystal_shard:4}}},
     {id:'s6_boss',stage:5,urgent:true,unlocks:6,name:'【緊急】地底王グラドス',desc:'洞窟の最奥で眠っていた地底王が目を覚ました。大きく動きは遅いが、一撃が重い。物理攻撃にはとても硬く、属性の攻撃がよく効く。',goal:{type:'boss'},reward:{gold:2400,mats:{grados_core:1,reinforce_orb:2},decos:2}},
     {id:'s6_mole',stage:5,after:'s6_boss',boss:'mole',name:'【強敵】結晶喰いの土竜',desc:'結晶を食べ尽くす巨大な土竜が、地面の下から奇襲を仕掛けてくる。地中に潜る前の揺れに注意。',goal:{type:'boss'},reward:{gold:1600,mats:{mole_crystal:1,reinforce_orb:2},decos:1}},
@@ -2733,7 +2712,6 @@ const DATA={
     queen_bee:{stage:[3],role:'ボス',desc:'毒霧の沼に巣を作る巨大な蜂。毒針を直線に飛ばし、働き蜂を呼び、毒霧の溜まりを作る。',tip:'毒霧の溜まりは2秒ほど毒が残る。働き蜂は早めに倒そう。'},
     twin_shark:{stage:[4],role:'ボス',desc:'深い淵を泳ぐ二つの頭を持つ鮫。止まらずに泳ぎ回り、血のにおいを嗅ぎつけて弱った相手を狙う。',tip:'噛みつきは扇形。体力が減ると狙われやすい。突進の直線から外れよう。'},
     mola_fish:{stage:[4],role:'ボス',desc:'大きな体で海をのんびり漂うマンボウ。体当たりやのしかかりで押しつぶし、ときどき横倒しになって日向ぼっこをする。',tip:'日向ぼっこ中は隙だらけ。体当たりは大きな円で予告される。'},
-    crystal_guardian:{stage:[5],role:'ボス',desc:'洞窟の結晶を守る巨大な守護者。結晶の腕で薙ぎ払い、雷の光線を放ち、地面に結晶柱を生やす。',tip:'結晶柱は直線の帯。光線の狙いが固まったら横へ。'},
     quake_dragon:{stage:[5],role:'ボス',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',tip:'地鳴りは鈍足になる。亀裂の帯の外へ逃げよう。'},
     scarab:{stage:[6],role:'ボス',desc:'火山の岩場で暮らす大きな甲虫。甲殻を溶岩のように赤く光らせ、毒の吐息を放つ。',tip:'突進の前に甲殻が赤く光る。毒の吐息は扇形。'},
     fire_phoenix:{stage:[6],role:'ボス',desc:'焦土の空を舞う不死鳥。冥火の翼で薙ぎ払い、急降下し、冥火の球を放つ。',tip:'急降下の直線から外れよう。冥火の球は追いかけてくる。'},
@@ -3109,8 +3087,6 @@ const DATA={
     {id:'r_shark_dual',out:{type:'equip',id:'shark_dual'},cost:{shark_fin:4,hard_shell__twin_shark:3},stage:4},
     {id:'r_mola_tachi',out:{type:'equip',id:'mola_tachi'},cost:{mola_scale:4,slime_gel__mola_fish:3},stage:4},
     {id:'r_mola_shuriken',out:{type:'equip',id:'mola_shuriken'},cost:{mola_scale:4,slime_gel__mola_fish:3},stage:4},
-    {id:'r_guard_gs',out:{type:'equip',id:'guard_gs'},cost:{guard_core:4,crystal_shard:3},stage:5},
-    {id:'r_guard_tachi',out:{type:'equip',id:'guard_tachi'},cost:{guard_core:4,crystal_shard:3},stage:5},
     {id:'r_ondo_hammer',out:{type:'equip',id:'ondo_hammer'},cost:{quake_horn:4,rock_scale:3},stage:5},
     {id:'r_ondo_bow',out:{type:'equip',id:'ondo_bow'},cost:{rock_scale:2,cave_fang:1},stage:5},
     {id:'r_syaku_dual',out:{type:'equip',id:'syaku_dual'},cost:{centi_shell__scarab:4,poison_spore:3},stage:6},
@@ -3151,22 +3127,18 @@ const DATA={
     {id:'r_bw_deep_octopus_bow',out:{type:'equip',id:'bw_deep_octopus_bow'},cost:{octo_sucker:4,slime_gel__deep_octopus:3},stage:4},
     {id:'r_bw_aquarios_shuriken',out:{type:'equip',id:'bw_aquarios_shuriken'},cost:{aqua_fin:4,water_scale:3},stage:4},
     {id:'r_bw_twin_shark_shuriken',out:{type:'equip',id:'bw_twin_shark_shuriken'},cost:{shark_fin:4,hard_shell__twin_shark:3},stage:4},
-    {id:'r_bw_crystal_guardian_sword',out:{type:'equip',id:'bw_crystal_guardian_sword'},cost:{guard_core:4,crystal_shard:3},stage:5},
     {id:'r_bw_mole_sword',out:{type:'equip',id:'bw_mole_sword'},cost:{mole_claw:4,mole_crystal:3},stage:5},
     {id:'r_bw_centipede_greatsword',out:{type:'equip',id:'bw_centipede_greatsword'},cost:{centi_shell:4,centi_ember:3},stage:5},
     {id:'r_bw_crystal_scorpion_greatsword',out:{type:'equip',id:'bw_crystal_scorpion_greatsword'},cost:{scorp_claw:4,hard_shell__crystal_scorpion:3},stage:5},
     {id:'r_bw_grados_tachi',out:{type:'equip',id:'bw_grados_tachi'},cost:{grados_ore:4,grados_core:3},stage:5},
-    {id:'r_bw_crystal_guardian_tachi',out:{type:'equip',id:'bw_crystal_guardian_tachi'},cost:{guard_core:4,crystal_shard:3},stage:5},
     {id:'r_bw_mole_dual',out:{type:'equip',id:'bw_mole_dual'},cost:{mole_claw:4,mole_crystal:3},stage:5},
     {id:'r_bw_centipede_dual',out:{type:'equip',id:'bw_centipede_dual'},cost:{centi_shell:4,centi_ember:3},stage:5},
     {id:'r_bw_crystal_scorpion_hammer',out:{type:'equip',id:'bw_crystal_scorpion_hammer'},cost:{scorp_claw:4,hard_shell__crystal_scorpion:3},stage:5},
     {id:'r_bw_grados_hammer',out:{type:'equip',id:'bw_grados_hammer'},cost:{grados_ore:4,grados_core:3},stage:5},
-    {id:'r_bw_crystal_guardian_lance',out:{type:'equip',id:'bw_crystal_guardian_lance'},cost:{guard_core:4,crystal_shard:3},stage:5},
     {id:'r_bw_mole_lance',out:{type:'equip',id:'bw_mole_lance'},cost:{mole_claw:4,mole_crystal:3},stage:5},
     {id:'r_bw_centipede_bow',out:{type:'equip',id:'bw_centipede_bow'},cost:{centi_shell:4,centi_ember:3},stage:5},
     {id:'r_bw_crystal_scorpion_bow',out:{type:'equip',id:'bw_crystal_scorpion_bow'},cost:{scorp_claw:4,hard_shell__crystal_scorpion:3},stage:5},
     {id:'r_bw_grados_shuriken',out:{type:'equip',id:'bw_grados_shuriken'},cost:{grados_ore:4,grados_core:3},stage:5},
-    {id:'r_bw_crystal_guardian_shuriken',out:{type:'equip',id:'bw_crystal_guardian_shuriken'},cost:{guard_core:4,crystal_shard:3},stage:5},
     {id:'r_bw_volcano_dragon_sword',out:{type:'equip',id:'bw_volcano_dragon_sword'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_felgnas_sword',out:{type:'equip',id:'bw_felgnas_sword'},cost:{felg_horn:4,heat_crystal:3},stage:6},
     {id:'r_bw_lava_giant_greatsword',out:{type:'equip',id:'bw_lava_giant_greatsword'},cost:{rock_core:4,red_arm:3},stage:6},
@@ -3215,9 +3187,6 @@ const DATA={
     {id:'r_bw_mola_fish_greatsword',out:{type:'equip',id:'bw_mola_fish_greatsword'},cost:{mola_scale:4,slime_gel__mola_fish:3},stage:4},
     {id:'r_bw_mola_fish_hammer',out:{type:'equip',id:'bw_mola_fish_hammer'},cost:{mola_scale:4,slime_gel__mola_fish:3},stage:4},
     {id:'r_bw_mola_fish_bow',out:{type:'equip',id:'bw_mola_fish_bow'},cost:{mola_scale:4,slime_gel__mola_fish:3},stage:4},
-    {id:'r_bw_crystal_guardian_dual',out:{type:'equip',id:'bw_crystal_guardian_dual'},cost:{guard_core:4,crystal_shard:3},stage:5},
-    {id:'r_bw_crystal_guardian_hammer',out:{type:'equip',id:'bw_crystal_guardian_hammer'},cost:{guard_core:4,crystal_shard:3},stage:5},
-    {id:'r_bw_crystal_guardian_bow',out:{type:'equip',id:'bw_crystal_guardian_bow'},cost:{guard_core:4,crystal_shard:3},stage:5},
     {id:'r_bw_quake_dragon_sword',out:{type:'equip',id:'bw_quake_dragon_sword'},cost:{quake_horn:4,rock_scale:3},stage:5},
     {id:'r_bw_quake_dragon_greatsword',out:{type:'equip',id:'bw_quake_dragon_greatsword'},cost:{quake_horn:4,rock_scale:3},stage:5},
     {id:'r_bw_quake_dragon_tachi',out:{type:'equip',id:'bw_quake_dragon_tachi'},cost:{quake_horn:4,rock_scale:3},stage:5},
@@ -3439,11 +3408,6 @@ const DATA={
     {id:'r_mola_arms',out:{type:'equip',id:'mola_arms'},cost:{mola_scale:2,slime_gel__mola_fish:1},stage:4},
     {id:'r_mola_waist',out:{type:'equip',id:'mola_waist'},cost:{mola_scale:2,hard_shell__mola_fish:2},stage:4},
     {id:'r_mola_legs',out:{type:'equip',id:'mola_legs'},cost:{mola_scale:1,slime_gel__mola_fish:3},stage:4},
-    {id:'r_guard_head',out:{type:'equip',id:'guard_head'},cost:{guard_core:2,crystal_shard:2},stage:5},
-    {id:'r_guard_body',out:{type:'equip',id:'guard_body'},cost:{guard_core:2,crystal_shard:1},stage:5},
-    {id:'r_guard_arms',out:{type:'equip',id:'guard_arms'},cost:{guard_core:3,cave_fang:1},stage:5},
-    {id:'r_guard_waist',out:{type:'equip',id:'guard_waist'},cost:{guard_core:2,crystal_shard:1},stage:5},
-    {id:'r_guard_legs',out:{type:'equip',id:'guard_legs'},cost:{guard_core:2,cave_wing:2},stage:5},
     {id:'r_ondo_head',out:{type:'equip',id:'ondo_head'},cost:{rock_scale:2,mire_core__quake_dragon:1},stage:5},
     {id:'r_ondo_body',out:{type:'equip',id:'ondo_body'},cost:{mire_core__quake_dragon:3,cave_fang:1},stage:5},
     {id:'r_ondo_arms',out:{type:'equip',id:'ondo_arms'},cost:{mire_core__quake_dragon:2,rock_scale:1},stage:5},
@@ -3791,6 +3755,9 @@ function compAutoGear(profile,who){
   if(set)for(const sl of ['head','body','arms','waist','legs'])if(set.pieces[sl]&&DATA.equipment[set.pieces[sl]])ov[sl]=Items.createEquipment(set.pieces[sl]);
   return {boss:ab.boss,stage:ab.stage,ov};
 }
+/** 削除したボス（結晶の大守護者）の装備・素材を持っていたら、同じステージの緊急ボス（地底王グラドス）の物に置き換える */
+const REMOVED_EQUIP={guard_gs:'bw_grados_greatsword',guard_tachi:'bw_grados_tachi',guard_head:'grados_helm',guard_body:'grados_mail',guard_arms:'grados_vambrace',guard_waist:'grados_faulds',guard_legs:'grados_greaves',bw_crystal_guardian_sword:'bw_grados_sword',bw_crystal_guardian_tachi:'bw_grados_tachi',bw_crystal_guardian_lance:'bw_grados_lance',bw_crystal_guardian_shuriken:'bw_grados_shuriken',bw_crystal_guardian_dual:'bw_grados_dual',bw_crystal_guardian_hammer:'bw_grados_hammer',bw_crystal_guardian_bow:'bw_grados_bow'};
+const REMOVED_MAT={guard_core:'grados_ore',crystal_guardian_spirit:'grados_spirit'};
 function computeStats(profile,override,who){
   if(!override&&who>=CHAR_COUNT){const ag=compAutoGear(profile,who);if(ag)override=ag.ov;} // 仲間の自動装備
   const P=CONFIG.player,ch=charOf(profile,who||0);
@@ -4163,7 +4130,7 @@ const Save={
     }
     if(d.bestiary&&typeof d.bestiary==='object')for(const k in d.bestiary){const n=d.bestiary[k]|0;if(DATA.enemies[k]&&n>0)p.bestiary[k]=Math.min(n,9999999);}
     if(d.stats&&typeof d.stats==='object')for(const k in p.stats)p.stats[k]=Math.max(0,d.stats[k]|0);
-    if(d.materials&&typeof d.materials==='object')for(const k in d.materials){const n=d.materials[k]|0;if(DATA.materials[k]&&n>0)p.materials[k]=n;}
+    if(d.materials&&typeof d.materials==='object')for(const k0 in d.materials){const k=REMOVED_MAT[k0]||k0,n=d.materials[k0]|0;if(DATA.materials[k]&&n>0)p.materials[k]=(p.materials[k]||0)+n;}
     if(d.matSeen&&typeof d.matSeen==='object'){p.matSeen=p.matSeen||{};for(const k in d.matSeen)if(DATA.materials[k])p.matSeen[k]=1;}
     const decoIds=new Set(),uidNums=[];
     const noteUid=u=>{const n=parseInt(String(u).slice(1),10);if(!isNaN(n))uidNums.push(n);};
@@ -4174,6 +4141,7 @@ const Save={
     }
     const itemIds=new Set(),usedDecos=new Set();
     if(Array.isArray(d.items))for(const x of d.items){
+      if(x&&REMOVED_EQUIP[x.baseId])x.baseId=REMOVED_EQUIP[x.baseId]; // 削除したボスの装備は、代わりの装備に置き換える
       if(!x||!DATA.equipment[x.baseId]||typeof x.uid!=='string'||itemIds.has(x.uid))continue;
       const base=DATA.equipment[x.baseId];
       const it={kind:'equip',uid:x.uid,baseId:x.baseId,slot:base.slot,rarity:base.slot==='charm'?clamp(x.rarity|0,0,4):0,
@@ -4832,7 +4800,7 @@ const BOSS_SIZE={meadow_bull:1.35,rhino:1.35,boar:1.2,armadillo:1.2,kama_mantis:
   wolf:1.15,flower_dragon:1.35,hermit_crab:1.25,salamander:1.25,stag_beetle:1.15,forest_rabbit:1.05,
   hydra:1.45,mud_whale:1.5,queen_bee:1.1,giant_frog:1.2,bog_leech:1.1,venomKing:1.3,mireGiant:1.4,
   aquarios:1.4,twin_shark:1.3,mola_fish:1.4,turtle:1.35,deep_octopus:1.35,thunderEel:1.25,giantWorm:1.4,
-  grados:1.4,crystal_guardian:1.35,quake_dragon:1.45,giant_bat:1.15,crystal_scorpion:1.2,mole:1.1,centipede:1.2,
+  grados:1.4,quake_dragon:1.45,giant_bat:1.15,crystal_scorpion:1.2,mole:1.1,centipede:1.2,
   volcano_dragon:1.45,lava_giant:1.4,felgnas:1.25,scarab:1.15,fire_phoenix:1.3,crimson_serpent:1.3,fire_griffon:1.3,
   ice_ape:1.3,ice_bear:1.3,ice_unicorn:1.15,ice_deer:1.15,frost_wyvern:1.35,eternal_beast:1.3,frost_cat:1.1,
   yomi_samurai:1.1,headless_knight:1.1,bone_dragon:1.4,black_wolf:1.15,abyss_spider:1.2,ghost_moth:1.1,grave_rat:1.05};
@@ -7683,7 +7651,7 @@ const GEAR_LOOKS={
 };
 /** ステージ4以降のボス武器（bw_ボス_武器種）の見た目に使う GEAR_LOOKS の名前 */
 const BOSS_WEAPON_LOOK={twin_shark:'shark',mola_fish:'mola',deep_octopus:'octo',aquarios:'aqua',turtle:'turtle',thunderEel:'eel',giantWorm:'worm',
-  crystal_guardian:'guard',quake_dragon:'ondo',giant_bat:'gbat',crystal_scorpion:'scorp',mole:'mole',centipede:'centi',grados:'grados',
+  quake_dragon:'ondo',giant_bat:'gbat',crystal_scorpion:'scorp',mole:'mole',centipede:'centi',grados:'grados',
   scarab:'syaku',fire_phoenix:'phoenix',crimson_serpent:'serpent',fire_griffon:'griffon',lava_giant:'lava',volcano_dragon:'dragon',felgnas:'felg',
   ice_bear:'shiro',ice_unicorn:'tsuno',eternal_beast:'mammoth',frost_cat:'fcat',ice_deer:'deer',frost_wyvern:'wyv',ice_ape:'ape',
   headless_knight:'kubi',yomi_samurai:'onry',abyss_spider:'abyss',ghost_moth:'gmoth',grave_rat:'grat',black_wolf:'bwolf',bone_dragon:'bdragon'};
