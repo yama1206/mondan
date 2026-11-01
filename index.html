@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.41.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.42.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -10299,6 +10299,14 @@ const Renderer={
     ctx.save();ctx.translate(pp.x,pp.y);
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,r*0.7,r*0.9,r*0.28,0,0,TAU);ctx.fill();
     const hop=st==='cheer'?Math.abs(Math.sin(t*12))*r*0.5:(moving?Math.abs(Math.sin(t*10*run))*r*0.08:0);
+    // 最高レアの色の相棒：控えめな虹色のオーラ（色が少しずつ移り変わる薄い輪と、小さなきらめき）
+    if((LOOK_VARIANTS[p.petLookV|0]||{}).rar==='SSR'){
+      ctx.save();ctx.globalAlpha=0.32;ctx.lineWidth=Math.max(1.5,r*0.06);
+      for(let i=0;i<3;i++){ctx.strokeStyle=`hsl(${(t*60+i*120)%360},90%,70%)`;ctx.beginPath();ctx.ellipse(0,-hop*0.3-r*0.1,r*(1.05+i*0.07),r*(0.75+i*0.05),0,i*2.1+t,i*2.1+t+TAU*0.55);ctx.stroke();}
+      ctx.globalAlpha=0.55;
+      for(let i=0;i<3;i++){const k=(t*0.7+i/3)%1,a=i*2.1+t*0.5;ctx.fillStyle=`hsl(${(t*80+i*120)%360},100%,80%)`;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.9,-r*0.2-k*r*0.8,Math.max(1,r*0.05)*(1-k),0,TAU);ctx.fill();}
+      ctx.restore();
+    }
     ctx.translate(0,-hop);
     const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0];
     if(hv.hue&&'filter' in ctx)ctx.filter=`hue-rotate(${hv.hue}deg)`;
@@ -11860,7 +11868,8 @@ function slotDots(it){return it.slots.map(u=>u?'◆':'◇').join('');}
 function slotDotsColored(it){return it.slots.map(u=>u?'<span style="color:#ffd23a">◆</span>':'<span style="color:#6a6480">◇</span>').join('');}
 /* 属性のマーク：属性のある武器は名前の後ろに付ける（火・水・雷・氷・冥） */
 const EL_MARK={fire:'🔥',water:'💧',thunder:'⚡',ice:'❄️',mei:'🌑'};
-function eqName(id){const b=DATA.equipment[id];if(!b)return '';const m=b.el&&EL_MARK[b.el.k];return b.name+(m||'');}
+const ST_MARK={poison:'☠️',paralysis:'💫',sleep:'💤',slow:'🐌'}; // 状態異常のマーク（毒・麻痺・眠り・鈍足）
+function eqName(id){const b=DATA.equipment[id];if(!b)return '';const m=(b.el&&EL_MARK[b.el.k])||'',n=(b.st&&ST_MARK[b.st.k])||'';return b.name+m+n;}
 function itemName(it){return eqName(it.baseId);}
 
 /* ===================== 9. 装備・製作の操作（データだけを変更する純粋な処理） =====================
