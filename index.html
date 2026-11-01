@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.54.5',date:'2026/11/01'};
+const GAME_VERSION={no:'1.54.6',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -9286,7 +9286,9 @@ const Renderer={
     this.multi=ps.length>1;
     // カメラ：同じ画面で遊ぶときは全員が収まるように、オンラインでは自分のキャラだけを追う
     const live=ps.filter(q=>!q.dead),pool=live.length?live:ps; // 倒れた仲間は追わない（全員倒れたときだけ全員を対象に）
-    const focus=this.focusId&&w.players[this.focusId]?[w.players[this.focusId]]:pool;
+    // 仲間（AI）はカメラの対象にしない：1人プレイでは、いつもプレイヤーを追う
+    const humans=ps.filter(q=>!q.ai),hLive=humans.filter(q=>!q.dead),hPool=hLive.length?hLive:humans;
+    const focus=this.focusId&&w.players[this.focusId]?[w.players[this.focusId]]:(hPool.length?hPool:pool);
     let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
     for(const q of focus){x0=Math.min(x0,q.x);x1=Math.max(x1,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y);}
     const base=this.scale*(this.zoomMul||1); // 戦闘画面の拡大（設定の「戦闘画面の大きさ」）
