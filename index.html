@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.80.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.81.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1654,7 +1654,7 @@ const DATA={
         {k:'charge',wind:0.8,cd:5,dmg:1.2}, // 重い突進
         {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90}, // 尾の岩塊を振り飛ばす
       ]},
-    scarab:{name:'灼熱の大甲虫',ai:'pattern',look:'gen',hp:3400,atk:29,def:9,r:40,speed:100,color:'#a0402a',drops:'scarab',boss:true,stunMax:140,stunTime:4,gen:{body:'shell',legs:6,head:'horn',arm:'pincer'},pal:{body:'#a0402a',dark:'#4a1a0e',spot:'#ffb070',eye:'#ff6a2a'},
+    scarab:{name:'灼熱の大甲虫',ai:'pattern',look:'gen',hp:3400,atk:29,def:9,r:40,speed:100,color:'#a0402a',drops:'scarab',boss:true,specials:[{k:'snowball',cd:10,wind:0.9,dmg:1.3,len:680,speed:250,grow:20,maxR:70,hz:'mudball',el:'fire',range:[120,650],los:true},{k:'hornToss',cd:8,wind:0.6,dmg:1.3,range:[0,180]},{k:'sandAmbush',cd:12,dmg:1.2,r:85,range:[100,600]}],stunMax:140,stunTime:4,gen:{body:'shell',legs:6,head:'horn',arm:'pincer'},pal:{body:'#a0402a',dark:'#4a1a0e',spot:'#ffb070',eye:'#ff6a2a'},
       pattern:[
         {k:'charge',wind:0.8,cd:5,dmg:1.2,times:2}, // 角を構えて二連突進
         {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90,el:'fire'}, // 灼けた岩玉を転がし投げる
@@ -1662,7 +1662,7 @@ const DATA={
         {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:3,spread:300,r:90,el:'fire'}, // 熱砂が噴き上がる
         {k:'shot',wind:0.6,cd:5,dmg:0.8,n:3,spread:0.5,speed:300,st:'poison'}, // 毒の体液を飛ばす
       ]},
-    fire_phoenix:{name:'焦土の不死鳥',ai:'pattern',look:'gen',hp:3300,atk:28,def:9,r:40,speed:115,color:'#c05020',drops:'fire_phoenix',boss:true,stunMax:130,stunTime:4,gen:{body:'oval',legs:0,head:'flame',wings:true,tail:true},pal:{body:'#c05020',dark:'#5a1a08',spot:'#ffd080',eye:'#ff70ff'},
+    fire_phoenix:{name:'焦土の不死鳥',ai:'pattern',look:'gen',hp:3300,atk:28,def:9,r:40,speed:115,color:'#c05020',drops:'fire_phoenix',boss:true,moveStyle:'flutter',specials:[{k:'flameRun',cd:11,wind:0.9,dmg:1.2,len:600,range:[150,600],los:true},{k:'diveLine',cd:8,wind:0.7,dmg:1.2,len:520,el:'fire',range:[120,500],los:true},{k:'stompWaves',cd:12,wind:0.8,dmg:0.9,el:'fire',range:[0,320]}],rebirth:{time:3,hp:0.3,dmg:1.2},stunMax:130,stunTime:4,gen:{body:'oval',legs:0,head:'flame',wings:true,tail:true},pal:{body:'#c05020',dark:'#5a1a08',spot:'#ffd080',eye:'#ff70ff'},
       pattern:[
         {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:12,ring:true,speed:280,kind:'fire',el:'fire'}, // 炎の羽根を全方位へ
         {k:'leap',wind:0.9,cd:6,dmg:1.2,r:100,range:450,el:'fire'}, // 炎をまとって急降下
@@ -1746,7 +1746,7 @@ const DATA={
         {k:'slam',wind:0.9,cd:6,dmg:1.1,r:95}, // 尾を叩きつける
       ],
       pal:{body:'#6a4a8a',dark:'#2a1a3a',spot:'#c8a0ff',eye:'#ffe0ff'}},
-    crimson_serpent:{name:'紅蓮の大蛇',ai:'pattern',look:'centipede',hp:3000,atk:27,def:8,r:34,speed:105,color:'#a03a1a',drops:'crimson_serpent',boss:true,stunMax:130,stunTime:4,
+    crimson_serpent:{name:'紅蓮の大蛇',ai:'pattern',look:'centipede',hp:3000,atk:27,def:8,r:34,speed:105,color:'#a03a1a',drops:'crimson_serpent',boss:true,moveStyle:'serpent',specials:[{k:'coil',cd:10,wind:0.5,dmg:0.7,r:55,hold:1.8,tick:0.4,el:'fire',range:[0,140]},{k:'venomBite',cd:7,wind:0.45,dmg:1.1,r:95,range:[0,160]},{k:'diveLine',cd:9,wind:0.6,dmg:1.2,len:420,range:[120,420],los:true}],stunMax:130,stunTime:4,
       pattern:[
         {k:'beam',wind:0.9,cd:5,dmg:1.2,len:340,width:50,el:'fire'}, // 紅蓮の炎を吐く
         {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:120,arc:3.4}, // とぐろを解いて薙ぎ払う
@@ -1755,7 +1755,7 @@ const DATA={
         {k:'shot',wind:0.7,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.9,kind:'fire',el:'fire'}, // 火の玉
       ],
       pal:{body:'#a03a1a',dark:'#4a1608',spot:'#ff9040',eye:'#ffe060'}},
-    fire_griffon:{name:'火口の翼獅子',ai:'pattern',look:'fireWyvern',hp:3200,atk:28,def:9,r:38,speed:115,color:'#c05a20',drops:'fire_griffon',boss:true,stunMax:140,stunTime:4,
+    fire_griffon:{name:'火口の翼獅子',ai:'pattern',look:'fireWyvern',hp:3200,atk:28,def:9,r:38,speed:115,color:'#c05a20',drops:'fire_griffon',boss:true,moveStyle:'circle',specials:[{k:'grabDrop',cd:10,wind:1.0,dmg:1.0,r:85,range:[0,450]},{k:'diveLine',cd:8,wind:0.8,dmg:1.2,len:520,range:[120,480],los:true},{k:'howlBolt',cd:13,wind:0.8,dmg:1.1,r:60,el:'fire',range:[0,700]}],stunMax:140,stunTime:4,
       pattern:[
         {k:'leap',wind:0.8,cd:5,dmg:1.2,r:95,range:450}, // 翼で舞い上がり飛びかかる
         {k:'combo',wind:0.5,cd:4,dmg:0.9,r:95,arc:1.4,hits:3,step:0.35}, // 前足の爪で連続で引っかく
@@ -2064,7 +2064,7 @@ const DATA={
       attacks:[{arc:0.7,r:72,wind:0.5,dirs:1,dmg:1.0},{arc:Math.PI*1.33,r:46,wind:0.6,dirs:1,dmg:0.9}],
       pal:{body:'#9a4a22',dark:'#3a1a0a',shell:'#c8703a',tail:'#ff7040',sting:'#ffd080',eye:'#ffe060'}},
     // ===== 灼熱の火山 ボス =====
-    lava_giant:{name:'溶岩の巨人',ai:'pattern',look:'lavaGiant',hp:3600,atk:32,def:14,r:40,speed:70,stunMax:160,stunTime:4,color:'#7a4a2a',drops:'lava_giant',boss:true,
+    lava_giant:{name:'溶岩の巨人',ai:'pattern',look:'lavaGiant',hp:3600,atk:32,def:14,r:40,speed:70,stunMax:160,stunTime:4,color:'#7a4a2a',drops:'lava_giant',boss:true,moveStyle:'lumber',specials:[{k:'hammerQuake',cd:8,wind:1.2,dmg:1.6,rings:2,el:'fire',range:[0,260]},{k:'pillarLine',cd:10,wind:1.0,dmg:1.0,r:50,el:'fire',range:[150,800]},{k:'rockfall',cd:13,wind:1.0,dmg:1.0,r:58,n:6,spread:300,el:'fire',range:[0,800]}],stepQuake:{dist:80,r:30,dmg:0.2},
       pattern:[
         {k:'slam',wind:1.2,cd:6,dmg:1.5,r:140,el:'fire'}, // 溶岩の拳で叩きつける
         {k:'toss',wind:1.0,cd:4.5,dmg:1.3,r:70,el:'fire'}, // 溶岩弾を投げる
@@ -2083,7 +2083,7 @@ const DATA={
         {k:'erupt',wind:1.2,cd:7,dmg:1.0,r:60,n:5,spread:240,below:0.5,el:'fire'}, // 火山弾の雨（怒り時）
       ],
       pal:{body:'#8a2a14',dark:'#2a0a04',scale:'#c04a20',lava:'#ff7a30',wing:'#5a1808',rage:'#b03010',rageDark:'#3a0800',eye:'#ffe060',rageEye:'#ffffff'}},
-    felgnas:{name:'熔鉄の魔獣フェルグナス',ai:'pattern',look:'felgnas',hp:3000,atk:30,def:9,r:36,speed:130,stunMax:140,stunTime:4,color:'#c05a1a',drops:'felgnas',boss:true,rageChain:2,
+    felgnas:{name:'熔鉄の魔獣フェルグナス',ai:'pattern',look:'felgnas',hp:3000,atk:30,def:9,r:36,speed:130,stunMax:140,stunTime:4,color:'#c05a1a',drops:'felgnas',boss:true,specials:[{k:'ramWall',cd:11,wind:1.1,dmg:1.5,el:'fire',range:[150,600],los:true},{k:'hornToss',cd:8,wind:0.55,dmg:1.3,el:'fire',range:[0,180]},{k:'flankPounce',cd:9,dmg:1.3,r:85,el:'fire',range:[120,420]}],rageChain:2,
       pattern:[
         {k:'charge',wind:0.7,cd:4.5,dmg:1.3,times:2}, // 熔鉄の角で二連突進
         {k:'leap',wind:0.8,cd:5.5,dmg:1.2,r:95,range:420,el:'fire'}, // 獣の跳躍
@@ -5217,7 +5217,8 @@ function applyStatus(w,e,status){
   else if(status==='slow'){e.slowT=(boss?2.5:5)*f;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'鈍足',color:'#9ad8ff'});}
 }
 function killEnemy(w,e){
-  {const d0=DATA.enemies[e.type];if(e.boss&&d0&&d0.ultimate&&!e.ultDone){e.hp=1;return;}} // 最後の大技を出すまでは倒れない（体力1で踏みとどまる）
+  {const d0=DATA.enemies[e.type];if(e.boss&&d0&&d0.ultimate&&!e.ultDone){e.hp=1;return;}
+   if(e.boss&&d0&&d0.rebirth&&!e.reborn){e.reborn=true;e.hp=1;cancelEnemyAction(w,e);startSpecial(w,e,Object.values(w.players).find(q=>!q.dead)||{x:e.x+1,y:e.y},{k:'rebirth'});return;}} // 不死鳥：一度だけ灰からよみがえる // 最後の大技を出すまでは倒れない（体力1で踏みとどまる）
   e.dead=true;e.hp=0;
   const d=DATA.enemies[e.type];
   // 報酬はアプリ側（オンラインではホスト）が kill イベントを受けて各プレイヤーに直接渡す
@@ -6350,6 +6351,10 @@ function startSpecial(w,e,p,mv){
         w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
         T({shape:'circle',x:c.x,y:c.y,r:e.r+60,total:1.1,dmg:dmg(1.2)});
         emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:(DATA.enemies[e.type].ultimate||{}).name||'最後の怒り！',color:'#ff6040'});}break;
+    case 'rebirth': // 不死鳥の再生：灰になって燃え上がり、炎の輪とともによみがえる
+      {const rb=DATA.enemies[e.type].rebirth||{};e.ult=true;e.timer=rb.time||3;e.sp.ang=0;
+        emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'灰の中から炎が…！',color:'#ffb050'});
+        for(let i=0;i<3;i++)T({shape:'ring',x:e.x,y:e.y,r0:i===0?0:e.r+i*110-20,r:e.r+(i+1)*110,total:e.timer+i*0.35,dmg:e.atk*(rb.dmg||1.2),el:'fire'});}break;
     case 'molehills': // モグラ：あちこちに土を盛り上げ、少しして結晶ごと突き上げる（盛り土が目印）
       {const ps=Object.values(w.players).filter(q=>!q.dead),n=mv.n+(ph2?2:0);
         for(let i=0;i<n;i++){const q=ps[i%Math.max(1,ps.length)]||p,a=rand(0,TAU),R=i<ps.length?0:rand(60,220);let x=q.x+Math.cos(a)*R,y=q.y+Math.sin(a)*R;if(circleHitsWall(w.map,x,y,20)){x=q.x;y=q.y;}
@@ -6544,8 +6549,8 @@ function updateSpecial(w,e,p,dt){
       return;
     case 'snowball':
       if(e.timer<=0){const a=S.ang;
-        w.hazards.push({id:w.nextId++,kind:'snowball',x:e.x+Math.cos(a)*(e.r+26),y:e.y+Math.sin(a)*(e.r+26),r:24,t:0,life:mv.len/mv.speed,tick:99,acc:0,dmg:0,delay:0,
-          vx:Math.cos(a)*mv.speed,vy:Math.sin(a)*mv.speed,grow:mv.grow,maxR:mv.maxR,wallStop:true,once:{dmg:e.atk*mv.dmg,kb:1.8,grp:{hit:new Set()},src:e.type,el:'ice',slow:true}});
+        w.hazards.push({id:w.nextId++,kind:mv.hz||'snowball',x:e.x+Math.cos(a)*(e.r+26),y:e.y+Math.sin(a)*(e.r+26),r:24,t:0,life:mv.len/mv.speed,tick:99,acc:0,dmg:0,delay:0,
+          vx:Math.cos(a)*mv.speed,vy:Math.sin(a)*mv.speed,grow:mv.grow,maxR:mv.maxR,wallStop:true,once:{dmg:e.atk*mv.dmg,kb:1.8,grp:{hit:new Set()},src:e.type,el:mv.el||'ice',slow:!mv.hz}}); // hz：転がす玉の種類（雪玉・フンの玉など）
         end(0.6);}
       return;
     case 'phantoms':
@@ -6695,6 +6700,10 @@ function updateSpecial(w,e,p,dt){
     case 'shellIn':
       if(S.hit&&S.step===0){S.step=1;e.timer=0.35;T({shape:'sector',x:e.x,y:e.y,angle:Math.atan2(p.y-e.y,p.x-e.x),r:e.r+110,arc:1.6,total:0.35,dmg:e.atk*mv.dmg});emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'ハサミで反撃！',color:'#ff6a6a'});return;}
       if(e.timer<=0){e.shell=false;end(S.step===1?0.7:0.4);}
+      return;
+    case 'rebirth':
+      e.z=0;if(e.timer<=0){const rb=DATA.enemies[e.type].rebirth||{};e.ult=false;e.hp=Math.round(e.maxHp*(rb.hp||0.3));e.phase=2;
+        emit(w,{type:'enrage',x:e.x,y:e.y,name:DATA.enemies[e.type].name,cry:e.type});emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'不死鳥がよみがえった！',color:'#ffd060'});end(0.6);}
       return;
     case 'ultimate':{
       const ud=DATA.enemies[e.type].ultimate||{};
@@ -10509,6 +10518,13 @@ const Renderer={
     ctx.save();ctx.translate(e.x,e.y);
     if(e.hidden){this.drawBurrow(ctx,e);ctx.restore();return;}
     if(e.camo)ctx.globalAlpha*=0.4; // 待ち伏せ中：草に紛れて見えにくい
+    if(e.ult){ // 最後の大技・不死鳥の再生：体のまわりに力がうずまく（攻撃が通らない印）
+      const tm=this.time||0,reb=e.action==='sp_rebirth';ctx.save();
+      const g=ctx.createRadialGradient(0,0,e.r*0.4,0,0,e.r*1.9);g.addColorStop(0,reb?'rgba(255,200,80,.55)':'rgba(255,90,40,.4)');g.addColorStop(1,'rgba(255,90,40,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,e.r*1.9,0,TAU);ctx.fill();
+      ctx.strokeStyle=reb?'#ffd060':'#ff7040';ctx.lineWidth=3;for(let i=0;i<3;i++){const a=tm*3+i*TAU/3;ctx.beginPath();ctx.arc(0,0,e.r*(1.25+0.15*Math.sin(tm*6+i)),a,a+1.4);ctx.stroke();}
+      if(reb){ctx.fillStyle='#ffb040';for(let i=0;i<10;i++){const k=(tm*0.8+i/10)%1,a=i*0.63;ctx.globalAlpha=1-k;ctx.beginPath();ctx.arc(Math.cos(a)*e.r*0.7,Math.sin(a)*e.r*0.7-k*e.r*1.5,3+3*(1-k),0,TAU);ctx.fill();}}
+      ctx.restore();}
     if(e.mound){ // ミミズ：地面の盛り上がりだけが見える
       const tm=this.time||0;ctx.fillStyle='#6a5232';ctx.strokeStyle='#2a1e10';ctx.lineWidth=2;
       for(let i=0;i<3;i++){const a=(e.facing||0)+Math.PI,dd=i*e.r*0.5;ctx.beginPath();ctx.ellipse(Math.cos(a)*dd,Math.sin(a)*dd,e.r*(0.7-i*0.15),e.r*(0.45-i*0.1)+Math.sin(tm*8+i)*1.5,0,0,TAU);ctx.fill();ctx.stroke();}
@@ -14171,7 +14187,7 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,ult:!!e.ult,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
