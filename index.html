@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.39.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.40.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3541,7 +3541,13 @@ const LOOKS=[
 /* 見た目ごとのサポート行動（首輪ではなく見た目が行動を持つ）。値は PET_ACTS のキー */
 const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling',l_turtle:'turtle',l_bird:'owl',l_hamster:'bee',l_ghost:'beesting',l_penguin:'penguin',l_fox:'fox'};
 /* 見た目の色違い：1つの見た目に4色（基本色＋色違い3つ）。色は色相をずらして作る */
-const LOOK_VARIANTS=[{name:'基本色',hue:0},{name:'色違い1',hue:110},{name:'色違い2',hue:220},{name:'色違い3',hue:300}];
+/* 色ごとのレア度（rar）と、ガチャで出る重み（w。合計100＝出る確率%） */
+const LOOK_VARIANTS=[{name:'基本色',hue:0,rar:'N',w:55},{name:'色違い1',hue:110,rar:'R',w:28},{name:'色違い2',hue:220,rar:'SR',w:13},{name:'色違い3',hue:300,rar:'SSR',w:4}];
+const LOOK_RAR_NAME={N:'ノーマル',R:'レア',SR:'スーパーレア',SSR:'最高レア'};
+/** 色の表示名：「色違い2（スーパーレア）」のように、レア度の色つきで出す */
+const lookVarLabel=v=>{const V=LOOK_VARIANTS[v]||LOOK_VARIANTS[0];return `<span style="color:${RARITY[V.rar].color}">${V.name}（${LOOK_RAR_NAME[V.rar]}）</span>`;};
+/** ガチャの色の抽選：レア度の重みで選ぶ */
+function rollLookVariant(){let r=RNG.next()*LOOK_VARIANTS.reduce((a,v)=>a+v.w,0);for(let i=0;i<LOOK_VARIANTS.length;i++){r-=LOOK_VARIANTS[i].w;if(r<0)return i;}return 0;}
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
 const PET_MAX=1;
 /* 首輪の効果量はレア度で変わる（ノーマル×1、レア×1.5、スーパーレア×2） */
@@ -12093,11 +12099,11 @@ const Ops={
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
     p.gachaN=(p.gachaN||0)+1;
-    const lk=pick(LOOKS),v=randInt(0,LOOK_VARIANTS.length-1),vn=LOOK_VARIANTS[v].name;
+    const lk=pick(LOOKS),v=rollLookVariant(),V=LOOK_VARIANTS[v],vn=`${V.name}・${LOOK_RAR_NAME[V.rar]}`;
     const have=p.looks[lk.id]||[];
     if(!have.includes(v)){
       p.looks[lk.id]=[...have,v].sort();
-      return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:RARITY.SSR.color,fx:{rar:'SSR',text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
+      return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:RARITY[V.rar].color,fx:{rar:V.rar,text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
     }
     p.coins=(p.coins||0)+1;
     return {changed:true,msg:`${lk.name}（${vn}）がかぶった → コイン +1`,color:'#ffd23a',fx:{rar:'N',text:`${lk.name}（${vn}）がかぶった → コイン +1`}};
@@ -14015,7 +14021,7 @@ const App={
     const sub=this.gachaSub||'pet';
     const tabs=[['pet','相棒'],['collar','首輪'],['letter','手紙'],['deco','装飾品']];
     const tabBar=`<div class="filters">${tabs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="gachaTab" data-t="${k}">${n}</button>`).join('')}</div>`;
-    const petCard=`<div class="recipe"><div class="rn">相棒ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。相棒（種類と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
+    const petCard=`<div class="recipe"><div class="rn">相棒ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。相棒（種類と色）がかぶるとコイン1枚。<br>色の出る確率：${LOOK_VARIANTS.map(v=>`<span style="color:${RARITY[v.rar].color}">${v.name}（${LOOK_RAR_NAME[v.rar]}）${v.w}%</span>`).join('　')}<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
     const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます。レア度で出る種類が変わります。かぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button><button class="${coins>=10?'primary':''}" data-act="collarGacha10" ${coins>=10?'':'disabled'}>10連（10コイン）</button></div></div>`;
@@ -14126,7 +14132,7 @@ const App={
   lookColorBtns(p,id){
     const eq=p.equipped.look===id,cur=p.equipped.lookV|0;
     return (p.looks[id]||[]).map(v=>{const on=eq&&cur===v;
-      return `<button class="${on?'':'primary'}" data-act="lookEquip" data-id="${id}" data-v="${v}">${LOOK_VARIANTS[v].name}${on?'（外す）':''}</button>`;}).join('');
+      return `<button class="${on?'':'primary'}" data-act="lookEquip" data-id="${id}" data-v="${v}">${lookVarLabel(v)}${on?'（外す）':''}</button>`;}).join('');
   },
   lookListHTML(){
     const p=this.profile;
