@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.25.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.25.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11290,7 +11290,9 @@ const UI={
       if(e.detail>0&&this.pressKey!==this.padKey(el)){this.pressKey=undefined;return;}
       this.pressKey=undefined;
       if(el.tagName==='BUTTON'||el.dataset.act==='selItem'||el.dataset.act==='pickQuest')Sound.ui('click');
-      App.action(el.dataset.act,el.dataset,el);
+      try{App.action(el.dataset.act,el.dataset,el);}
+      catch(err){console.error(err);UI.notify('エラー：'+(err&&err.message||err)+'（この画面はもう一度開き直してください）','#ff6060',8);
+        if(el.dataset.act==='openEquip'||el.dataset.act==='openItems'||el.dataset.act==='inventory'){try{App.inv.who=0;App.inv.sel=null;App.inv.worn=false;App.inv.filter='weapon';App.inv.decoPick=null;App.renderInventory();}catch(e2){console.error(e2);}}}
     });
     this.modal.addEventListener('click',e=>{
       const el=e.target.closest('[data-m]');if(!el)return;
@@ -13575,6 +13577,8 @@ const App={
   },
   renderInventory(){
     const p=this.profile;
+    if(!this.inv.who||this.inv.who<0)this.inv.who=0;
+    if(this.inv.who===1&&!p.p2)this.inv.who=0; // 2P のデータが無いときは1Pの画面に戻す
     const itemsMode=this.inv.mode==='items';
     const tabs=itemsMode?[['items','アイテム'],['craft','調合'],['mats','素材']]:[['equip','装備'],['decos','装飾品']];
     if(!tabs.some(([k])=>k===this.inv.tab))this.inv.tab=tabs[0][0];
