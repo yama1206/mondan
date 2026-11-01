@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.53.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.54.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -777,8 +777,8 @@ const DATA={
     dorc_lance:{name:'氷潮の槍',slot:'weapon',el:{k:'water',v:8},wtype:'lance',atk:24,crit:10,slots:2},
     hachi_shuriken:{name:'女王蜂の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:28,crit:11,slots:2,boss:'queen_bee'},
     hachi_bow:{name:'毒蜂の弓',slot:'weapon',st:{k:'poison',buildup:15},wtype:'bow',atk:28,crit:10,slots:2},
-    shark_gs:{name:'双頭鮫の大剣',slot:'weapon',el:{k:'mei',v:14},wtype:'greatsword',atk:53,crit:6,slots:2,boss:'twin_shark'},
-    shark_dual:{name:'深淵の双鮫剣',slot:'weapon',el:{k:'mei',v:11},wtype:'dual',atk:34,crit:15,slots:2,boss:'twin_shark'},
+    shark_gs:{name:'双頭鮫の大剣',slot:'weapon',el:{k:'water',v:14},wtype:'greatsword',atk:53,crit:6,slots:2,boss:'twin_shark'},
+    shark_dual:{name:'深淵の双鮫剣',slot:'weapon',el:{k:'water',v:11},wtype:'dual',atk:34,crit:15,slots:2,boss:'twin_shark'},
     mola_tachi:{name:'蒼海の太刀',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'tachi',atk:30,crit:13,slots:2,boss:'mola_fish'},
     mola_shuriken:{name:'蒼海の鱗手裏剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'shuriken',atk:28,crit:12,slots:2,boss:'mola_fish'},
     guard_gs:{name:'結晶の大剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'greatsword',atk:36,crit:5,slots:2,boss:'crystal_guardian'},
@@ -1343,7 +1343,7 @@ const DATA={
     hermit_crab:{weak:['thunder'],strong:['ice']},
     mud_whale:{weak:['thunder'],strong:['water']},
     queen_bee:{weak:['fire'],strong:['thunder']},
-    twin_shark:{weak:['ice'],strong:['mei']},
+    twin_shark:{weak:['thunder'],strong:['water']},
     mola_fish:{weak:['thunder'],strong:['water']},
     crystal_guardian:{weak:['fire'],strong:['thunder']},
     quake_dragon:{weak:['ice'],strong:['fire']},
@@ -1467,17 +1467,16 @@ const DATA={
         {k:'swarm',wind:0.6,cd:9,kind:'worker_bee',n:2,max:4}, // 働き蜂を呼ぶ
         {k:'shot',wind:0.8,cd:7,dmg:0.6,n:10,ring:true,speed:240,st:'poison',stChance:0.4,below:0.5}, // 毒霧を全方位に撒く（怒り時）
       ]},
-    twin_shark:{name:'深淵の双頭鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
+    twin_shark:{name:'深淵の双頭鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,moveStyle:'circle',bloodScent:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
       pattern:[
-        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:120,arc:1.3,hits:2,step:0.35,el:'mei'}, // 二つの頭で交互に噛む
-        {k:'charge',wind:0.7,cd:5,dmg:1.2,el:'mei',times:3}, // 背びれを立てて何度も突っ込む
+        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:120,arc:1.3,hits:2,step:0.35}, // 二つの頭で交互に噛む
+        {k:'charge',wind:0.7,cd:5,dmg:1.2,times:3}, // 背びれを立てて何度も突っ込む
         {k:'leap',wind:0.9,cd:6.5,dmg:1.2,r:95,range:420}, // 水面から跳ねて食らいつく
         {k:'slam',wind:1.0,cd:6,dmg:1.2,r:115}, // 尾びれの一撃
       ]},
-    mola_fish:{name:'蒼海の巨大マンボウ',ai:'pattern',look:'gen',hp:3100,atk:25,def:8,r:44,speed:90,color:'#5a8ab0',drops:'mola_fish',boss:true,stunMax:140,stunTime:4,gen:{body:'round',legs:0,head:'round',fins:true},pal:{body:'#5a8ab0',dark:'#2a4a6a',spot:'#e0f0ff',eye:'#ffe060'},
+    mola_fish:{name:'蒼海の巨大マンボウ',ai:'pattern',look:'gen',hp:3100,atk:25,def:8,r:44,speed:90,color:'#5a8ab0',drops:'mola_fish',boss:true,moveStyle:'drift',specials:[{k:'bask',cd:18,time:3,range:[0,900]},{k:'bodyPress',cd:9,wind:1.4,dmg:1.5,r:150,range:[0,420]}],stunMax:140,stunTime:4,gen:{body:'round',legs:0,head:'round',fins:true},pal:{body:'#5a8ab0',dark:'#2a4a6a',spot:'#e0f0ff',eye:'#ffe060'},
       pattern:[
         {k:'slam',wind:1.0,cd:5,dmg:1.3,r:130}, // 巨体ののしかかり
-        {k:'shot',wind:0.6,cd:5,dmg:0.6,n:10,ring:true,speed:240,st:'sleep',stChance:0.4,volleys:2,gap:0.5}, // 泡を全方位に吐く
         {k:'leap',wind:1.0,cd:7,dmg:1.3,r:110,range:380}, // 水面から跳ね上がって落ちる
         {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'}, // ぬめりの水たまり
         {k:'charge',wind:0.9,cd:6,dmg:1.2}, // ゆったり体当たり
@@ -1565,7 +1564,7 @@ const DATA={
         {k:'pool',wind:0.9,cd:7,dmg:0.5,r:80,life:5,hz:'rut'}, // ぬかるみを広げる（足を取られる）
       ],
       pal:{body:'#6a2a3a',dark:'#2e1018',spot:'#d05060',eye:'#ffe0e0'}},
-    deep_octopus:{name:'深淵の大蛸',ai:'pattern',look:'jelly',hp:3000,atk:26,def:8,r:36,speed:96,color:'#2a4a7a',drops:'deep_octopus',boss:true,stunMax:130,stunTime:4,
+    deep_octopus:{name:'深淵の大蛸',ai:'pattern',look:'jelly',hp:3000,atk:26,def:8,r:36,speed:96,color:'#2a4a7a',drops:'deep_octopus',boss:true,moveStyle:'octo',specials:[{k:'inkCloud',cd:12,wind:0.8,r:130,range:[0,500]},{k:'tentacleBind',cd:10,wind:0.5,dmg:0.7,r:110,range:[0,180]}],stunMax:130,stunTime:4,
       pattern:[
         {k:'combo',wind:0.5,cd:4,dmg:0.8,r:125,arc:2.0,hits:4,step:0.3}, // 八本の腕の連打
         {k:'pool',wind:0.9,cd:6,dmg:0.5,r:120,life:5,hz:'curse',st:'sleep'}, // 墨を吐いて視界を奪う
@@ -1766,7 +1765,7 @@ const DATA={
     water_spirit:{name:'水霊',ai:'archer',look:'spirit',hp:70,atk:16,def:1,r:13,speed:70,color:'#70c0e8',drops:'water_spirit',aimTime:0.9,arrowSpeed:330,
       pal:{body:'#70c0e8',dark:'#2a5a80',eye:'#ffffff'}},
     /* 水辺のボス（技は pattern に並べる。技の種類は沼地と同じ） */
-    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]}],
+    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,moveStyle:'swim',specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]},{k:'coil',cd:12,wind:0.55,dmg:0.6,r:60,hold:1.6,tick:0.45,el:'water',range:[0,140]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:70,el:'water'}, // 激流のブレス
         {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:2.5}, // 長い体で薙ぎ払う
@@ -1776,16 +1775,15 @@ const DATA={
         {k:'swarm',wind:0.7,cd:10,n:2,kind:'piranha',max:4}, // 小魚を呼ぶ
       ],
       pal:{body:'#2a6aa0',dark:'#10284a',fin:'#60c0f0',rage:'#5a3a8a',rageDark:'#2a1a4a',eye:'#e0f8ff',rageEye:'#ff5080'}},
-    turtle:{name:'水瀑の大亀',ai:'pattern',look:'turtle',hp:4000,atk:30,def:14,r:40,speed:76,stunMax:150,stunTime:4,color:'#4a7a5a',drops:'turtle',boss:true,
+    turtle:{name:'水瀑の大亀',ai:'pattern',look:'turtle',hp:4000,atk:30,def:14,r:40,speed:76,stunMax:150,stunTime:4,color:'#4a7a5a',drops:'turtle',boss:true,moveStyle:'lumber',backArmor:0.2,specials:[{k:'bounceRoll',cd:11,wind:0.9,dmg:1.2,time:3,range:[0,600]}],
       pattern:[
         {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150}, // 甲羅ごとのしかかる
         {k:'charge',wind:0.9,cd:6,dmg:1.2,times:3}, // 甲羅にこもって回転しながら滑る
         {k:'beam',wind:1.0,cd:6,dmg:1.2,len:320,width:60,el:'water'}, // 口から滝のような水流
         {k:'shot',wind:0.8,cd:4.5,dmg:1.0,n:3,spread:0.6,speed:250,kind:'soul',el:'water'}, // 水弾
-        {k:'swarm',wind:0.8,cd:9,n:2,kind:'crab',max:3}, // 甲羅に住む蟹を呼ぶ
       ],
       pal:{body:'#4a7a5a',dark:'#1e3a2a',shell:'#7aa070',rage:'#5a5a8a',rageDark:'#2a2a4a',eye:'#e0ffe0',rageEye:'#ff6040'}},
-    thunderEel:{name:'雷鳴の大鰻',ai:'pattern',look:'thunderEel',hp:3600,atk:33,def:6,r:36,speed:120,stunMax:140,stunTime:4,color:'#3a4ab0',drops:'thunder_eel',boss:true,
+    thunderEel:{name:'雷鳴の大鰻',ai:'pattern',look:'thunderEel',hp:3600,atk:33,def:6,r:36,speed:120,stunMax:140,stunTime:4,color:'#3a4ab0',drops:'thunder_eel',boss:true,moveStyle:'swim',specials:[{k:'discharge',cd:10,wind:0.9,dmg:1.0,r:150,range:[0,260]}],
       pattern:[
         {k:'beam',wind:0.9,cd:5,dmg:1.2,len:340,width:50,el:'thunder',st:'paralysis'}, // 一直線の稲妻
         {k:'slam',wind:1.0,cd:5,dmg:1.2,r:140,el:'thunder'}, // 全身から放電
@@ -1796,7 +1794,7 @@ const DATA={
       ],
       pal:{body:'#3a4ab0',dark:'#1a2060',spark:'#ffe858',rage:'#6a3ab0',rageDark:'#2a1460',eye:'#ffffff',rageEye:'#ff40ff'}},
     // 水辺の隠しボス（依頼「大蚯蚓」）：ゴムのような体。雷は通りにくい
-    giantWorm:{name:'滝つぼの大蚯蚓',ai:'pattern',look:'giantWorm',hp:2800,atk:28,def:5,r:34,speed:100,stunMax:120,stunTime:4,color:'#b07a8a',drops:'giant_worm',boss:true,
+    giantWorm:{name:'滝つぼの大蚯蚓',ai:'pattern',look:'giantWorm',hp:2800,atk:28,def:5,r:34,speed:100,stunMax:120,stunTime:4,color:'#b07a8a',drops:'giant_worm',boss:true,moveStyle:'burrowed',specials:[{k:'halfSweep',cd:7,wind:0.7,dmg:1.2,r:150,range:[0,200]},{k:'tunnel',cd:11,wind:0.7,dmg:1.0,r:60,len:480,range:[100,500]}],
       pattern:[
         {k:'burrow',wind:0.9,cd:6,dmg:1.3,r:95}, // 地中を進み、真下から飛び出す
         {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:3,spread:280,r:80}, // 地面を突き破って何度も顔を出す
@@ -2552,8 +2550,8 @@ const DATA={
     hermit_crab:{stage:[2],role:'ボス',desc:'大きな殻を背負ったヤドカリ。殻ごと突進し、大ハサミで挟む。泡を吐いて眠らせることもある。',tip:'泡は睡眠の危険がある。ハサミの薙ぎ払いは大きく避けよう。'},
     mud_whale:{stage:[3],role:'ボス',desc:'沼の底に潜む大きな鯨。冷たい潮を吹き、泥の尾で薙ぎ払い、大波を起こして着地する。',tip:'潮吹きは扇形の氷。大波は着弾の円を予告する。'},
     queen_bee:{stage:[3],role:'ボス',desc:'毒霧の沼に巣を作る巨大な蜂。毒針を直線に飛ばし、働き蜂を呼び、毒霧の溜まりを作る。',tip:'毒霧の溜まりは2秒ほど毒が残る。働き蜂は早めに倒そう。'},
-    twin_shark:{stage:[4],role:'ボス',desc:'深い淵を泳ぐ二つの頭を持つ鮫。双頭で噛みつき、冥の力をまとって突進する。',tip:'噛みつきは扇形で、冥属性。突進の直線から外れよう。'},
-    mola_fish:{stage:[4],role:'ボス',desc:'大きな体で海を漂うマンボウ。体当たりの突進のほか、水流を吹き出し、睡眠を誘う鱗粉を撒く。',tip:'鱗粉は扇形に広がる。体当たりは大きな円で予告される。'},
+    twin_shark:{stage:[4],role:'ボス',desc:'深い淵を泳ぐ二つの頭を持つ鮫。止まらずに泳ぎ回り、血のにおいを嗅ぎつけて弱った相手を狙う。',tip:'噛みつきは扇形。体力が減ると狙われやすい。突進の直線から外れよう。'},
+    mola_fish:{stage:[4],role:'ボス',desc:'大きな体で海をのんびり漂うマンボウ。体当たりやのしかかりで押しつぶし、ときどき横倒しになって日向ぼっこをする。',tip:'日向ぼっこ中は隙だらけ。体当たりは大きな円で予告される。'},
     crystal_guardian:{stage:[5],role:'ボス',desc:'洞窟の結晶を守る巨大な守護者。結晶の腕で薙ぎ払い、雷の光線を放ち、地面に結晶柱を生やす。',tip:'結晶柱は直線の帯。光線の狙いが固まったら横へ。'},
     quake_dragon:{stage:[5],role:'ボス',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',tip:'地鳴りは鈍足になる。亀裂の帯の外へ逃げよう。'},
     scarab:{stage:[6],role:'ボス',desc:'火山の岩場で暮らす大きな甲虫。甲殻を溶岩のように赤く光らせ、毒の吐息を放つ。',tip:'突進の前に甲殻が赤く光る。毒の吐息は扇形。'},
@@ -4750,7 +4748,9 @@ function damageEnemy(w,p,e,mult,src){
   if(e.type==='hydra'&&src.hit&&src.hit.part&&src.hit.part.head&&!(e.headsCut>=2)){e.headHits=(e.headHits||0)+1; // ヒュドラ：首を何度も攻撃すると1本落ちる
     if(e.headHits>=12){e.headHits=0;e.headsCut=(e.headsCut||0)+1;e.regrowT=15;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'首が落ちた！',color:'#ffd23a'});}}
   if(e.type==='mireGiant'&&RNG.next()<0.5)emit(w,{type:'mudSplash',x:e.x,y:e.y}); // 沼巨人：攻撃を受けると泥が飛び散る
-  if(e.fin)mult*=0.3; // 泥鯨：泥に潜っている間は攻撃が届きにくい
+  if(e.fin||e.mound)mult*=0.3; // 泥鯨・ミミズ：潜っている間は攻撃が届きにくい
+  if(e.basking)mult*=1.3; // マンボウ：日向ぼっこ中は隙だらけ
+  {const ed=DATA.enemies[e.type];if(ed&&ed.backArmor&&Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))>Math.PI*2/3)mult*=ed.backArmor;} // カメ：背中の甲羅は固い
   if(e.curl){const back=Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))>Math.PI/2;mult*=back?0.2:0.4;} // 丸まっている：攻撃が通りにくい（背中側は特に固い）
   const hp_=src.hit||null,part=hp_&&hp_.part; // 当たった部位
   const s=p.stats;let atk=s.atk*(s.power||1);
@@ -5616,6 +5616,9 @@ const BOSS_REST=0.8;
 const BOSS_REST_OF=e=>e.boss?BOSS_REST:0;
 function updateBossPattern(w,e,p,dt){
   const def=DATA.enemies[e.type],ph2=e.phase===2,rc=ph2?0.7:1,pat=def.pattern||[];
+  if(def.bloodScent){ // サメ：血のにおい。体力の割合が一番低い相手を狙い、弱った相手には少し速くなる
+    let v=null,vr=2;for(const q of Object.values(w.players)){if(q.dead)continue;const r=q.hp/(q.stats.maxHp||1);if(r<vr){vr=r;v=q;}}
+    if(v)p=v;e.frenzy=vr<0.5;}
   for(const k in e.cds)e.cds[k]-=dt*(e.hasteT>0?1.6:1); // ドラミング後は技の間隔が短くなる
   if(e.state==='sleep')return;
   if(e.state==='stunned'){e.z=0;e.leapTo=null;e.hidden=false;e.sp=null;e.shell=false;e.curl=false;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
@@ -5783,6 +5786,14 @@ function bossStyleMove(w,e,p,d,ang,dt,def){
     e.z=26;e.flT=(e.flT||0)-dt;if(e.flT<=0){e.flT=rand(0.4,0.9);e.flA=ang+rand(-1.6,1.6);e.flR=rand(110,200);}
     const tx=p.x-Math.cos(e.flA)*e.flR,ty=p.y-Math.sin(e.flA)*e.flR,dx=tx-e.x,dy=ty-e.y,dd=Math.hypot(dx,dy);
     if(dd>4){const sp=Math.min(dd,e.speed*1.3*dt);moveEntity(w.map,e,dx/dd*sp,dy/dd*sp);}e.facing=ang;return true;}
+  if(st==='swim'){ // 海竜・ウナギ：体をうねらせて滑らかに泳ぐ
+    e.swT=(e.swT||0)+dt;if(d>130){const a=ang+Math.sin(e.swT*3)*0.5;moveEntity(w.map,e,Math.cos(a)*e.speed*1.05*dt,Math.sin(a)*e.speed*1.05*dt);e.facing=a;}else e.facing=ang;return true;}
+  if(st==='burrowed'){ // ミミズ：ほとんど地中。地面の盛り上がりだけが動く
+    if(d>140){e.mound=true;steerTo(w,e,p,e.speed*1.1,dt);}else{e.mound=false;e.facing=ang;}return true;}
+  if(st==='octo'){ // タコ：足をうねらせて動き、ときどき体の色を変えて背景にとけこむ
+    e.ocT=(e.ocT||0)+dt;e.camo=(e.ocT%7)>5;if(d>160)steerTo(w,e,p,e.speed*0.8,dt);e.facing=ang;return true;}
+  if(st==='drift'){ // マンボウ：ゆらゆら漂うように、のんびり
+    e.drT=(e.drT||0)+dt;const a=ang+Math.sin(e.drT*0.8)*0.9;if(d>150)moveEntity(w.map,e,Math.cos(a)*e.speed*0.55*dt,Math.sin(a)*e.speed*0.55*dt);e.facing=ang;return true;}
   if(st==='lurk'){ // オオサンショウウオ：ほとんど動かず待つ。遠いときだけのそのそ近づく
     if(d>420)steerTo(w,e,p,e.speed*0.45,dt);e.facing=ang;return true;}
   if(st==='rooted'){e.facing=ang;return true;} // 毒花竜：根を張っていて動かない
@@ -5791,7 +5802,7 @@ function bossStyleMove(w,e,p,d,ang,dt,def){
     if(in_){steerTo(w,e,p,e.speed*1.2,dt);return true;}
     const R=st==='circle'?200:150,dir=Math.floor(e.circT/cyc)%2?1:-1,a=ang+Math.PI/2*dir;
     let mx=Math.cos(a),my=Math.sin(a);const k=(d-R)/R;mx+=Math.cos(ang)*k*1.5;my+=Math.sin(ang)*k*1.5;const l=Math.hypot(mx,my)||1;
-    moveEntity(w.map,e,mx/l*e.speed*(st==='circle'?0.9:0.75)*dt,my/l*e.speed*(st==='circle'?0.9:0.75)*dt);
+    const fz=e.frenzy?1.25:1;moveEntity(w.map,e,mx/l*e.speed*(st==='circle'?0.9:0.75)*fz*dt,my/l*e.speed*(st==='circle'?0.9:0.75)*fz*dt);
     e.facing=st==='sidestep'?ang:Math.atan2(my,mx);return true;}
   if(st==='ambush'){ // 待ち伏せ：近くではじっと体をゆらし、遠いとそろりと近づく
     if(d>380){steerTo(w,e,p,e.speed*0.35,dt);e.stillT=0;}
@@ -5970,6 +5981,27 @@ function startSpecial(w,e,p,mv){
         T({shape:'circle',x:tx,y:ty,r:mv.r,total:wind,dmg:e.atk*mv.dmg,el:'water'});}break;
     case 'royalJelly': // 女王蜂：ローヤルゼリーを食べて回復（その間は隙だらけ）
       emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'ローヤルゼリー',color:'#ffe08a'});break;
+    // ---- ステージ4のボス ----
+    case 'discharge': // デンキウナギ：体に電気をため、まわりの地面へ放電（麻痺）
+      T({shape:'circle',x:e.x,y:e.y,r:e.r+mv.r,total:wind,dmg:e.atk*mv.dmg,el:'thunder',st:'paralysis'});
+      T({shape:'ring',x:e.x,y:e.y,r0:e.r+mv.r,r:e.r+mv.r+90,total:wind+0.35,dmg:e.atk*mv.dmg*0.6,el:'thunder'});
+      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'バチバチ…',color:'#ffe060'});e.timer=wind+0.4;break;
+    case 'halfSweep': // ミミズ：地中から体を半分出して、ぐるっと薙ぎ払う
+      e.mound=false;T({shape:'circle',x:e.x,y:e.y,r:e.r+mv.r,total:wind,dmg:e.atk*mv.dmg});break;
+    case 'tunnel': // ミミズ：地中を長く掘り進み、通った跡の地面が崩れる
+      {e.hidden=true;const L=mv.len;e.sp.pts=[];for(let i=1;i<=8;i++){const dd=L*i/8;e.sp.pts.push([e.x+Math.cos(ang)*dd,e.y+Math.sin(ang)*dd]);}
+        for(let i=0;i<e.sp.pts.length;i++){const q=e.sp.pts[i];if(isWall(w.map,Math.floor(q[0]/TILE),Math.floor(q[1]/TILE)))break;T({shape:'circle',x:q[0],y:q[1],r:mv.r,total:wind+0.5+i*0.12,dmg:e.atk*mv.dmg});}
+        e.timer=wind+0.5;emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});}break;
+    case 'inkCloud': // タコ：墨を吐いて、相手の画面を暗くする
+      e.sp.tg=T({shape:'circle',x:p.x,y:p.y,r:mv.r,total:wind,dmg:0});
+      w.hazards.push({id:w.nextId++,kind:'ink',x:p.x,y:p.y,r:mv.r,t:0,life:wind+4,tick:99,acc:0,dmg:0,delay:wind,visual:true});break;
+    case 'tentacleBind': // タコ：触腕で絡め取って動けなくする
+      e.sp.tg=T({shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+mv.r,arc:1.4,total:wind,dmg:e.atk*mv.dmg});break;
+    case 'bask': // マンボウ：横倒しになって日向ぼっこ（その間は隙だらけ）
+      e.basking=true;e.timer=mv.time;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'ぷかぁ…',color:'#bfe8ff'});break;
+    case 'bodyPress': // マンボウ：大きな体で、ゆっくり押しつぶす
+      {let tx=p.x,ty=p.y;if(cannotEnter(w.map,e,tx,ty)){tx=e.x;ty=e.y;}e.sp.from=[e.x,e.y];e.sp.to=[tx,ty];e.sp.wind=wind;
+        T({shape:'circle',x:tx,y:ty,r:mv.r,total:wind,dmg:e.atk*mv.dmg});}break;
     case 'iaiStance': // 居合の構え：構え中に攻撃されると強烈な反撃
       T({shape:'circle',x:e.x,y:e.y,r:e.r+mv.r,total:mv.hold,dmg:0,small:true});
       emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'構え…',color:'#d0a0ff'});
@@ -5980,7 +6012,7 @@ function updateSpecial(w,e,p,dt){
   const S=e.sp;if(!S){e.state='recover';e.timer=0.4;return;}
   const mv=S.mv,ph2=e.phase===2,rest=BOSS_REST_OF(e);
   S.t+=dt;e.timer-=dt;
-  const end=(t)=>{e.state='recover';e.timer=(t==null?0.6:t)+rest;e.hidden=false;e.z=(['fly','flutter'].includes(DATA.enemies[e.type].moveStyle)?26:0);e.sp=null;e.curl=false;e.shell=false;};
+  const end=(t)=>{e.state='recover';e.timer=(t==null?0.6:t)+rest;e.hidden=false;e.z=(['fly','flutter'].includes(DATA.enemies[e.type].moveStyle)?26:0);e.sp=null;e.curl=false;e.shell=false;e.basking=false;};
   const T=(o)=>addTelegraph(w,Object.assign({owner:e.id},SP_EL(mv),o));
   switch(S.k){
     case 'flankPounce':
@@ -6064,9 +6096,9 @@ function updateSpecial(w,e,p,dt){
       if(e.timer<=0){const h=Math.round(e.maxHp*mv.heal);e.hp=Math.min(e.maxHp,e.hp+h);emit(w,{type:'heal',x:e.x,y:e.y-e.r,amount:h});
         w.hazards.push({id:w.nextId++,kind:'rut',x:e.x,y:e.y,r:90,bl:poolShape().map(b=>[b[0]*1.6,b[1]*1.6,b[2]*1.6]),t:0,life:6,tick:0.5,acc:0,dmg:0,delay:0,slowOnly:true});end(0.5);}
       return;
-    case 'grabHold':case 'threat':case 'croak':
-      if(e.timer<=0){const tm=S.k==='grabHold'?1.2:S.k==='croak'?0.7:0.6;
-        for(const q2 of Object.values(w.players))if(!q2.dead&&!(q2.dodgeInv>0)&&inTelegraph(S.tg,q2.x,q2.y,q2.r)){q2.heldT=tm;emit(w,{type:'bossTxt',x:q2.x,y:q2.y-30,text:S.k==='grabHold'?'捕まった！':'ひるんだ！',color:'#ff8a6a'});}
+    case 'grabHold':case 'threat':case 'croak':case 'tentacleBind':
+      if(e.timer<=0){const tm=S.k==='grabHold'?1.2:S.k==='tentacleBind'?1.5:S.k==='croak'?0.7:0.6;
+        for(const q2 of Object.values(w.players))if(!q2.dead&&!(q2.dodgeInv>0)&&inTelegraph(S.tg,q2.x,q2.y,q2.r)){q2.heldT=tm;emit(w,{type:'bossTxt',x:q2.x,y:q2.y-30,text:S.k==='grabHold'?'捕まった！':S.k==='tentacleBind'?'絡め取られた！':'ひるんだ！',color:'#ff8a6a'});}
         end(S.k==='grabHold'?0.5:0.4);}
       return;
     case 'curlUp':
@@ -6103,6 +6135,20 @@ function updateSpecial(w,e,p,dt){
     case 'hopBehind':
       {const k=clamp(1-e.timer/S.wind,0,1),q=clamp((k-0.3)/0.7,0,1);e.x=S.from[0]+(S.to[0]-S.from[0])*q;e.y=S.from[1]+(S.to[1]-S.from[1])*q;e.z=Math.sin(Math.PI*q)*70;
         if(e.timer<=0){e.facing=Math.atan2(p.y-e.y,p.x-e.x);emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});end(0.6);}}
+      return;
+    case 'discharge':case 'halfSweep':
+      if(e.timer<=0)end(0.7);return;
+    case 'tunnel':
+      e.hidden=true;if(e.timer<=0){const q=S.pts.filter(q=>!cannotEnter(w.map,e,q[0],q[1])).pop();if(q){e.x=q[0];e.y=q[1];}emit(w,{type:'roarWave',x:e.x,y:e.y,r:80});end(0.8);}
+      return;
+    case 'inkCloud':
+      if(e.timer<=0){for(const q2 of Object.values(w.players))if(!q2.dead&&!(q2.dodgeInv>0)&&inTelegraph(S.tg,q2.x,q2.y,q2.r))emit(w,{type:'ink',pid:q2.id,x:q2.x,y:q2.y});end(0.5);}
+      return;
+    case 'bask':
+      if(e.timer<=0){e.basking=false;end(0.4);}return;
+    case 'bodyPress':
+      {const k=clamp(1-e.timer/S.wind,0,1),q=clamp((k-0.2)/0.8,0,1);e.x=S.from[0]+(S.to[0]-S.from[0])*q;e.y=S.from[1]+(S.to[1]-S.from[1])*q;e.z=Math.sin(Math.PI*q)*40;
+        if(e.timer<=0){emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});end(1.0);}}
       return;
     case 'tripleBite':
       if(e.timer<=0)end(0.7);return;
@@ -8967,6 +9013,7 @@ const Renderer={
       case 'roarWave':this.ring(ev.x,ev.y,20,ev.r+30,'#ffe0a0',0.55,7);this.addShake(10);break;
       case 'warp':this.ring(ev.x,ev.y,4,34,'#9fe0ff',0.45,3);break; // 仲間のワープ
       case 'mudSplash':this.burst(ev.x,ev.y,'#6a5a3a',6,180);break; // 沼巨人の泥が飛び散る
+      case 'ink':this.burst(ev.x,ev.y,'#101018',14,160);if(this.focusId?ev.pid===this.focusId:!/^c\d+$/.test(ev.pid||''))this.inkT=3.5;break; // タコの墨：画面が暗くなる
       case 'bossTxt':this.floater(ev.x,ev.y,ev.text,ev.color||'#fff',18,1.2);break; // ボスの技名
       case 'slashLine':{ // 分身の斬撃：線に沿って光の粒
         const n=14;for(let i=0;i<=n;i++){const q=i/n;this.burst(ev.x0+(ev.x1-ev.x0)*q,ev.y0+(ev.y1-ev.y0)*q,'#d0a0ff',2,60);}this.addShake(3);break;}
@@ -9331,6 +9378,10 @@ const Renderer={
   /** 設置物：落とし穴・シビレ罠・大タル爆弾 */
   /** 状態異常の画面効果：発生の瞬間は状態の色で一度光り、続いている間は画面の縁を状態の色で染める */
   drawStatusFx(ctx,W,H){
+    if(this.inkT>0){ // タコの墨：画面のまわりが黒くにじむ
+      this.inkT-=1/60;const a=Math.min(1,this.inkT/1.2)*0.9;ctx.save();
+      const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.12,W/2,H/2,Math.max(W,H)*0.6);g.addColorStop(0,`rgba(5,5,12,${a*0.35})`);g.addColorStop(1,`rgba(5,5,12,${a})`);
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();}
     const v=this.statusView||{},fx=this.statusFx,t=this.time||0;
     const kinds=[['poison','#8cff4a'],['para','#ffe040'],['sleep','#8a7cff'],['curse','#c070ff']].filter(([k])=>v[k]);
     if(kinds.length){
@@ -9449,6 +9500,11 @@ const Renderer={
     ctx.save();ctx.translate(e.x,e.y);
     if(e.hidden){this.drawBurrow(ctx,e);ctx.restore();return;}
     if(e.camo)ctx.globalAlpha*=0.4; // 待ち伏せ中：草に紛れて見えにくい
+    if(e.mound){ // ミミズ：地面の盛り上がりだけが見える
+      const tm=this.time||0;ctx.fillStyle='#6a5232';ctx.strokeStyle='#2a1e10';ctx.lineWidth=2;
+      for(let i=0;i<3;i++){const a=(e.facing||0)+Math.PI,dd=i*e.r*0.5;ctx.beginPath();ctx.ellipse(Math.cos(a)*dd,Math.sin(a)*dd,e.r*(0.7-i*0.15),e.r*(0.45-i*0.1)+Math.sin(tm*8+i)*1.5,0,0,TAU);ctx.fill();ctx.stroke();}
+      ctx.restore();return;}
+    if(e.basking)ctx.rotate(Math.PI/2*0.9); // マンボウ：横倒しで日向ぼっこ
     if(e.fin){ // 泥鯨：泥に潜って背びれだけ見える
       const tm=this.time||0,a=e.facing||0;ctx.fillStyle='rgba(60,50,30,.45)';ctx.beginPath();ctx.ellipse(0,0,e.r*1.1,e.r*0.5,a,0,TAU);ctx.fill();
       ctx.strokeStyle='rgba(180,160,120,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,e.r*(1.1+0.1*Math.sin(tm*4)),e.r*0.55,a,0,TAU);ctx.stroke();
@@ -10536,6 +10592,8 @@ const Renderer={
       ctx.fillStyle='rgba(60,150,230,.75)';ctx.beginPath();ctx.ellipse(0,0,z.r*0.8,z.r*1.1,0,0,TAU);ctx.fill();
       ctx.fillStyle='rgba(235,250,255,.85)';ctx.beginPath();ctx.ellipse(z.r*0.45,0,z.r*0.3,z.r*1.0,0,0,TAU);ctx.fill();
       ctx.restore();return;}
+    if(z.kind==='ink'){ // タコの墨だまり
+      ctx.save();ctx.globalAlpha=clamp(Math.min(z.t/0.3,(z.life-z.t)/1),0,1)*0.75;ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();ctx.restore();return;}
     if(z.kind==='mudball'){ // 転がる泥の塊
       ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(z.x,z.y+z.r*0.8,z.r,z.r*0.3,0,0,TAU);ctx.fill();
       ctx.fillStyle='#5a4a2a';ctx.strokeStyle='#2a2010';ctx.lineWidth=2;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();ctx.stroke();
@@ -12977,7 +13035,7 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
