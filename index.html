@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.60.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.60.2',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -2294,21 +2294,21 @@ const DATA={
   stages:[
     // layout：マップの部屋構成（DATA.layouts）。無い場合は従来の固定マップ（buildDungeon）を使う
     {id:1,name:'風渡る草原',desc:'開けた草原と、風に揺れる丈の長い草むら。獣たちの縄張りが点在する、冒険の始まりの地。最奥の「暴角の広場」には、角を持つ巨獣が待ち構えている。',
-      enemySet:{melee:'goblin',ranged:'goblin_archer'},hp:1.0,atk:1.0,density:0.3,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'meadow'}, // density：魔物の出現数の倍率（1が標準）
+      enemySet:{melee:'goblin',ranged:'goblin_archer',boss:'meadow_bull'},hp:1.0,atk:1.0,density:0.3,chest:'chest',floor:'#2b2633',layout:'meadow',bgm:'meadow'}, // density：魔物の出現数の倍率（1が標準）
     {id:2,name:'緑風の森林',desc:'風が木々を揺らす深い森。さまざまな魔物が潜み、最奥の「古森の広場」には森の主が棲みつく。',
-      enemySet:{melee:'forest_wolf',ranged:'mushroom'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
+      enemySet:{melee:'forest_wolf',ranged:'mushroom',boss:'wolf'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'forest',bgm:'forest'},
     {id:3,name:'腐毒の沼地',desc:'毒の霧がたちこめる沼地。足元の泥と、ぬめる水辺に気をつけて。最奥の「沼の中心」には、恐ろしい主が棲みついている。',
-      enemySet:{melee:'leech',ranged:'carnivore_plant'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'swamp',bgm:'swamp'},
+      enemySet:{melee:'leech',ranged:'carnivore_plant',boss:'hydra'},hp:1.0,atk:1.0,chest:'chest',floor:'#2b2633',layout:'swamp',bgm:'swamp'},
     {id:4,name:'蒼流の水辺',desc:'澄んだ川と、落ちる滝の音が響く水辺。水の底から雷の気配が漂う。最奥の「滝つぼ」には、水底を統べる主が潜んでいる。',
-      enemySet:{melee:'piranha',ranged:'water_spirit'},hp:1.2,atk:1.2,chest:'chest',floor:'#2b2633',layout:'river',bgm:'river'},
+      enemySet:{melee:'piranha',ranged:'water_spirit',boss:'aquarios'},hp:1.2,atk:1.2,chest:'chest',floor:'#2b2633',layout:'river',bgm:'river'},
     {id:5,name:'晶石の大洞窟',desc:'きらめく結晶が壁を覆う、深く長い洞窟。道は一本道に近く、奥へ進むほど結晶の光が強くなる。最奥の「晶洞の底」には、地の底を統べる主が眠っている。',
-      enemySet:{melee:'rock_shell',ranged:'cave_spider'},hp:1.2,atk:1.2,chest:'chest2',layout:'crystal',bgm:'cave'},
+      enemySet:{melee:'rock_shell',ranged:'cave_spider',boss:'grados'},hp:1.2,atk:1.2,chest:'chest2',layout:'crystal',bgm:'cave'},
     {id:6,name:'灼熱の火山',desc:'溶岩が流れる火山の内部。赤い熱気と噴き上がる炎が絶えない。最奥の「火口の底」では、溶岩の巨人が目を覚ます。',
-      enemySet:{melee:'magma_beetle',ranged:'fire_wyvern'},hp:1.2,atk:1.2,chest:'chest2',layout:'volcano',bgm:'volcano'},
+      enemySet:{melee:'magma_beetle',ranged:'fire_wyvern',boss:'volcano_dragon'},hp:1.2,atk:1.2,chest:'chest2',layout:'volcano',bgm:'volcano'},
     {id:7,name:'氷雪地帯',desc:'白い雪と氷柱が続く吹雪の山。風の音がやむことはない。山頂の「氷嶺」には、雪山の主が棲んでいる。',
-      enemySet:{melee:'ice_mantis',ranged:'snow_owl'},hp:1.4,atk:1.4,chest:'chest2',layout:'snow',bgm:'snow'},
+      enemySet:{melee:'ice_mantis',ranged:'snow_owl',boss:'ice_ape'},hp:1.4,atk:1.4,chest:'chest2',layout:'snow',bgm:'snow'},
     {id:8,name:'忘却の地下墓地',desc:'忘れ去られた墓所と地下遺跡。不気味な気配が満ちており、最奥の「冥府の祭壇」には恐ろしい主が棲みついている。',
-      enemySet:{melee:'hobgoblin',ranged:'sniper'},hp:1.4,atk:1.4,chest:'chest2',layout:'crypt',bgm:'crypt'},
+      enemySet:{melee:'hobgoblin',ranged:'sniper',boss:'yomi_samurai'},hp:1.4,atk:1.4,chest:'chest2',layout:'crypt',bgm:'crypt'},
   ],
   /* マップの部屋構成。毎回 main から数部屋・side から寄り道の部屋を選び、つなぎ方も変える。
      spawn：[魔物, 最少, 最多]／elite：強化された魔物の数／gather：採取ポイントの数 [最少,最多]／chest：必ず置く宝箱の数
