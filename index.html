@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.26.4',date:'2026/10/31'};
+const GAME_VERSION={no:'1.26.5',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -548,7 +548,7 @@ const DATA={
     bone_hammer:{name:'骨の大槌',slot:'weapon',wtype:'hammer',atk:14,crit:0,},
     bone_lance:{name:'骨の槍',slot:'weapon',wtype:'lance',atk:11,crit:10,},
     beast_lance:{name:'獣牙の槍',slot:'weapon',wtype:'lance',atk:19,crit:10,slots:1},
-    mire_lance:{name:'沼喰いの槍',slot:'weapon',st:{k:'poison',buildup:20},wtype:'lance',atk:27,crit:10,slots:1},
+    mire_lance:{name:'沼喰いの槍',slot:'weapon',st:{k:'poison',buildup:20},wtype:'lance',atk:24,crit:10,slots:1},
     wolf_lance:{name:'古狼の槍',slot:'weapon',wtype:'lance',atk:23,crit:10,slots:1},
     /* ---- ザコ素材の防具（各ステージ2シリーズ）：同じステージのボス装備より一段弱く、一式効果はなし ---- */
     // 草原：獣皮シリーズ（森狼）
@@ -586,7 +586,7 @@ const DATA={
     croc_faulds:{name:'沼鰐の尻尾',slot:'waist',def:9,skills:{poison_res:3,def_up:1},slots:1},
     croc_greaves:{name:'沼鰐の脚甲',slot:'legs',def:10,skills:{def_up:2,poison_res:1,hp_up:2},slots:1},
     // 沼地：毒蛙シリーズ（毒沼ガエル・膨張体・食虫花）
-    frog_lance:{name:'毒蛙の舌槍',slot:'weapon',el:{k:'water',v:8},wtype:'lance',atk:27,crit:10,slots:1},
+    frog_lance:{name:'毒蛙の舌槍',slot:'weapon',el:{k:'water',v:8},wtype:'lance',atk:24,crit:10,slots:1},
     frog_hood:{name:'毒蛙のフード',slot:'head',def:9,skills:{status_res:2,dodge_dist:2},slots:1},
     frog_vest:{name:'毒蛙の皮衣',slot:'body',def:11,skills:{dodge_dist:3,status_res:2},slots:1},
     frog_gloves:{name:'毒蛙の手袋',slot:'arms',def:8,skills:{item_power:3,dodge_dist:1},slots:1},
@@ -715,7 +715,7 @@ const DATA={
     hydra_faulds:{name:'多頭竜の尾',slot:'waist',def:12,skills:{poison_res:3,regen:3,hp_up:1},slots:2},
     hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,skills:{poison_res:4,regen:2,hp_up:1},slots:2},
     // ---- 毒蟲シリーズ（毒蟲王・沼地）：会心と状態異常耐性 ----
-    venom_db:{name:'毒蟲の双剣',slot:'weapon',el:{k:'water',v:8},wtype:'dual',atk:25,crit:14,slots:2},
+    venom_db:{name:'毒蟲の双剣',slot:'weapon',el:{k:'water',v:8},wtype:'dual',atk:24,crit:14,slots:2},
     venom_tachi:{name:'毒蟲の太刀',slot:'weapon',st:{k:'poison',buildup:20},wtype:'tachi',atk:24,crit:12,slots:2},
     venom_bow:{name:'毒蟲の弓',slot:'weapon',st:{k:'poison',buildup:20},wtype:'bow',atk:21,crit:10,slots:2},
     venom_helm:{name:'毒蟲の触角兜',slot:'head',def:12,skills:{crit_up:4,status_res:3},slots:2},
@@ -724,8 +724,8 @@ const DATA={
     venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:11,skills:{crit_up:3,status_res:3,poison_res:1},slots:2},
     venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,skills:{crit_up:4,status_res:2,poison_res:1},slots:2},
     // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
-    mire_hammer:{name:'沼巨人の槌',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:31,crit:0,slots:2},
-    mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:29,crit:4,slots:2},
+    mire_hammer:{name:'沼巨人の槌',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:24,crit:0,slots:2},
+    mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:24,crit:4,slots:2},
     mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,skills:{heal_up:4,def_up:3},slots:2},
     mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:19,skills:{heal_up:5,regen:2},slots:2},
     mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:13,skills:{heal_up:4,def_up:2,regen:1},slots:2},
@@ -770,12 +770,12 @@ const DATA={
     kama_dual:{name:'大鎌蟷螂の雷双剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'dual',atk:26,crit:15,slots:2},
     armd_hammer:{name:'大アルマジロの殻槌',slot:'weapon',st:{k:'slow',buildup:15},wtype:'hammer',atk:15,crit:1,slots:2},
     armd_gs:{name:'大アルマジロの甲羅剣',slot:'weapon',st:{k:'slow',buildup:15},wtype:'greatsword',atk:14,crit:4,slots:2},
-    hana_gs:{name:'毒花竜の冥花大剣',slot:'weapon',el:{k:'mei',v:14},wtype:'greatsword',atk:50,crit:6,slots:2},
-    hana_bow:{name:'毒花竜の冥花弓',slot:'weapon',el:{k:'mei',v:11},wtype:'bow',atk:31,crit:11,slots:2},
+    hana_gs:{name:'毒花竜の冥花大剣',slot:'weapon',el:{k:'mei',v:14},wtype:'greatsword',atk:27,crit:6,slots:2},
+    hana_bow:{name:'毒花竜の冥花弓',slot:'weapon',el:{k:'mei',v:11},wtype:'bow',atk:27,crit:11,slots:2},
     yado_dual:{name:'巨大ヤドカリの殻双剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'dual',atk:23,crit:14,slots:2},
     yado_lance:{name:'巨大ヤドカリの殻槍',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'lance',atk:24,crit:10,slots:2},
-    dorc_hammer:{name:'泥鯨の大槌',slot:'weapon',el:{k:'ice',v:8},wtype:'hammer',atk:31,crit:0,slots:2},
-    dorc_lance:{name:'氷潮の槍',slot:'weapon',el:{k:'ice',v:8},wtype:'lance',atk:27,crit:10,slots:2},
+    dorc_hammer:{name:'泥鯨の大槌',slot:'weapon',el:{k:'ice',v:8},wtype:'hammer',atk:24,crit:0,slots:2},
+    dorc_lance:{name:'氷潮の槍',slot:'weapon',el:{k:'ice',v:8},wtype:'lance',atk:24,crit:10,slots:2},
     hachi_shuriken:{name:'女王蜂の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:28,crit:11,slots:2},
     hachi_bow:{name:'毒蜂の弓',slot:'weapon',st:{k:'poison',buildup:15},wtype:'bow',atk:28,crit:10,slots:2},
     shark_gs:{name:'双頭鮫の大剣',slot:'weapon',el:{k:'mei',v:14},wtype:'greatsword',atk:53,crit:6,slots:2},
