@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.72.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.73.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -288,7 +288,7 @@ const CONFIG={
 const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝手紙（モンハンのお守り）
 const PRESET_SLOTS=['weapon','head','body','arms','waist','legs','charm'],PRESET_MAX=5; // 装備プリセット：武器・防具・手紙
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
-const ITEM_ORDER=['potion','good_potion','heal_all','antidote','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
+const ITEM_ORDER=['potion','good_potion','heal_all','atk_horn','def_horn','flash','pit_trap','shock_trap','poison_bottle','para_bottle','sleep_bottle']; // 解毒薬・大タル爆弾は廃止
 /** 持っている消耗品のID（ITEM_ORDER の順）。切り替えの輪や表示はこれだけを使う */
 /** 身代わりの護符：持ち物（bag.ghost_guard）に入れておくと、幽霊になるところを1回だけ防いで起き上がる。使う操作は無い */
 const GHOST_GUARD={name:'身代わりの護符',max:1,price:1000};
@@ -421,17 +421,15 @@ const DATA={
   // effect.type：heal（ratio＝最大HPに対する回復割合、radius があれば範囲内の味方全員）
   //             buff（stat＝atk/def、pct＝%、time＝秒、radius＝範囲）
   consumables:{
-    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復。片手剣の医療の心得中は近くの味方にも半分'},
-    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.6,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（毒・呪いも治る）'},
-    heal_all:{name:'癒しお香',short:'癒しお香',delay:2.0,max:3,color:'#8dffc0',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
-    antidote:{name:'解毒薬',short:'解毒薬',delay:1.0,max:5,color:'#9ff0d0',effect:{type:'cure'},desc:'毒・麻痺・睡眠・呪いを解除する。状態異常になったときに出る「解毒薬を使う」からは、すぐ使える'},
+    potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復（状態異常もすべて治る）。片手剣の医療の心得中は近くの味方にも半分'},
+    good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.6,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（状態異常もすべて治る）'},
+    heal_all:{name:'癒しお香',short:'癒しお香',delay:2.0,max:3,color:'#8dffc0',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・状態異常もすべて治る）'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
     // 狩りの道具（effect.type：flash＝閃光 / place＝足元に設置）
     flash:{name:'閃光玉',short:'閃光玉',delay:0.6,max:3,color:'#fff6a0',effect:{type:'flash',radius:360,boss:7,minion:5},desc:'周りの敵の目をくらませる（ボス7秒・雑魚5秒）。その間は追ってこない'},
     pit_trap:{name:'落とし穴',short:'落とし穴',delay:3.0,max:1,color:'#b08a5a',effect:{type:'place',kind:'pit',arm:1.0,r:26,boss:6,minion:4},desc:'足元に設置。踏んだ敵を足止めする（ボス6秒・雑魚4秒）'},
     shock_trap:{name:'シビレ罠',short:'シビレ罠',delay:3.0,max:1,color:'#ffe040',effect:{type:'place',kind:'shock',arm:1.0,r:26,area:70,boss:4,minion:5},desc:'足元に設置。踏むと周りの敵をまとめてしびれさせる（ボス4秒・雑魚5秒）'},
-    bomb:{name:'大タル爆弾',short:'大タル爆弾',delay:1.5,max:2,color:'#ff5a3a',effect:{type:'place',kind:'bomb',fuse:3.0,r:14,area:110,dmg:150},desc:'足元に設置。設置してから3秒後に爆発して周りの敵に大ダメージ（味方は吹き飛ぶだけ）'},
     // 状態異常の瓶：使うと、次の矢3本に状態異常を付ける（矢が当たると効果）
     poison_bottle:{name:'毒の瓶',short:'毒瓶',delay:1.0,max:5,color:'#a8e040',effect:{type:'coat',status:'poison',shots:3},desc:'次の矢3本に毒を付ける（当たった敵の体力が少しずつ減る）'},
     para_bottle:{name:'麻痺の瓶',short:'麻痺瓶',delay:1.0,max:5,color:'#ffe040',effect:{type:'coat',status:'paralysis',shots:3},desc:'次の矢3本に麻痺を付ける（当たった敵は動けなくなる。ボスは短い）'},
@@ -2463,17 +2461,15 @@ const DATA={
   // ショップ（拠点・ロビー・装備画面の「ショップ」タブ）。ゴールドで買える
   // stage：そのステージが解放されると並ぶ
   shop:[
-    {id:'potion',name:'回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
-    {id:'good_potion',name:'良い回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
+    {id:'potion',name:'回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復（状態異常もすべて治る）',price:15,type:'item',item:'potion'},
+    {id:'good_potion',name:'良い回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（状態異常もすべて治る）',price:30,type:'item',item:'good_potion'},
     {id:'heal_all',name:'癒しお香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:100,type:'item',item:'heal_all'},
-    {id:'antidote',name:'解毒薬',desc:'毒・麻痺・睡眠・呪いを解除する',price:20,type:'item',item:'antidote'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:100,type:'item',item:'atk_horn'},
     {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:100,type:'item',item:'def_horn'},
     {id:'ghost_guard',name:'身代わりの護符',desc:'持っているだけで効果がある。倒れたまま助けが間に合わず幽霊になるところを1回だけ防ぎ、その場で起き上がる（使うと無くなる）',price:1000,type:'guard'},
     {id:'flash',name:'閃光玉',desc:'周りの敵の目をくらませる',price:40,type:'item',item:'flash'},
     {id:'pit_trap',name:'落とし穴',desc:'踏んだ敵を足止めする罠',price:100,type:'item',item:'pit_trap'},
     {id:'shock_trap',name:'シビレ罠',desc:'踏むと周りの敵をしびれさせる罠',price:110,type:'item',item:'shock_trap'},
-    {id:'bomb',name:'大タル爆弾',desc:'3秒後に爆発する大型の爆弾',price:75,type:'item',item:'bomb'},
   ],
   /* ステージ：各依頼で使うダンジョンの敵・難易度。enemySet の melee / ranged / boss が配置される */
   stages:[
@@ -2747,7 +2743,7 @@ const DATA={
     ice_unicorn:{stage:[7],role:'ボス',desc:'雪原を駆ける氷の角を持つ獣。角の突進と薙ぎ払いで痺れを残し、電撃の直線を放つ。',tip:'痺れは行動を封じる。突進の直線から必ず外れよう。'},
     headless_knight:{stage:[8],role:'ボス',desc:'首のない騎士が大鎌を振るう。薙ぎ払いと突きで眠らせ、首を狙う斬撃を飛ばし、骸骨兵を呼ぶ。',tip:'大鎌の薙ぎ払いは眠りを誘う。振り終わりの隙を狙おう。'},
     yomi_samurai:{stage:[8],role:'ボス',desc:'黄泉の淵から這い出た怨霊の武者。水の刃で薙ぎ払い、突進し、怨霊を呼び出す。',tip:'水の刃は扇状に広がる。怨霊は時間で消えるので、呼ばれたら離れよう。'},
-    giant_frog:{stage:[3],role:'ボス',desc:'沼の大きな蛙。跳んで着地の衝撃を広げ、毒液を吐き、舌で払う。',tip:'着地の前に体が縮む。その瞬間に離れよう。毒液は避けるか、解毒を用意しよう。'},
+    giant_frog:{stage:[3],role:'ボス',desc:'沼の大きな蛙。跳んで着地の衝撃を広げ、毒液を吐き、舌で払う。',tip:'着地の前に体が縮む。その瞬間に離れよう。毒液は避けるか、回復薬で治そう。'},
     bog_leech:{stage:[3],role:'ボス',desc:'沼底に潜み、足元から飛び出す吸血ヒル。吸い付かれると毒が続く。',tip:'泥が盛り上がったら要注意。吸い付かれたら素早く振りほどこう。'},
     deep_octopus:{stage:[4],role:'ボス',desc:'深い淵に棲む大蛸。触腕を振るい、地面を突き刺し、水流を四方へ噴き出す。',tip:'触腕の攻撃は間合いが広い。水流は全方向に飛ぶので、移動し続けよう。'},
     giant_bat:{stage:[5],role:'ボス',desc:'洞窟の天井に棲む大きな蝙蝠。急降下し、音波を直線や円形に放つ。',tip:'上空から襲いかかるので、降下の前兆を見て避けよう。'},
@@ -3540,14 +3536,12 @@ const DATA={
     {id:'r_bull_legs',out:{type:'equip',id:'bull_greaves'},cost:{bull_hide:2,boar_hide:1,goblin_hide:2}},
     {id:'r_deco',out:{type:'deco'},cost:{wolf_claw:2,wolf_pelt:1}}, // 装飾品：ボス素材で作れるのはレア以下まで
     {id:'r_potion',out:{type:'item',id:'potion',n:2},cost:{herb:2}},
-    {id:'r_antidote',out:{type:'item',id:'antidote',n:2},cost:{herb:2}},
     {id:'r_heal_all',out:{type:'item',id:'heal_all',n:1},cost:{herb:3,forest_mushroom:2}},
     {id:'r_atk_horn',out:{type:'item',id:'atk_horn',n:1},cost:{poison_spore:2,herb:1}},
     {id:'r_def_horn',out:{type:'item',id:'def_horn',n:1},cost:{wood:3,herb:1}},
     {id:'r_flash',out:{type:'item',id:'flash',n:1},cost:{forest_mushroom:1,herb:1}},
     {id:'r_pit',out:{type:'item',id:'pit_trap',n:1},cost:{wood:2,herb:1}},
     {id:'r_shock',out:{type:'item',id:'shock_trap',n:1},cost:{poison_spore:2,forest_mushroom:1}},
-    {id:'r_bomb',out:{type:'item',id:'bomb',n:1},cost:{wood:3,poison_spore:1}},
   ],
 };
 
@@ -5420,8 +5414,6 @@ function updatePlayer(w,p,inp,dt){
   p.guarding=false;
   if(p.dead&&p.out){updateSpirit(w,p,inp,dt);return;}
   if(p.dead){p.using=null;p.charging=false;p.drip=null;return;}
-  // 解毒薬の即時使用（状態異常の表示から押したとき）：麻痺・睡眠中でも使える
-  if(inp.cure&&(p.bag.antidote||0)>0&&cureStatus(w,p)){p.bag.antidote--;emit(w,{type:'itemUsed',pid:p.id,item:'antidote'});}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   if(TEST_MODE.invincible)p.heldT=0;
   if(p.heldT>0){p.heldT-=dt;p.moving=false;p.charging=false;p.charge=0;p.using=null;p.kx*=0.5;p.ky*=0.5;return;} // ボスに掴まれている・ひるんでいる間は動けない
@@ -5561,11 +5553,11 @@ function updatePlayer(w,p,inp,dt){
     }
   }
 }
-/** 解毒：毒・麻痺・睡眠・呪いを治す。治したら true */
+/** 状態異常をすべて治す（毒・麻痺・睡眠・呪い・鈍足）。HPを回復するアイテムを使うと治る。治したら true */
 function cureStatus(w,p){
-  if(!(p.poisonT>0||p.curseT>0||p.paraT>0||p.sleepT>0))return false;
-  p.poisonT=0;p.poisonTick=0;p.poisoned=0;p.curseT=0;p.paraT=0;p.sleepT=0;
-  emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-34,text:'解毒！',color:'#9ff0d0'});
+  if(!(p.poisonT>0||p.curseT>0||p.paraT>0||p.sleepT>0||p.slowT>0))return false;
+  p.poisonT=0;p.poisonTick=0;p.poisoned=0;p.curseT=0;p.paraT=0;p.sleepT=0;p.slowT=0;
+  emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-34,text:'状態異常が治った',color:'#7fe09a'});
   return true;
 }
 /** アイテムの効果を出す（範囲付きなら範囲内の生きている味方全員） */
@@ -5578,7 +5570,7 @@ function startDrip(w,p,id){
   p.bag[id]=Math.max(0,(p.bag[id]||0)-1);
   emit(w,{type:'itemUsed',pid:p.id,item:id});
   p.drip={left:hl,total:ef.drip||3,t:0,done:0,pend:0,emitT:0,item:id};
-  if(id!=='potion'&&(p.poisonT>0||p.curseT>0)){p.poisonT=0;p.curseT=0;emit(w,{type:'status',pid:p.id,x:p.x,y:p.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+  cureStatus(w,p); // HPを回復するアイテムは、どれも状態異常をすべて治す
   // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
   if(id==='potion'&&medic){const share=Math.round(hl/2);for(const id2 in w.players){const a=w.players[id2];if(a===p||a.dead||Math.hypot(a.x-p.x,a.y-p.y)>220)continue;a.hp=Math.min(a.stats.maxHp,a.hp+share);emit(w,{type:'heal',x:a.x,y:a.y-20,amount:share});}}
 }
@@ -5592,8 +5584,7 @@ function applyItem(w,p,id){
       const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(wsActive(p,'medic')?1.5:1));
       q.hp=Math.min(q.stats.maxHp,q.hp+hl);
       emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
-      // 回復薬は状態異常を治さない（解毒薬の役目）。良い回復薬・癒しお香は治す
-      if(id!=='potion'&&(q.poisonT>0||q.curseT>0)){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+      cureStatus(w,q); // HPを回復するアイテムは、どれも状態異常をすべて治す
       // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
       if(id==='potion'&&q===p&&wsActive(p,'medic')){const share=Math.round(hl/2);for(const id2 in w.players){const a=w.players[id2];if(a===p||a.dead||Math.hypot(a.x-p.x,a.y-p.y)>220)continue;a.hp=Math.min(a.stats.maxHp,a.hp+share);emit(w,{type:'heal',x:a.x,y:a.y-20,amount:share});}}
     }else if(ef.type==='cure'){
@@ -5670,7 +5661,7 @@ function updatePlaced(w,dt){
           const hl=Math.round(q.stats.maxHp*ef.rate*mul);
           q.hp=Math.min(q.stats.maxHp,q.hp+hl);
           emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
-          if(q.poisonT>0||q.curseT>0){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
+          cureStatus(w,q);
         }
       }
       continue;
@@ -14848,7 +14839,7 @@ const App={
     this.refreshPanel();
   },
   /** 装備画面・鍛冶屋・ショップを開いていれば描き直す */
-  /** 状態異常になった時、解毒薬を持っていれば2秒だけ「解毒薬を使う」を出す */
+  /** 状態異常になった時、閃光と状態名で知らせる */
   cureWatch(){
     const w=this.world,me=w&&w.players[this.myPid];
     const live=!!(me&&!me.dead);
@@ -14860,7 +14851,6 @@ const App={
     for(const k in names)if(now[k]&&!prev[k])Renderer.statusFx={text:names[k][0],color:names[k][1],start:Date.now(),life:1.2};
     this.statusPrev=now;
     Renderer.statusView=now;
-    if(has&&!this.cureHad&&((me.bag&&me.bag.antidote)||0)>0)this.showCurePop();
     if(!has&&this.cureHad)this.hideCurePop();
     this.cureHad=has;
   },
@@ -15896,7 +15886,7 @@ const App={
     h+=`<div class="btnrow"><button data-act="cancelPick">キャンセル</button></div>`;
     return h;
   },
-  /** 調合：素材から消耗品（回復薬・解毒薬など）を作る */
+  /** 調合：素材から消耗品（回復薬など）を作る */
   craftTabHTML(){
     return `<div class="small muted" style="margin-bottom:6px">素材を使って回復薬や罠などを調合します。必要な素材がそろっていれば作れます。</div>`
       +this.recipeListHTML(r=>r.out.type==='item',false);
