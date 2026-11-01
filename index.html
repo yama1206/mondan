@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.21.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.21.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -13338,8 +13338,6 @@ const App={
   },
   onlineHTML(){
     return `<div class="panel camp"><h2>オンライン協力（別々のPC）</h2>
-      <p class="small muted" style="line-height:1.7">ホストのPCがゲームの処理を行います。セーブデータは<b>持ち寄り式</b>で、各自が自分のPCのキャラクター（装備・素材・ゴールド）で参加し、入手したものも自分のPCに保存されます。
-      最大5人。インターネット接続が必要です（接続の仲介に無料サービス PeerJS を使い、つながった後はPC同士で直接通信します）。</p>
       <label class="field">あなたの名前<input id="netName" maxlength="12" value="${esc(Net.savedName())}" placeholder="名前（12文字まで）"></label>
       <div class="menu-col"><button class="primary" data-act="netHost">部屋を作る（ホストになる）</button></div>
       <label class="field">参加する部屋のコード<input id="netCode" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="例：483027" value="${esc(this.netCodeDraft||'')}" style="letter-spacing:.2em"></label>
