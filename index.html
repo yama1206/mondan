@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.29.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.29.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3573,7 +3573,7 @@ const LOOKS=[
   {id:'l_fox',name:'兎',col:'#fff4e8'},
 ];
 /* 見た目ごとのサポート行動（首輪ではなく見た目が行動を持つ）。値は PET_ACTS のキー */
-const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling',l_turtle:'turtle',l_bird:'owl',l_hamster:'bee',l_ghost:'slime',l_penguin:'penguin',l_fox:'fox'};
+const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling',l_turtle:'turtle',l_bird:'owl',l_hamster:'bee',l_ghost:'moth',l_penguin:'penguin',l_fox:'fox'};
 /* 見た目の色違い：1つの見た目に4色（基本色＋色違い3つ）。色は色相をずらして作る */
 const LOOK_VARIANTS=[{name:'基本色',hue:0},{name:'色違い1',hue:110},{name:'色違い2',hue:220},{name:'色違い3',hue:300}];
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
@@ -4698,10 +4698,11 @@ function damageEnemy(w,p,e,mult,src){
   if(!e.boss&&!e.mid&&!e.halfFlinched&&e.hp>0&&e.hp<=e.maxHp*0.5){e.halfFlinched=true;e.flinchT=0.45;e.action=null;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'怯み',color:'#ffd27a'});}
   if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
-  if(s.inflict&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
-    const k=s.inflict.k;e.buildup=e.buildup||{};e.buildThr=e.buildThr||{};
+  const inf=src.petInflict||s.inflict; // ペットの状態異常（蛾の鱗粉）は持ち主の武器の代わりに使う
+  if(inf&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
+    const k=inf.k;e.buildup=e.buildup||{};e.buildThr=e.buildThr||{};
     const thr=e.buildThr[k]||100;
-    e.buildup[k]=(e.buildup[k]||0)+s.inflict.buildup*(1+(s.statusPct||0)/100); // 状態異常強化で蓄積が増える
+    e.buildup[k]=(e.buildup[k]||0)+inf.buildup*(1+(s.statusPct||0)/100); // 状態異常強化で蓄積が増える
     if(e.buildup[k]>=thr){e.buildup[k]=0;e.buildThr[k]=thr+50;applyStatus(w,e,k);}
   }
   // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
@@ -6334,8 +6335,7 @@ function updateRevive(w,dt){
    ready／do：飼い主の様子を見て助ける首輪（回復・守り・応援） */
 const PET_ACTS={
   penguin:{name:'氷滑り',desc:'氷の上を滑って近くの敵に体当たりする（飼い主の攻撃力の30%＋氷属性）',cd:7,attack:{mult:0.3,range:240,elem:{k:'ice',v:8}}},
-  slime:{name:'ぷるぷる回復',desc:'飼い主のHPが8割を切ると、体を寄せて少し回復する（最大HPの6%）',cd:10,
-    ready:(w,o)=>o.hp<o.stats.maxHp*0.8,do:(w,pt,o)=>petHeal(w,o,0.06)},
+  moth:{name:'鱗粉',desc:'離れた所から近くの敵に鱗粉を吹きかけ、麻痺させる（飼い主の攻撃力の20%・麻痺が溜まる）',cd:8,attack:{mult:0.2,range:320,ranged:true,inflict:{k:'paralysis',buildup:25}}},
   bee:{name:'種の差し入れ',desc:'飼い主のHPが4割を切ると、ほおぶくろから種を出して大きく回復させる（最大HPの20%）',cd:30,
     ready:(w,o)=>o.hp<o.stats.maxHp*0.4,do:(w,pt,o)=>petHeal(w,o,0.2)},
   mole:{name:'土の守り',desc:'飼い主に敵の攻撃の予告が重なると、土の守りで受けるダメージを30%減らす（4秒）',cd:15,
@@ -6359,7 +6359,7 @@ function petTarget(w,o,at){
 }
 function petStrike(w,pt,o,e,A){
   if(e.dead||e.hidden)return;
-  damageEnemy(w,o,e,A.attack.mult,{pet:true,stunMult:0.01,petElem:A.attack.elem});
+  damageEnemy(w,o,e,A.attack.mult,{pet:true,stunMult:0.01,petElem:A.attack.elem,petInflict:A.attack.inflict});
   emit(w,{type:'petAct',x:pt.x,y:pt.y-12,tx:e.x,ty:e.y,name:A.name,ranged:!!A.attack.ranged,collar:LOOK_ACT[o.petLook],pid:o.id});
 }
 function updatePets(w,dt){
