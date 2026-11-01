@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.40.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.40.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1292,6 +1292,7 @@ const DATA={
   // items の type：coin（コイン）／gold（G）／item（消耗品・id）／mat（素材・id）／equip（装備・id、n本）／deco（装飾品・id、rarity）
   gifts:[
     {id:'thanks_coin_100',reason:'運営からの感謝の気持ちです',items:[{type:'coin',n:100}]},
+    {id:'reset_coin_150',reason:'相棒と首輪のリセットに合わせたプレゼントです',items:[{type:'coin',n:150}]},
   ],
   elemShare:0.5,
   seriesRes:{
@@ -3659,7 +3660,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:16,
+  KEY:'kourou_dungeon_save',VERSION:17,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -3691,6 +3692,7 @@ const Save={
   /** バージョン間の移行処理。仕様変更時は migrations[旧バージョン] を追加する */
   migrate(data,v){
     const migrations={
+      16:d=>{d.looks={};d.pets={};if(d.equipped&&typeof d.equipped==='object'){d.equipped.look=null;d.equipped.lookV=0;d.equipped.pet=null;}return d;}, // 16 → 17：持っている相棒と首輪をすべて消す（コインは返さない）
       15:d=>d, // 15 → 16：相棒の見た目（最高レア）を9種に作り直し（旧い見た目は外れる）
       14:d=>d, // 14 → 15：コイン・相棒・強化素材を追加（無ければ sanitize で0）
       13:d=>d, // 13 → 14：仲間（companions）を追加。無ければ sanitize で既定の役割と初期装備を支給
