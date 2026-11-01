@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.63.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.64.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3607,7 +3607,7 @@ const Profile={
       p2:{equipped:emptyEquip()},
       companions:[{role:'healer',equipped:emptyEquip()},{role:'tank',equipped:emptyEquip()}],
       coins:0,pets:{},looks:{},petEssence:0,
-      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,fadeOthers:false,autoRestock:false,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
+      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,allyDamageNumbers:true,fadeOthers:false,autoRestock:false,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
       bestiary:{},giftsGot:{}}; // モンスター図鑑：魔物ごとの討伐数（1以上で登録済み）／giftsGot：受け取ったプレゼント
@@ -4837,7 +4837,7 @@ function damageEnemy(w,p,e,mult,src){
       }
     }
   }
-  emit(w,{type:'damage',target:'enemy',x:hp_&&part?hp_.x:e.x,y:hp_&&part?hp_.y-hp_.r:e.y-e.r,amount:dmg,crit,skill:!!src.skill,head,guard:guarded,weak:weakPart&&!guarded,arrowWeak:weakPart&&!!src.arrow,el:elHit?elHit.k:null,elEff:elHit?(elHit.m>=1.5?2:elHit.m>1?1:elHit.m<1?-1:0):0});
+  emit(w,{type:'damage',target:'enemy',pid:p&&p.id,x:hp_&&part?hp_.x:e.x,y:hp_&&part?hp_.y-hp_.r:e.y-e.r,amount:dmg,crit,skill:!!src.skill,head,guard:guarded,weak:weakPart&&!guarded,arrowWeak:weakPart&&!!src.arrow,el:elHit?elHit.k:null,elEff:elHit?(elHit.m>=1.5?2:elHit.m>1?1:elHit.m<1?-1:0):0});
   if(s.drainChance>0&&RNG.next()*100<s.drainChance&&p.hp<s.maxHp){
     const h=Math.max(2,Math.round(s.maxHp*0.03));p.hp=Math.min(s.maxHp,p.hp+h);
     emit(w,{type:'heal',x:p.x,y:p.y-20,amount:h,drain:true});
@@ -5263,7 +5263,7 @@ function updatePlaced(w,dt){
           if(e.dead||Math.hypot(e.x-o.x,e.y-o.y)>ef.area+e.r)continue;
           const dmg=Math.round(ef.dmg*(0.9+0.6*(w.diff.level-1))*rand(0.95,1.05));
           e.hp-=dmg;e.hurt=0.2;e.aggro=true;
-          emit(w,{type:'damage',target:'enemy',x:e.x,y:e.y-e.r,amount:dmg,crit:false});
+          emit(w,{type:'damage',target:'enemy',pid:o.owner,x:e.x,y:e.y-e.r,amount:dmg,crit:false});
           if(e.boss&&e.state==='sleep')triggerBoss(w);
           if(e.hp<=0)killEnemy(w,e);
         }
@@ -9314,7 +9314,9 @@ const Renderer={
   onEvent(ev,settings){
     switch(ev.type){
       case 'damage':
-        if(settings.damageNumbers){
+        // 設定で、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字を出さないようにできる
+        const allyNum=ev.target!=='enemy'||!ev.pid||settings.allyDamageNumbers!==false||(typeof App!=='undefined'&&App.localInputPid&&App.localInputPid(ev.pid));
+        if(settings.damageNumbers&&allyNum){
           const col=ev.dot?'#a8e060':ev.target==='player'?'#ff5050':(ev.guard?'#9aa0a8':(ev.crit?'#ffd23a':(ev.skill?'#7fe0ff':'#ffffff')));
           this.floater(ev.x+rand(-8,8),ev.y,(ev.guard?'弾かれた ':'')+(ev.weak?'弱点! ':'')+(ev.el&&ev.elEff>0?DATA.elements[ev.el].name+(ev.elEff>1?'◎ ':'○ '):'')+(ev.crit?'会心! ':'')+ev.amount,col,ev.dot?13:ev.crit?22:(ev.target==='player'?18:15));
         }
@@ -14811,7 +14813,7 @@ const App={
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
-      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
         <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
