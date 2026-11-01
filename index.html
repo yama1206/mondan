@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.82.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.82.2',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -442,7 +442,6 @@ const DATA={
     bull:{name:'暴角シリーズ',bonus:'暴角の突撃',pieces:{head:'bull_helm',body:'bull_mail',arms:'bull_vambrace',waist:'bull_faulds',legs:'bull_greaves'},eff2:{def:3},eff:{bossDmgPct:10}},
     gale:{name:'疾風シリーズ',bonus:'疾風の翼',pieces:{head:'gale_helm',body:'gale_mail',arms:'gale_vambrace',waist:'gale_faulds',legs:'gale_greaves'},eff2:{dodgeDistPct:10},eff:{atk:2}},
     lizard:{name:'大蜥蜴シリーズ',bonus:'岩肌の生命力',pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},eff2:{maxHp:15},eff:{dmgCut:4}},
-    lava:{name:'溶岩の巨人シリーズ',bonus:'溶岩の熱撃',pieces:{head:'lava_helm',body:'lava_mail',arms:'lava_vambrace',waist:'lava_faulds',legs:'lava_greaves'},eff2:{def:3},eff:{elemAtk:{fire:12}}},
     dragon:{name:'炎獄竜シリーズ',bonus:'炎獄の加護',pieces:{head:'dragon_helm',body:'dragon_mail',arms:'dragon_vambrace',waist:'dragon_faulds',legs:'dragon_greaves'},eff2:{atk:4},eff:{elemAtk:{fire:10},crit:10}},
     felg:{name:'熔鉄の魔獣シリーズ',bonus:'熔鉄の突進',pieces:{head:'felg_helm',body:'felg_mail',arms:'felg_vambrace',waist:'felg_faulds',legs:'felg_greaves'},eff2:{atk:2},eff:{maxHp:13}},
     deer:{name:'氷冠の大鹿シリーズ',bonus:'氷冠の冷気',pieces:{head:'deer_helm',body:'deer_mail',arms:'deer_vambrace',waist:'deer_faulds',legs:'deer_greaves'},eff2:{def:3},eff:{elemAtk:{ice:12}}},
@@ -623,11 +622,6 @@ const DATA={
     // ---- 大顎シリーズ（大顎クワガタ・森林）：守りの固さ ----
     // 火山・氷雪の武器（火・氷属性。既存の武器種7種）
     // 火山・氷雪のボス防具（各ボス1式・5部位）
-    lava_helm:{name:'溶岩の兜',slot:'head',def:16,skills:{dmg_cut:4,elem_up:3},slots:2},
-    lava_mail:{name:'溶岩の胴鎧',slot:'body',def:22,skills:{dmg_cut:5,def_up:2},slots:2},
-    lava_vambrace:{name:'溶岩の籠手',slot:'arms',def:14,skills:{dmg_cut:4,elem_up:2,def_up:1},slots:2},
-    lava_faulds:{name:'溶岩の腰当て',slot:'waist',def:14,skills:{dmg_cut:3,elem_up:3,def_up:1},slots:2},
-    lava_greaves:{name:'溶岩の脚甲',slot:'legs',def:16,skills:{dmg_cut:4,elem_up:2,def_up:1},slots:2},
     dragon_helm:{name:'炎獄の兜',slot:'head',def:16,skills:{atk_up:4,elem_up:3},slots:2},
     dragon_mail:{name:'炎獄の鎧',slot:'body',def:22,skills:{atk_up:5,crit_dmg:2},slots:2},
     dragon_vambrace:{name:'炎獄の腕鎧',slot:'arms',def:14,skills:{atk_up:4,elem_up:2,crit_dmg:1},slots:2},
@@ -836,13 +830,10 @@ const DATA={
     bw_grados_shuriken:{name:'地底王の手裏剣',slot:'weapon',el:{k:'fire',v:12},wtype:'shuriken',atk:36,crit:12,slots:2,boss:'grados'},
     bw_volcano_dragon_sword:{name:'炎獄竜の剣',slot:'weapon',el:{k:'fire',v:13},wtype:'sword',atk:40,crit:12,slots:2,boss:'volcano_dragon'},
     bw_felgnas_sword:{name:'熔鉄の剣',slot:'weapon',el:{k:'fire',v:12},wtype:'sword',atk:35,crit:11,slots:2,boss:'felgnas'},
-    bw_lava_giant_greatsword:{name:'溶岩の大剣',slot:'weapon',el:{k:'fire',v:12},wtype:'greatsword',atk:38,crit:5,slots:2,boss:'lava_giant'},
     bw_volcano_dragon_tachi:{name:'炎獄竜の太刀',slot:'weapon',el:{k:'fire',v:13},wtype:'tachi',atk:40,crit:14,slots:2,boss:'volcano_dragon'},
     bw_felgnas_dual:{name:'熔鉄の双剣',slot:'weapon',el:{k:'fire',v:12},wtype:'dual',atk:34,crit:15,slots:2,boss:'felgnas'},
-    bw_lava_giant_lance:{name:'溶岩の槍',slot:'weapon',el:{k:'fire',v:12},wtype:'lance',atk:35,crit:11,slots:2,boss:'lava_giant'},
     bw_volcano_dragon_bow:{name:'炎獄竜の弓',slot:'weapon',el:{k:'fire',v:13},wtype:'bow',atk:38,crit:12,slots:2,boss:'volcano_dragon'},
     bw_felgnas_bow:{name:'熔鉄の弓',slot:'weapon',el:{k:'fire',v:12},wtype:'bow',atk:33,crit:11,slots:2,boss:'felgnas'},
-    bw_lava_giant_shuriken:{name:'溶岩の手裏剣',slot:'weapon',el:{k:'fire',v:12},wtype:'shuriken',atk:33,crit:12,slots:2,boss:'lava_giant'},
     bw_volcano_dragon_shuriken:{name:'炎獄竜の手裏剣',slot:'weapon',el:{k:'fire',v:13},wtype:'shuriken',atk:38,crit:13,slots:2,boss:'volcano_dragon'},
     bw_ice_bear_sword:{name:'白熊の剣',slot:'weapon',el:{k:'ice',v:13},wtype:'sword',atk:44,crit:12,slots:2,boss:'ice_bear'},
     bw_ice_unicorn_sword:{name:'氷角の剣',slot:'weapon',el:{k:'ice',v:13},wtype:'sword',atk:44,crit:12,slots:2,boss:'ice_unicorn'},
@@ -1019,11 +1010,6 @@ const DATA={
     bw_grados_dual:{name:'地底王の双剣',slot:'weapon',el:{k:'fire',v:12},wtype:'dual',atk:30,crit:15,slots:2,boss:'grados'},
     bw_grados_lance:{name:'地底王の槍',slot:'weapon',el:{k:'fire',v:12},wtype:'lance',atk:43,crit:11,slots:2,boss:'grados'},
     bw_grados_bow:{name:'地底王の弓',slot:'weapon',el:{k:'fire',v:12},wtype:'bow',atk:37,crit:11,slots:2,boss:'grados'},
-    bw_lava_giant_sword:{name:'溶岩の剣',slot:'weapon',el:{k:'fire',v:12},wtype:'sword',atk:41,crit:11,slots:2,boss:'lava_giant'},
-    bw_lava_giant_tachi:{name:'溶岩の太刀',slot:'weapon',el:{k:'fire',v:12},wtype:'tachi',atk:42,crit:13,slots:2,boss:'lava_giant'},
-    bw_lava_giant_dual:{name:'溶岩の双剣',slot:'weapon',el:{k:'fire',v:12},wtype:'dual',atk:30,crit:15,slots:2,boss:'lava_giant'},
-    bw_lava_giant_hammer:{name:'溶岩の槌',slot:'weapon',el:{k:'fire',v:12},wtype:'hammer',atk:47,crit:1,slots:2,boss:'lava_giant'},
-    bw_lava_giant_bow:{name:'溶岩の弓',slot:'weapon',el:{k:'fire',v:12},wtype:'bow',atk:37,crit:11,slots:2,boss:'lava_giant'},
     bw_volcano_dragon_greatsword:{name:'炎獄竜の大剣',slot:'weapon',el:{k:'fire',v:13},wtype:'greatsword',atk:47,crit:5,slots:2,boss:'volcano_dragon'},
     bw_volcano_dragon_dual:{name:'炎獄竜の双剣',slot:'weapon',el:{k:'fire',v:13},wtype:'dual',atk:33,crit:15,slots:2,boss:'volcano_dragon'},
     bw_volcano_dragon_hammer:{name:'炎獄竜の槌',slot:'weapon',el:{k:'fire',v:13},wtype:'hammer',atk:51,crit:1,slots:2,boss:'volcano_dragon'},
@@ -1256,7 +1242,6 @@ const DATA={
     mole_spirit:{name:'土竜の霊玉',color:'#c8a8ff',desc:'結晶喰いの土竜からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     centipede_spirit:{name:'大百足の霊玉',color:'#c8a8ff',desc:'晶殻の大百足からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     grados_spirit:{name:'地底王グラドスの霊玉',color:'#c8a8ff',desc:'地底王グラドスからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
-    lava_giant_spirit:{name:'巨人の霊玉',color:'#c8a8ff',desc:'溶岩の巨人からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     volcano_dragon_spirit:{name:'炎獄竜ヴォルカノスの霊玉',color:'#c8a8ff',desc:'炎獄竜ヴォルカノスからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     felgnas_spirit:{name:'魔獣フェルグナスの霊玉',color:'#c8a8ff',desc:'熔鉄の魔獣フェルグナスからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     ice_deer_spirit:{name:'大鹿の霊玉',color:'#c8a8ff',desc:'氷冠の大鹿からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
@@ -1342,9 +1327,6 @@ const DATA={
     hell_fang:{name:'炎獄竜の牙',color:'#ffe0a0',desc:'炎獄竜ヴォルカノスの牙。（灼熱の火山）'},
     black_scale:{name:'炎獄竜の黒鱗',color:'#3a1a10',desc:'炎獄竜の黒く焼けた鱗。（灼熱の火山）'},
     lava_dragon_core:{name:'溶岩の竜核',color:'#ff7a30',desc:'炎獄竜の心臓に宿る溶岩の核。非常に稀少。（灼熱の火山）'},
-    rock_core:{name:'グラドスの岩核',color:'#a06a40',desc:'溶岩の巨人の体の中心にある岩の核。（灼熱の火山）'},
-    red_arm:{name:'巨人の赤熱腕',color:'#ff6a20',desc:'溶岩の巨人の赤く燃える腕。（灼熱の火山）'},
-    hard_rock:{name:'溶岩巨人の堅岩',color:'#7a4a2a',desc:'溶岩の巨人を覆う、とても硬い岩。（灼熱の火山）'},
     felg_horn:{name:'フェルグナスの熔鉄角',color:'#ffa040',desc:'熔鉄の魔獣フェルグナスの角。（灼熱の火山）'},
     heat_crystal:{name:'熱核の結晶',color:'#ffd080',desc:'熔鉄の魔獣の体内で熱を溜める結晶。非常に稀少。（灼熱の火山）'},
     // ---- 氷雪地帯の素材（雑魚・ボス）----
@@ -1526,7 +1508,7 @@ const DATA={
     poison_frog:{atk:'water',weak:['thunder']},leech:{weak:['fire','thunder']},carnivore_plant:{weak:['fire'],strong:['water']},
     bloater:{weak:['fire']},swamp_croc:{atk:'water',weak:['thunder'],strong:['fire']},parasite:{weak:['fire','mei']},
     mole:{weak:['fire']},centipede:{atk:'fire',weak:['ice','water']},grados:{weak:['fire','water','thunder','ice','mei']},
-    lava_giant:{atk:'fire',weak:['water','ice']},volcano_dragon:{atk:'fire',weak:['ice','water']},felgnas:{atk:'fire',weak:['water','ice']},
+    volcano_dragon:{atk:'fire',weak:['ice','water']},felgnas:{atk:'fire',weak:['water','ice']},
     ice_deer:{atk:'ice',weak:['fire']},frost_wyvern:{atk:'ice',weak:['fire']},ice_ape:{atk:'ice',weak:['fire']},
     hydra:{atk:'water',weak:['thunder','fire']},venomKing:{weak:['fire'],strong:['ice']},mireGiant:{atk:'water',weak:['fire','thunder']},
     water_lizard:{atk:'water',weak:['thunder']},jellyfish:{atk:'thunder',weak:['fire']},piranha:{atk:'water',weak:['thunder']},
@@ -2064,15 +2046,6 @@ const DATA={
       attacks:[{arc:0.7,r:72,wind:0.5,dirs:1,dmg:1.0},{arc:Math.PI*1.33,r:46,wind:0.6,dirs:1,dmg:0.9}],
       pal:{body:'#9a4a22',dark:'#3a1a0a',shell:'#c8703a',tail:'#ff7040',sting:'#ffd080',eye:'#ffe060'}},
     // ===== 灼熱の火山 ボス =====
-    lava_giant:{name:'溶岩の巨人',ai:'pattern',look:'lavaGiant',hp:3600,atk:32,def:14,r:40,speed:70,stunMax:160,stunTime:4,color:'#7a4a2a',drops:'lava_giant',boss:true,moveStyle:'lumber',specials:[{k:'hammerQuake',cd:8,wind:1.2,dmg:1.6,rings:2,el:'fire',range:[0,260]},{k:'pillarLine',cd:10,wind:1.0,dmg:1.0,r:50,el:'fire',range:[150,800]},{k:'rockfall',cd:13,wind:1.0,dmg:1.0,r:58,n:6,spread:300,el:'fire',range:[0,800]}],stepQuake:{dist:80,r:30,dmg:0.2},
-      pattern:[
-        {k:'slam',wind:1.2,cd:6,dmg:1.5,r:140,el:'fire'}, // 溶岩の拳で叩きつける
-        {k:'toss',wind:1.0,cd:4.5,dmg:1.3,r:70,el:'fire'}, // 溶岩弾を投げる
-        {k:'crack',wind:0.9,cd:6,dmg:1.2,len:360,width:44,el:'fire'}, // 溶岩の亀裂
-        {k:'sweep',wind:0.9,cd:4,dmg:1.3,r:120,arc:3.1}, // 腕を振り回す
-        {k:'pool',wind:1.0,cd:7,dmg:0.8,r:90,life:6,hz:'fire',el:'fire'}, // 滴る溶岩だまり
-      ],
-      pal:{body:'#7a4a2a',dark:'#2a1608',rock:'#a06a40',lava:'#ff6a20',core:'#ffb050',rage:'#a03a1a',rageDark:'#3a0a04',eye:'#ffe060',rageEye:'#ffffff'}},
     volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:88,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.7,rings:3,el:'fire',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:52,el:'fire',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'fire',txt:'熱波！',txtColor:'#ffb070',range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:64,el:'fire',txt:'火山弾！',txtColor:'#ffb070',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:440,width:44,el:'fire',txt:'炎獄の旋回ブレス！',below:0.5,range:[0,600]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:70,el:'fire'}, // 炎獄のブレス
@@ -2385,7 +2358,6 @@ const DATA={
     magma_beetle:{rolls:[{type:'mat',id:'blast_shell',chance:1.0,min:1,max:2},{type:'mat',id:'blast_sac',chance:0.4,min:1,max:1}]},
     molten_beast:{rolls:[{type:'mat',id:'molten_armor',chance:1.0,min:1,max:2},{type:'mat',id:'molten_horn',chance:0.4,min:1,max:1}]},
     scorpion:{rolls:[{type:'mat',id:'crater_shell',chance:1.0,min:1,max:2},{type:'mat',id:'hot_stinger',chance:0.4,min:1,max:1}]},
-    lava_giant:{rarityBoost:2.0,rolls:[{type:'mat',id:'lava_giant_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'rock_core',chance:1.0,min:2,max:3},{type:'mat',id:'red_arm',chance:1.0,min:1,max:2},{type:'mat',id:'hard_rock',chance:0.3,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
     volcano_dragon:{rarityBoost:2.0,rolls:[{type:'mat',id:'volcano_dragon_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'hell_fang',chance:1.0,min:2,max:3},{type:'mat',id:'black_scale',chance:1.0,min:1,max:2},{type:'mat',id:'lava_dragon_core',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
     felgnas:{rarityBoost:2.0,rolls:[{type:'mat',id:'felgnas_spirit',chance:0.1,min:1,max:1},{type:'mat',id:'felg_horn',chance:1.0,min:2,max:3},{type:'mat',id:'molten_armor',chance:1.0,min:1,max:2},{type:'mat',id:'heat_crystal',chance:0.25,min:1,max:1},{type:'mat',id:'reinforce_orb',chance:0.7,min:1,max:1},{type:'deco',chance:0.75},{type:'deco',chance:0.35}]},
     ice_beetle:{rolls:[{type:'mat',id:'ice_shell',chance:1.0,min:1,max:2},{type:'mat',id:'frozen_crystal',chance:0.4,min:1,max:1}]},
@@ -2630,7 +2602,7 @@ const DATA={
     {id:'v_ash',stage:6,key:true,name:'爆炎の甲虫の掃討',desc:'赤く光って爆発する甲虫を10体倒せ。爆発の前に離れること。',goal:{type:'kill',target:'magma_beetle',count:10},reward:{gold:840,mats:{blast_sac:3}}},
     {id:'v_wing',stage:6,key:true,name:'炎翼竜の狩り',desc:'熱風のブレスを吐く炎翼竜を8体倒せ。',goal:{type:'kill',target:'fire_wyvern',count:8},reward:{gold:860,mats:{flame_fang:3}}},
     {id:'v_beast',stage:6,key:true,name:'溶鉄の魔獣の討伐',desc:'溶けた鉄の体を持つ魔獣を8体倒せ。',goal:{type:'kill',target:'molten_beast',count:8},reward:{gold:880,mats:{molten_horn:2}}},
-    {id:'v_boss',stage:6,urgent:true,unlocks:7,boss:'volcano_dragon',name:'【緊急】炎獄竜ヴォルカノス',desc:'火口の底で、炎獄竜ヴォルカノスが目を覚ました。炎をまとって地を這い、羽ばたいて襲いかかる。',goal:{type:'boss'},reward:{gold:2600,mats:{rock_core:1,reinforce_orb:2},decos:2}},
+    {id:'v_boss',stage:6,urgent:true,unlocks:7,boss:'volcano_dragon',name:'【緊急】炎獄竜ヴォルカノス',desc:'火口の底で、炎獄竜ヴォルカノスが目を覚ました。炎をまとって地を這い、羽ばたいて襲いかかる。',goal:{type:'boss'},reward:{gold:2600,mats:{hell_fang:1,reinforce_orb:2},decos:2}},
     {id:'v_dragon',stage:6,after:'v_boss',boss:'volcano_dragon',name:'【強敵】炎獄竜ヴォルカノス',desc:'火口の奥で、炎の竜が翼を広げた。炎のブレスと溶岩弾に注意せよ。',goal:{type:'boss'},reward:{gold:1900,mats:{hell_fang:1,reinforce_orb:2},decos:1}},
     {id:'v_felg',stage:6,after:'v_dragon',boss:'felgnas',name:'【強敵】熔鉄の魔獣フェルグナス',desc:'熔鉄をまとった魔獣が突進を繰り返す。残った熔鉄の地面に気をつけろ。',goal:{type:'boss'},reward:{gold:2000,mats:{felg_horn:1,reinforce_orb:2},decos:1}},
     {id:'v_serpent',stage:6,after:'v_felg',boss:'crimson_serpent',name:'【強敵】紅蓮の大蛇',desc:'火山の岩場で、炎をまとった大蛇が身をくねらせている。地を這う炎に注意。',goal:{type:'boss'},reward:{gold:2100,mats:{centi_ember__crimson_serpent:3,centi_shell__crimson_serpent:2}}},
@@ -2758,7 +2730,6 @@ const DATA={
     magma_beetle:{stage:[6],role:'雑魚',desc:'体内に爆熱を溜めた甲虫。近づくと赤く光り、しばらくして爆発する。',tip:'赤く光ったら円の外へ。爆発後は消える。'},
     molten_beast:{stage:[6],role:'雑魚',desc:'溶けた鉄の体を持つ魔獣。直線に突進し、通った跡に熔鉄の炎を残す。',tip:'突進の前に向きが見える。跡の炎には触れないこと。'},
     scorpion:{stage:[6],role:'雑魚',desc:'火口に住む大きな蠍。尾の突き刺しと、前方の薙ぎ払いを使う。',tip:'突き刺しは細い扇。薙ぎ払いの後は少し隙がある。'},
-    lava_giant:{stage:[6],role:'ボス',desc:'火口の底で眠っていた溶岩の巨人。叩きつけ・岩投げ・溶岩の亀裂で攻めてくる。',tip:'岩投げは着弾の円を予告する。亀裂は直線の帯。'},
     volcano_dragon:{stage:[6],role:'ボス',desc:'炎獄竜ヴォルカノス。扇状の火炎ブレスと溶岩弾を使い、弱ると溶岩の噴出を起こす。',tip:'噴出の地点は事前に円で示される。ブレスの扇の外へ。'},
     felgnas:{stage:[6],role:'ボス',desc:'熔鉄をまとった魔獣フェルグナス。直線の突進を最大3回続け、熱波と熔鉄の地面を生む。',tip:'突進中は方向を変えない。次の突進の予告を見て横へ。'},
     ice_beetle:{stage:[7],role:'雑魚',desc:'氷晶の外殻を持つ甲虫。周囲に氷の破片を飛ばす。',tip:'破片は円の外へ広がる。外殻が硬いので、横から攻めよう。'},
@@ -2907,11 +2878,6 @@ const DATA={
     // 洞窟の雑魚防具
     // 氷雪地帯の雑魚防具
     // 火山・氷雪のボス防具
-    {id:'r_lava_helm',out:{type:'equip',id:'lava_helm'},cost:{rock_core:2,hard_rock:1},stage:6},
-    {id:'r_lava_mail',out:{type:'equip',id:'lava_mail'},cost:{hard_rock:3,rock_core:1},stage:6},
-    {id:'r_lava_vambrace',out:{type:'equip',id:'lava_vambrace'},cost:{red_arm:2,rock_core:1},stage:6},
-    {id:'r_lava_faulds',out:{type:'equip',id:'lava_faulds'},cost:{hard_rock:2,red_arm:1},stage:6},
-    {id:'r_lava_greaves',out:{type:'equip',id:'lava_greaves'},cost:{hard_rock:2,rock_core:1},stage:6},
     {id:'r_dragon_helm',out:{type:'equip',id:'dragon_helm'},cost:{hell_fang:2,black_scale:1},stage:6},
     {id:'r_dragon_mail',out:{type:'equip',id:'dragon_mail'},cost:{black_scale:3,lava_dragon_core:1},stage:6},
     {id:'r_dragon_vambrace',out:{type:'equip',id:'dragon_vambrace'},cost:{hell_fang:2,black_scale:1},stage:6},
@@ -3131,13 +3097,10 @@ const DATA={
     {id:'r_bw_grados_shuriken',out:{type:'equip',id:'bw_grados_shuriken'},cost:{grados_ore:4,grados_core:3},stage:5},
     {id:'r_bw_volcano_dragon_sword',out:{type:'equip',id:'bw_volcano_dragon_sword'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_felgnas_sword',out:{type:'equip',id:'bw_felgnas_sword'},cost:{felg_horn:4,heat_crystal:3},stage:6},
-    {id:'r_bw_lava_giant_greatsword',out:{type:'equip',id:'bw_lava_giant_greatsword'},cost:{rock_core:4,red_arm:3},stage:6},
     {id:'r_bw_volcano_dragon_tachi',out:{type:'equip',id:'bw_volcano_dragon_tachi'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_felgnas_dual',out:{type:'equip',id:'bw_felgnas_dual'},cost:{felg_horn:4,heat_crystal:3},stage:6},
-    {id:'r_bw_lava_giant_lance',out:{type:'equip',id:'bw_lava_giant_lance'},cost:{rock_core:4,red_arm:3},stage:6},
     {id:'r_bw_volcano_dragon_bow',out:{type:'equip',id:'bw_volcano_dragon_bow'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_felgnas_bow',out:{type:'equip',id:'bw_felgnas_bow'},cost:{felg_horn:4,heat_crystal:3},stage:6},
-    {id:'r_bw_lava_giant_shuriken',out:{type:'equip',id:'bw_lava_giant_shuriken'},cost:{rock_core:4,red_arm:3},stage:6},
     {id:'r_bw_volcano_dragon_shuriken',out:{type:'equip',id:'bw_volcano_dragon_shuriken'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_ice_bear_sword',out:{type:'equip',id:'bw_ice_bear_sword'},cost:{shiro_pelt:4,beast_hide__ice_bear:3},stage:7},
     {id:'r_bw_ice_unicorn_sword',out:{type:'equip',id:'bw_ice_unicorn_sword'},cost:{tsuno_horn:4,beast_fang__ice_unicorn:3},stage:7},
@@ -3314,11 +3277,6 @@ const DATA={
     {id:'r_bw_grados_dual',out:{type:'equip',id:'bw_grados_dual'},cost:{grados_ore:4,grados_core:3},stage:5},
     {id:'r_bw_grados_lance',out:{type:'equip',id:'bw_grados_lance'},cost:{grados_ore:4,grados_core:3},stage:5},
     {id:'r_bw_grados_bow',out:{type:'equip',id:'bw_grados_bow'},cost:{grados_ore:4,grados_core:3},stage:5},
-    {id:'r_bw_lava_giant_sword',out:{type:'equip',id:'bw_lava_giant_sword'},cost:{rock_core:4,red_arm:3},stage:6},
-    {id:'r_bw_lava_giant_tachi',out:{type:'equip',id:'bw_lava_giant_tachi'},cost:{rock_core:4,red_arm:3},stage:6},
-    {id:'r_bw_lava_giant_dual',out:{type:'equip',id:'bw_lava_giant_dual'},cost:{rock_core:4,red_arm:3},stage:6},
-    {id:'r_bw_lava_giant_hammer',out:{type:'equip',id:'bw_lava_giant_hammer'},cost:{rock_core:4,red_arm:3},stage:6},
-    {id:'r_bw_lava_giant_bow',out:{type:'equip',id:'bw_lava_giant_bow'},cost:{rock_core:4,red_arm:3},stage:6},
     {id:'r_bw_volcano_dragon_greatsword',out:{type:'equip',id:'bw_volcano_dragon_greatsword'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_volcano_dragon_dual',out:{type:'equip',id:'bw_volcano_dragon_dual'},cost:{hell_fang:4,black_scale:3},stage:6},
     {id:'r_bw_volcano_dragon_hammer',out:{type:'equip',id:'bw_volcano_dragon_hammer'},cost:{hell_fang:4,black_scale:3},stage:6},
@@ -3745,9 +3703,9 @@ function compAutoGear(profile,who){
   if(set)for(const sl of ['head','body','arms','waist','legs'])if(set.pieces[sl]&&DATA.equipment[set.pieces[sl]])ov[sl]=Items.createEquipment(set.pieces[sl]);
   return {boss:ab.boss,stage:ab.stage,ov};
 }
-/** 削除したボス（結晶の大守護者）の装備・素材を持っていたら、同じステージの緊急ボス（地底王グラドス）の物に置き換える */
-const REMOVED_EQUIP={guard_gs:'bw_grados_greatsword',guard_tachi:'bw_grados_tachi',guard_head:'grados_helm',guard_body:'grados_mail',guard_arms:'grados_vambrace',guard_waist:'grados_faulds',guard_legs:'grados_greaves',bw_crystal_guardian_sword:'bw_grados_sword',bw_crystal_guardian_tachi:'bw_grados_tachi',bw_crystal_guardian_lance:'bw_grados_lance',bw_crystal_guardian_shuriken:'bw_grados_shuriken',bw_crystal_guardian_dual:'bw_grados_dual',bw_crystal_guardian_hammer:'bw_grados_hammer',bw_crystal_guardian_bow:'bw_grados_bow'};
-const REMOVED_MAT={guard_core:'grados_ore',crystal_guardian_spirit:'grados_spirit'};
+/** 削除したボス（結晶の大守護者・溶岩の巨人）の装備・素材を持っていたら、同じステージの緊急ボス（地底王グラドス・炎獄竜）の物に置き換える */
+const REMOVED_EQUIP={guard_gs:'bw_grados_greatsword',guard_tachi:'bw_grados_tachi',guard_head:'grados_helm',guard_body:'grados_mail',guard_arms:'grados_vambrace',guard_waist:'grados_faulds',guard_legs:'grados_greaves',bw_crystal_guardian_sword:'bw_grados_sword',bw_crystal_guardian_tachi:'bw_grados_tachi',bw_crystal_guardian_lance:'bw_grados_lance',bw_crystal_guardian_shuriken:'bw_grados_shuriken',bw_crystal_guardian_dual:'bw_grados_dual',bw_crystal_guardian_hammer:'bw_grados_hammer',bw_crystal_guardian_bow:'bw_grados_bow',bw_lava_giant_greatsword:'bw_volcano_dragon_greatsword',bw_lava_giant_lance:'bw_volcano_dragon_lance',bw_lava_giant_shuriken:'bw_volcano_dragon_shuriken',bw_lava_giant_sword:'bw_volcano_dragon_sword',bw_lava_giant_tachi:'bw_volcano_dragon_tachi',bw_lava_giant_dual:'bw_volcano_dragon_dual',bw_lava_giant_hammer:'bw_volcano_dragon_hammer',bw_lava_giant_bow:'bw_volcano_dragon_bow',lava_helm:'dragon_helm',lava_mail:'dragon_mail',lava_vambrace:'dragon_vambrace',lava_faulds:'dragon_faulds',lava_greaves:'dragon_greaves'};
+const REMOVED_MAT={guard_core:'grados_ore',crystal_guardian_spirit:'grados_spirit',rock_core:'hell_fang',red_arm:'black_scale',hard_rock:'black_scale',lava_giant_spirit:'volcano_dragon_spirit'};
 function computeStats(profile,override,who){
   if(!override&&who>=CHAR_COUNT){const ag=compAutoGear(profile,who);if(ag)override=ag.ov;} // 仲間の自動装備
   const P=CONFIG.player,ch=charOf(profile,who||0);
@@ -4791,7 +4749,7 @@ const BOSS_SIZE={meadow_bull:1.35,rhino:1.35,boar:1.2,armadillo:1.2,kama_mantis:
   hydra:1.45,mud_whale:1.5,queen_bee:1.1,giant_frog:1.2,bog_leech:1.1,venomKing:1.3,mireGiant:1.4,
   aquarios:1.4,twin_shark:1.3,mola_fish:1.4,turtle:1.35,deep_octopus:1.35,thunderEel:1.25,giantWorm:1.4,
   grados:1.4,quake_dragon:1.45,giant_bat:1.15,crystal_scorpion:1.2,mole:1.1,centipede:1.2,
-  volcano_dragon:1.45,lava_giant:1.4,felgnas:1.25,scarab:1.15,fire_phoenix:1.3,crimson_serpent:1.3,fire_griffon:1.3,
+  volcano_dragon:1.45,felgnas:1.25,scarab:1.15,fire_phoenix:1.3,crimson_serpent:1.3,fire_griffon:1.3,
   ice_ape:1.3,ice_bear:1.3,ice_unicorn:1.15,ice_deer:1.15,frost_wyvern:1.35,eternal_beast:1.3,frost_cat:1.1,
   yomi_samurai:1.1,headless_knight:1.1,bone_dragon:1.4,black_wolf:1.15,abyss_spider:1.2,ghost_moth:1.1,grave_rat:1.05};
 function urgentBossBoost(type,stageNo){
@@ -7761,7 +7719,7 @@ const GEAR_LOOKS={
 /** ステージ4以降のボス武器（bw_ボス_武器種）の見た目に使う GEAR_LOOKS の名前 */
 const BOSS_WEAPON_LOOK={twin_shark:'shark',mola_fish:'mola',deep_octopus:'octo',aquarios:'aqua',turtle:'turtle',thunderEel:'eel',giantWorm:'worm',
   quake_dragon:'ondo',giant_bat:'gbat',crystal_scorpion:'scorp',mole:'mole',centipede:'centi',grados:'grados',
-  scarab:'syaku',fire_phoenix:'phoenix',crimson_serpent:'serpent',fire_griffon:'griffon',lava_giant:'lava',volcano_dragon:'dragon',felgnas:'felg',
+  scarab:'syaku',fire_phoenix:'phoenix',crimson_serpent:'serpent',fire_griffon:'griffon',volcano_dragon:'dragon',felgnas:'felg',
   ice_bear:'shiro',ice_unicorn:'tsuno',eternal_beast:'mammoth',frost_cat:'fcat',ice_deer:'deer',frost_wyvern:'wyv',ice_ape:'ape',
   headless_knight:'kubi',yomi_samurai:'onry',abyss_spider:'abyss',ghost_moth:'gmoth',grave_rat:'grat',black_wolf:'bwolf',bone_dragon:'bdragon'};
 Object.assign(GEAR_LOOKS,{ // 武器だけに使う見た目（防具は無いボス）
@@ -9253,16 +9211,6 @@ BossArt.A.fire_griffon=(k,H)=>{ // 火口の翼獅子：獅子の体、背から
     head:()=>{for(let i=0;i<12;i++){const a=i/12*TAU;flame(k,0.6+Math.cos(a)*0.3,Math.sin(a)*0.3+0.1,0.25,0.1,mn,ml);}
       E(k,0.6,0,0.32,0.32,0,mn);E(k,0.68,0,0.24,0.22,0,b,d);TD.snout(k,H,0.82,0.12,0.2,'#ecc890',d);E(k,1.03,0,0.04,0.05,0,'#3a1a0a');
       TD.eyes(k,H,0.78,0.13,0.04,'#f0c020');}});
-};
-BossArt.A.lava_giant=(k,H)=>{ // 溶岩の巨人：黒い岩の巨体、走る溶岩の割れ目、左右の拳、燃える目
-  const {E,P,L,S}=H,rk='#3a2a26',lv='#ff6a1e',gl='#ffd060',d='#120806',c=k.ctx,up=k.wind?0.35:0;
-  const crack=a=>{S(k,a,'rgba(255,106,30,.5)',0.1);S(k,a,lv,0.05);S(k,a,gl,0.02);};
-  for(const s of [-1,1]){const sw=Math.sin(k.p*0.5+(s>0?Math.PI:0))*0.08;P(k,[0,s*0.5,0.45+up,s*(0.7-up*0.3),0.65+up+sw,s*(0.62-up*0.3),0.2,s*0.4],'#2e221e',d);E(k,0.8+up+sw,s*(0.68-up*0.3),0.24,0.22,0,rk,d);crack([0.7+up+sw,s*(0.6-up*0.3),0.85+up+sw,s*(0.72-up*0.3)]);}
-  P(k,[-0.75,-0.45,-0.2,-0.78,0.35,-0.6,0.5,0,0.35,0.6,-0.2,0.78,-0.75,0.45,-0.85,0],rk,d);
-  crack([-0.6,-0.35,-0.3,-0.1,-0.5,0.3]);crack([0.0,-0.6,-0.1,0,0.15,0.5]);crack([-0.35,0.55,-0.2,0.3]);
-  for(const s of [-1,1])E(k,0.0,s*0.58,0.28,0.22,0,'#2e221e',d);
-  P(k,[0.28,-0.22,0.6,-0.18,0.62,0.18,0.28,0.22],rk,d);for(const s of [-1,1])E(k,0.5,s*0.1,0.05,0.035,0,k.ph2?'#ff2a10':gl);
-  c.fillStyle=lv;for(let i=0;i<4;i++){const o=(k.t*0.9+i*0.25)%1,a=i*1.6;c.beginPath();c.arc(Math.cos(a)*(0.8+o*0.3),Math.sin(a)*(0.8+o*0.3),0.035*(1-o*0.5),0,TAU);c.fill();}
 };
 BossArt.A.volcano_dragon=(k,H)=>{ // 炎獄竜ヴォルカノス：大きく広げた翼、反った角、溶岩の斑、炎を溜める顎
   dragonTop(k,H,{b:'#a82a1a',d:'#300804',spike:'#2a1a14',horn:'#2a1a14',eye:'#ffd040',wing:1.35,mem:'#6a1408',bone:'#3a0a04',spots:'rgba(255,160,40,.7)',breath:['#fff0a0','rgba(255,120,20,0)']});
