@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.38.4',date:'2026/11/01'};
+const GAME_VERSION={no:'1.39.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1506,7 +1506,7 @@ const DATA={
         {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:5,spread:0.9,speed:320,kind:'soul',el:'mei'}, // 首の霊火を放つ
         {k:'swarm',wind:0.7,cd:11,kind:'skeleton',n:1}, // 亡者を呼ぶ
       ]},
-    yomi_samurai:{name:'黄泉の怨霊武者',ai:'pattern',look:'gen',hp:3700,atk:28,def:10,r:40,speed:110,color:'#2a4a6a',drops:'yomi_samurai',boss:true,stunMax:145,stunTime:4,gen:{body:'oval',legs:0,head:'mane',arm:'katana',cloak:true},pal:{body:'#2a4a6a',dark:'#10203a',spot:'#9ad8ff',eye:'#ff5070'},
+    yomi_samurai:{name:'黄泉の怨霊武者',ai:'pattern',look:'gen',hp:3700,atk:28,def:10,r:40,speed:110,color:'#2a4a6a',drops:'yomi_samurai',boss:true,specials:[{k:'phantoms',cd:13,wind:1.0,dmg:1.1,len:520,width:46,el:'mei',range:[0,600]},{k:'iaiStance',cd:14,hold:1.8,dmg:1.9,r:150,el:'mei',range:[0,260]}],stunMax:145,stunTime:4,gen:{body:'oval',legs:0,head:'mane',arm:'katana',cloak:true},pal:{body:'#2a4a6a',dark:'#10203a',spot:'#9ad8ff',eye:'#ff5070'},
       pattern:[
         {k:'beam',wind:0.8,cd:4.5,dmg:1.3,len:300,width:40,el:'mei'}, // 居合の一閃（まっすぐ）
         {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:125,arc:1.4,hits:3,step:0.4,el:'mei'}, // 刀の三連斬り
@@ -1625,10 +1625,10 @@ const DATA={
     field_rat:{name:'フィールドラット',ai:'goblin',hp:14,atk:6,def:0,r:9,speed:210,color:'#9a8a7a',drops:'field_rat',pal:{body:'#9a8a7a',dark:'#4a4038',ear:'#e0a0a0',eye:'#ff4040'}},
     archer:{name:'スケルトンアーチャー',ai:'archer',hp:28,atk:11,def:1,r:12,speed:80,color:'#ddd6c0',drops:'archer',pal:{body:'#ddd6c0',dark:'#7a7260'}},
     // stunMax：槌で頭を叩いたときのスタン値の上限（無い敵はスタンしない）。stunTime：スタンの秒数
-    wolf:{name:'古狼',ai:'wolf',atkEl:{roar:'thunder',sweep:'thunder'},hp:1600,atk:22,def:5,r:30,speed:120,stunMax:100,stunTime:4,color:'#7c6c5c',drops:'wolf',boss:true,
+    wolf:{name:'古狼',ai:'wolf',atkEl:{roar:'thunder',sweep:'thunder'},hp:1600,atk:22,def:5,r:30,speed:120,stunMax:100,stunTime:4,color:'#7c6c5c',drops:'wolf',boss:true,specials:[{k:'howlBolt',cd:12,wind:0.7,dmg:1.0,r:70,el:'thunder',range:[0,700]},{k:'flankPounce',cd:9,dmg:1.3,r:85,range:[120,420]}],
       pal:{body:'#7c6c5c',dark:'#4c4038',rage:'#8a5848',rageDark:'#5a3028',eye:'#ffd060',rageEye:'#ff2a2a'}},
     // ステージ1（風渡る草原）
-    meadow_bull:{name:'草原の暴角獣',ai:'bull',atkEl:{dash:'fire',spit:'fire'},hp:1800,atk:23,def:6,r:33,speed:118,stunMax:110,stunTime:4,color:'#9a7a4a',drops:'meadow_bull',boss:true,
+    meadow_bull:{name:'草原の暴角獣',ai:'bull',atkEl:{dash:'fire',spit:'fire'},hp:1800,atk:23,def:6,r:33,speed:118,stunMax:110,stunTime:4,color:'#9a7a4a',drops:'meadow_bull',boss:true,specials:[{k:'hornToss',cd:9,wind:0.6,dmg:1.3,range:[0,170]},{k:'stompWaves',cd:12,wind:0.8,dmg:1.0,range:[0,320]}],
       pal:{body:'#9a7a4a',dark:'#5a4428',rage:'#b0583a',rageDark:'#6a2e1c',eye:'#fff0c0',rageEye:'#ff3a2a',horn:'#f0e6c8'}},
     // 森の強敵：樹海の大山椒魚（長い舌・体をくねらせる体当たり・水属性の粘液）
     salamander:{name:'樹海の大山椒魚',ai:'pattern',look:'salamander',hp:2800,atk:26,def:7,r:38,speed:95,stunMax:120,stunTime:4,color:'#3a6a4a',drops:'salamander',boss:true,
@@ -1695,7 +1695,7 @@ const DATA={
       pal:{body:'#8a5aa0',dark:'#3a2050',spore:'#d0a0ff',eye:'#ffffff'}},
     /* ボス：pattern に技を順に並べる（技：sweep=扇形 / slam=円 / charge=突進 / shot=飛び道具 / pool=毒の沼 / swarm=子蟲召喚）
        wind：予備動作の秒数／cd：次に使えるまでの秒数／dmg：攻撃力への倍率／r・arc：範囲 */
-    hydra:{name:'腐沼の多頭竜ヒュドラ',ai:'pattern',look:'hydra',hp:3000,atk:26,def:6,r:34,speed:110,stunMax:120,stunTime:4,color:'#4a6a3a',drops:'hydra',boss:true,
+    hydra:{name:'腐沼の多頭竜ヒュドラ',ai:'pattern',look:'hydra',hp:3000,atk:26,def:6,r:34,speed:110,stunMax:120,stunTime:4,color:'#4a6a3a',drops:'hydra',boss:true,specials:[{k:'tripleBreath',cd:11,wind:1.0,dmg:1.1,len:320,width:50,el:'water',st:'poison',range:[0,360],los:true},{k:'dive',cd:14,dmg:1.4,r:100,range:[0,700]}],
       pattern:[
         {k:'combo',wind:0.7,cd:4.5,dmg:1.0,r:130,arc:1.4,hits:3,step:0.35}, // 三つ首が順に噛みつく
         {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:3,spread:0.5,speed:300,kind:'soul',el:'water'}, // 三つ首から水弾
@@ -1736,7 +1736,7 @@ const DATA={
     water_spirit:{name:'水霊',ai:'archer',look:'spirit',hp:70,atk:16,def:1,r:13,speed:70,color:'#70c0e8',drops:'water_spirit',aimTime:0.9,arrowSpeed:330,
       pal:{body:'#70c0e8',dark:'#2a5a80',eye:'#ffffff'}},
     /* 水辺のボス（技は pattern に並べる。技の種類は沼地と同じ） */
-    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,
+    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:70,el:'water'}, // 激流のブレス
         {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:2.5}, // 長い体で薙ぎ払う
@@ -1862,7 +1862,7 @@ const DATA={
         {k:'sweep',wind:0.6,cd:3,dmg:1.2,r:130,arc:2.5}, // 長い体で薙ぎ払う
       ],
       pal:{body:'#8a4a3a',dark:'#3a1e16',shell:'#c86a4a',leg:'#e8a060',crystal:'#ffb070',rage:'#c05020',rageDark:'#501808',eye:'#ffe060',rageEye:'#ffffff'}},
-    grados:{name:'地底王グラドス',ai:'pattern',look:'golem',hp:4200,atk:34,def:16,r:42,speed:62,stunMax:170,stunTime:4,color:'#6a6a7a',drops:'grados',boss:true,physRes:0.4,
+    grados:{name:'地底王グラドス',ai:'pattern',look:'golem',hp:4200,atk:34,def:16,r:42,speed:62,stunMax:170,stunTime:4,color:'#6a6a7a',drops:'grados',boss:true,specials:[{k:'crossCrack',cd:11,wind:1.1,dmg:1.3,len:440,width:64,range:[0,400]},{k:'rockfall',cd:13,wind:1.0,dmg:1.1,r:62,n:8,spread:320,range:[0,800]}],physRes:0.4,
       pattern:[
         {k:'slam',wind:1.2,cd:6,dmg:1.5,r:150}, // 両の拳で地面を叩く
         {k:'sweep',wind:0.9,cd:4,dmg:1.3,r:130,arc:2.8}, // 腕で大きく薙ぐ
@@ -1893,7 +1893,7 @@ const DATA={
         {k:'pool',wind:1.0,cd:7,dmg:0.8,r:90,life:6,hz:'fire',el:'fire'}, // 滴る溶岩だまり
       ],
       pal:{body:'#7a4a2a',dark:'#2a1608',rock:'#a06a40',lava:'#ff6a20',core:'#ffb050',rage:'#a03a1a',rageDark:'#3a0a04',eye:'#ffe060',rageEye:'#ffffff'}},
-    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:110,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,
+    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:110,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:70,el:'fire'}, // 炎獄のブレス
         {k:'shot',wind:0.9,cd:4.5,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire',el:'fire'}, // 火炎弾を扇に
@@ -1948,7 +1948,7 @@ const DATA={
         {k:'sweep',wind:0.8,cd:4,dmg:1.1,r:140,arc:3.4}, // 尾で薙ぎ払う
       ],
       pal:{body:'#7ac8e8',dark:'#1e4a68',scale:'#c8f0ff',wing:'#3a88b0',rage:'#50a8d8',rageDark:'#143a58',eye:'#ffffff',rageEye:'#ff8040'}},
-    ice_ape:{name:'氷嶺の剛猿',ai:'pattern',look:'iceApe',hp:3500,atk:33,def:10,r:40,speed:100,stunMax:160,stunTime:4,color:'#e8eef4',drops:'ice_ape',boss:true,
+    ice_ape:{name:'氷嶺の剛猿',ai:'pattern',look:'iceApe',hp:3500,atk:33,def:10,r:40,speed:100,stunMax:160,stunTime:4,color:'#e8eef4',drops:'ice_ape',boss:true,specials:[{k:'drumming',cd:16,wind:0.9,dmg:0.8,r:210,haste:6,range:[0,400]},{k:'snowball',cd:10,wind:0.9,dmg:1.3,len:640,speed:260,grow:22,maxR:72,range:[120,600],los:true}],
       pattern:[
         {k:'slam',wind:1.0,cd:5,dmg:1.4,r:130}, // 両拳で地面を叩く
         {k:'combo',wind:0.6,cd:4,dmg:1.0,r:115,arc:1.5,hits:3,step:0.35}, // 左右の拳の連打
@@ -4507,6 +4507,7 @@ function inTelegraph(t,x,y,r){
     const d=Math.hypot(dx,dy);if(d>t.r+r)return false;if(d<r+6)return true;
     return Math.abs(angDiff(Math.atan2(dy,dx),t.angle))<=t.arc/2+Math.asin(Math.min(1,r/d));
   }
+  if(t.shape==='ring'){const d=Math.hypot(dx,dy);return d<t.r+r&&d>(t.r0||0)-r;} // 輪：内側の円は安全
   if(t.shape==='rect'){
     const c=Math.cos(t.angle),s=Math.sin(t.angle),lx=dx*c+dy*s,ly=-dx*s+dy*c;
     return lx>-r&&lx<t.len+r&&Math.abs(ly)<t.width/2+r;
@@ -4636,6 +4637,7 @@ function projPart(e,x,y,r,px,py){
 }
 function damageEnemy(w,p,e,mult,src){
   if(e.dead||e.hidden)return; // 地中に潜っている間は当たらない
+  if(e.state==='special'&&e.sp&&e.sp.k==='iaiStance')e.sp.hit=true; // 居合の構え中に攻撃すると反撃が来る
   const hp_=src.hit||null,part=hp_&&hp_.part; // 当たった部位
   const s=p.stats;let atk=s.atk*(s.power||1);
   if(s.effects.desperate&&p.hp<=s.maxHp*0.3)atk*=1.35;
@@ -5373,8 +5375,9 @@ function updateWolf(w,e,p,dt){
   const ph2=e.phase===2,def=DATA.enemies[e.type],mv=def.moves||WOLF_MOVES,rc=ph2?(def.rageCd||1):1;
   for(const k in e.cds)e.cds[k]-=dt;
   if(e.state==='sleep')return;
-  if(e.state==='stunned'){e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
-  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
+  if(e.state==='stunned'){e.z=0;e.hidden=false;e.sp=null;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
+  if(e.state==='special'){updateSpecial(w,e,p,dt);return;}
+  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'&&e.state!=='special'){
     e.phase=2;e.state='roar';e.timer=1.2;e.speed=DATA.enemies[e.type].speed*1.25;
     w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
     emit(w,{type:'enrage',x:e.x,y:e.y,name:DATA.enemies[e.type].name,cry:e.type});
@@ -5385,6 +5388,7 @@ function updateWolf(w,e,p,dt){
     case 'roar':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
     case 'chase':{
       e.facing=ang;
+      if(trySpecial(w,e,p,d,lineOfSight(w.map,e.x,e.y,p.x,p.y)))break; // 緊急ボスの特別な技
       const reach=e.r+p.r+46;
       if(d<reach+30&&mv.includes('sweep')&&e.cds.sweep<=0){
         // 薙ぎ払い：前方の広い範囲
@@ -5466,10 +5470,12 @@ const BOSS_REST=0.8;
 const BOSS_REST_OF=e=>e.boss?BOSS_REST:0;
 function updateBossPattern(w,e,p,dt){
   const def=DATA.enemies[e.type],ph2=e.phase===2,rc=ph2?0.7:1,pat=def.pattern||[];
-  for(const k in e.cds)e.cds[k]-=dt;
+  for(const k in e.cds)e.cds[k]-=dt*(e.hasteT>0?1.6:1); // ドラミング後は技の間隔が短くなる
   if(e.state==='sleep')return;
-  if(e.state==='stunned'){e.z=0;e.leapTo=null;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
-  if(e.boss&&e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
+  if(e.state==='stunned'){e.z=0;e.leapTo=null;e.hidden=false;e.sp=null;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
+  if(e.hasteT>0)e.hasteT-=dt;
+  if(e.state==='special'){updateSpecial(w,e,p,dt);return;}
+  if(e.boss&&e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'&&e.state!=='special'){
     e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;e.z=0;e.leapTo=null;
     w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
     emit(w,{type:'enrage',x:e.x,y:e.y,name:def.name,cry:e.type});
@@ -5483,6 +5489,7 @@ function updateBossPattern(w,e,p,dt){
       let facingOk=true;
       if(def.turn){const tr=def.turn*(ph2?1.3:1)*dt;e.facing+=clamp(angDiff(ang,e.facing),-tr,tr);facingOk=Math.abs(angDiff(ang,e.facing))<0.45;}
       else e.facing=ang;
+      if(facingOk&&trySpecial(w,e,p,d,los))break; // 緊急ボスの特別な技
       let pick=-1;
       for(let i=0;i<pat.length&&facingOk;i++){
         const idx=((e.patIdx|0)+i)%pat.length,cd=e.cds['p'+idx];
@@ -5528,7 +5535,7 @@ function updateBossPattern(w,e,p,dt){
         }
       }else{
         bossNoAttack(e,p,dt);
-        if(d>170)steerTo(w,e,p,e.speed,dt);
+        if(d>170)steerTo(w,e,p,e.speed*(e.hasteT>0?1.35:1),dt);
         else if(d<120)moveEntity(w.map,e,-Math.cos(ang)*e.speed*dt*0.6,-Math.sin(ang)*e.speed*dt*0.6);
       }
       break;
@@ -5597,14 +5604,160 @@ function updateBossPattern(w,e,p,dt){
     }
   }
 }
+/* ===== 緊急ボスの特別な技（specials）=====
+   DATA.enemies の specials:[{k,cd,...}] に並べる。通常の技とは別の状態（state='special'）で動き、終わると recover に戻る。
+   pattern・wolf・bull のどの動き方のボスでも使える。最初の1回は出撃から少し待ってから。 */
+function trySpecial(w,e,p,d,los){
+  const sp=DATA.enemies[e.type].specials;if(!sp||!sp.length)return false;
+  const order=shuffle(sp.map((_,i)=>i));
+  for(const i of order){
+    const mv=sp[i],key='s'+i;
+    if(e.cds[key]===undefined){e.cds[key]=rand(4,7);continue;}
+    if(e.cds[key]>0)continue;
+    if(mv.below&&e.hp>e.maxHp*mv.below)continue;
+    const R=mv.range||[0,600];
+    if(d<R[0]||d>R[1])continue;
+    if(mv.los&&!los)continue;
+    e.cds[key]=mv.cd*(e.phase===2?0.75:1);
+    startSpecial(w,e,p,mv);return true;
+  }
+  return false;
+}
+const SP_EL=mv=>({el:mv.el,st:mv.st});
+function startSpecial(w,e,p,mv){
+  const ph2=e.phase===2,wind=(mv.wind||0.8)*(ph2?0.85:1),ang=Math.atan2(p.y-e.y,p.x-e.x);
+  e.state='special';e.action='sp_'+mv.k;e.sp={k:mv.k,mv,t:0,step:0,ang};e.atkAngle=ang;e.facing=ang;e.timer=wind;
+  const T=(o)=>addTelegraph(w,Object.assign({owner:e.id},SP_EL(mv),o));
+  const dmg=k=>e.atk*k;
+  switch(mv.k){
+    case 'hornToss': // 角すくい上げ：近くを角ですくって大きく吹き飛ばす
+      T({shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+110,arc:1.3,total:wind,dmg:dmg(mv.dmg),kb:2.4});break;
+    case 'stompWaves': // 三連踏み鳴らし：外へ広がる輪の衝撃を3回
+      for(let i=0;i<3;i++)T({shape:'ring',x:e.x,y:e.y,r0:i===0?0:e.r+i*90-10,r:e.r+(i+1)*90+20,total:wind+i*0.45,dmg:dmg(mv.dmg)});
+      e.timer=wind+0.9;break;
+    case 'howlBolt': // 遠吠えの落雷：全員の足元に雷（怒ると2回）
+      T({shape:'circle',x:e.x,y:e.y,r:e.r+60,total:wind,dmg:0,small:true});
+      emit(w,{type:'roarWave',x:e.x,y:e.y,r:60,cry:e.type});
+      for(const q of Object.values(w.players)){if(q.dead)continue;
+        for(let k=0;k<(ph2?2:1);k++)T({shape:'circle',x:q.x+(k?rand(-60,60):0),y:q.y+(k?rand(-60,60):0),r:mv.r,total:wind+0.55+k*0.5,dmg:dmg(mv.dmg)});}
+      e.timer=wind+(ph2?1.1:0.6);break;
+    case 'flankPounce': // 回り込み：横へ素早く回り込み、そこから飛びかかる
+      e.sp.side=RNG.next()<0.5?1:-1;e.timer=0.3;break;
+    case 'tripleBreath': // 三首の時間差ブレス：扇状に3本、少しずつずらして
+      for(let i=0;i<3;i++){const a=ang+(i-1)*0.5;T({shape:'rect',x:e.x,y:e.y,angle:a,len:mv.len+e.r,width:mv.width,total:wind+i*0.3,dmg:dmg(mv.dmg)});}
+      e.timer=wind+0.6;break;
+    case 'dive': // 沼潜り：潜って足元から毒の沼ごと飛び出す
+      emit(w,{type:'roarWave',x:e.x,y:e.y,r:60});e.hidden=true;e.timer=1.6;break;
+    case 'vortex': // 大渦：中心へ引き寄せ、最後に渦の中心が弾ける
+      w.hazards.push({id:w.nextId++,kind:'vortex',x:p.x,y:p.y,r:mv.r,t:0,life:wind+2.6,tick:0.5,acc:0,dmg:e.atk*0.08,delay:0,pull:mv.pull,el:mv.el});
+      T({shape:'circle',x:p.x,y:p.y,r:80,total:wind+2.6,dmg:dmg(mv.dmg)});
+      e.timer=wind+0.4;break;
+    case 'tsunami': // 大津波：横に広い水の壁が前へ押し寄せる
+      T({shape:'rect',x:e.x,y:e.y,angle:ang,len:mv.len,width:mv.width,total:wind,dmg:0,small:true});break;
+    case 'crossCrack': // 地割れの十字（怒ると八方）
+      {const n=ph2?8:4;for(let i=0;i<n;i++)T({shape:'rect',x:e.x,y:e.y,angle:ang+i*TAU/n,len:mv.len+e.r,width:mv.width,total:wind,dmg:dmg(mv.dmg)});}break;
+    case 'rockfall': // 落石：あちこちに天井から岩
+      for(let i=0;i<mv.n;i++){const a=rand(0,TAU),R=rand(40,mv.spread);T({shape:'circle',x:p.x+Math.cos(a)*R,y:p.y+Math.sin(a)*R,r:mv.r,total:wind+i*0.12,dmg:dmg(mv.dmg)});}
+      for(const q of Object.values(w.players))if(!q.dead)T({shape:'circle',x:q.x,y:q.y,r:mv.r,total:wind+mv.n*0.12+0.2,dmg:dmg(mv.dmg)});
+      emit(w,{type:'roarWave',x:e.x,y:e.y,r:100});e.timer=wind+0.5;break;
+    case 'flameRun': // 飛翔火炎：飛び上がって一直線に飛び、通った跡を炎の帯にする
+      {const L=Math.min(mv.len,Math.max(260,Math.hypot(p.x-e.x,p.y-e.y)+160));e.sp.len=L;
+        T({shape:'rect',x:e.x,y:e.y,angle:ang,len:L,width:e.r*2,total:wind,dmg:0});}break;
+    case 'tailSpin': // 尾の大回転：一周なぎ払い、まわりに炎が残る
+      T({shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:dmg(mv.dmg)});break;
+    case 'drumming': // ドラミング：衝撃波を出し、しばらく素早くなる
+      T({shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:dmg(mv.dmg),kb:1.8});
+      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'ドラミング！',color:'#ff9a6a'});break;
+    case 'snowball': // 大雪玉：転がるうちに大きくなる
+      T({shape:'rect',x:e.x,y:e.y,angle:ang,len:mv.len,width:90,total:wind,dmg:0,small:true});break;
+    case 'phantoms': // 分身斬り：四方から分身が一斉に斬りかかる
+      {const base=rand(0,TAU),n=ph2?6:4;e.sp.lines=[];
+        for(let i=0;i<n;i++){const a=base+i*TAU/n,sx=p.x+Math.cos(a)*mv.len*0.5,sy=p.y+Math.sin(a)*mv.len*0.5,ta=a+Math.PI,tot=wind+i*0.15;
+          T({shape:'rect',x:sx,y:sy,angle:ta,len:mv.len,width:mv.width,total:tot,dmg:dmg(mv.dmg)});
+          e.sp.lines.push([sx,sy,sx+Math.cos(ta)*mv.len,sy+Math.sin(ta)*mv.len,tot]);}
+        e.timer=wind+n*0.15+0.1;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'分身',color:'#d0a0ff'});}break;
+    case 'iaiStance': // 居合の構え：構え中に攻撃されると強烈な反撃
+      T({shape:'circle',x:e.x,y:e.y,r:e.r+mv.r,total:mv.hold,dmg:0,small:true});
+      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'構え…',color:'#d0a0ff'});
+      e.timer=mv.hold;break;
+  }
+}
+function updateSpecial(w,e,p,dt){
+  const S=e.sp;if(!S){e.state='recover';e.timer=0.4;return;}
+  const mv=S.mv,ph2=e.phase===2,rest=BOSS_REST_OF(e);
+  S.t+=dt;e.timer-=dt;
+  const end=(t)=>{e.state='recover';e.timer=(t==null?0.6:t)+rest;e.hidden=false;e.z=0;e.sp=null;};
+  const T=(o)=>addTelegraph(w,Object.assign({owner:e.id},SP_EL(mv),o));
+  switch(S.k){
+    case 'flankPounce':
+      if(S.step===0){ // 横へすばやく移動
+        const a=S.ang+S.side*Math.PI/2;moveEntity(w.map,e,Math.cos(a)*520*dt,Math.sin(a)*520*dt);
+        if(e.timer<=0){S.step=1;const wind=0.6*(ph2?0.85:1);S.from=[e.x,e.y];let tx=p.x,ty=p.y;if(cannotEnter(w.map,e,tx,ty)){tx=e.x;ty=e.y;}S.to=[tx,ty];S.wind=wind;e.timer=wind;
+          e.facing=Math.atan2(ty-e.y,tx-e.x);T({shape:'circle',x:tx,y:ty,r:mv.r,total:wind,dmg:e.atk*mv.dmg});}
+      }else{const k=clamp(1-e.timer/S.wind,0,1),q=clamp((k-0.35)/0.65,0,1);
+        e.x=S.from[0]+(S.to[0]-S.from[0])*q;e.y=S.from[1]+(S.to[1]-S.from[1])*q;e.z=Math.sin(Math.PI*q)*60;
+        if(e.timer<=0){emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});end(0.7);}}
+      return;
+    case 'dive':
+      e.hidden=true;
+      if(S.step===0&&e.timer<=0.7){S.step=1;S.tx=p.x;S.ty=p.y;T({shape:'circle',x:p.x,y:p.y,r:mv.r,total:0.7,dmg:e.atk*mv.dmg});}
+      if(e.timer<=0){if(!cannotEnter(w.map,e,S.tx,S.ty)){e.x=S.tx;e.y=S.ty;}
+        w.hazards.push({id:w.nextId++,kind:'toxpool',x:e.x,y:e.y,r:mv.r,bl:poolShape().map(b=>[b[0]*1.3,b[1]*1.3,b[2]*1.3]),t:0,life:6,tick:0.5,acc:0,dmg:e.atk*0.15,delay:0,st:'poison'});
+        emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});end(0.9);}
+      return;
+    case 'tsunami':
+      if(e.timer<=0){ // 横一列の波を前へ流す
+        const a=S.ang,px=-Math.sin(a),py=Math.cos(a),n=9,grp={hit:new Set()};
+        for(let i=0;i<n;i++){const off=(i-(n-1)/2)*(mv.width/(n-1));
+          w.hazards.push({id:w.nextId++,kind:'wave',x:e.x+Math.cos(a)*(e.r+20)+px*off,y:e.y+Math.sin(a)*(e.r+20)+py*off,r:34,t:0,life:mv.len/mv.speed,tick:99,acc:0,dmg:0,delay:0,
+            vx:Math.cos(a)*mv.speed,vy:Math.sin(a)*mv.speed,once:{dmg:e.atk*mv.dmg,kb:1.6,grp,src:e.type,el:mv.el}});}
+        emit(w,{type:'shoot',x:e.x,y:e.y});end(0.7);}
+      return;
+    case 'flameRun':
+      if(S.step===0){if(e.timer<=0){S.step=1;S.left=S.len;S.drop=0;S.hit=new Set();}return;}
+      {const sp=780*dt;moveEntity(w.map,e,Math.cos(S.ang)*sp,Math.sin(S.ang)*sp);S.left-=sp;S.drop-=sp;e.z=40;
+        if(S.drop<=0){S.drop=46;w.hazards.push({id:w.nextId++,kind:'fire',x:e.x,y:e.y,r:34,t:0,life:3.5,tick:0.5,acc:0,dmg:e.atk*0.5,delay:0,el:'fire'});}
+        for(const q of Object.values(w.players)){if(q.dead||S.hit.has(q.id))continue;if(Math.hypot(q.x-e.x,q.y-e.y)<e.r+q.r){S.hit.add(q.id);hitPlayer(w,q,e.atk*mv.dmg,e.x,e.y,e.type,'fire');}}
+        if(S.left<=0){emit(w,{type:'roarWave',x:e.x,y:e.y,r:80});end(0.8);}}
+      return;
+    case 'tailSpin':
+      if(e.timer<=0){for(let i=0;i<8;i++){const a=i*TAU/8,R=mv.r*0.85;w.hazards.push({id:w.nextId++,kind:'fire',x:e.x+Math.cos(a)*R,y:e.y+Math.sin(a)*R,r:30,t:0,life:2.5,tick:0.5,acc:0,dmg:e.atk*0.45,delay:0,el:'fire'});}
+        emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r});end(0.7);}
+      else e.facing+=dt*(S.t>0.3?14:2); // 溜めの終わりにぐるっと回る
+      return;
+    case 'drumming':
+      if(e.timer<=0){e.hasteT=mv.haste;emit(w,{type:'roarWave',x:e.x,y:e.y,r:mv.r,cry:e.type});end(0.5);}
+      return;
+    case 'snowball':
+      if(e.timer<=0){const a=S.ang;
+        w.hazards.push({id:w.nextId++,kind:'snowball',x:e.x+Math.cos(a)*(e.r+26),y:e.y+Math.sin(a)*(e.r+26),r:24,t:0,life:mv.len/mv.speed,tick:99,acc:0,dmg:0,delay:0,
+          vx:Math.cos(a)*mv.speed,vy:Math.sin(a)*mv.speed,grow:mv.grow,maxR:mv.maxR,wallStop:true,once:{dmg:e.atk*mv.dmg,kb:1.8,grp:{hit:new Set()},src:e.type,el:'ice',slow:true}});
+        end(0.6);}
+      return;
+    case 'phantoms':
+      while(S.lines.length&&S.t>=S.lines[0][4]){const L=S.lines.shift();emit(w,{type:'slashLine',x0:L[0],y0:L[1],x1:L[2],y1:L[3]});}
+      if(e.timer<=0)end(0.7);
+      return;
+    case 'iaiStance':
+      if(S.hit&&S.step===0){S.step=1;e.timer=0.3;w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
+        T({shape:'circle',x:e.x,y:e.y,r:e.r+mv.r,total:0.3,dmg:e.atk*mv.dmg});emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'返し斬り！',color:'#ff6a6a'});return;}
+      if(e.timer<=0)end(S.step===1?0.9:0.4);
+      return;
+  }
+  if(e.timer<=0){ // そのほか：予告の時間が終わったら隙を作って戻る
+    if(S.k==='crossCrack'||S.k==='hornToss')emit(w,{type:'roarWave',x:e.x,y:e.y,r:90});
+    end(S.k==='stompWaves'||S.k==='rockfall'?0.6:0.7);
+  }
+}
 /** 草原の暴角獣：角なぎ・突進・踏みつけ。体力が半分を切ると怒り、突進の間隔が短くなる */
 function updateBull(w,e,p,dt){
   const ph2=e.phase===2,def=DATA.enemies[e.type],rc=ph2?0.7:1;
   if(e.cds.stomp===undefined)e.cds.stomp=2; // 踏みつけは初回の出し方を遅らせる
   for(const k in e.cds)e.cds[k]-=dt;
   if(e.state==='sleep')return;
-  if(e.state==='stunned'){e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
-  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'){
+  if(e.state==='stunned'){e.z=0;e.hidden=false;e.sp=null;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
+  if(e.state==='special'){updateSpecial(w,e,p,dt);return;}
+  if(e.phase===1&&e.hp<=e.maxHp*0.5&&e.state!=='charge'&&e.state!=='roar'&&e.state!=='special'){
     e.phase=2;e.state='roar';e.timer=1.0;e.speed=def.speed*1.2;
     w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
     emit(w,{type:'enrage',x:e.x,y:e.y,name:def.name,cry:e.type});
@@ -5615,6 +5768,7 @@ function updateBull(w,e,p,dt){
     case 'roar':e.timer-=dt;if(e.timer<=0)e.state='chase';break;
     case 'chase':{
       e.facing=ang;
+      if(trySpecial(w,e,p,d,lineOfSight(w.map,e.x,e.y,p.x,p.y)))break; // 緊急ボスの特別な技
       const reach=e.r+p.r+40;
       if(d<reach+26&&e.cds.sweep<=0){ // 角なぎ：前方の扇形
         e.state='windup';e.action='sweep';e.timer=ph2?0.5:0.7;e.atkAngle=ang;
@@ -6179,7 +6333,7 @@ function updateTelegraphs(w,dt){
     t.t+=dt;
     if(t.t>=t.total){
       if(t.dmg>0){w._atkEnt=w.enemies.find(e=>e.id===t.owner)||null;
-        for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y,(w.enemies.find(e=>e.id===t.owner)||{}).type,t.el,t.st)&&t.slow)slowPlayer(w,p,t.slow);}
+        for(const id in w.players){const p=w.players[id];if(!p.dead&&inTelegraph(t,p.x,p.y,p.r)&&hitPlayer(w,p,t.dmg,t.x,t.y,(w.enemies.find(e=>e.id===t.owner)||{}).type,t.el,t.st)){if(t.slow)slowPlayer(w,p,t.slow);if(t.kb){p.kx*=t.kb;p.ky*=t.kb;}}}
         w._atkEnt=null;emit(w,{type:'tgResolve',shape:t.shape,x:t.x,y:t.y,r:t.r,angle:t.angle,arc:t.arc,small:!!t.small});
       }
     }else keep.push(t);
@@ -6286,6 +6440,21 @@ function updateHazards(w,dt){
   for(const hz of w.hazards){
     if(hz.delay>0){hz.delay-=dt;continue;}
     hz.t+=dt;hz.acc+=dt;
+    // 動く危険地帯（津波・雪玉）：進んで、壁に当たると消える。雪玉は転がるほど大きくなる
+    if(hz.vx||hz.vy){hz.x+=hz.vx*dt;hz.y+=hz.vy*dt;if(hz.grow)hz.r=Math.min(hz.maxR||80,hz.r+hz.grow*dt);
+      if(isWall(w.map,Math.floor(hz.x/TILE),Math.floor(hz.y/TILE))){if(hz.wallStop)emit(w,{type:'roarWave',x:hz.x,y:hz.y,r:hz.r});hz.t=hz.life;continue;}}
+    // 一度だけ当たるもの：同じ波・雪玉には一人一回だけ（吹き飛ばしつき）
+    if(hz.once){const O=hz.once;
+      for(const p of Object.values(w.players)){if(p.dead||O.grp.hit.has(p.id))continue;
+        if(Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r+p.r*0.6){O.grp.hit.add(p.id);
+          if(hitPlayer(w,p,O.dmg,hz.x-(hz.vx||0)*0.05,hz.y-(hz.vy||0)*0.05,O.src,O.el)){p.kx*=O.kb||1;p.ky*=O.kb||1;if(O.slow)slowPlayer(w,p,{time:2});}}}
+      continue;}
+    // 大渦：範囲内のプレイヤーを中心へ引き寄せ、少しずつダメージ
+    if(hz.pull){
+      for(const p of Object.values(w.players)){if(p.dead)continue;const dx=hz.x-p.x,dy=hz.y-p.y,d=Math.hypot(dx,dy);
+        if(d<hz.r&&d>8){const f=hz.pull*dt*(0.5+0.5*(1-d/hz.r));moveEntity(w.map,p,dx/d*f,dy/d*f);}}
+      if(hz.acc>=hz.tick){hz.acc-=hz.tick;for(const p of Object.values(w.players))if(!p.dead&&Math.hypot(p.x-hz.x,p.y-hz.y)<hz.r)dotPlayer(w,p,hz.dmg,hz.el);}
+      continue;}
     let inside=Object.values(w.players).filter(p=>!p.dead&&inHazard(hz,p.x,p.y,p.r*0.5));
     const heat=hz.kind==='fire'||hz.kind==='magma';
     if(heat)inside=inside.filter(p=>!hit.has(p.id));else for(const p of inside)p.poisoned=hz.kind==='toxpool'?2:0.3; // 沼の毒池は出てから2秒間毒が残る
@@ -8355,6 +8524,9 @@ const Renderer={
       case 'slimeLand':this.burst(ev.x,ev.y,'#7fe07a',14,150);this.addShake(3);break;
       case 'roarWave':this.ring(ev.x,ev.y,20,ev.r+30,'#ffe0a0',0.55,7);this.addShake(10);break;
       case 'warp':this.ring(ev.x,ev.y,4,34,'#9fe0ff',0.45,3);break; // 仲間のワープ
+      case 'bossTxt':this.floater(ev.x,ev.y,ev.text,ev.color||'#fff',18,1.2);break; // ボスの技名
+      case 'slashLine':{ // 分身の斬撃：線に沿って光の粒
+        const n=14;for(let i=0;i<=n;i++){const q=i/n;this.burst(ev.x0+(ev.x1-ev.x0)*q,ev.y0+(ev.y1-ev.y0)*q,'#d0a0ff',2,60);}this.addShake(3);break;}
       case 'heavySwing':this.addShake(5);break;
       case 'empower':this.floater(ev.x,ev.y,'強化!','#d080ff',14,1.0);this.ring(ev.x,ev.y+14,6,34,'#c070ff',0.4,3);break;
       case 'revived':this.floater(ev.x,ev.y-20,'よみがえった!','#d080ff',16,1.2);this.ring(ev.x,ev.y,6,50,'#c070ff',0.6,4);this.burst(ev.x,ev.y,'#d8c8ff',16,140);break;
@@ -8699,6 +8871,11 @@ const Renderer={
     }else if(t.shape==='sector'){
       ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.arc(t.x,t.y,t.r,t.angle-t.arc/2,t.angle+t.arc/2);ctx.closePath();ctx.fill();ctx.stroke();
       ctx.fillStyle=prog;ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.arc(t.x,t.y,t.r*k,t.angle-t.arc/2,t.angle+t.arc/2);ctx.closePath();ctx.fill();
+    }else if(t.shape==='ring'){ // 輪：内側は安全
+      const r0=t.r0||0;
+      ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,TAU);ctx.arc(t.x,t.y,r0,0,TAU,true);ctx.fill('evenodd');
+      ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,TAU);ctx.stroke();if(r0>0){ctx.beginPath();ctx.arc(t.x,t.y,r0,0,TAU);ctx.stroke();}
+      ctx.fillStyle=prog;ctx.beginPath();ctx.arc(t.x,t.y,r0+(t.r-r0)*k,0,TAU);ctx.arc(t.x,t.y,r0,0,TAU,true);ctx.fill('evenodd');
     }else if(t.shape==='rect'){
       ctx.translate(t.x,t.y);ctx.rotate(t.angle);
       ctx.fillRect(0,-t.width/2,t.len,t.width);ctx.strokeRect(0,-t.width/2,t.len,t.width);
@@ -9892,6 +10069,23 @@ const Renderer={
   },
   drawHazard(ctx,z){
     if(z.kind==='magma'||z.kind==='fire'){this.drawLava(ctx,z);return;}
+    if(z.kind==='vortex'){ // 大渦：回る水の輪
+      const tm=this.time||0;ctx.save();
+      const g=ctx.createRadialGradient(z.x,z.y,4,z.x,z.y,z.r);g.addColorStop(0,'rgba(20,60,140,.55)');g.addColorStop(1,'rgba(70,160,255,.08)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();
+      ctx.strokeStyle='rgba(170,220,255,.6)';ctx.lineWidth=2.5;
+      for(let i=0;i<4;i++){const a=tm*3+i*TAU/4;ctx.beginPath();for(let k=0;k<=20;k++){const q=k/20,rr=z.r*(1-q*0.9),aa=a+q*4;const x=z.x+Math.cos(aa)*rr,y=z.y+Math.sin(aa)*rr*0.85;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}
+      ctx.restore();return;}
+    if(z.kind==='wave'){ // 津波：白い波頭の水のかたまり
+      const a=Math.atan2(z.vy||0,z.vx||1);ctx.save();ctx.translate(z.x,z.y);ctx.rotate(a);
+      ctx.fillStyle='rgba(60,150,230,.75)';ctx.beginPath();ctx.ellipse(0,0,z.r*0.8,z.r*1.1,0,0,TAU);ctx.fill();
+      ctx.fillStyle='rgba(235,250,255,.85)';ctx.beginPath();ctx.ellipse(z.r*0.45,0,z.r*0.3,z.r*1.0,0,0,TAU);ctx.fill();
+      ctx.restore();return;}
+    if(z.kind==='snowball'){ // 大雪玉：転がる白い玉
+      const a=(z.t||0)*6;ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(z.x,z.y+z.r*0.8,z.r,z.r*0.3,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#f4f8ff';ctx.strokeStyle='#9ab8d8';ctx.lineWidth=2;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();ctx.stroke();
+      ctx.strokeStyle='rgba(150,180,215,.8)';ctx.lineWidth=1.5;for(let i=0;i<3;i++){const b=a+i*2.1;ctx.beginPath();ctx.arc(z.x+Math.cos(b)*z.r*0.45,z.y+Math.sin(b)*z.r*0.45,z.r*0.18,0,TAU);ctx.stroke();}
+      ctx.restore();return;}
     if(z.kind==='toxpool'){ // 沼地の毒池：紫緑の濁った水面と泡
       const pulse=0.5+0.5*Math.sin(this.time*4+z.id);
       const a=clamp(Math.min(z.t/0.3,(z.life-z.t)/0.6),0,1);
@@ -12303,9 +12497,9 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
-      telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
+      telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
       blizzard:w.blizzard?{on:!!w.blizzard.on}:null,narrowVision:!!w.narrowVision,
       gathers:(w.gathers||[]).map(g=>({id:g.id,x:g.x,y:g.y,kind:g.kind,used:g.used})),
