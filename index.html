@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.40.5',date:'2026/11/01'};
+const GAME_VERSION={no:'1.41.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3365,7 +3365,7 @@ function eqColor(it){if(it.slot==='charm')return rarColor(it.rarity);if(it.slot!
 function eqRarity(it){return it.slot==='charm'?DATA.rarities[it.rarity]:{name:'',color:'#e6e6e6'};}
 function lootLabel(l){
   if(l.type==='mat')return {text:`${DATA.materials[l.id].name} ×${l.n}`,color:DATA.materials[l.id].color};
-  if(l.type==='equip'){const nm=DATA.equipment[l.item.baseId].name;return l.item.slot==='charm'?{text:`${nm}（${DATA.rarities[l.item.rarity].name}）`,color:rarColor(l.item.rarity)}:{text:nm,color:'#e6e6e6'};}
+  if(l.type==='equip'){const nm=eqName(l.item.baseId);return l.item.slot==='charm'?{text:`${nm}（${DATA.rarities[l.item.rarity].name}）`,color:rarColor(l.item.rarity)}:{text:nm,color:'#e6e6e6'};}
   if(l.type==='deco')return {text:`${DATA.decorations[l.item.decoId].name}（${DATA.rarities[l.item.rarity].name}）`,color:rarColor(l.item.rarity)};
   if(l.type==='item'){const c=DATA.consumables[l.id];return {text:`${c.name} ×${l.n}`,color:c.color};}
   if(l.type==='gold')return {text:`${l.n}G`,color:'#ffd23a'};
@@ -11858,7 +11858,10 @@ function elemResText(r){const a=Object.keys(DATA.elements).filter(k=>r[k]).map(k
 function slotDots(it){return it.slots.map(u=>u?'◆':'◇').join('');}
 /** 装備中一覧の部位の隣：空きスロットは灰色の◇、使用済みは金色の◆ */
 function slotDotsColored(it){return it.slots.map(u=>u?'<span style="color:#ffd23a">◆</span>':'<span style="color:#6a6480">◇</span>').join('');}
-function itemName(it){return DATA.equipment[it.baseId].name;}
+/* 属性のマーク：属性のある武器は名前の後ろに付ける（火・水・雷・氷・冥） */
+const EL_MARK={fire:'🔥',water:'💧',thunder:'⚡',ice:'❄️',mei:'🌑'};
+function eqName(id){const b=DATA.equipment[id];if(!b)return '';const m=b.el&&EL_MARK[b.el.k];return b.name+(m||'');}
+function itemName(it){return eqName(it.baseId);}
 
 /* ===================== 9. 装備・製作の操作（データだけを変更する純粋な処理） =====================
    画面表示（通知）はしないで結果のメッセージを返す。ローカルでは App がそのまま実行し、
@@ -12202,7 +12205,7 @@ const Ops={
     if((p.gold||0)<gold)return {msg:'お金が足りません（'+gold+'G 必要）',color:'#ff8060'};
     Profile.spendMats(p,{reinforce_orb:orbs});p.gold-=gold;
     it.reinforce=lv+1;it.def+=1;
-    return {changed:true,msg:`${DATA.equipment[it.baseId].name} を強化！ 防御力 +1（${lv+1}/${REINFORCE_MAX}）`,color:'#ffd23a'};
+    return {changed:true,msg:`${eqName(it.baseId)} を強化！ 防御力 +1（${lv+1}/${REINFORCE_MAX}）`,color:'#ffd23a'};
   },
   /** ボスの武器を霊玉で強化：そのボスの霊玉1個とお金を使い、攻撃力を上げる（3段階目で特殊効果） */
   bossReinforce(p,who,a){
@@ -12219,7 +12222,7 @@ const Ops={
     let eff='';
     if(lv+1===BOSS_REINF_MAX){const ids=Object.keys(DATA.enemies);const ei=ids.indexOf(boss);const ef=BOSS_REINF_EFFECTS[(ei<0?0:ei)%BOSS_REINF_EFFECTS.length];if(!it.effects.includes(ef))it.effects.push(ef);eff=`（特殊効果「${DATA.effects[ef].name}」付与）`;}
     const up=st.atk?`攻撃 +${st.atk}`:'';
-    return {changed:true,msg:`${DATA.equipment[it.baseId].name} を強化！ ${up}（${lv+1}/${BOSS_REINF_MAX}）${eff}`,color:'#ffd23a'};
+    return {changed:true,msg:`${eqName(it.baseId)} を強化！ ${up}（${lv+1}/${BOSS_REINF_MAX}）${eff}`,color:'#ffd23a'};
   },
   /** 付与：防具に玉（段階1〜3）で付与スキルを抽選する。付与済みなら作り直し（今の付与を消して抽選し直す）。玉は1個 */
   enchant(p,who,a){
@@ -12230,7 +12233,7 @@ const Ops={
     const again=!!(it.enchant&&it.enchant.skills&&Object.keys(it.enchant.skills).length);
     Profile.spendMats(p,{[id]:1});
     it.enchant={t,skills:Items.rollEnchant(t)};
-    return {changed:true,msg:`${DATA.equipment[it.baseId].name} に${DATA.enchantTiers[t-1].name}の付与${again?'（作り直し）':''}`,color:'#ffd23a'};
+    return {changed:true,msg:`${eqName(it.baseId)} に${DATA.enchantTiers[t-1].name}の付与${again?'（作り直し）':''}`,color:'#ffd23a'};
   },
 };
 
@@ -13736,7 +13739,7 @@ const App={
     const p=this.profile;
     const nameOf=it=>it.type==='coin'?`${it.n}コイン`:it.type==='gold'?`${it.n}G`
       :it.type==='item'?`${DATA.consumables[it.id].name} ×${it.n}`:it.type==='mat'?`${DATA.materials[it.id].name} ×${it.n}`
-      :it.type==='equip'?`${DATA.equipment[it.id].name}${it.n>1?' ×'+it.n:''}`:`${DATA.decorations[it.id].name}`;
+      :it.type==='equip'?`${eqName(it.id)}${it.n>1?' ×'+it.n:''}`:`${DATA.decorations[it.id].name}`;
     const list=DATA.gifts.map(g=>{
       const got=!!p.giftsGot[g.id];
       return `<div class="recipe"><div class="rn">${g.items.map(nameOf).join('、')}　<small class="muted">（${esc(g.reason)}）</small></div>
@@ -14258,7 +14261,7 @@ const App={
   itemDetailHTML(it){
     const p=this.profile,base=DATA.equipment[it.baseId],rar=eqRarity(it),who=this.inv.who||0;
     const owner=Profile.equippedBy(p,it.uid),eq=owner===who;
-    let h=`<div class="iname" style="color:${rar.color}">${base.name}</div><div class="isub">${rar.name?rar.name+'・':''}${SLOT_NAMES[it.slot]}${base.wtype?'（'+DATA.weaponTypes[base.wtype].name+'）':''}　${this.equipTag(it.uid)}</div>`;
+    let h=`<div class="iname" style="color:${rar.color}">${eqName(it.baseId)}</div><div class="isub">${rar.name?rar.name+'・':''}${SLOT_NAMES[it.slot]}${base.wtype?'（'+DATA.weaponTypes[base.wtype].name+'）':''}　${this.equipTag(it.uid)}</div>`;
     {const sr=DATA.seriesRes[it.baseId==='fang_king'?'fang':it.baseId.split('_')[0]];
     h+=it.slot==='charm'?'':sec('基本性能',it.slot==='weapon'?row('攻撃力',it.atk)+row('会心率',it.crit+'%')+(base.el?row('属性',`<span style="color:${DATA.elements[base.el.k].color}">${DATA.elements[base.el.k].name} ${Math.round(base.el.v*rar.statMult)}</span>`):''):row('防御力',it.def)+(sr?row('属性耐性',elemResText(sr)):''));}
     if(it.slot==='charm'){const sk=it.skills||{};h+=sec('スキルポイント（この手紙だけのもの）',Object.keys(sk).map(k=>{const d=DATA.armorSkills[k];return d?row(d.name,'+'+sk[k]+'pt'):'';}).join('')+`<div class="small muted">手紙は1枚ずつ付いているスキルとポイントが違います。レア度が高いほど強いスキル・多いポイントが付きやすくなります。</div>`);}
@@ -14406,7 +14409,7 @@ const App={
       const txt=has?keys.map(k=>`${DATA.armorSkills[k].name} +${sk[k]}pt`).join('・'):'まだ付与なし';
       const btns=tiers.map((t,i)=>{const id=i===0?'enchant_orb':'enchant_orb'+(i+1),n=p.materials[id]||0;
         return `<button class="${n>0?'primary':''}" data-act="enchant" data-uid="${it.uid}" data-t="${i+1}" ${n>0?'':'disabled'}>${t.name}の玉で${has?'作り直す':'付与'}（所持 ${n}）</button>`;}).join('');
-      return `<div class="recipe"><div class="rn">${esc(DATA.equipment[it.baseId].name)}</div><div class="muted">${SLOT_NAMES[it.slot]}　${esc(txt)}</div><div class="btnrow">${btns}</div></div>`;
+      return `<div class="recipe"><div class="rn">${esc(eqName(it.baseId))}</div><div class="muted">${SLOT_NAMES[it.slot]}　${esc(txt)}</div><div class="btnrow">${btns}</div></div>`;
     }).join(''):'<div class="muted">防具を持っていません。</div>';
     return `<div class="col full" style="margin-bottom:10px"><div class="col-t">防具への付与</div><div class="small muted" style="margin-bottom:6px">玉を1個使うと、防具にスキルポイントが付きます（手紙と同じ仕組み）。玉の段階が高いほど、強いスキルが出やすく、ポイントも高くなります。「作り直す」は今の付与を消して、玉1個で抽選し直します。</div>${rows}</div>`;
   },
@@ -14418,7 +14421,7 @@ const App={
       const b=DATA.equipment[it.baseId],boss=b.boss,mat=boss+'_spirit',have=p.materials[mat]||0,lv=it.bossLv||0,full=lv>=BOSS_REINF_MAX;
       const gold=full?0:BOSS_REINF_GOLD[lv],can=!full&&have>=BOSS_REINF_COST&&gold0>=gold;
       const mn=(DATA.materials[mat]||{}).name||'霊玉';
-      return `<div class="recipe"><div class="rn">${esc(b.name)}　<span style="color:#ffd23a">霊玉強化 ${lv}/${BOSS_REINF_MAX}</span></div>
+      return `<div class="recipe"><div class="rn">${esc(eqName(it.baseId))}　<span style="color:#ffd23a">霊玉強化 ${lv}/${BOSS_REINF_MAX}</span></div>
         <div class="muted">${SLOT_NAMES[it.slot]}　攻撃力 ${it.atk}　会心 ${it.crit}%</div>
         ${full?'':`<div class="cost"><span class="${have>=BOSS_REINF_COST?'ok':'ng'}">${esc(mn)} ${have}/${BOSS_REINF_COST}</span><span class="${gold0>=gold?'ok':'ng'}">${gold}G（所持 ${gold0}G）</span></div>`}
         <div class="btnrow"><button class="${can?'primary':''}" data-act="bossReinforce" data-uid="${it.uid}" ${can?'':'disabled'}>${full?'強化済み':'霊玉で強化する'}</button></div></div>`;
@@ -14431,7 +14434,7 @@ const App={
     const rows=list.length?list.map(it=>{
       const lv=it.reinforce||0,b=DATA.equipment[it.baseId],full=lv>=REINFORCE_MAX;
       const need=lv+1,gold=REINFORCE_GOLD*(lv+1),can=!full&&orbs>=need&&gold0>=gold;
-      return `<div class="recipe"><div class="rn">${esc(b.name)}　<span style="color:#ffd23a">強化 ${lv}/${REINFORCE_MAX}</span></div>
+      return `<div class="recipe"><div class="rn">${esc(eqName(it.baseId))}　<span style="color:#ffd23a">強化 ${lv}/${REINFORCE_MAX}</span></div>
         <div class="muted">${SLOT_NAMES[it.slot]}　防御力 ${it.def}</div>
         ${full?'':`<div class="cost"><span class="${orbs>=need?'ok':'ng'}">強化玉 ${orbs}/${need}</span><span class="${gold0>=gold?'ok':'ng'}">${gold}G（所持 ${gold0}G）</span></div>`}
         <div class="btnrow"><button class="${can?'primary':''}" data-act="reinforce" data-uid="${it.uid}" ${can?'':'disabled'}>${full?'強化済み':'強化する（防御 +1）'}</button></div></div>`;
@@ -14559,7 +14562,7 @@ const App={
     return `<div class="col full" data-scroll="craft"><div class="recipes">${list.map(r=>{
       let name,info='';
       if(r.out.type==='equip'){
-        const b=DATA.equipment[r.out.id];name=isBossWeapon(r.out.id)?`<span style="color:${BOSS_WEAPON_COLOR}">${b.name}</span>`:b.name;
+        const b=DATA.equipment[r.out.id];name=isBossWeapon(r.out.id)?`<span style="color:${BOSS_WEAPON_COLOR}">${eqName(r.out.id)}</span>`:eqName(r.out.id);
         const set=b.slot!=='weapon'?Object.values(DATA.armorSets).find(s=>s.pieces[b.slot]===r.out.id):null;
         info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk} / 会心率 ${b.crit}%${b.el?` / ${DATA.elements[b.el.k].name}属性 ${b.el.v}`:''}${b.st?` / ${DATA.playerStatus[b.st.k].name}（状態異常・蓄積 ${b.st.buildup}）`:''}`:`防御力 ${b.def} / 装飾品スロット ${b.slots||0}`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（シリーズスキル「${set.bonus}」）</span>`:''}`;
       }else if(r.out.type==='deco'){
