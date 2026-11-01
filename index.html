@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.84.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.84.1',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -13558,10 +13558,19 @@ const UI={
     });
   },
   show(html){
-    const scrolls={};
-    this.overlay.querySelectorAll('[data-scroll]').forEach(el=>{scrolls[el.dataset.scroll]=el.scrollTop;});
-    this.overlay.innerHTML=html;this.overlay.classList.remove('hidden');
-    this.overlay.querySelectorAll('[data-scroll]').forEach(el=>{if(scrolls[el.dataset.scroll])el.scrollTop=scrolls[el.dataset.scroll];});
+    const scrolls={},ov=this.overlay;
+    ov.querySelectorAll('[data-scroll]').forEach(el=>{scrolls[el.dataset.scroll]=el.scrollTop;});
+    /* 同じ画面を描き直すときは、スクロールしていた場所（画面全体・一覧など）をすべて覚えておき、描き直したあとに戻す。
+       画面が変わったとき（見出しや外枠が違うとき）は戻さない */
+    const sig=()=>{const f=ov.firstElementChild,h=ov.querySelector('h2');return (f?f.className:'')+'|'+(h?h.textContent:'');};
+    const pathOf=el=>{const a=[];while(el&&el!==ov){a.unshift([...el.parentNode.children].indexOf(el));el=el.parentNode;}return a;};
+    const byPath=a=>{let el=ov;for(const i of a){el=el&&el.children[i];}return el||null;};
+    const oldSig=ov.classList.contains('hidden')?null:sig(),keep=[];
+    if(oldSig!==null){if(ov.scrollTop||ov.scrollLeft)keep.push([[],ov.scrollTop,ov.scrollLeft]);ov.querySelectorAll('*').forEach(el=>{if((el.scrollTop||el.scrollLeft)&&!el.dataset.scroll)keep.push([pathOf(el),el.scrollTop,el.scrollLeft]);});}
+    const se=document.scrollingElement,pageY=se?se.scrollTop:0;
+    ov.innerHTML=html;ov.classList.remove('hidden');
+    ov.querySelectorAll('[data-scroll]').forEach(el=>{if(scrolls[el.dataset.scroll])el.scrollTop=scrolls[el.dataset.scroll];});
+    if(oldSig!==null&&oldSig===sig()){for(const [pa,t,l] of keep){const el=byPath(pa);if(el){el.scrollTop=t;el.scrollLeft=l;}}if(se&&pageY)se.scrollTop=pageY;}
     // 相棒のプレビュー（装備画面の詳細欄）：ゲーム内と同じ描き方で姿を出す
     this.overlay.querySelectorAll('canvas.pet-prev').forEach(cv=>{
       try{Renderer.drawPet(cv.getContext('2d'),{id:'__prev',x:240,y:64,r:80,facing:0,petLook:cv.dataset.look,petLookV:cv.dataset.v|0,preview:true});}catch(e){}
