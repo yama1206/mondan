@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.49.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.49.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1025,9 +1025,9 @@ const DATA={
   },
   materials:{
     // ステージ3：腐毒の沼地
-    toxic_gland:{name:'毒腺',color:'#a0e040',desc:'毒蛙や花食いが持つ毒の袋。（腐毒の沼地）'},
+    toxic_gland:{name:'毒腺',color:'#a0e040',desc:'毒蛙や花食いが持つ毒の袋。（緑風の森林・腐毒の沼地）'},
     leech_skin:{name:'ヒルの皮',color:'#8a3a3a',desc:'ぬるりと光る厚い皮。（腐毒の沼地）'},
-    swamp_moss:{name:'沼苔',color:'#4a8a5a',desc:'沼の底に生える柔らかい苔。（腐毒の沼地）'},
+    swamp_moss:{name:'沼苔',color:'#4a8a5a',desc:'沼の底に生える柔らかい苔。（緑風の森林・腐毒の沼地）'},
     poison_sac:{name:'毒袋',color:'#c0d050',desc:'膨張体が抱え込んだ毒の袋。（腐毒の沼地）'},
     croc_scale:{name:'沼鰐の鱗',color:'#6a8a5a',desc:'硬い鱗。防具の素材にも向く。（腐毒の沼地）'},
     parasite_core:{name:'寄生核',color:'#b080e0',desc:'寄生体の中心にある核。（腐毒の沼地）'},
@@ -1094,7 +1094,7 @@ const DATA={
     frost_wyvern_spirit:{name:'永冬竜フロストレインの霊玉',color:'#c8a8ff',desc:'永冬竜フロストレインからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     ice_ape_spirit:{name:'剛猿の霊玉',color:'#c8a8ff',desc:'氷嶺の剛猿からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     bone_dragon_spirit:{name:'骨竜の霊玉',color:'#c8a8ff',desc:'冥府の骨竜からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
-    mire_core:{name:'沼巨人の泥核',color:'#8a7a4a',desc:'沼巨人の体の芯になる泥の塊。非常に稀少。（腐毒の沼地）'},
+    mire_core:{name:'沼巨人の泥核',color:'#8a7a4a',desc:'沼巨人の体の芯になる泥の塊。非常に稀少。（腐毒の沼地・晶石の大洞窟）'},
     // ステージ4：蒼流の水辺
     water_scale:{name:'水棲の鱗',color:'#7ad8c0',desc:'水棲トカゲの青い鱗。（蒼流の水辺）'},
     jelly_gel:{name:'泡沫の膠',color:'#c8e8ff',desc:'クラゲが抱える透明な膠。（蒼流の水辺）'},
@@ -1200,35 +1200,35 @@ const DATA={
     owl_gem:{name:'氷結の眼晶',color:'#9ae8ff',desc:'吹雪フクロウの目に宿る氷の結晶。（氷雪地帯）'},
     // ---- 晶石の大洞窟で手に入る素材 ----
     cave_wing:{name:'コウモリの翼膜',color:'#7a60a0',desc:'洞窟コウモリの薄くて丈夫な翼。（晶石の大洞窟）'},
-    cave_fang:{name:'鋭牙',color:'#f0f0e0',desc:'洞窟コウモリの鋭い牙。（晶石の大洞窟）'},
-    rock_scale:{name:'岩殻の鱗',color:'#8a8e98',desc:'岩殻トカゲの硬い鱗。（晶石の大洞窟）'},
+    cave_fang:{name:'鋭牙',color:'#f0f0e0',desc:'洞窟コウモリの鋭い牙。（風渡る草原・晶石の大洞窟）'},
+    rock_scale:{name:'岩殻の鱗',color:'#8a8e98',desc:'岩殻トカゲの硬い鱗。（風渡る草原・晶石の大洞窟・灼熱の火山）'},
     rock_tooth:{name:'岩トカゲの牙',color:'#c8c0a8',desc:'岩殻トカゲの太い牙。稀少素材。（晶石の大洞窟）'},
-    spider_silk:{name:'鍾乳蜘蛛の糸',color:'#e8e8f8',desc:'鍾乳蜘蛛が張る、強い糸。（晶石の大洞窟）'},
+    spider_silk:{name:'鍾乳蜘蛛の糸',color:'#e8e8f8',desc:'鍾乳蜘蛛が張る、強い糸。（緑風の森林・晶石の大洞窟・灼熱の火山・忘却の地下墓地）'},
     spider_fang:{name:'蜘蛛の毒牙',color:'#a8c040',desc:'鍾乳蜘蛛の毒を持つ牙。稀少素材。（晶石の大洞窟）'},
-    crystal_shard:{name:'輝晶の欠片',color:'#9ae8ff',desc:'輝晶スライムがまとう結晶の欠片。（晶石の大洞窟）'},
+    crystal_shard:{name:'輝晶の欠片',color:'#9ae8ff',desc:'輝晶スライムがまとう結晶の欠片。（風渡る草原・晶石の大洞窟・氷雪地帯）'},
     crystal_core:{name:'結晶核',color:'#c8f0ff',desc:'輝晶スライムの体の中心にある核。稀少素材。（晶石の大洞窟）'},
     mole_claw:{name:'土竜の爪',color:'#e8e0c8',desc:'結晶喰いの土竜の大きな爪。稀少素材。（晶石の大洞窟）'},
     mole_crystal:{name:'土竜の結晶',color:'#9ae8ff',desc:'土竜が食べた結晶。非常に稀少。（晶石の大洞窟）'},
-    centi_shell:{name:'百足の甲殻',color:'#c86a4a',desc:'晶殻の大百足の硬い甲殻。（晶石の大洞窟）'},
-    centi_ember:{name:'晶炎の核',color:'#ffb070',desc:'大百足の体で燃える晶炎の核。非常に稀少。（晶石の大洞窟）'},
+    centi_shell:{name:'百足の甲殻',color:'#c86a4a',desc:'晶殻の大百足の硬い甲殻。（晶石の大洞窟・灼熱の火山）'},
+    centi_ember:{name:'晶炎の核',color:'#ffb070',desc:'大百足の体で燃える晶炎の核。非常に稀少。（晶石の大洞窟・灼熱の火山）'},
     grados_ore:{name:'地底鉱石',color:'#8a8a9a',desc:'地底王グラドスの体を作る鉱石。（晶石の大洞窟）'},
     grados_core:{name:'王の核',color:'#c8f0ff',desc:'地底王の心臓となる核。非常に稀少。（晶石の大洞窟）'},
     stag_mandible:{name:'大顎',color:'#c8a070',desc:'大顎クワガタの巨大なあご。稀少素材。（緑風の森林）'},
     stag_shell:{name:'黒鋼の甲殻',color:'#5a4030',desc:'大顎クワガタの、鋼のように硬い甲殻。（緑風の森林）'},
-    goblin_string:{name:'ゴブリンの弓弦',color:'#c8b070',desc:'ゴブリン弓兵の弓に張られた弦。（緑風の森林）'},
-    beast_fang:{name:'獣の牙',color:'#ece4cc',desc:'森狼の鋭い牙。（緑風の森林）'},
-    beast_hide:{name:'獣皮',color:'#9a7a52',desc:'森狼のしなやかな毛皮。（緑風の森林）'},
-    slime_gel:{name:'スライムの粘液',color:'#6fe07a',desc:'グリーンスライムのぷるぷるした粘液。（緑風の森林）'},
-    hard_shell:{name:'硬い甲殻',color:'#4a8a70',desc:'森甲虫の背中を覆う硬い甲殻。（緑風の森林）'},
-    poison_spore:{name:'毒胞子',color:'#a8c040',desc:'毒胞子キノコがまき散らす胞子。取り扱い注意。（緑風の森林）'},
+    goblin_string:{name:'ゴブリンの弓弦',color:'#c8b070',desc:'ゴブリン弓兵の弓に張られた弦。（風渡る草原）'},
+    beast_fang:{name:'獣の牙',color:'#ece4cc',desc:'森狼の鋭い牙。（緑風の森林・氷雪地帯）'},
+    beast_hide:{name:'獣皮',color:'#9a7a52',desc:'森狼のしなやかな毛皮。（緑風の森林・氷雪地帯）'},
+    slime_gel:{name:'スライムの粘液',color:'#6fe07a',desc:'グリーンスライムのぷるぷるした粘液。（風渡る草原・腐毒の沼地・蒼流の水辺）'},
+    hard_shell:{name:'硬い甲殻',color:'#4a8a70',desc:'森甲虫の背中を覆う硬い甲殻。（風渡る草原・緑風の森林・蒼流の水辺・晶石の大洞窟）'},
+    poison_spore:{name:'毒胞子',color:'#a8c040',desc:'毒胞子キノコがまき散らす胞子。取り扱い注意。（緑風の森林・腐毒の沼地・晶石の大洞窟・灼熱の火山）'},
     wood:{name:'木材',color:'#a0703a',desc:'古木の採取場で取れる丈夫な木材。（緑風の森林）'},
-    herb:{name:'薬草',color:'#58c060',desc:'古木の採取場に生える薬草。（緑風の森林）'},
+    herb:{name:'薬草',color:'#58c060',desc:'古木の採取場に生える薬草。（風渡る草原・緑風の森林）'},
     forest_mushroom:{name:'森のキノコ',color:'#d08a5a',desc:'古木の根元に生えるキノコ。（緑風の森林）'},
     // ---- 忘却の地下墓地で手に入る素材 ----
     soul_shard:{name:'霊魂の欠片',color:'#9ad8ff',desc:'迷い霊が残した、淡く光る欠片。（忘却の地下墓地）'},
     rotten_cloth:{name:'腐敗した布',color:'#7a7a58',desc:'墓守ゾンビがまとっていたぼろ布。（忘却の地下墓地）'},
     cursed_iron:{name:'呪われた鉄片',color:'#6a5a8a',desc:'呪われた騎士の鎧のかけら。（忘却の地下墓地）'},
-    curse_powder:{name:'呪術の粉',color:'#b070d0',desc:'墓地の呪術師が使う怪しい粉。（忘却の地下墓地）'},
+    curse_powder:{name:'呪術の粉',color:'#b070d0',desc:'墓地の呪術師が使う怪しい粉。（蒼流の水辺・忘却の地下墓地）'},
     seal_shard:{name:'封印片',color:'#d8c070',desc:'祭壇の封印が砕けたかけら。（忘却の地下墓地）'},
     dragon_bone:{name:'骨竜の竜骨',color:'#e8e2d0',desc:'冥府の骨竜の巨大な骨。稀少素材。（忘却の地下墓地）'},
     nether_core:{name:'冥府の霊核',color:'#7a50ff',desc:'骨竜を動かしていた霊核。非常に稀少。（忘却の地下墓地）'},
