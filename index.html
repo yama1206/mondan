@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.73.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.73.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -5225,6 +5225,7 @@ function damageEnemy(w,p,e,mult,src){
 }
 /** 矢の状態異常を付ける（ボスは効きにくい） */
 /** ボスの耐性：同じ種類の状態異常・閃光を受けるたびに効き目が縮む（0.75倍ずつ、下限0.25倍）。ボスごとに数えるので次の戦いではリセット */
+/** ボスの慣れ（耐性）：状態異常は種類ごと（毒・麻痺・睡眠・鈍足）、閃光玉、罠は種類ごと（trap_pit・trap_shock）に別々に数える */
 function bossResFactor(e,k){if(!e.boss)return 1;const n=(e.resCount||{})[k]||0;return Math.max(0.25,Math.pow(0.75,n));}
 function bossResHit(e,k){if(!e.boss)return;e.resCount=e.resCount||{};e.resCount[k]=(e.resCount[k]||0)+1;}
 function applyStatus(w,e,status){
@@ -5619,7 +5620,7 @@ function cancelEnemyAction(w,e){
 }
 /** 罠で動きを止める。ボスは同じ罠を何度も受けると効き目が短くなる */
 function holdEnemy(w,e,sec,kind){
-  if(e.boss){e.trapCount=(e.trapCount||0)+1;sec*=Math.pow(0.75,e.trapCount-1);}
+  if(e.boss){const rk='trap_'+kind;sec*=bossResFactor(e,rk);bossResHit(e,rk);} // ボスの罠への慣れ：落とし穴・シビレ罠それぞれ別（かかるたびに0.75倍、最低0.25倍）
   e.trapT=Math.max(e.trapT||0,sec);e.trapKind=kind;e.blindT=0;
   cancelEnemyAction(w,e);
   emit(w,{type:'trapped',kind,x:e.x,y:e.y,boss:e.boss,name:DATA.enemies[e.type].name,sec:Math.round(sec*10)/10});
