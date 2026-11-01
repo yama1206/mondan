@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.34.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.35.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3567,13 +3567,13 @@ const LOOKS=[
   {id:'l_penguin',name:'角獣',col:'#cfeaff'},
   {id:'l_dragon',name:'チビドラゴン',col:'#e05a7a'},
   {id:'l_turtle',name:'大亀',col:'#6a8a4a'},
-  {id:'l_ghost',name:'蛾',col:'#c8a0ff'},
+  {id:'l_ghost',name:'蜂',col:'#e8b830'},
   {id:'l_hamster',name:'鼠',col:'#b8a0a0'},
   {id:'l_bird',name:'鷹',col:'#6a5a4a'},
   {id:'l_fox',name:'兎',col:'#fff4e8'},
 ];
 /* 見た目ごとのサポート行動（首輪ではなく見た目が行動を持つ）。値は PET_ACTS のキー */
-const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling',l_turtle:'turtle',l_bird:'owl',l_hamster:'bee',l_ghost:'moth',l_penguin:'penguin',l_fox:'fox'};
+const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling',l_turtle:'turtle',l_bird:'owl',l_hamster:'bee',l_ghost:'beesting',l_penguin:'penguin',l_fox:'fox'};
 /* 見た目の色違い：1つの見た目に4色（基本色＋色違い3つ）。色は色相をずらして作る */
 const LOOK_VARIANTS=[{name:'基本色',hue:0},{name:'色違い1',hue:110},{name:'色違い2',hue:220},{name:'色違い3',hue:300}];
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
@@ -4698,7 +4698,7 @@ function damageEnemy(w,p,e,mult,src){
   if(!e.boss&&!e.mid&&!e.halfFlinched&&e.hp>0&&e.hp<=e.maxHp*0.5){e.halfFlinched=true;e.flinchT=0.45;e.action=null;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'怯み',color:'#ffd27a'});}
   if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
-  const inf=src.petInflict||s.inflict; // ペットの状態異常（蛾の鱗粉）は持ち主の武器の代わりに使う
+  const inf=src.petInflict||s.inflict; // ペットの状態異常（蜂の毒針）は持ち主の武器の代わりに使う
   if(inf&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
     const k=inf.k;e.buildup=e.buildup||{};e.buildThr=e.buildThr||{};
     const thr=e.buildThr[k]||100;
@@ -6335,7 +6335,7 @@ function updateRevive(w,dt){
    ready／do：飼い主の様子を見て助ける首輪（回復・守り・応援） */
 const PET_ACTS={
   penguin:{name:'氷滑り',desc:'氷の上を滑って近くの敵に体当たりする（飼い主の攻撃力の30%＋氷属性）',cd:7,attack:{mult:0.3,range:240,elem:{k:'ice',v:8}}},
-  moth:{name:'鱗粉',desc:'離れた所から近くの敵に鱗粉を吹きかけ、麻痺させる（飼い主の攻撃力の20%・麻痺が溜まる）',cd:8,attack:{mult:0.2,range:320,ranged:true,inflict:{k:'paralysis',buildup:25}}},
+  beesting:{name:'毒針刺し',desc:'近くの敵に飛びかかって毒針で刺し、毒にする（飼い主の攻撃力の25%・毒が溜まる）',cd:6,attack:{mult:0.25,range:300,inflict:{k:'poison',buildup:25}}},
   bee:{name:'種の差し入れ',desc:'飼い主のHPが4割を切ると、ほおぶくろから種を出して大きく回復させる（最大HPの20%）',cd:30,
     ready:(w,o)=>o.hp<o.stats.maxHp*0.4,do:(w,pt,o)=>petHeal(w,o,0.2)},
   mole:{name:'土の守り',desc:'飼い主に敵の攻撃の予告が重なると、土の守りで受けるダメージを30%減らす（4秒）',cd:15,
@@ -8062,13 +8062,30 @@ const PET_ART={
     H.E(k,0.85,0.02,0.24,0.2,0,'#7ab07a',d);H.eye(k,0.9,-0.02,0.045);
     H.E(k,-0.05,-0.12,0.72,0.5,0,C,d);H.E(k,-0.3,-0.22,0.18,0.14,0,'#8aa86a',d);H.E(k,0.15,-0.25,0.18,0.14,0,'#8aa86a',d);
     H.E(k,-0.1,-0.42,0.14,0.1,0,'#8aa86a',d);H.E(k,-0.05,0.12,0.75,0.12,0,'#c0a060',d);return [0.2,-0.1,0.3];},
-  l_ghost(k,H,C,mv){const d='rgba(0,0,0,.55)',f=Math.sin(k.t*(mv?16:4))*0.35;
-    H.E(k,-0.05,-0.42+Math.abs(f)*0.1,0.42,0.34,0.5-f,C,d);H.E(k,-0.45,-0.3,0.45,0.36,-0.5+f,C,d);
-    H.E(k,-0.28,0.08,0.26,0.2,0.3+f,'#e8d0ff',d);H.E(k,0.1,0.06,0.2,0.16,-0.3-f,'#e8d0ff',d);
-    H.E(k,-0.45,-0.32,0.1,0.1,0,'#e0c0ff');H.E(k,0.12,-0.4,0.09,0.09,0,'#e0c0ff');
-    H.E(k,0.02,0.02,0.1,0.42,0,'#4a3a5a');
-    H.L(k,[0.05,-0.36,0.2,-0.85],'#4a3a5a',0.03);H.L(k,[0.05,-0.36,0.1,-0.9],'#4a3a5a',0.03);
-    H.eye(k,0.1,-0.12,0.045);return [0.0,-0.1,0.25];},
+  l_ghost(k,H,C,mv){ // 蜂：宙に浮いて羽音を立てる。とがった縞の腹と毒針
+    const d='rgba(0,0,0,.6)',c=k.ctx,bob=Math.sin(k.t*(mv?9:5))*0.05-0.12,fl=Math.sin(k.t*45)*0.28,DK='#2a2010',WG='rgba(225,242,255,.5)';
+    // 奥の翅
+    H.E(k,-0.1,-0.52+bob,0.4,0.13,-0.95+fl,WG,d);
+    // 脚（ぶら下げる）
+    for(const [x,ax] of [[0.02,-0.08],[0.12,0.0],[0.22,0.1]])H.L(k,[x,-0.12+bob,ax,0.08+bob,ax+0.07,0.2+bob],DK,0.03);
+    // とがった腹：縞模様と毒針
+    const ab=[-0.02,-0.36,-0.38,-0.4,-0.64,-0.24,-0.8,0.0,-0.52,0.02,-0.16,-0.04].map((v,i)=>i%2?v+bob:v);
+    H.P(k,[-0.76,-0.02+bob,-1.0,0.08+bob,-0.76,0.04+bob],DK);
+    H.P(k,ab,C,d);
+    c.save();c.beginPath();c.moveTo(ab[0],ab[1]);for(let i=2;i<ab.length;i+=2)c.lineTo(ab[i],ab[i+1]);c.closePath();c.clip();
+    for(const x of [-0.24,-0.46,-0.66]){c.fillStyle=DK;c.beginPath();c.moveTo(x,-0.5+bob);c.lineTo(x-0.1,-0.5+bob);c.lineTo(x-0.16,0.1+bob);c.lineTo(x-0.06,0.1+bob);c.closePath();c.fill();}
+    c.restore();H.P(k,ab,null,d);
+    // 胸（毛の生えた胴）
+    H.P(k,[-0.06,-0.34,0.12,-0.42,0.28,-0.32,0.28,-0.08,0.1,0.0,-0.06,-0.08].map((v,i)=>i%2?v+bob:v),'#6a4a20',d);
+    H.L(k,[0.0,-0.3+bob,0.22,-0.3+bob],'#c89a40',0.04);
+    // 頭：大きな複眼、あご、くの字の触角
+    H.P(k,[0.28,-0.36,0.46,-0.4,0.56,-0.22,0.48,-0.06,0.3,-0.1].map((v,i)=>i%2?v+bob:v),DK,d);
+    H.P(k,[0.36,-0.36,0.5,-0.36,0.52,-0.18,0.4,-0.16].map((v,i)=>i%2?v+bob:v),'#c03a2a');
+    H.P(k,[0.48,-0.1+bob,0.6,-0.04+bob,0.5,-0.02+bob],DK);
+    H.L(k,[0.42,-0.38+bob,0.48,-0.6+bob,0.64,-0.66+bob],DK,0.03);H.L(k,[0.36,-0.38+bob,0.36,-0.62+bob,0.5,-0.72+bob],DK,0.03);
+    // 手前の翅（すじ入り）
+    H.E(k,0.0,-0.5+bob,0.44,0.15,-0.7-fl,WG,d);
+    return [0.28,-0.22+bob,0.13];},
   l_hamster(k,H,C,mv){const d='rgba(0,0,0,.55)',sw=mv?0.12:0.02;
     H.S(k,[-0.5,0.15,-0.85,0.3,-1.15,0.2],'#c8a8a8',0.05);
     for(const [x,ph] of [[-0.3,0],[0.3,1.6]])H.leg(k,x,0.3,ph,'#c8a8a8',0.09,{g:0.47,sw,knee:0,lift:0.05});
@@ -8310,7 +8327,7 @@ const Renderer={
       case 'itemCancel':this.floater(ev.x,ev.y,'中断','#aaaaaa',14,0.8);break;
       case 'itemArea':this.ring(ev.x,ev.y,20,ev.r,ev.color,0.7,4);break;
       case 'buff':this.floater(ev.x,ev.y,(ev.stat==='atk'?'攻撃':'防御')+'UP!',ev.color,16,1.2);break;
-      case 'petAct':this.floater(ev.x,ev.y-6,ev.name,'#ffd0f0',12,1.0);if(ev.tx!=null){this.ring(ev.tx,ev.ty,4,ev.ranged?26:18,ev.collar==='dragonling'?'#ff8040':'#ffe0f0',0.35);}else this.ring(ev.x,ev.y+12,6,30,'#ffd0f0',0.5);break; // ペットのサポート行動
+      case 'petAct':this.floater(ev.x,ev.y-6,ev.name,'#ffd0f0',12,1.0);if(ev.tx!=null){this.ring(ev.tx,ev.ty,4,ev.ranged?26:18,ev.collar==='dragonling'?'#ff8040':ev.collar==='beesting'?'#a0e070':'#ffe0f0',0.35);}else this.ring(ev.x,ev.y+12,6,30,'#ffd0f0',0.5);break; // ペットのサポート行動
       case 'swing':if(ev.level>0){this.ring(ev.x,ev.y,10,40+ev.level*20,'#ffd060',0.35,3+ev.level);this.addShake(ev.level*2);}break;
       case 'skill':this.ring(ev.x,ev.y,10,50,'#7fe0ff',0.3);break;
       case 'tgResolve':
