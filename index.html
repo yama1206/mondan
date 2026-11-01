@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.40.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.40.3',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -1291,7 +1291,6 @@ const DATA={
   // プレゼント：ここに追加すると、キャンプ画面の「プレゼント」から受け取れる（1人1回）。
   // items の type：coin（コイン）／gold（G）／item（消耗品・id）／mat（素材・id）／equip（装備・id、n本）／deco（装飾品・id、rarity）
   gifts:[
-    {id:'thanks_coin_100',reason:'運営からの感謝の気持ちです',items:[{type:'coin',n:100}]},
     {id:'apology_coin_200',reason:'運営からのお詫びの品です',items:[{type:'coin',n:200}]},
   ],
   elemShare:0.5,
