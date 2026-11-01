@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.54.7',date:'2026/11/01'};
+const GAME_VERSION={no:'1.55.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -8850,6 +8850,112 @@ const PET_ART={
     return [0.26,-0.12,0.16];},
 };
 // ===== PETART END =====
+/* ===== 雑魚の見た目（上から見た姿・元の生き物らしく）=====
+   キーは魔物の種類（type）。+x が前（向いている方向）、単位は体の半径 r。hurt のときは白く光る */
+const MobArt=(()=>{
+  const mk=(c,hurt)=>{const C=v=>hurt?'#ffffff':v,lw=c.lineWidth;
+    const E=(x,y,rx,ry,rot,f,s)=>{c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),rot||0,0,TAU);if(f){c.fillStyle=C(f);c.fill();}if(s){c.strokeStyle=s;c.lineWidth=lw;c.stroke();}};
+    const P=(a,f,s)=>{c.beginPath();c.moveTo(a[0],a[1]);for(let i=2;i<a.length;i+=2)c.lineTo(a[i],a[i+1]);c.closePath();if(f){c.fillStyle=C(f);c.fill();}if(s){c.strokeStyle=s;c.lineWidth=lw;c.stroke();}};
+    const L=(a,col,w)=>{c.beginPath();c.moveTo(a[0],a[1]);for(let i=2;i<a.length;i+=2)c.lineTo(a[i],a[i+1]);c.strokeStyle=hurt?'#ffffff':col;c.lineWidth=w;c.stroke();};
+    return {E,P,L,C};};
+  const __mk=mk;
+  const legs=(H,n,xs,len,t,col,w)=>{for(let i=0;i<n;i++){const x=xs[i],sw=Math.sin(t+i*1.7)*0.18;for(const s of [-1,1])H.L([x,s*0.45,x+sw*s,s*(0.45+len)],col,w);}};
+  return {
+    __h:(c,hurt)=>__mk(c,hurt),
+    goblin(c,e,H,pal,t){ // ゴブリン：とがった長い耳、ぼろの肩当て、こん棒
+      const d=pal.dark,sw=e.state==='windup'?-1.1:Math.sin(t*10)*0.15;
+      H.E(-0.15,0,0.62,0.9,0,'#6a4a2a',d); // ぼろ布の肩
+      H.P([0.1,-0.35,0.95,-1.25,0.25,-0.05],pal.ear,d);H.P([0.1,0.35,0.95,1.25,0.25,0.05],pal.ear,d); // 長い耳
+      H.E(0.15,0,0.62,0.6,0,pal.body,d); // 頭
+      H.E(0.62,0,0.16,0.13,0,'#3a7a24'); // 大きな鼻
+      for(const s of [-1,1]){H.E(0.45,s*0.27,0.12,0.12,0,pal.eye);H.E(0.5,s*0.27,0.05,0.05,0,'#1a1008');}
+      c.save();c.rotate(sw+0.5);H.L([0.3,0.7,1.2,0.75],'#6a4520',0.22);H.E(1.3,0.76,0.24,0.22,0,'#8a5a2a',d);c.restore(); // こん棒
+    },
+    goblin_archer(c,e,H,pal,t){ // ゴブリン弓兵：フード、背中の矢筒、弓
+      const d=pal.dark;
+      H.P([-0.95,-0.25,-0.35,-0.35,-0.35,0.05,-0.95,-0.05],'#7a4a20',d); // 矢筒
+      for(const y of [-0.3,-0.18,-0.06])H.L([-0.95,y,-1.2,y-0.05],'#e8e0c8',0.06);
+      H.P([0.1,-0.3,0.8,-1.0,0.2,0],pal.ear,d);H.P([0.1,0.3,0.8,1.0,0.2,0],pal.ear,d);
+      H.E(0,0,0.72,0.72,0,'#5a6a3a',d); // フード
+      H.E(0.25,0,0.45,0.45,0,pal.body);
+      for(const s of [-1,1])H.E(0.5,s*0.2,0.1,0.1,0,pal.eye);
+      const pull=e.state==='aim'?clamp(1-e.timer/0.8,0,1)*0.35:0;
+      c.lineWidth=0.16;c.strokeStyle=H.C('#7a4a20');c.beginPath();c.arc(0.55,0,1.0,-1.1,1.1);c.stroke(); // 弓
+      H.L([0.55+Math.cos(-1.1),Math.sin(-1.1),0.85-pull,0,0.55+Math.cos(1.1),Math.sin(1.1)],'#e8e0c8',0.05);
+    },
+    field_rat(c,e,H,pal,t){ // ネズミ：とがった鼻先、丸い耳、長い尻尾、ひげ
+      const d=pal.dark,w=Math.sin(t*14)*0.25;
+      c.lineCap='round';H.L([-0.9,0,-1.4,w*0.6,-1.9,-w*0.4,-2.3,w],'#d8a8a8',0.14); // 尻尾
+      legs(H,2,[-0.4,0.3],0.25,t*14,'#e0a0a0',0.12);
+      H.P([-1.0,0,-0.7,-0.6,0.2,-0.55,0.75,-0.25,1.25,0,0.75,0.25,0.2,0.55,-0.7,0.6],pal.body,d); // 体
+      H.E(-0.2,0,0.4,0.25,0,'#b8a898');
+      for(const s of [-1,1]){H.E(0.45,s*0.5,0.24,0.24,0,pal.body,d);H.E(0.45,s*0.5,0.13,0.13,0,pal.ear);}
+      H.E(1.27,0,0.11,0.11,0,'#f08090'); // 鼻
+      for(const s of [-1,1]){H.E(0.85,s*0.2,0.08,0.08,0,'#1a1010');H.L([1.15,s*0.08,1.6,s*0.35],'#ece6dc',0.03);H.L([1.15,s*0.08,1.6,s*0.15],'#ece6dc',0.03);}
+    },
+    slime(c,e,H,pal,t){ // スライム：ぷるぷる揺れる半透明の体、中の核、光沢
+      c.rotate(-e.facing); // 体は向きで回さない
+      const k=Math.sin(t*6)*0.08,sq=e.state==='windup'?0.15:0,f=e.facing;
+      c.globalAlpha*=0.88;
+      H.E(0,0.1,1.0+k+sq,0.92-k-sq,0,pal.body,pal.dark);c.globalAlpha/=0.88;
+      H.E(-0.15,0.2,0.45,0.35,0,'#3ea84a');
+      H.E(-0.35,-0.35,0.28,0.16,-0.5,'rgba(255,255,255,.55)');
+      for(const s of [-1,1]){const ex=Math.cos(f)*0.35+Math.cos(f+Math.PI/2)*s*0.28,ey=Math.sin(f)*0.35+Math.sin(f+Math.PI/2)*s*0.28;H.E(ex,ey,0.13,0.16,0,'#ffffff');H.E(ex+Math.cos(f)*0.05,ey+Math.sin(f)*0.05,0.07,0.09,0,pal.eye);}
+      for(let i=0;i<2;i++){const a=t*0.7+i*3,q=(t*0.8+i*0.5)%1;H.E(Math.cos(a)*0.8,0.9+q*0.3,0.08,0.12*(1-q),0,pal.body);}
+    },
+    wild_boar(c,e,H,pal,t){ // イノシシ：背中のたてがみ、平たい鼻、反り返った牙
+      const d=pal.dark;legs(H,2,[-0.5,0.4],0.3,t*12,'#3a2a18',0.18);
+      H.E(-0.15,0,1.05,0.7,0,pal.body,d);
+      for(let i=0;i<7;i++){const x=-0.9+i*0.24;H.P([x,-0.08,x+0.12,0,x,0.08,x-0.06,0],'#4a3420');} // たてがみ
+      H.P([0.6,-0.5,1.25,-0.32,1.4,0,1.25,0.32,0.6,0.5],pal.body,d); // 頭
+      for(const s of [-1,1])H.P([0.65,s*0.42,0.55,s*0.8,0.85,s*0.5],'#6a4a30',d); // 耳
+      H.E(1.42,0,0.14,0.24,0,'#c89a8a',d);
+      for(const s of [-1,1]){H.P([1.2,s*0.22,1.55,s*0.48,1.62,s*0.36,1.28,s*0.12],'#f4ecd8',d);H.E(1.0,s*0.25,0.07,0.07,0,pal.eye);}
+    },
+    beetle(c,e,H,pal,t){ // 甲虫：つやのある前翅、合わせ目、胸、小さな角、6本の脚
+      const d=pal.dark;legs(H,3,[-0.35,0.1,0.5],0.4,t*12,d,0.12);
+      H.E(-0.2,0,0.85,0.75,0,pal.shell,d);
+      H.L([-1.0,0,0.45,0],d,0.06);
+      for(const s of [-1,1])H.E(-0.3,s*0.35,0.45,0.18,0,'rgba(255,255,255,.18)');
+      H.E(0.65,0,0.32,0.45,0,pal.body,d); // 胸
+      H.E(0.95,0,0.18,0.24,0,pal.body,d); // 頭
+      H.P([1.05,-0.05,1.45,-0.25,1.1,0.05],'#2a3a30',d);
+      for(const s of [-1,1]){H.E(1.02,s*0.14,0.05,0.05,0,pal.eye);H.L([1.05,s*0.15,1.35,s*0.45],d,0.04);}
+    },
+    forest_wolf(c,e,H,pal,t){ // 森狼：とがった耳、長い鼻先、背中の濃い毛、ふさふさの尻尾
+      const d=pal.dark,w=Math.sin(t*9)*0.25;legs(H,2,[-0.5,0.45],0.3,t*13,d,0.16);
+      H.E(-1.3,w*0.35,0.55,0.26,w*0.4,pal.body,d);H.E(-1.75,w*0.55,0.16,0.14,0,'#d8d0c0'); // ふさふさの尻尾
+      H.E(-0.1,0,0.95,0.55,0,pal.body,d);H.E(-0.2,0,0.7,0.25,0,d);
+      H.P([0.55,-0.42,1.2,-0.25,1.55,0,1.2,0.25,0.55,0.42],pal.body,d);
+      for(const s of [-1,1])H.P([0.65,s*0.3,0.55,s*0.7,0.9,s*0.4],pal.body,d);
+      H.E(1.55,0,0.09,0.09,0,'#1a1410');for(const s of [-1,1])H.E(1.05,s*0.2,0.07,0.06,0,pal.eye);
+    },
+    hanayari(c,e,H,pal,t){ // ハナヤリ：地面に広がる葉と、槍のように突き出たつぼみ
+      const d=pal.dark,open=e.state==='windup'||e.state==='aim'?0.5:0;
+      for(let i=0;i<6;i++){const a=i*TAU/6+0.3;c.save();c.rotate(a);H.P([0.2,0,0.8,-0.35,1.35,0,0.8,0.35],pal.leaf,d);H.L([0.25,0,1.2,0],d,0.04);c.restore();}
+      H.E(0,0,0.42,0.42,0,'#5a9a3a',d);
+      for(let i=0;i<5;i++){const a=i*TAU/5;c.save();c.rotate(a);H.P([0.1,-0.12-open*0.2,0.55+open*0.3,0,0.1,0.12+open*0.2],pal.mouth,d);c.restore();}
+      H.P([0.1,-0.08,1.25+open*0.3,0,0.1,0.08],pal.tooth,d); // 槍の穂先
+    },
+    mahibana(c,e,H,pal,t){ // マヒバナ：大きな黄色い花と、ふわふわ舞う麻痺の花粉
+      const d=pal.dark;c.rotate(-e.facing);
+      for(let i=0;i<5;i++){const a=i*TAU/5+0.6;c.save();c.rotate(a);H.P([0.2,0,0.85,-0.3,1.3,0,0.85,0.3],pal.leaf,d);c.restore();}
+      const op=0.9+Math.sin(t*3)*0.08;
+      for(let i=0;i<8;i++){const a=i*TAU/8+t*0.3;c.save();c.rotate(a);H.E(0.5*op,0,0.35*op,0.18,0,pal.mouth,d);c.restore();}
+      H.E(0,0,0.32,0.32,0,'#c87a20',d);
+      for(let i=0;i<6;i++){const a=i*1.1+t*1.5,q=(t*0.6+i/6)%1;H.E(Math.cos(a)*0.4*(1+q),Math.sin(a)*0.4*(1+q)-q*0.6,0.07,0.07,0,pal.tooth);}
+    },
+    mushroom(c,e,H,pal,t){ // 毒胞子キノコ：水玉模様のかさ、ふちのひだ、胞子
+      c.rotate(-e.facing);const d=pal.dark,pf=e.state==='windup'?0.12:Math.sin(t*3)*0.03;
+      H.E(0.1,0.25,0.95,0.6,0,'rgba(0,0,0,.25)');
+      H.E(0,0,1.0-pf,0.95-pf,0,'#a0405e',d);
+      H.E(0,-0.05,0.85-pf,0.8-pf,0,pal.cap);
+      for(const [x,y,r2] of [[-0.35,-0.3,0.18],[0.3,-0.35,0.14],[0.05,0.15,0.2],[-0.45,0.3,0.12],[0.45,0.25,0.13]])H.E(x,y,r2,r2*0.85,0,pal.spot);
+      if(e.state==='windup')for(let i=0;i<8;i++){const a=i*TAU/8;H.E(Math.cos(a)*1.2,Math.sin(a)*1.2,0.08,0.08,0,'#d8e8a0');}
+    },
+  };
+})();
+
 const Renderer={
   cv:null,ctx:null,dpr:1,w:0,h:0,scale:1,cam:{x:0,y:0},camInit:false,mapCanvas:null,mapVersion:-1,mapRef:null,
   particles:[],floaters:[],rings:[],shake:0,banner:null,time:0,
@@ -9549,7 +9655,7 @@ const Renderer={
       ctx.save();ctx.globalAlpha=0.35+0.2*Math.sin(this.time*9+e.id);ctx.strokeStyle='#c070ff';ctx.lineWidth=3;ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.arc(0,0,e.r+4,this.time*2,this.time*2+TAU);ctx.stroke();ctx.restore();
     }
-    if(!(ed.boss&&BossArt.draw(ctx,e,hurt)))switch(ed.look||ed.ai){
+    if(!(ed.boss&&BossArt.draw(ctx,e,hurt))&&!this.drawMobArt(ctx,e,hurt,ed))switch(ed.look||ed.ai){
       case 'goblin':this.drawGoblin(ctx,e,hurt,ed.pal);break;
       case 'archer':case 'garcher':this.drawArcher(ctx,e,hurt,ed.pal,ed.aimTime||0.8);break;
       case 'wolf':this.drawWolf(ctx,e,hurt,ed.pal);break;
@@ -9616,6 +9722,17 @@ const Renderer={
     }
     ctx.restore();
     // 敵の体力は表示しない（モンハン式）
+  },
+  /** 雑魚の新しい見た目（MobArt にあるものだけ）。描いたら true */
+  drawMobArt(ctx,e,hurt,ed){
+    const fn=MobArt[e.type];if(!fn||!ed.pal)return false;
+    if(e.state==='aim'&&ed.ai==='archer'){ // 弓兵の狙い線
+      const aimTime=ed.aimTime||0.8,locked=e.timer<=0.28,k=1-clamp(e.timer/aimTime,0,1);
+      ctx.save();ctx.rotate(e.atkAngle);ctx.strokeStyle=locked?`rgba(255,60,60,${0.6+0.4*Math.sin(this.time*40)})`:`rgba(255,120,80,${0.25+0.4*k})`;
+      ctx.lineWidth=locked?3:1.5;ctx.setLineDash(locked?[]:[8,6]);ctx.beginPath();ctx.moveTo(e.r,0);ctx.lineTo(520,0);ctx.stroke();ctx.setLineDash([]);ctx.restore();}
+    ctx.save();ctx.rotate(e.facing||0);ctx.scale(e.r,e.r);ctx.lineWidth=1.6/e.r;ctx.lineJoin='round';ctx.lineCap='round';
+    try{fn(ctx,e,MobArt.__h(ctx,hurt),ed.pal,e.anim||0);}catch(err){}
+    ctx.restore();return true;
   },
   drawGoblin(ctx,e,hurt,pal){
     const r=e.r,f=e.facing,bob=Math.sin(e.anim*10)*1;
