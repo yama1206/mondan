@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.81.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.82.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1631,14 +1631,14 @@ const DATA={
         {k:'swarm',wind:0.6,cd:9,kind:'worker_bee',n:2,max:4}, // 働き蜂を呼ぶ
         {k:'shot',wind:0.8,cd:7,dmg:0.6,n:10,ring:true,speed:240,st:'poison',stChance:0.4,below:0.5}, // 毒霧を全方位に撒く（怒り時）
       ]},
-    twin_shark:{name:'深淵の大鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,moveStyle:'circle',bloodScent:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
+    twin_shark:{name:'深淵の大鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,specials:[{k:'diveLine',cd:8,wind:0.6,dmg:1.3,len:460,range:[120,460],los:true},{k:'sandAmbush',cd:12,dmg:1.3,r:85,range:[100,600]},{k:'shakeBite',cd:8,wind:0.45,dmg:0.9,r:85,range:[0,150]}],moveStyle:'circle',bloodScent:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
       pattern:[
         {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:120,arc:1.3,hits:2,step:0.35}, // 続けて二度噛みつく
         {k:'charge',wind:0.7,cd:5,dmg:1.2,times:3}, // 背びれを立てて何度も突っ込む
         {k:'leap',wind:0.9,cd:6.5,dmg:1.2,r:95,range:420}, // 水面から跳ねて食らいつく
         {k:'slam',wind:1.0,cd:6,dmg:1.2,r:115}, // 尾びれの一撃
       ]},
-    mola_fish:{name:'蒼海の巨大マンボウ',ai:'pattern',look:'gen',hp:3100,atk:25,def:8,r:44,speed:90,color:'#5a8ab0',drops:'mola_fish',boss:true,moveStyle:'drift',specials:[{k:'bask',cd:18,time:3,range:[0,900]},{k:'bodyPress',cd:9,wind:1.4,dmg:1.5,r:150,range:[0,420]}],stunMax:140,stunTime:4,gen:{body:'round',legs:0,head:'round',fins:true},pal:{body:'#5a8ab0',dark:'#2a4a6a',spot:'#e0f0ff',eye:'#ffe060'},
+    mola_fish:{name:'蒼海の巨大マンボウ',ai:'pattern',look:'gen',hp:3100,atk:25,def:8,r:44,speed:90,color:'#5a8ab0',drops:'mola_fish',boss:true,moveStyle:'drift',specials:[{k:'bask',cd:18,time:3,range:[0,900]},{k:'bodyPress',cd:9,wind:1.4,dmg:1.5,r:150,range:[0,420]},{k:'breach',cd:12,wind:1.2,dmg:1.4,r:130,range:[100,500]}],stunMax:140,stunTime:4,gen:{body:'round',legs:0,head:'round',fins:true},pal:{body:'#5a8ab0',dark:'#2a4a6a',spot:'#e0f0ff',eye:'#ffe060'},
       pattern:[
         {k:'slam',wind:1.0,cd:5,dmg:1.3,r:130}, // 巨体ののしかかり
         {k:'leap',wind:1.0,cd:7,dmg:1.3,r:110,range:380}, // 水面から跳ね上がって落ちる
@@ -1931,7 +1931,7 @@ const DATA={
         {k:'swarm',wind:0.7,cd:10,n:2,kind:'piranha',max:4}, // 小魚を呼ぶ
       ],
       pal:{body:'#2a6aa0',dark:'#10284a',fin:'#60c0f0',rage:'#5a3a8a',rageDark:'#2a1a4a',eye:'#e0f8ff',rageEye:'#ff5080'}},
-    turtle:{name:'水瀑の大亀',ai:'pattern',look:'turtle',hp:4000,atk:30,def:14,r:40,speed:76,stunMax:150,stunTime:4,color:'#4a7a5a',drops:'turtle',boss:true,moveStyle:'lumber',backArmor:0.2,specials:[{k:'bounceRoll',cd:11,wind:0.9,dmg:1.2,time:3,range:[0,600]}],
+    turtle:{name:'水瀑の大亀',ai:'pattern',look:'turtle',hp:4000,atk:30,def:14,r:40,speed:76,stunMax:150,stunTime:4,color:'#4a7a5a',drops:'turtle',boss:true,moveStyle:'lumber',backArmor:0.2,specials:[{k:'bounceRoll',cd:11,wind:0.9,dmg:1.2,time:3,range:[0,600]},{k:'shellIn',cd:11,hold:2.5,dmg:1.2,r:110,range:[0,240]},{k:'shakeBite',cd:8,wind:0.5,dmg:0.9,r:80,range:[0,150]}],
       pattern:[
         {k:'slam',wind:1.1,cd:4.5,dmg:1.4,r:150}, // 甲羅ごとのしかかる
         {k:'charge',wind:0.9,cd:6,dmg:1.2,times:3}, // 甲羅にこもって回転しながら滑る
@@ -1939,7 +1939,7 @@ const DATA={
         {k:'shot',wind:0.8,cd:4.5,dmg:1.0,n:3,spread:0.6,speed:250,kind:'soul',el:'water'}, // 水弾
       ],
       pal:{body:'#4a7a5a',dark:'#1e3a2a',shell:'#7aa070',rage:'#5a5a8a',rageDark:'#2a2a4a',eye:'#e0ffe0',rageEye:'#ff6040'}},
-    thunderEel:{name:'雷鳴の大鰻',ai:'pattern',look:'thunderEel',hp:3600,atk:33,def:6,r:36,speed:120,stunMax:140,stunTime:4,color:'#3a4ab0',drops:'thunder_eel',boss:true,moveStyle:'swim',specials:[{k:'discharge',cd:10,wind:0.9,dmg:1.0,r:150,range:[0,260]}],
+    thunderEel:{name:'雷鳴の大鰻',ai:'pattern',look:'thunderEel',hp:3600,atk:33,def:6,r:36,speed:120,stunMax:140,stunTime:4,color:'#3a4ab0',drops:'thunder_eel',boss:true,moveStyle:'swim',specials:[{k:'discharge',cd:10,wind:0.9,dmg:1.0,r:150,range:[0,260]},{k:'diveLine',cd:8,wind:0.6,dmg:1.1,len:460,el:'thunder',range:[120,460],los:true},{k:'coil',cd:11,wind:0.5,dmg:0.6,r:50,hold:1.6,tick:0.4,el:'thunder',range:[0,130]}],
       pattern:[
         {k:'beam',wind:0.9,cd:5,dmg:1.2,len:340,width:50,el:'thunder',st:'paralysis'}, // 一直線の稲妻
         {k:'slam',wind:1.0,cd:5,dmg:1.2,r:140,el:'thunder'}, // 全身から放電
