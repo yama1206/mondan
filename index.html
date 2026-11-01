@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.63.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.63.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -2443,7 +2443,7 @@ const DATA={
     {id:'m1_lizard',stage:1,after:'m1_bird',boss:'rock_lizard',name:'【強敵】岩肌の大蜥蜴',desc:'草原の岩場に、岩のような鱗の大蜥蜴が棲みついた。噛みつき・尻尾の振り回し・吐き出す岩に注意。',goal:{type:'boss'},reward:{gold:1100,mats:{lizard_scale:2,reinforce_orb:2},decos:1}},
     {id:'m1_boss',stage:1,urgent:true,unlocks:2,name:'【緊急】草原の暴角獣',desc:'草原の奥に陣取る暴角獣を討伐せよ。討伐すれば森へ進める。',goal:{type:'boss'},reward:{gold:600,mats:{bull_horn:2,reinforce_orb:2},decos:1}},
     {id:'s1_goblin',stage:2,key:true,name:'甲虫狩り',desc:'森甲虫が森で増えすぎている。10体退治してほしい。',goal:{type:'kill',target:'beetle',count:10},reward:{gold:240,mats:{hard_shell:2,scrap_iron:1}}},
-    {id:'s1_bug',stage:2,key:true,name:'キノコと虫の退治',desc:'森に増えた毒胞子キノコと森甲虫を、合わせて10体退治してほしい。',goal:{type:'kill',target:'mushbug',count:10},reward:{gold:300,mats:{forest_mushroom:3,old_bone:1}}},
+    {id:'s1_bug',stage:2,key:true,name:'キノコと虫の退治',desc:'森に増えた毒胞子キノコと森甲虫を、合わせて10体退治してほしい。',goal:{type:'kill',target:'mushbug',count:10},reward:{gold:300,mats:{forest_mushroom:3,beast_fang:1}}},
     {id:'s1_boss',stage:2,urgent:true,unlocks:3,name:'【緊急】古狼討伐',desc:'森の最奥に棲む古狼を討伐せよ。討伐すれば新たな地へ挑める。',goal:{type:'boss'},reward:{gold:800,mats:{wolf_fang:1,reinforce_orb:2},decos:1}},
     {id:'sw_frog',stage:3,key:true,name:'毒沼の討伐',desc:'沼地に潜む毒の蛙を12体倒せ。',goal:{type:'kill',target:'poison_frog',count:12},reward:{gold:360,mats:{toxic_gland:2}}},
     {id:'sw_plant',stage:3,key:true,name:'花食いの刈り取り',desc:'沼地に根を張る食虫の花を8体刈り取れ。',goal:{type:'kill',target:'carnivore_plant',count:8},reward:{gold:360,mats:{swamp_moss:2}}},
@@ -2660,11 +2660,11 @@ const DATA={
     {id:'r_belt',out:{type:'equip',id:'leather_belt'},cost:{goblin_hide__hobgoblin:2,old_bone:1}},
     {id:'r_bonehelm',out:{type:'equip',id:'bone_helm'},cost:{old_bone:3,goblin_hide__hobgoblin:1}},
     {id:'r_wolfsword',out:{type:'equip',id:'wolf_sword'},cost:{wolf_pelt:4,wolf_fang:3}},
-    {id:'r_wolfhelm',out:{type:'equip',id:'wolf_helm'},cost:{wolf_pelt:2,old_bone:2,wolf_fang:1}},
+    {id:'r_wolfhelm',out:{type:'equip',id:'wolf_helm'},cost:{wolf_pelt:2,beast_fang:2,wolf_fang:1}},
     {id:'r_wolfmail',out:{type:'equip',id:'wolf_mail'},cost:{wolf_pelt:3,wolf_claw:1,beast_hide:2}},
     {id:'r_wolfarms',out:{type:'equip',id:'wolf_vambrace'},cost:{wolf_claw:2,wolf_pelt:1,beast_fang:2}},
     {id:'r_wolflegs',out:{type:'equip',id:'wolf_greaves'},cost:{wolf_pelt:2,wolf_claw:1,beast_hide:3}},
-    {id:'r_wolfwaist',out:{type:'equip',id:'wolf_faulds'},cost:{wolf_pelt:2,wolf_claw:1,old_bone:2}},
+    {id:'r_wolfwaist',out:{type:'equip',id:'wolf_faulds'},cost:{wolf_pelt:2,wolf_claw:1,beast_fang:2}},
     {id:'r_fangking',out:{type:'equip',id:'fang_king'},cost:{wolf_heart:1,wolf_fang:3,wolf_claw:2}},
     {id:'r_iron_gs',out:{type:'equip',id:'iron_gs'},cost:{scrap_iron__skeleton:5,goblin_hide__hobgoblin:2,old_bone:2}},
     {id:'r_iron_tachi',out:{type:'equip',id:'iron_tachi'},cost:{scrap_iron__archer:4,arrowhead:2}},
