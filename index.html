@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.54.6',date:'2026/11/01'};
+const GAME_VERSION={no:'1.54.7',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -14651,7 +14651,7 @@ const App={
   /** 装備画面で、装備を付ける相手（自分・仲間）を選ぶ */
   whoSelectHTML(){
     const p=this.profile,cur=this.inv.who||0;
-    const opts=[[0,'自分（1P）']].concat(p.companions.map((c,i)=>[CHAR_COUNT+i,'仲間：'+COMP_ROLE_NAME[c.role]]));
+    const opts=[[0,'自分']].concat(p.companions.map((c,i)=>[CHAR_COUNT+i,'仲間：'+COMP_ROLE_NAME[c.role]]));
     return `<div class="who-sel small">装備する相手：${opts.map(([w,n])=>`<button class="${cur===w?'on':''}" data-act="invWho" data-who="${w}">${n}</button>`).join('')}</div>`;
   },
   /** 装備画面の「相棒」枠（プレイヤーのみ） */
