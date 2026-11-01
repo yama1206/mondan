@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.45.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.45.2',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11866,7 +11866,7 @@ const UI={
     const d=el.dataset;
     // どの欄にあるか（左の装備欄と中央の一覧で同じ項目でも、別物として覚える）
     const col=el.closest?el.closest('[data-scroll]'):null; // 合成したキー（dataset だけのもの）にも対応
-    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||'',col?col.dataset.scroll:''].join('|');
+    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||'',d.w||'',d.v||'',col?col.dataset.scroll:''].join('|'); // d.w＝操作説明の武器種、d.v＝相棒の色
   },
   focusRoot(){
     if(this.modalOpen())return this.modal;
