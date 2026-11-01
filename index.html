@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.43.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.44.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3965,12 +3965,9 @@ const THEME_PAL={
   snow:{wall:'ice',base:'#9cc4da',blobs:['#b6daee','#8fb8d0'],lip:'#7fa6bd',lipDark:'#4f7790',floor:['#e6f0f7','#dce8f1'],speck:'frost'},
 };
 function buildStageMap(L){
-  const G=MAPGEN,W=1+G.cols*G.cellW+G.bossW+1,H=1+G.rows*G.cellH+1;
-  const map={W,H,tiles:new Uint8Array(W*H).fill(1),version:1,rooms:{},roomList:[],theme:L.theme,doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[]};
-  const set=(x,y,v)=>{if(x>0&&y>0&&x<W-1&&y<H-1)map.tiles[y*W+x]=v;};
-  const rect=(x1,y1,x2,y2,v)=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)set(x,y,v);};
-  const hc=(y,x1,x2)=>rect(Math.min(x1,x2),y-1,Math.max(x1,x2),y+1,0);
-  const vc=(x,y1,y2)=>rect(x-1,Math.min(y1,y2),x+1,Math.max(y1,y2),0);
+  const G=MAPGEN;
+  // ボス部屋の位置：右（いつもの）・上・下のどれか。上・下のときは道の最後を一番上・一番下の段にそろえる
+  let bossSide=pick(['right','top','bottom']);
   // 1) スタートから右へ進む道。2列目以降は、同じ列で上下に1回ずれることもある
   const key=(c,r)=>c*10+r,nodes=new Map(),links=[];
   let c=0,r=randInt(0,G.rows-1),vert=0;
@@ -3985,6 +3982,19 @@ function buildStageMap(L){
     links.push([key(c,r),key(nx.c,nx.r)]);
     c=nx.c;r=nx.r;path.push(nx);nodes.set(key(c,r),{c,r,kind:'main'});
   }
+  if(bossSide!=='right'){ // 最後の列で、上（下）の段まで道をのばす。途中がふさがっていれば右に戻す
+    const tr=bossSide==='top'?0:G.rows-1,dr=tr<r?-1:1;
+    let ok=true;for(let rr=r+dr;rr!==tr+dr&&r!==tr;rr+=dr)if(nodes.has(key(c,rr))){ok=false;break;}
+    if(!ok)bossSide='right';
+    else while(r!==tr){const nr=r+dr;links.push([key(c,r),key(c,nr)]);r=nr;path.push({c,r});nodes.set(key(c,r),{c,r,kind:'main'});}
+  }
+  const gx0=1,gy0=bossSide==='top'?G.bossH+5:1;
+  const W=bossSide==='right'?1+G.cols*G.cellW+G.bossW+1:1+G.cols*G.cellW+1,H=bossSide==='right'?1+G.rows*G.cellH+1:1+G.rows*G.cellH+G.bossH+5;
+  const map={W,H,tiles:new Uint8Array(W*H).fill(1),version:1,rooms:{},roomList:[],theme:L.theme,doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[]};
+  const set=(x,y,v)=>{if(x>0&&y>0&&x<W-1&&y<H-1)map.tiles[y*W+x]=v;};
+  const rect=(x1,y1,x2,y2,v)=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)set(x,y,v);};
+  const hc=(y,x1,x2)=>rect(Math.min(x1,x2),y-1,Math.max(x1,x2),y+1,0);
+  const vc=(x,y1,y2)=>rect(x-1,Math.min(y1,y2),x+1,Math.max(y1,y2),0);
   // 2) 寄り道の部屋（行き止まり）
   const sideWant=randInt(3,5);let sides=0;
   for(const n of shuffle(path.slice(1))){
@@ -3994,21 +4004,27 @@ function buildStageMap(L){
     if(!cand.length)continue;
     const s=pick(cand);nodes.set(key(s.c,s.r),{c:s.c,r:s.r,kind:'side'});links.push([key(n.c,n.r),key(s.c,s.r)]);sides++;
   }
-  // 3) 近道：となり合う道の部屋どうしを、ときどき余分につなぐ（寄り道の部屋は行き止まりのまま）
+  // 3) 近道：となり合う部屋どうしを余分につなぎ、ぐるっと回れる道を増やす（寄り道の部屋も、半分くらいは別の部屋とつながる）
   const linked=(a,b)=>links.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
   for(const a of nodes.values())for(const b of nodes.values()){
     const ka=key(a.c,a.r),kb=key(b.c,b.r);
-    if(a.kind==='side'||b.kind==='side'||ka>=kb||Math.abs(a.c-b.c)+Math.abs(a.r-b.r)!==1||linked(ka,kb))continue;
-    if(RNG.next()<0.45)links.push([ka,kb]);
+    if(ka>=kb||Math.abs(a.c-b.c)+Math.abs(a.r-b.r)!==1||linked(ka,kb))continue;
+    const side=a.kind==='side'||b.kind==='side';
+    if(RNG.next()<(side?0.5:0.75))links.push([ka,kb]);
   }
   // 4) 部屋の大きさと位置（マス目の中でずらす）
   for(const n of nodes.values()){
-    const ox=1+n.c*G.cellW,oy=1+n.r*G.cellH,st=n.kind==='start';
+    const ox=gx0+n.c*G.cellW,oy=gy0+n.r*G.cellH,st=n.kind==='start';
     const w=st?randInt(9,11):randInt(12,G.cellW-4),hh=st?randInt(8,9):randInt(8,G.cellH-3);
     const x1=ox+randInt(1,G.cellW-w-2),y1=oy+randInt(1,G.cellH-hh-1);
     n.rect=[x1,y1,x1+w-1,y1+hh-1];rect(n.rect[0],n.rect[1],n.rect[2],n.rect[3],0);
   }
-  const bx1=1+G.cols*G.cellW+3,bx2=W-3,by1=Math.floor(H/2)-Math.floor(G.bossH/2),by2=by1+G.bossH;
+  // ボス部屋の場所
+  const lastN=path[path.length-1],lcx=gx0+lastN.c*G.cellW+Math.floor(G.cellW/2);
+  let bx1,bx2,by1,by2;
+  if(bossSide==='right'){bx1=1+G.cols*G.cellW+3;bx2=W-3;by1=Math.floor(H/2)-Math.floor(G.bossH/2);by2=by1+G.bossH;}
+  else{bx2=Math.min(W-3,lcx+Math.floor(G.bossW/2));bx1=bx2-G.bossW;if(bx1<2){bx1=2;bx2=bx1+G.bossW;}
+    if(bossSide==='top'){by1=2;by2=by1+G.bossH;}else{by2=H-3;by1=by2-G.bossH;}}
   rect(bx1,by1,bx2,by2,0);
   // 5) 通路（幅3マス）。重なりがあればまっすぐ、無ければL字に曲げる
   // 道の太さは2〜4マスでばらつかせる（wd＝中心線から上下・左右にどれだけ広がるか）
@@ -4038,10 +4054,20 @@ function buildStageMap(L){
   };
   for(const [ka,kb] of links)connect(nodes.get(ka),nodes.get(kb));
   // ボス部屋への入口（道の最後の部屋から）。扉のタイルを記録する
-  const last=nodes.get(key(path[path.length-1].c,path[path.length-1].r)),a=last.rect,dy=randInt(by1+4,by2-4);
-  if(dy-1>=a[1]&&dy+1<=a[3])hc(dy,a[2],bx1);
-  else{const mx=bx1-3,ya=randInt(a[1]+1,a[3]-1);hc(ya,a[2],mx);vc(mx,ya,dy);hc(dy,mx,bx1);}
-  map.doorTiles=[[bx1-1,dy-1],[bx1-1,dy],[bx1-1,dy+1]];
+  const last=nodes.get(key(path[path.length-1].c,path[path.length-1].r)),a=last.rect;
+  if(bossSide==='right'){
+    const dy=randInt(by1+4,by2-4);
+    if(dy-1>=a[1]&&dy+1<=a[3])hc(dy,a[2],bx1);
+    else{const mx=bx1-3,ya=randInt(a[1]+1,a[3]-1);hc(ya,a[2],mx);vc(mx,ya,dy);hc(dy,mx,bx1);}
+    map.doorTiles=[[bx1-1,dy-1],[bx1-1,dy],[bx1-1,dy+1]];
+  }else{ // 上・下：最後の部屋からまっすぐ縦の道（重ならなければL字）
+    const dx=randInt(Math.max(bx1+4,a[0]+1),Math.min(bx2-4,a[2]-1)),top=bossSide==='top';
+    const ry=top?a[1]:a[3],gy=top?by2:by1;
+    if(dx>=bx1+4&&dx<=bx2-4)vc(dx,ry,gy);
+    else{const ex=clamp(Math.round((a[0]+a[2])/2),a[0]+1,a[2]-1),bxm=clamp(ex,bx1+4,bx2-4),my=top?gy+3:gy-3;vc(ex,ry,my);hc(my,ex,bxm);vc(bxm,my,gy);}
+    const ddx=(dx>=bx1+4&&dx<=bx2-4)?dx:clamp(Math.round((a[0]+a[2])/2),bx1+4,bx2-4),dyy=top?by2+1:by1-1;
+    map.doorTiles=[[ddx-1,dyy],[ddx,dyy],[ddx+1,dyy]];
+  }
   // 6) 部屋の種類を割り当てる
   const mains=shuffle(L.main.slice()),sideDefs=shuffle(L.side.slice());let mi=0,si=0;
   for(const n of nodes.values()){
@@ -4053,7 +4079,7 @@ function buildStageMap(L){
   const sr=nodes.get(key(path[0].c,path[0].r)).rect;
   map.rooms={start:sr,boss:bossRect};
   map.start={x:((sr[0]+sr[2])/2+0.5)*TILE,y:((sr[1]+sr[3])/2+0.5)*TILE};
-  map.bossX1=bx1;map.bossSpot={x:((bx1+bx2)/2+0.5)*TILE,y:((by1+by2)/2+0.5)*TILE};
+  map.bossX1=bx1;map.bossRect=bossRect;map.bossSide=bossSide;map.bossSpot={x:((bx1+bx2)/2+0.5)*TILE,y:((by1+by2)/2+0.5)*TILE};
   // 7) 障害物（木・岩・柱・墓石）。道をふさがないよう、置くたびにスタートからの到達範囲を確かめる
   const sx=Math.floor((sr[0]+sr[2])/2),sy=Math.floor((sr[1]+sr[3])/2);
   let floor=reachableCount(map,sx,sy);
@@ -6508,8 +6534,10 @@ function triggerBoss(w){
 function updateBossRoom(w){
   const b=bossOf(w);if(!b)return;
   const ps=Object.values(w.players).filter(p=>!p.dead);
-  const bx=w.map.bossX1||61;
-  if(b.state==='sleep'&&ps.some(p=>p.x>(bx+2)*TILE))triggerBoss(w);
+  const bx=w.map.bossX1||61,BR=w.map.bossRect;
+  // ボス部屋に入ったら目を覚ます（部屋の位置は右・上・下のどれか）
+  const inside=p=>BR?(p.x>(BR[0]+2)*TILE&&p.x<(BR[2]-1)*TILE&&p.y>(BR[1]+2)*TILE&&p.y<(BR[3]-1)*TILE):p.x>(bx+2)*TILE;
+  if(b.state==='sleep'&&ps.some(inside))triggerBoss(w);
   // ドアは閉めない：外からいつでもボス部屋に入れる（扉に重なって動けなくなる問題も起きない）
 }
 /** 同じ画面で遊ぶとき、プレイヤー同士が離れすぎないようにする。
