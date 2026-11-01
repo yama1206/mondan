@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.57.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.58.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -468,7 +468,7 @@ const DATA={
     yado:{name:'巨大ヤドカリシリーズ',bonus:'殻の眠り守り',pieces:{head:'yado_head',body:'yado_body',arms:'yado_arms',waist:'yado_waist',legs:'yado_legs'},eff2:{statusRes:10},eff:{maxHp:15}},
     dorc:{name:'泥鯨シリーズ',bonus:'氷潮の守り',pieces:{head:'dorc_head',body:'dorc_body',arms:'dorc_arms',waist:'dorc_waist',legs:'dorc_legs'},eff2:{maxHp:13},eff:{def:2}},
     hachi:{name:'女王蜂シリーズ',bonus:'女王の毒針',pieces:{head:'hachi_head',body:'hachi_body',arms:'hachi_arms',waist:'hachi_waist',legs:'hachi_legs'},eff2:{poisonRes:20},eff:{atk:2}},
-    shark:{name:'双頭鮫シリーズ',bonus:'双鮫の執念',pieces:{head:'shark_head',body:'shark_body',arms:'shark_arms',waist:'shark_waist',legs:'shark_legs'},eff2:{atk:2},eff:{elemAtk:{mei:10}}},
+    shark:{name:'大鮫シリーズ',bonus:'大鮫の執念',pieces:{head:'shark_head',body:'shark_body',arms:'shark_arms',waist:'shark_waist',legs:'shark_legs'},eff2:{atk:2},eff:{elemAtk:{water:10}}},
     mola:{name:'蒼海マンボウシリーズ',bonus:'鱗の眠り返し',pieces:{head:'mola_head',body:'mola_body',arms:'mola_arms',waist:'mola_waist',legs:'mola_legs'},eff2:{statusRes:10},eff:{healPct:10}},
     guard:{name:'結晶守護者シリーズ',bonus:'結晶の守護',pieces:{head:'guard_head',body:'guard_body',arms:'guard_arms',waist:'guard_waist',legs:'guard_legs'},eff2:{def:3},eff:{elemAtk:{thunder:10}}},
     ondo:{name:'轟音竜シリーズ',bonus:'地鳴りの体幹',pieces:{head:'ondo_head',body:'ondo_body',arms:'ondo_arms',waist:'ondo_waist',legs:'ondo_legs'},eff2:{knockRes:30},eff:{def:2}},
@@ -779,8 +779,8 @@ const DATA={
     dorc_lance:{name:'氷潮の槍',slot:'weapon',el:{k:'water',v:8},wtype:'lance',atk:24,crit:10,slots:2},
     hachi_shuriken:{name:'女王蜂の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:28,crit:11,slots:2,boss:'queen_bee'},
     hachi_bow:{name:'毒蜂の弓',slot:'weapon',st:{k:'poison',buildup:15},wtype:'bow',atk:28,crit:10,slots:2},
-    shark_gs:{name:'双頭鮫の大剣',slot:'weapon',el:{k:'water',v:14},wtype:'greatsword',atk:53,crit:6,slots:2,boss:'twin_shark'},
-    shark_dual:{name:'深淵の双鮫剣',slot:'weapon',el:{k:'water',v:11},wtype:'dual',atk:34,crit:15,slots:2,boss:'twin_shark'},
+    shark_gs:{name:'大鮫の大剣',slot:'weapon',el:{k:'water',v:14},wtype:'greatsword',atk:53,crit:6,slots:2,boss:'twin_shark'},
+    shark_dual:{name:'深淵の大鮫剣',slot:'weapon',el:{k:'water',v:11},wtype:'dual',atk:34,crit:15,slots:2,boss:'twin_shark'},
     mola_tachi:{name:'蒼海の太刀',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'tachi',atk:30,crit:13,slots:2,boss:'mola_fish'},
     mola_shuriken:{name:'蒼海の鱗手裏剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'shuriken',atk:28,crit:12,slots:2,boss:'mola_fish'},
     guard_gs:{name:'結晶の大剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'greatsword',atk:36,crit:5,slots:2,boss:'crystal_guardian'},
@@ -809,22 +809,22 @@ const DATA={
     bw_hydra_hammer:{name:'多頭竜の槌',slot:'weapon',el:{k:'water',v:9},wtype:'hammer',atk:40,crit:1,slots:2,boss:'hydra'},
     bw_giant_frog_lance:{name:'大蛙の槍',slot:'weapon',st:{k:'poison',buildup:15},wtype:'lance',atk:27,crit:10,slots:2,boss:'giant_frog'},
     bw_giant_frog_shuriken:{name:'大蛙の手裏剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'shuriken',atk:28,crit:11,slots:2,boss:'giant_frog'},
-    bw_twin_shark_sword:{name:'双頭鮫の剣',slot:'weapon',el:{k:'water',v:9},wtype:'sword',atk:34,crit:11,slots:2,boss:'twin_shark'},
+    bw_twin_shark_sword:{name:'大鮫の剣',slot:'weapon',el:{k:'water',v:9},wtype:'sword',atk:34,crit:11,slots:2,boss:'twin_shark'},
     bw_mola_fish_sword:{name:'翻車の剣',slot:'weapon',el:{k:'ice',v:9},wtype:'sword',atk:34,crit:11,slots:2},
     bw_turtle_greatsword:{name:'大亀の大剣',slot:'weapon',el:{k:'water',v:9},wtype:'greatsword',atk:33,crit:5,slots:2,boss:'turtle'},
     bw_deep_octopus_greatsword:{name:'大蛸の大剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'greatsword',atk:33,crit:5,slots:2,boss:'deep_octopus'},
     bw_aquarios_tachi:{name:'蒼海竜の太刀',slot:'weapon',el:{k:'water',v:11},wtype:'tachi',atk:35,crit:13,slots:2,boss:'aquarios'},
-    bw_twin_shark_tachi:{name:'双頭鮫の太刀',slot:'weapon',el:{k:'water',v:9},wtype:'tachi',atk:34,crit:13,slots:2,boss:'twin_shark'},
+    bw_twin_shark_tachi:{name:'大鮫の太刀',slot:'weapon',el:{k:'water',v:9},wtype:'tachi',atk:34,crit:13,slots:2,boss:'twin_shark'},
     bw_mola_fish_dual:{name:'翻車の双剣',slot:'weapon',el:{k:'ice',v:9},wtype:'dual',atk:33,crit:15,slots:2},
     bw_turtle_dual:{name:'大亀の双剣',slot:'weapon',el:{k:'water',v:9},wtype:'dual',atk:29,crit:15,slots:2,boss:'turtle'},
     bw_deep_octopus_hammer:{name:'大蛸の槌',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'hammer',atk:34,crit:1,slots:2,boss:'deep_octopus'},
     bw_aquarios_hammer:{name:'蒼海竜の槌',slot:'weapon',el:{k:'water',v:11},wtype:'hammer',atk:38,crit:1,slots:2,boss:'aquarios'},
-    bw_twin_shark_lance:{name:'双頭鮫の槍',slot:'weapon',el:{k:'water',v:9},wtype:'lance',atk:34,crit:11,slots:2,boss:'twin_shark'},
+    bw_twin_shark_lance:{name:'大鮫の槍',slot:'weapon',el:{k:'water',v:9},wtype:'lance',atk:34,crit:11,slots:2,boss:'twin_shark'},
     bw_mola_fish_lance:{name:'翻車の槍',slot:'weapon',el:{k:'ice',v:9},wtype:'lance',atk:34,crit:11,slots:2},
     bw_turtle_bow:{name:'大亀の弓',slot:'weapon',el:{k:'water',v:9},wtype:'bow',atk:28,crit:11,slots:2,boss:'turtle'},
     bw_deep_octopus_bow:{name:'大蛸の弓',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'bow',atk:28,crit:11,slots:2,boss:'deep_octopus'},
     bw_aquarios_shuriken:{name:'蒼海竜の手裏剣',slot:'weapon',el:{k:'water',v:11},wtype:'shuriken',atk:33,crit:12,slots:2,boss:'aquarios'},
-    bw_twin_shark_shuriken:{name:'双頭鮫の手裏剣',slot:'weapon',el:{k:'water',v:9},wtype:'shuriken',atk:31,crit:12,slots:2,boss:'twin_shark'},
+    bw_twin_shark_shuriken:{name:'大鮫の手裏剣',slot:'weapon',el:{k:'water',v:9},wtype:'shuriken',atk:31,crit:12,slots:2,boss:'twin_shark'},
     bw_crystal_guardian_sword:{name:'守護晶の剣',slot:'weapon',el:{k:'mei',v:11},wtype:'sword',atk:38,crit:11,slots:2,boss:'crystal_guardian'},
     bw_mole_sword:{name:'晶土竜の剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'sword',atk:38,crit:11,slots:2,boss:'mole'},
     bw_centipede_greatsword:{name:'晶百足の大剣',slot:'weapon',st:{k:'poison',buildup:20},wtype:'greatsword',atk:40,crit:5,slots:2,boss:'centipede'},
@@ -922,11 +922,11 @@ const DATA={
     hachi_arms:{name:'女王蜂の腕甲',slot:'arms',def:18,skills:{crit_up:4,minion_hunter:2,poison_res:1},slots:2},
     hachi_waist:{name:'女王蜂の腰当て',slot:'waist',def:17,skills:{crit_up:3,minion_hunter:3,poison_res:1},slots:2},
     hachi_legs:{name:'女王蜂の脚甲',slot:'legs',def:18,skills:{crit_up:4,minion_hunter:2,poison_res:1},slots:2},
-    shark_head:{name:'双頭鮫の兜',slot:'head',def:24,skills:{atk_up:4,crit_up:3},slots:2},
-    shark_body:{name:'双頭鮫の鎧',slot:'body',def:29,skills:{atk_up:5,weakness:2},slots:2},
-    shark_arms:{name:'双頭鮫の腕甲',slot:'arms',def:24,skills:{atk_up:4,crit_up:2,weakness:1},slots:2},
-    shark_waist:{name:'双頭鮫の腰当て',slot:'waist',def:23,skills:{atk_up:3,crit_up:3,weakness:1},slots:2},
-    shark_legs:{name:'双頭鮫の脚甲',slot:'legs',def:24,skills:{atk_up:4,crit_up:2,weakness:1},slots:2},
+    shark_head:{name:'大鮫の兜',slot:'head',def:24,skills:{atk_up:4,crit_up:3},slots:2},
+    shark_body:{name:'大鮫の鎧',slot:'body',def:29,skills:{atk_up:5,weakness:2},slots:2},
+    shark_arms:{name:'大鮫の腕甲',slot:'arms',def:24,skills:{atk_up:4,crit_up:2,weakness:1},slots:2},
+    shark_waist:{name:'大鮫の腰当て',slot:'waist',def:23,skills:{atk_up:3,crit_up:3,weakness:1},slots:2},
+    shark_legs:{name:'大鮫の脚甲',slot:'legs',def:24,skills:{atk_up:4,crit_up:2,weakness:1},slots:2},
     mola_head:{name:'蒼海マンボウの兜',slot:'head',def:24,skills:{regen:4,heal_up:3},slots:2},
     mola_body:{name:'蒼海マンボウの鎧',slot:'body',def:29,skills:{regen:5,item_power:2},slots:2},
     mola_arms:{name:'蒼海マンボウの腕甲',slot:'arms',def:24,skills:{regen:4,heal_up:2,item_power:1},slots:2},
@@ -1049,7 +1049,7 @@ const DATA={
     hermit_crab_spirit:{name:'巨大ヤドカリの霊玉',color:'#c8a8ff',desc:'樹海の巨大ヤドカリからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     mud_whale_spirit:{name:'泥鯨の霊玉',color:'#c8a8ff',desc:'腐沼の泥鯨からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     queen_bee_spirit:{name:'女王蜂の霊玉',color:'#c8a8ff',desc:'毒霧の女王蜂からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
-    twin_shark_spirit:{name:'双頭鮫の霊玉',color:'#c8a8ff',desc:'深淵の双頭鮫からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
+    twin_shark_spirit:{name:'大鮫の霊玉',color:'#c8a8ff',desc:'深淵の大鮫からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     mola_fish_spirit:{name:'巨大マンボウの霊玉',color:'#c8a8ff',desc:'蒼海の巨大マンボウからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     crystal_guardian_spirit:{name:'大守護者の霊玉',color:'#c8a8ff',desc:'結晶の大守護者からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     quake_dragon_spirit:{name:'轟音竜の霊玉',color:'#c8a8ff',desc:'地底の轟音竜からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
@@ -1146,7 +1146,7 @@ const DATA={
     armd_plate:{name:'大アルマジロの甲板',color:'#b0a070',desc:'大アルマジロの背中の甲板。（風渡る草原）'},
     hana_petal:{name:'毒花竜の花弁',color:'#c070d0',desc:'毒花竜の冥花の花弁。（古森）'},
     yado_shell:{name:'巨大ヤドカリの殻',color:'#d0a070',desc:'巨大ヤドカリの大きな殻。（樹海）'},
-    shark_fin:{name:'双頭鮫の背びれ',color:'#5a7aa0',desc:'深淵の双頭鮫の背びれ。（深淵）'},
+    shark_fin:{name:'大鮫の背びれ',color:'#5a7aa0',desc:'深淵の大鮫の背びれ。（深淵）'},
     mola_scale:{name:'蒼海マンボウの鱗板',color:'#90c0e0',desc:'蒼海の巨大マンボウの大きな鱗板。（蒼流の水辺）'},
     guard_core:{name:'結晶守護者の核晶',color:'#a090e0',desc:'結晶の大守護者の核になる晶石。（水晶の洞窟）'},
     shiro_pelt:{name:'白熊の白毛',color:'#f0f4ff',desc:'氷河の大白熊の厚い白毛。（氷雪地帯）'},
@@ -1255,7 +1255,7 @@ const DATA={
     hard_shell__crystal_scorpion:{name:'大蠍の硬殻',color:'#4a8a70',desc:'晶毒の大蠍から採れる硬い甲殻。（晶石の大洞窟）'},
     hard_shell__deep_octopus:{name:'大蛸の硬殻',color:'#4a8a70',desc:'深淵の大蛸から採れる硬い甲殻。（蒼流の水辺）'},
     hard_shell__mola_fish:{name:'巨大マンボウの硬殻',color:'#4a8a70',desc:'蒼海の巨大マンボウから採れる硬い甲殻。（蒼流の水辺）'},
-    hard_shell__twin_shark:{name:'双頭鮫の硬殻',color:'#4a8a70',desc:'深淵の双頭鮫から採れる硬い甲殻。（蒼流の水辺）'},
+    hard_shell__twin_shark:{name:'大鮫の硬殻',color:'#4a8a70',desc:'深淵の大鮫から採れる硬い甲殻。（蒼流の水辺）'},
     hard_shell__armadillo:{name:'巨躯アルマジロの硬殻',color:'#4a8a70',desc:'草原の巨躯アルマジロから採れる硬い甲殻。（風渡る草原）'},
     poison_spore:{name:'毒胞子',color:'#a8c040',desc:'毒胞子キノコがまき散らす胞子。取り扱い注意。（緑風の森林・腐毒の沼地・晶石の大洞窟・灼熱の火山）'},
     wood:{name:'木材',color:'#a0703a',desc:'古木の採取場で取れる丈夫な木材。（緑風の森林）'},
@@ -1266,7 +1266,7 @@ const DATA={
     rotten_cloth:{name:'腐敗した布',color:'#7a7a58',desc:'墓守ゾンビがまとっていたぼろ布。（忘却の地下墓地）'},
     cursed_iron:{name:'呪われた鉄片',color:'#6a5a8a',desc:'呪われた騎士の鎧のかけら。（忘却の地下墓地）'},
     curse_powder:{name:'呪術の粉',color:'#b070d0',desc:'墓地の呪術師が使う怪しい粉。（忘却の地下墓地）'},
-    curse_powder__twin_shark:{name:'双頭鮫の呪粉',color:'#b070d0',desc:'深淵の双頭鮫から採れる呪術の粉。（蒼流の水辺）'},
+    curse_powder__twin_shark:{name:'大鮫の呪粉',color:'#b070d0',desc:'深淵の大鮫から採れる呪術の粉。（蒼流の水辺）'},
     seal_shard:{name:'封印片',color:'#d8c070',desc:'祭壇の封印が砕けたかけら。（忘却の地下墓地）'},
     dragon_bone:{name:'骨竜の竜骨',color:'#e8e2d0',desc:'冥府の骨竜の巨大な骨。稀少素材。（忘却の地下墓地）'},
     nether_core:{name:'冥府の霊核',color:'#7a50ff',desc:'骨竜を動かしていた霊核。非常に稀少。（忘却の地下墓地）'},
@@ -1469,9 +1469,9 @@ const DATA={
         {k:'swarm',wind:0.6,cd:9,kind:'worker_bee',n:2,max:4}, // 働き蜂を呼ぶ
         {k:'shot',wind:0.8,cd:7,dmg:0.6,n:10,ring:true,speed:240,st:'poison',stChance:0.4,below:0.5}, // 毒霧を全方位に撒く（怒り時）
       ]},
-    twin_shark:{name:'深淵の双頭鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,moveStyle:'circle',bloodScent:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
+    twin_shark:{name:'深淵の大鮫',ai:'pattern',look:'gen',hp:3000,atk:26,def:8,r:40,speed:110,color:'#3a4a6a',drops:'twin_shark',boss:true,moveStyle:'circle',bloodScent:true,stunMax:130,stunTime:4,gen:{body:'long',legs:0,head:'fin',tail:true,fins:true},pal:{body:'#3a4a6a',dark:'#1a2236',spot:'#c8d8f0',eye:'#ff5070'},
       pattern:[
-        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:120,arc:1.3,hits:2,step:0.35}, // 二つの頭で交互に噛む
+        {k:'combo',wind:0.6,cd:4.5,dmg:1.0,r:120,arc:1.3,hits:2,step:0.35}, // 続けて二度噛みつく
         {k:'charge',wind:0.7,cd:5,dmg:1.2,times:3}, // 背びれを立てて何度も突っ込む
         {k:'leap',wind:0.9,cd:6.5,dmg:1.2,r:95,range:420}, // 水面から跳ねて食らいつく
         {k:'slam',wind:1.0,cd:6,dmg:1.2,r:115}, // 尾びれの一撃
@@ -2457,7 +2457,7 @@ const DATA={
     {id:'aq_lizard',stage:4,key:true,name:'水辺のトカゲ狩り',desc:'川辺を走る水棲トカゲを12体倒せ。',goal:{type:'kill',target:'water_lizard',count:12},reward:{gold:520,mats:{water_scale:2}}},
     {id:'aq_jelly',stage:4,key:true,name:'漂う泡の掃除',desc:'水辺に漂う泡沫クラゲを9体倒せ。',goal:{type:'kill',target:'jellyfish',count:9},reward:{gold:520,mats:{jelly_gel:2}}},
     {id:'aq_boss',stage:4,urgent:true,unlocks:5,name:'【緊急】滝つぼの海竜',desc:'滝つぼに潜む蒼い海竜を討て。討伐すれば墓地へ進める。',goal:{type:'boss'},reward:{gold:1000,mats:{aqua_fin:2,water_scale:2,reinforce_orb:2},decos:1}},
-    {id:'ex_twin_shark',stage:4,after:'aq_octo',boss:'twin_shark',name:'【強敵】深淵の双頭鮫',desc:'深い淵を泳ぐ二つの頭を持つ鮫。双頭で噛みつき、冥の力をまとって突進する。',goal:{type:'boss'},reward:{gold:1620,mats:{hard_shell__twin_shark:2,curse_powder__twin_shark:2}}},
+    {id:'ex_twin_shark',stage:4,after:'aq_octo',boss:'twin_shark',name:'【強敵】深淵の大鮫',desc:'深い淵を泳ぐ大きな鮫。止まらずに泳ぎ回り、血のにおいを嗅ぎつけて弱った相手を狙う。',goal:{type:'boss'},reward:{gold:1620,mats:{hard_shell__twin_shark:2,curse_powder__twin_shark:2}}},
     {id:'ex_mola_fish',stage:4,after:'ex_twin_shark',boss:'mola_fish',name:'【強敵】蒼海の巨大マンボウ',desc:'大きな体で海を漂うマンボウ。体当たりの突進のほか、水流を吹き出し、睡眠を誘う鱗粉を撒く。',goal:{type:'boss'},reward:{gold:1620,mats:{slime_gel__mola_fish:2,hard_shell__mola_fish:2}}},
     {id:'aq_turtle',stage:4,after:'aq_boss',boss:'turtle',name:'【強敵】滝を背負う大亀',desc:'滝の裏から、水を背負った大きな亀が現れた。',goal:{type:'boss'},reward:{gold:1200,mats:{shell_heart:2,crab_shell:2,reinforce_orb:2},decos:1}},
     {id:'aq_eel',stage:4,after:'aq_turtle',boss:'thunderEel',name:'【強敵】雷鳴の大鰻',desc:'渦の淵で雷が鳴っている。雷を纏う大鰻が目を覚ました。',goal:{type:'boss'},reward:{gold:1400,mats:{thunder_core:2,eel_sac:3,reinforce_orb:3},decos:1}},
@@ -7639,7 +7639,7 @@ Object.assign(GEAR_ART,{
     arm(k,H,l){const bz=Math.sin(k.t*40)*0.1;k.ctx.rotate(-0.8+bz);H.E(k,0.7,0,0.7,0.25,0,'rgba(220,240,255,.6)','rgba(120,140,170,.8)',0.05);},
     tail(k,H,l){H.E(k,0.3,0,0.45,0.32,0,l.main,l.dark);k.ctx.fillStyle='#24180e';k.ctx.fillRect(0.2,-0.3,0.12,0.6);H.P(k,[0.7,-0.1,1.1,0,0.7,0.1],'#2a2a2a',l.dark);H.E(k,1.12,0,0.06,0.06,0,'#a060c0');},
   }),
-  shark:seriesArt({ // 深淵の双頭鮫：鮫の頭のかぶり物（歯の並ぶ口）と背びれ、胴の背びれ、胸びれ、三日月の尾
+  shark:seriesArt({ // 深淵の大鮫：鮫の頭のかぶり物（歯の並ぶ口）と背びれ、胴の背びれ、胸びれ、三日月の尾
     head(k,H,l){H.P(k,[-1.0,-1.0,0.8,-0.75,1.9,0,0.8,0.75,-1.0,1.0],l.main,l.dark);H.P(k,[1.85,-0.03,0.9,-0.5,0.9,0.5,1.85,0.03],l.light,l.dark);for(let i=0;i<4;i++)for(const g of [-1,1])H.P(k,[1.0+i*0.2,g*0.42,1.1+i*0.2,g*0.25,1.2+i*0.2,g*0.38],'#fff');eyes2(k,H,0.6,0.62,0.12,l.eye);H.P(k,[-0.3,-0.1,-1.3,0,-0.3,0.1],l.dark);},
     body(k,H,l){H.P(k,[0.3,-0.12,-0.9,0,0.3,0.12],l.dark);H.E(k,0,0,0.9,0.4,0,'rgba(255,255,255,.12)');},
     arm(k,H,l){H.P(k,[0,-0.2,0.9,0.3,0.1,0.25],l.main,l.dark);},
@@ -8394,79 +8394,79 @@ BossArt.A.queen_bee=(k,H)=>{ // 毒霧の女王蜂：縞模様の大きな腹と
   const cr=[];for(let i=0;i<10;i++){const a=i/10*TAU,rr=i%2?0.16:0.09;cr.push(0.3+Math.cos(a)*rr,Math.sin(a)*rr);}P(k,cr,gold,'#8a6a10',0.02);
 };
 // --- 海・滝 ---
-BossArt.A.twin_shark=(k,H)=>{ // 深淵の双頭鮫：一つの胴から左右へ分かれた二つの鮫の頭、胸びれ、三日月の尾
-  const {E,P,L,S}=H,b='#5a6a8a',be='#dcdfe8',d='#1a2034',c=k.ctx,w=Math.sin(k.t*6)*0.15;
-  P(k,[-0.85,0,-1.3,-0.4+w,-1.12,w,-1.3,0.4+w],b,d);
-  for(const s of [-1,1])P(k,[0.0,s*0.22,-0.35,s*0.7,-0.25,s*0.25],b,d);
-  E(k,-0.2,0,0.72,0.3,0,b,d);P(k,[-0.35,-0.05,-0.05,0,-0.35,0.05],'#3a4a68',d,0.02);
-  const op=k.wind?0.12:0;
-  for(const s of [-1,1]){c.save();c.translate(0.35,s*0.12);c.rotate(s*0.38);
-    P(k,[0,-0.2,0.45,-0.14,0.75,0,0.45,0.14,0,0.2],b,d);
-    P(k,[0.7,-0.02-op,0.45,-0.1-op,0.45,0.1+op,0.7,0.02+op],be,d,0.02);
-    H.eye(k,0.4,-s*0.12,0.035);H.eye(k,0.4,s*0.12,0.035);
-    for(let i=0;i<3;i++)L(k,[0.12+i*0.05,-0.15,0.12+i*0.05,0.15],d,0.015);c.restore();}
+BossArt.A.twin_shark=(k,H)=>{ // 深淵の大鮫：流線形の体、三角の背びれ、左右に張った胸びれ、三日月形の尾、とがった鼻先とえら
+  const {E,P,L}=H,b='#4a5a72',d='#141c28',be='#c8d4e0',c=k.ctx,w=Math.sin(k.t*4)*0.18;
+  P(k,[-1.0,0,-1.45,-0.5+w,-1.3,w*0.6,-1.45,0.45+w],b,d); // 三日月の尾
+  for(const s of [-1,1])P(k,[0.25,s*0.25,-0.15,s*0.95,-0.35,s*0.9,-0.1,s*0.25],b,d); // 胸びれ
+  P(k,[-1.05,-0.08,-0.4,-0.36,0.5,-0.3,1.1,-0.1,1.35,0,1.1,0.1,0.5,0.3,-0.4,0.36,-1.05,0.08],b,d);
+  P(k,[0.9,-0.06,1.3,0,0.9,0.06],be);
+  P(k,[-0.35,-0.04,0.05,-0.03,-0.15,0.05,-0.45,0.04],'#2a3446',d); // 背びれ（上から見ると細い）
+  for(const s of [-1,1]){for(let i=0;i<4;i++)L(k,[0.45-i*0.08,s*0.2,0.4-i*0.08,s*0.3],d,0.02);H.eye(k,0.85,s*0.14,0.045,k.ph2||k.e.frenzy?'#ff2a2a':'#101418');}
 };
-BossArt.A.mola_fish=(k,H)=>{ // 蒼海の巨大マンボウ：丸く平たい体、左右に大きく揺れる背びれと尻びれ、尾のないぎざぎざの後ろの縁
-  const {E,P,L}=H,b='#8aa8c8',d='#30486a',be='#dce6f2',c=k.ctx,f=Math.sin(k.t*3)*0.25;
-  for(const s of [-1,1])P(k,[-0.15,s*0.25,-0.4,s*(0.95+f*s),-0.6,s*(0.85+f*s),-0.45,s*0.25],b,d);
-  E(k,0,0,0.75,0.38,0,b,d);
-  for(let i=0;i<5;i++)E(k,-0.72,-0.28+i*0.14,0.08,0.08,0,b,d);
-  E(k,0.1,0,0.5,0.14,0,be);
-  for(const s of [-1,1]){E(k,0.3,s*0.32,0.12,0.06,s*(0.5+f),b,d);H.eye(k,0.5,s*0.25,0.055);}
-  E(k,0.76,0,0.06,0.07,0,'#4a6a8a',d);
-};
-BossArt.A.turtle=(k,H)=>{ // 水瀑の大亀：亀甲模様の大きな甲羅、四本のひれ足、くちばしの頭、甲羅を流れ落ちる水
-  const {E,P,L,T}=H,sh='#4a7a5a',hx='#2a4a36',sk='#8ab08a',d='#1e3424',rim='#c8b070',c=k.ctx;
-  for(const [x,i] of [[0.45,0],[-0.5,1]])for(const s of [-1,1]){const o=Math.sin(k.p*0.7+i*Math.PI+(s>0?Math.PI:0))*0.3;c.save();c.translate(x,s*0.55);c.rotate(s*(0.5+o)+(i?Math.PI*0.85*s:0));E(k,0.22,0,0.3,0.12,0,sk,d);c.restore();}
-  E(k,-0.95,0,0.12,0.08,0,sk,d);
-  T(k,[0.6,0,0.95,0],sk,d,0.22);E(k,1.05,0,0.2,0.17,0,sk,d);P(k,[1.18,-0.06,1.3,0,1.18,0.06],'#d0c070',d);TD.eyes(k,H,1.05,0.12,0.035);
-  E(k,-0.05,0,0.9,0.75,0,rim,d);E(k,-0.05,0,0.82,0.67,0,sh,d);
-  for(const [x,y] of [[-0.05,0],[-0.45,-0.3],[-0.45,0.3],[0.35,-0.3],[0.35,0.3],[-0.65,0],[0.55,0]]){const pts=[];for(let i=0;i<6;i++){const a=i/6*TAU;pts.push(x+Math.cos(a)*0.2,y+Math.sin(a)*0.18);}P(k,pts,'#5a8a68',hx,0.04);}
-  c.strokeStyle='rgba(180,230,255,.7)';c.lineWidth=0.04;for(let i=0;i<6;i++){const a=i/6*TAU+0.3,o=(k.t*1.2+i*0.2)%1;c.beginPath();c.moveTo(Math.cos(a)*0.3,Math.sin(a)*0.25);c.lineTo(Math.cos(a)*(0.45+o*0.4),Math.sin(a)*(0.38+o*0.32));c.stroke();}
-};
-BossArt.A.thunderEel=(k,H)=>{ // 雷鳴の大鰻：大きくうねる長い体、背のひれ、まとう稲妻
-  const {E,P,L,S,T,along}=H,b='#2a3a8a',be='#e8e070',d='#0c1440',fn='#5a70c8',c=k.ctx;
-  const pts=[];for(let i=0;i<9;i++)pts.push(-1.3+i*0.3,Math.sin(k.t*4-i*0.9)*0.25*(1-i/14));
-  S(k,pts,fn,0.48);T(k,pts,b,d,0.3);S(k,pts,be,0.06);
-  const hx=pts[16],hy=pts[17];c.save();c.translate(hx,hy);c.rotate(Math.atan2(hy-pts[15],0.3));
-  E(k,0.1,0,0.26,0.2,0,b,d);TD.snout(k,H,0.2,0.13,0.3,b,d);TD.eyes(k,H,0.2,0.13,0.045,'#f8f060');
-  for(const s of [-1,1])S(k,[0.45,s*0.06,0.65,s*0.2,0.8,s*0.15],be,0.02);c.restore();
-  const n=k.ph2?4:2;c.strokeStyle='#fff070';c.lineWidth=0.04;
-  for(let j=0;j<n;j++){const [x,y]=along(pts,Math.random());c.beginPath();c.moveTo(x,y);let X=x,Y=y;const dir=Math.random()<0.5?-1:1;for(let i=0;i<4;i++){X+=(Math.random()-0.5)*0.3;Y+=dir*(0.1+Math.random()*0.12);c.lineTo(X,Y);}c.stroke();}
-};
-BossArt.A.giantWorm=(k,H)=>{ // 滝つぼの大蚯蚓：体節の輪がならぶ太い体、環帯、歯の並ぶ丸い口、まわりの水しぶき
-  const {E,P,L,S,T,along}=H,b='#d08c8c',d='#6a3434',bd='#a85a6a',c=k.ctx;
-  const pts=[];for(let i=0;i<8;i++)pts.push(-1.2+i*0.32,Math.sin(k.t*2.5-i*0.7)*0.22);
-  T(k,pts,b,d,0.5);
-  for(let i=1;i<14;i++){const [x,y,a]=along(pts,i/14);c.save();c.translate(x,y);c.rotate(a);L(k,[0,-0.24,0.02,0.24],d,0.022);c.restore();}
-  {const [x,y,a]=along(pts,0.6);c.save();c.translate(x,y);c.rotate(a);E(k,0,0,0.18,0.28,0,bd,d);c.restore();}
-  const [hx,hy,ha]=along(pts,1);c.save();c.translate(hx,hy);c.rotate(ha);
-  E(k,0.08,0,0.24,0.27,0,'#3a0a10',d);
-  for(let i=0;i<10;i++){const a=i/10*TAU;P(k,[0.08+Math.cos(a)*0.24,Math.sin(a)*0.26,0.08+Math.cos(a+0.15)*0.11,Math.sin(a+0.15)*0.12,0.08+Math.cos(a+0.3)*0.24,Math.sin(a+0.3)*0.26],'#f4ece0');}
+BossArt.A.mola_fish=(k,H)=>{ // 蒼海の巨大マンボウ：横倒しで泳ぐ丸い体（横から見た姿）、上下に長いひれ、後ろの舵びれ、小さな口
+  const {E,P,L}=H,b='#7a9ac0',d='#24344a',be='#c8d8ea',c=k.ctx,fl=Math.sin(k.t*2.4)*0.25;
+  c.save();c.rotate(Math.PI/2*0); // 進む向きが +x：体は横から見た姿で、ひれは左右（画面の±y）に伸びる
+  for(const s of [-1,1])P(k,[-0.35,s*0.6,-0.55+fl*s*0.2,s*1.55,-0.2+fl*s*0.2,s*1.5,0.05,s*0.62],b,d); // 背びれ・しりびれ
+  const cl=[];for(let i=0;i<=10;i++){const a=Math.PI/2+i/10*Math.PI;cl.push(-0.7+Math.cos(a)*0.28,Math.sin(a)*0.78);}P(k,cl,'#6a8ab0',d); // 舵びれ
+  for(let i=-2;i<=2;i++)E(k,-0.92,i*0.25,0.06,0.06,0,be);
+  E(k,0,0,0.85,0.8,0,b,d);E(k,0.05,0.25,0.6,0.38,0,be);
+  c.fillStyle=k.c('#9ab4d4');for(const [x,y] of [[-0.3,-0.3],[0.1,-0.45],[-0.45,0.05],[0.3,-0.2]]){c.beginPath();c.arc(x,y,0.07,0,TAU);c.fill();}
+  E(k,0.82,0.05,0.08,0.07,0,'#2a3a4a');H.eye(k,0.55,-0.25,0.08,k.ph2?'#ff3a2a':'#101418');E(k,0.2,0.05,0.12,0.06,0.3,'#5a7aa0');
   c.restore();
-  c.fillStyle='rgba(170,220,255,.7)';for(let i=0;i<6;i++){const a=i/6*TAU+k.t,o=(k.t*1.2+i/6)%1;c.beginPath();c.arc(Math.cos(a)*(0.6+o*0.6),Math.sin(a)*(0.5+o*0.5),0.035,0,TAU);c.fill();}
 };
-BossArt.A.deep_octopus=(k,H)=>{ // 深淵の大蛸：後ろへふくらんだ頭、左右の目、前と左右へうねる吸盤つきの八本の腕
-  const {E,P,L,S,tube}=H,b='#a83a5a',d='#4a0e22',su='#f4c4cc',c=k.ctx;
-  for(let i=0;i<8;i++){const a=-Math.PI*0.75+i/7*Math.PI*1.5,ph=k.t*3+i,len=0.95+(k.wind?0.2:0);
-    const pts=[0.15+Math.cos(a)*0.25,Math.sin(a)*0.25];for(let j=1;j<=4;j++){const r=0.25+j*len*0.22,aa=a+Math.sin(ph+j)*0.25*j*0.4;pts.push(0.15+Math.cos(aa)*r,Math.sin(aa)*r);}
-    tube(k,pts,0.18,0.05,i%2?'#8a2a48':b,d);
-    c.fillStyle=k.c(su);for(let j=1;j<4;j++){c.beginPath();c.arc(pts[j*2],pts[j*2+1],0.03,0,TAU);c.fill();}}
-  E(k,-0.3,0,0.62,0.48,0,b,d);
-  c.fillStyle='rgba(255,200,210,.35)';for(const [x,y] of [[-0.5,-0.2],[-0.2,0.2],[-0.6,0.15],[-0.25,-0.25]]){c.beginPath();c.arc(x,y,0.07,0,TAU);c.fill();}
-  E(k,0.2,0,0.32,0.36,0,b,d);
-  for(const s of [-1,1]){E(k,0.25,s*0.24,0.11,0.1,0,k.ph2?'#ff6a3a':'#f0d040',d,0.02);P(k,[0.17,s*0.23,0.33,s*0.23,0.33,s*0.26,0.17,s*0.26],'#111');}
+BossArt.A.turtle=(k,H)=>{ // 水瀑の大亀：亀甲の盛り上がった甲羅に苔と水しぶき、太い4本の足、大きなくちばしの頭、短い尾
+  const {E,P,L}=H,sk='#6a8a5a',d='#1e2a18',sh='#4a6a3a',sc='#7a9a5a',rim='#c0a060',c=k.ctx;
+  P(k,[-0.85,-0.08,-1.15,0,-0.85,0.08],sk,d);
+  for(const [x,i] of [[0.5,0],[-0.5,1]])for(const s of [-1,1]){const o=Math.sin(k.p*0.6+i*Math.PI+(s>0?Math.PI:0))*0.1;E(k,x+o,s*0.78,0.24,0.2,0,sk,d);for(let j=0;j<3;j++)E(k,x+o+0.12,s*(0.82+(j-1)*0.08),0.04,0.04,0,'#e8e0c8');}
+  E(k,0.98,0,0.28,0.24,0,sk,d);P(k,[1.15,-0.12,1.4,0,1.15,0.12],'#d8c890',d);for(const s of [-1,1])H.eye(k,1.05,s*0.13,0.05,k.ph2?'#ff3a2a':'#1a1a10');
+  E(k,0,0,0.98,0.85,0,rim,d);E(k,0,0,0.88,0.76,0,sh,d);
+  const hex=(x,y,r)=>{const p=[];for(let i=0;i<6;i++){const a=i/6*TAU;p.push(x+Math.cos(a)*r,y+Math.sin(a)*r*0.9);}P(k,p,sc,d,0.025);};
+  hex(0,0,0.26);for(let i=0;i<6;i++){const a=i/6*TAU+0.5;hex(Math.cos(a)*0.5,Math.sin(a)*0.45,0.2);}
+  c.fillStyle=k.c('#5a8a3a');for(const [x,y] of [[-0.3,0.35],[0.25,-0.4],[-0.5,-0.2]]){c.beginPath();c.ellipse(x,y,0.12,0.07,0.6,0,TAU);c.fill();}
+  c.fillStyle='rgba(180,230,255,.7)';for(let i=0;i<5;i++){const q=(k.t*1.2+i/5)%1;c.beginPath();c.arc(-0.2+Math.cos(i*1.3)*0.4,Math.sin(i*1.3)*0.35-q*0.4,0.04*(1-q)+0.015,0,TAU);c.fill();}
 };
-BossArt.A.aquarios=(k,H)=>{ // 蒼海竜アクアリオス：大きくうねる海蛇の体と背びれ、角とひれ耳の竜の頭、ひげ
-  const {E,P,L,S,T,along}=H,b='#2a7ac8',d='#0e3260',be='#a8e0f0',fn='#60c8e8',c=k.ctx;
-  const pts=[];for(let i=0;i<8;i++)pts.push(-1.4+i*0.3,Math.sin(k.t*2.5-i*0.9)*0.35*(1-i/12));
-  for(let i=1;i<8;i++){const [x,y,a]=along(pts,i/8);c.save();c.translate(x,y);c.rotate(a);for(const s of [-1,1])P(k,[-0.1,s*0.12,0.0,s*0.36,0.1,s*0.12],fn,d,0.02);c.restore();}
-  T(k,pts,b,d,0.34);S(k,pts,be,0.08);
-  P(k,[pts[0],pts[1],pts[0]-0.3,pts[1]-0.3,pts[0]-0.2,pts[1],pts[0]-0.3,pts[1]+0.3],fn,d);
-  const hx=pts[14],hy=pts[15];c.save();c.translate(hx+0.1,hy);c.rotate(Math.atan2(hy-pts[13],0.3)*0.5);
-  for(const s of [-1,1]){P(k,[-0.05,s*0.15,-0.4,s*0.35,-0.1,s*0.05],'#d8f0ff',d);P(k,[0.05,s*0.2,-0.1,s*0.42,0.12,s*0.22],fn,d,0.02);S(k,[0.45,s*0.08,0.7,s*0.28,0.9,s*0.22],fn,0.025);}
-  E(k,0.05,0,0.26,0.24,0,b,d);TD.snout(k,H,0.18,0.15,0.42,b,d);
-  TD.eyes(k,H,0.15,0.16,0.045,'#f0e040');c.restore();
+BossArt.A.thunderEel=(k,H)=>{ // 雷電の大ウナギ：長くうねる体、背と腹に続くひれ、光る発電斑、えら穴、平たい頭
+  const {E,P,L,S,tube,along}=H,b='#24305a',d='#0a0e20',fin='#4a5a9a',gl='#f0e040',c=k.ctx,ph=k.t*3;
+  const pts=[];for(let i=0;i<10;i++){pts.push(-1.7+i*0.3,Math.sin(ph-i*0.8)*0.16);}
+  for(const s of [-1,1]){const fp=[];for(let i=0;i<10;i++)fp.push(pts[i*2],pts[i*2+1]+s*0.2*(0.6+0.4*Math.sin(i)));S(k,fp,fin,0.09);}
+  tube(k,pts,0.08,0.3,b,d);
+  for(let i=1;i<9;i++){const [x,y]=along(pts,i/9),g=0.5+0.5*Math.sin(k.t*6+i);c.fillStyle=`rgba(240,224,64,${0.4+0.5*g})`;c.beginPath();c.arc(x,y,0.05,0,TAU);c.fill();}
+  const hx=pts[18],hy=pts[19];c.save();c.translate(hx,hy);
+  P(k,[-0.1,-0.27,0.35,-0.2,0.55,0,0.35,0.2,-0.1,0.27],b,d);for(let i=0;i<3;i++)L(k,[-0.02+i*0.06,-0.2,-0.02+i*0.06,-0.1],gl,0.02);
+  for(const s of [-1,1]){H.eye(k,0.3,s*0.12,0.045,k.ph2?'#ff3a2a':gl);S(k,[0.5,s*0.05,0.75,s*0.15,0.85,s*0.08],'#8a9ad8',0.025);}
+  c.restore();
+};
+BossArt.A.giantWorm=(k,H)=>{ // ゴムの大ミミズ：細かな輪の体節が長く続き、環帯の太い帯、輪の口
+  const {E,L,tube,along}=H,b='#c8808a',d='#5a2a30',cl='#a85a66',c=k.ctx,ph=k.t*2;
+  const pts=[];for(let i=0;i<11;i++)pts.push(-1.9+i*0.32,Math.sin(ph-i*0.6)*0.2);
+  tube(k,pts,0.2,0.32,b,d);
+  for(let i=1;i<20;i++){const [x,y,a]=along(pts,i/20);c.save();c.translate(x,y);c.rotate(a);L(k,[0,-0.27,0,0.27],'rgba(90,40,48,.55)',0.025);c.restore();} // 体節の輪
+  {const [x,y,a]=along(pts,0.66);c.save();c.translate(x,y);c.rotate(a);E(k,0,0,0.4,0.33,0,cl,d);c.restore();} // 環帯（少し太い帯）
+  const hx=pts[20],hy=pts[21];E(k,hx+0.12,hy,0.3,0.32,0,b,d);E(k,hx+0.28,hy,0.17,0.2,0,'#5a1a22',d);
+  for(let i=0;i<8;i++){const a=i/8*TAU+k.t;E(k,hx+0.28+Math.cos(a)*0.12,hy+Math.sin(a)*0.14,0.025,0.025,0,'#f0d8d0');}
+};
+BossArt.A.deep_octopus=(k,H)=>{ // 深淵の大蛸：後ろにふくらんだ大きな外套膜、横の目、吸盤の並んだ太い8本の腕、漏斗
+  const {E,P,L,S,tube,along}=H,b='#8a2a4a',d='#2a0a16',su='#f0c0c8',c=k.ctx;
+  for(let i=0;i<8;i++){const a0=(i-3.5)/3.5*2.3,cu=(i<4?-1:1)*(0.5+0.3*Math.sin(k.t*2+i)),pts=[0.1+Math.cos(a0)*0.2,Math.sin(a0)*0.2];
+    let x=pts[0],y=pts[1],a=a0;for(let j=1;j<=5;j++){a+=cu*0.28+Math.sin(k.t*3+i+j)*0.12;x+=Math.cos(a)*0.24;y+=Math.sin(a)*0.24;pts.push(x,y);}
+    tube(k,pts,0.2,0.04,b,d);for(let j=1;j<7;j++){const [px,py]=along(pts,j/7);E(k,px,py,0.035,0.035,0,su);}} // 吸盤の並んだ腕が、くるりと丸まりながら広がる
+  E(k,-0.55,0,0.7,0.52,0,b,d);E(k,-0.7,-0.12,0.35,0.18,-0.3,'rgba(255,255,255,.15)');
+  c.fillStyle=k.c('#6a1a34');for(const [x,y] of [[-0.8,0.15],[-0.45,-0.25],[-0.95,-0.1],[-0.3,0.2]]){c.beginPath();c.arc(x,y,0.06,0,TAU);c.fill();}
+  E(k,0.05,0,0.3,0.4,0,b,d);for(const s of [-1,1]){E(k,0.0,s*0.3,0.12,0.1,0,'#f0e0a0',d);E(k,0.02,s*0.3,0.03,0.08,0,'#1a0a0a');}
+  E(k,0.2,0.22,0.08,0.06,0.5,'#6a1a34',d);
+};
+BossArt.A.aquarios=(k,H)=>{ // 蒼海竜アクアリオス：太くうねる首長の体、4枚のひれ足、背のひれ、角とえらひれのある頭、尾びれ
+  const {E,P,L,S,tube,along}=H,b='#2a6aa8',d='#0c2440',be='#8ad0f0',fin='#3ab0d8',c=k.ctx,ph=k.t*2.2;
+  const pts=[];for(let i=0;i<8;i++){const x=-1.5+i*0.3;pts.push(x,Math.sin(ph-i*0.7)*0.2*(1-i/12));}
+  for(const [fi,sz] of [[2,0.6],[5,0.7]]){const [x,y,a]=along(pts,fi/7);for(const s of [-1,1]){const sw=Math.sin(ph*1.3+fi+(s>0?1.5:0))*0.25;c.save();c.translate(x,y);c.rotate(a+s*(1.2+sw));E(k,sz*0.55,0,sz*0.6,sz*0.22,0,fin,d);L(k,[0.1,0,sz*1.05,0],d,0.025);c.restore();}} // ひれ足
+  P(k,[pts[0],pts[1],pts[0]-0.45,pts[1]-0.38,pts[0]-0.3,pts[1],pts[0]-0.45,pts[1]+0.38],fin,d); // 尾びれ
+  tube(k,pts,0.26,0.62,b,d);
+  for(let i=1;i<7;i++){const [x,y,a]=along(pts,i/7);c.save();c.translate(x,y);c.rotate(a);P(k,[-0.08,0,0.02,-0.02,0.12,0,0.02,0.02],be);P(k,[-0.12,-0.02,0.0,-0.3-0.05*Math.sin(ph+i),0.12,-0.02],fin,d,0.02);c.restore();} // 背のひれ
+  const hx=pts[14],hy=pts[15];c.save();c.translate(hx,hy);c.scale(1.5,1.5);
+  for(const s of [-1,1]){P(k,[-0.05,s*0.18,-0.35,s*0.55,-0.1,s*0.42,0.05,s*0.25],fin,d);L(k,[-0.05,s*0.2,-0.3,s*0.5],d,0.02);} // えらひれ
+  E(k,0.15,0,0.36,0.3,0,b,d);P(k,[0.3,-0.2,0.85,-0.1,0.92,0,0.85,0.1,0.3,0.2],b,d);E(k,0.55,0,0.3,0.1,0,be);
+  for(const s of [-1,1]){P(k,[0.0,s*0.15,-0.35,s*0.32,-0.05,s*0.08],'#e8f4ff',d);H.eye(k,0.38,s*0.17,0.055,k.ph2?'#ff3a2a':'#ffe060');S(k,[0.85,s*0.06,1.1,s*0.18,1.25,s*0.12],'#8ad0f0',0.03);}
+  c.restore();
 };
 // --- 洞窟・結晶 ---
 BossArt.A.mole=(k,H)=>{ // 結晶喰いの土竜：丸い体、前の左右に張り出した大きな掘る手、ピンクの鼻、背中の結晶
