@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.48.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.48.2',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -359,7 +359,7 @@ const DATA={
   // w: レアリティ別の出現重み [コモン,アンコモン,レア,エピック,レジェンダリー]
   effects:{
     hunter:{name:'狩人の誇り',desc:'ボスへのダメージ +15%',w:[10,10,10,10,10]},
-    gale:{name:'疾風',desc:'回避のクールタイム -30%',w:[10,10,10,9,8]},
+    gale:{name:'疾風',desc:'スタミナの回復速度 +30%',w:[10,10,10,9,8]},
     desperate:{name:'背水',desc:'HP30%以下のとき攻撃力 +35%',w:[8,8,9,10,10]},
     medic:{name:'治癒の心得',desc:'回復薬の回復量 +40%',w:[12,10,8,6,5]},
     guard:{name:'鉄壁',desc:'受けるダメージ -12%',w:[10,10,10,10,10]},
@@ -402,7 +402,7 @@ const DATA={
     medic:{name:'医療の心得',duration:20,cd:120},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）、回復薬の効果の半分を近くの味方（220の範囲）にも
     fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージにかかる時間が半分。攻撃を受けてもチャージは止まらない
     iai:{name:'居合の極意',duration:4,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→35%
-    kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
+    kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：スタミナの回復速度1.5倍、攻撃力10%アップ
     taunt:{name:'挑発',duration:20,cd:120},         // 槍：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
     sokusha:{name:'速射',duration:20,cd:120},       // 弓：チャージ速度2倍、矢が貫通する（ボスは当たった部位すべてにダメージ）
     inmitsu:{name:'隠密',duration:20,cd:120},
@@ -3211,7 +3211,7 @@ const HELP_WS={
   medic:'回復アイテムの効果1.5倍、蘇生にかかる時間を2秒短縮。回復薬の効果の半分を近くの味方にも回復する',
   fudou:'チャージにかかる時間が50%短くなる。攻撃を受けてもチャージは止まらない',
   iai:'見切りの判定時間が1.5倍、見切りの攻撃力アップが25%から35%に',
-  kyodo:'回避のクールタイムが0.3秒短くなり、攻撃力が10%上がる',
+  kyodo:'スタミナの回復速度が1.5倍になり、攻撃力が10%上がる',
   taunt:'発動中はボスのヘイトが最大になり、狙われやすくなる。全方向の90%ガードと、回避距離1.3倍',
   sokusha:'チャージ速度が2倍になり、矢が敵を貫通する。貫通する矢は、ボスの当たった部位すべてにダメージを与える',
   inmitsu:'手裏剣を一度に3枚投げる（通常2枚）。敵から見つからなくなり、追いかけていた敵も追うのをやめる（見つからない効果はボスには効かない）',
@@ -3442,7 +3442,8 @@ function computeStats(profile,override,who){
   s.sheatheTime=wt.sheathe||0.5;
   s.attackInterval=wt.interval/(1+s.atkSpd/100);
   s.range=wt.range;s.arc=wt.arc;s.activeTime=wt.active;s.power=wt.power;s.swingTime=wt.swing||0.22;s.tip=wt.tip||null;
-  s.dodgeCd=P.dodgeCd*(s.effects.gale?0.7:1)*s.dodgeCdMult;
+  s.dodgeCd=P.dodgeCd*s.dodgeCdMult;
+  s.stamRegen=s.effects.gale?1.3:1; // スタミナの回復速度（効果「疾風」で +30%）
   s.skill=wt.skill||null;
   s.skillCd=s.skill?DATA.skills[s.skill].cd*(s.effects.skillcd?0.75:1):0;
   s.ws=wt.ws||null;if(s.ws)s.skillCd=DATA.weaponSkills[s.ws].cd*(s.effects.skillcd?0.75:1);
@@ -4980,7 +4981,7 @@ function updatePlayer(w,p,inp,dt){
   // 解毒薬の即時使用（状態異常の表示から押したとき）：麻痺・睡眠中でも使える
   if(inp.cure&&(p.bag.antidote||0)>0&&cureStatus(w,p)){p.bag.antidote--;emit(w,{type:'itemUsed',pid:p.id,item:'antidote'});}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
-  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec);p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
+  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec*(s.stamRegen||1)*(wsActive(p,'kyodo')?1.5:1)); // 疾風・狂人化で回復が速くなるp.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
   // 回復薬・良い回復薬：飲み始めてから3秒かけてジワジワ回復する
   if(p.drip){const dr=p.drip;dr.t+=dt;
@@ -5062,7 +5063,7 @@ function updatePlayer(w,p,inp,dt){
     if(!(p.charging&&inp.attack&&s.weaponType==='greatsword')){p.charging=false;p.charge=0;}
     p.sheathing=null; // 納刀動作も中断（抜刀したまま）
     p.dodgeDir=p.moving?{x:mx,y:my}:{x:Math.cos(p.facing),y:Math.sin(p.facing)};
-    p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd-(wsActive(p,'kyodo')?0.3:0);p.stam-=1;
+    p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd;p.stam-=1;
     p.dodgeInv=P.dodgeTime+s.dodgeIframe;
     p.dodgeStart=w.time;p.perfectThisDodge=false;
     emit(w,{type:'dodge',x:p.x,y:p.y,pid:p.id});
