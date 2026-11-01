@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.78.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.79.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1921,7 +1921,7 @@ const DATA={
     water_spirit:{name:'水霊',ai:'archer',look:'spirit',hp:70,atk:16,def:1,r:13,speed:70,color:'#70c0e8',drops:'water_spirit',aimTime:0.9,arrowSpeed:330,
       pal:{body:'#70c0e8',dark:'#2a5a80',eye:'#ffffff'}},
     /* 水辺のボス（技は pattern に並べる。技の種類は沼地と同じ） */
-    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:112,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,moveStyle:'swim',specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]},{k:'coil',cd:12,wind:0.55,dmg:0.6,r:60,hold:1.6,tick:0.45,el:'water',range:[0,140]}],
+    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:88,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,moveStyle:'swim',specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]},{k:'coil',cd:12,wind:0.55,dmg:0.6,r:60,hold:1.6,tick:0.45,el:'water',range:[0,140]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.6,rings:3,el:'water',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:50,el:'water',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'water',txt:'大潮！',txtColor:'#9ad8ff',range:[0,900]},{k:'collapse',cd:16,wind:1.0,dmg:0.9,n:16,r:62,el:'water',txt:'豪雨！',txtColor:'#9ad8ff',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.0,len:420,width:40,el:'water',txt:'激流の渦！',txtColor:'#9ad8ff',below:0.5,range:[0,600]}],ultimate:{mode:'safe',zones:4,zoneR:58,zoneCol:'#9ae8ff',charge:5,el:'water',name:'蒼海竜の大海嘯！',warn:'光る泡の中に逃げ込め！'},
       pattern:[
         {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:70,el:'water'}, // 激流のブレス
         {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:2.5}, // 長い体で薙ぎ払う
@@ -2045,7 +2045,7 @@ const DATA={
         {k:'sweep',wind:0.6,cd:3,dmg:1.2,r:130,arc:2.5}, // 長い体で薙ぎ払う
       ],
       pal:{body:'#8a4a3a',dark:'#3a1e16',shell:'#c86a4a',leg:'#e8a060',crystal:'#ffb070',rage:'#c05020',rageDark:'#501808',eye:'#ffe060',rageEye:'#ffffff'}},
-    grados:{name:'地底王グラドス',ai:'pattern',look:'golem',hp:4200,atk:34,def:16,r:42,speed:62,stunMax:170,stunTime:4,color:'#6a6a7a',drops:'grados',boss:true,specials:[{k:'hammerQuake',cd:7,wind:1.2,dmg:1.9,rings:3,range:[0,280]},{k:'doubleSweep',cd:6,wind:0.9,dmg:1.3,r:150,range:[0,230]},{k:'pillarLine',cd:8,wind:0.9,dmg:1.2,r:52,range:[150,800]},{k:'quakeStomp',cd:14,wind:1.0,dmg:0.15,range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:66,range:[0,900]},{k:'crossCrack',cd:11,wind:1.1,dmg:1.3,len:440,width:64,range:[0,400]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:430,width:42,below:0.5,range:[0,600]}],stepQuake:{dist:70,r:34,dmg:0.25},ultimate:{charge:5,rocks:5},physRes:0.4,
+    grados:{name:'地底王グラドス',ai:'pattern',look:'golem',hp:4200,atk:34,def:16,r:42,speed:62,stunMax:170,stunTime:4,color:'#6a6a7a',drops:'grados',boss:true,specials:[{k:'hammerQuake',cd:7,wind:1.2,dmg:1.9,rings:3,range:[0,280]},{k:'doubleSweep',cd:6,wind:0.9,dmg:1.3,r:150,range:[0,230]},{k:'pillarLine',cd:8,wind:0.9,dmg:1.2,r:52,range:[150,800]},{k:'quakeStomp',cd:14,wind:1.0,dmg:0.15,range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:66,range:[0,900]},{k:'crossCrack',cd:11,wind:1.1,dmg:1.3,len:440,width:64,range:[0,400]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:430,width:42,below:0.5,range:[0,600]}],stepQuake:{dist:70,r:34,dmg:0.25},ultimate:{charge:5,rocks:5,name:'地底王の最後の怒り！',warn:'落ちてきた岩の陰に隠れろ！'},physRes:0.4,
       pattern:[
         {k:'toss',wind:1.0,cd:5,dmg:1.3,r:80}, // 岩をもいで投げる
         {k:'erupt',wind:1.1,cd:6.5,dmg:1.0,n:4,spread:300,r:70}, // 地底から岩柱
@@ -2073,7 +2073,7 @@ const DATA={
         {k:'pool',wind:1.0,cd:7,dmg:0.8,r:90,life:6,hz:'fire',el:'fire'}, // 滴る溶岩だまり
       ],
       pal:{body:'#7a4a2a',dark:'#2a1608',rock:'#a06a40',lava:'#ff6a20',core:'#ffb050',rage:'#a03a1a',rageDark:'#3a0a04',eye:'#ffe060',rageEye:'#ffffff'}},
-    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:110,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]}],
+    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:88,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.7,rings:3,el:'fire',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:52,el:'fire',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'fire',txt:'熱波！',txtColor:'#ffb070',range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:64,el:'fire',txt:'火山弾！',txtColor:'#ffb070',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:440,width:44,el:'fire',txt:'炎獄の旋回ブレス！',below:0.5,range:[0,600]}],ultimate:{mode:'cover',rocks:5,charge:5,el:'fire',name:'炎獄竜の最後の噴火！',warn:'落ちてきた溶岩岩の陰に隠れろ！'},
       pattern:[
         {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:70,el:'fire'}, // 炎獄のブレス
         {k:'shot',wind:0.9,cd:4.5,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire',el:'fire'}, // 火炎弾を扇に
@@ -5319,7 +5319,7 @@ const Companion={
     }
     // 引っかかり対策：飼い主（プレイヤー）から離れたまま、しばらくほとんど動けていない仲間は、プレイヤーのそばへワープ
     const leader=Object.values(w.players).find(q=>!q.ai&&!q.dead);
-    if(!leader||w.coverRocks)return; // 最後の大技の間はワープしない（岩の陰へ向かっている）
+    if(!leader||w.coverRocks||w.safeZones)return; // 最後の大技の間はワープしない（岩の陰へ向かっている）
     for(const p of Object.values(w.players)){
       if(!p.ai||p.dead||p.out)continue;
       const A=p.ai,far=Math.hypot(p.x-leader.x,p.y-leader.y);
@@ -5347,6 +5347,9 @@ const Companion={
     const foes=(w.enemies||[]).filter(e=>!e.dead&&e.hp>0);
     const toward=(tx,ty,stop)=>{const d=Math.hypot(tx-p.x,ty-p.y);if(d<=stop)return {mx:0,my:0};return navDir(w,p,tx,ty)||{mx:0,my:0};}; // 石や壁をよけて進む
     const role=p.ai.role;
+    // 最後の大技（安全な輪）：一番近い輪の中へ
+    if(w.safeZones&&w.safeZones.length){let b=null,bd=1e9;for(const z of w.safeZones){const d=Math.hypot(z.x-p.x,z.y-p.y);if(d<bd){bd=d;b=z;}}
+      if(b){if(bd>b.r*0.5){const m=navDir(w,p,b.x,b.y)||{mx:0,my:0};I.mx=m.mx;I.my=m.my;}I.sheathe=!!p.drawn&&bd>60;return I;}}
     // 最後の大技：一番近い岩の陰（ボスから見て岩の向こう側）へ隠れる
     if(w.coverRocks&&w.coverRocks.length){const ub=foes.find(e=>e.ult);if(ub){
       let best=null,bd=1e9;const R=w.coverRocks;
@@ -6330,22 +6333,23 @@ function startSpecial(w,e,p,mv){
       e.timer=wind+0.8;break;
     case 'quakeStomp': // 地鳴りの踏み込み：部屋じゅうが揺れて足が鈍り、続けて足元から岩柱
       T({shape:'circle',x:e.x,y:e.y,r:1400,total:wind,dmg:dmg(mv.dmg),slow:{time:3.5,mult:0.55},small:true});
-      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'地鳴り！',color:'#d8c890'});
+      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:mv.txt||'地鳴り！',color:mv.txtColor||'#d8c890'});
       for(const q of Object.values(w.players))if(!q.dead)for(let k=0;k<2;k++)T({shape:'circle',x:q.x+(k?rand(-70,70):0),y:q.y+(k?rand(-70,70):0),r:70,total:wind+0.8+k*0.45,dmg:dmg(1.1)});
       e.timer=wind+1.3;break;
     case 'collapse': // 崩落の雨：部屋のあちこちに落石。最後に大岩が狙って落ちる
       {const R=w.map.bossRect,x0=R?(R[0]+1)*TILE:e.x-400,x1=R?(R[2])*TILE:e.x+400,y0=R?(R[1]+1)*TILE:e.y-400,y1=R?(R[3])*TILE:e.y+400;
         for(let i=0;i<mv.n+(ph2?6:0);i++)T({shape:'circle',x:rand(x0,x1),y:rand(y0,y1),r:mv.r,total:wind+i*0.08,dmg:dmg(mv.dmg)});
         for(const q of Object.values(w.players))if(!q.dead)T({shape:'circle',x:q.x,y:q.y,r:110,total:wind+(mv.n+(ph2?6:0))*0.08+0.5,dmg:dmg(1.6)});
+        if(mv.txt)emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:mv.txt,color:mv.txtColor||'#ffd060'});
         emit(w,{type:'roarWave',x:e.x,y:e.y,r:100});e.timer=wind+1.2;}break;
     case 'coreSpin': // 核の暴走（怒り時）：核の光線をぐるりと回しながら放つ
-      {const sd=RNG.next()<0.5?1:-1,n=ph2?20:14;for(let i=0;i<n;i++)T({shape:'rect',x:e.x,y:e.y,angle:ang+sd*i*0.32,len:mv.len+e.r,width:mv.width,total:wind+i*0.16,dmg:dmg(mv.dmg),el:'fire'});
-        emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'核の暴走！',color:'#ff8040'});e.timer=wind+n*0.16+0.3;}break;
+      {const sd=RNG.next()<0.5?1:-1,n=ph2?20:14;for(let i=0;i<n;i++)T({shape:'rect',x:e.x,y:e.y,angle:ang+sd*i*0.32,len:mv.len+e.r,width:mv.width,total:wind+i*0.16,dmg:dmg(mv.dmg),el:mv.el||'fire'});
+        emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:mv.txt||'核の暴走！',color:mv.txtColor||'#ff8040'});e.timer=wind+n*0.16+0.3;}break;
     case 'ultimate': // 最後の大技（体力5%以下で一度だけ）：部屋の中心へ跳び、落ちた岩の陰にいないと助からない大爆発
       {const c=w.map.bossSpot||{x:e.x,y:e.y};e.sp.from=[e.x,e.y];e.sp.to=[c.x,c.y];e.timer=1.1;e.ult=true;
         w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
         T({shape:'circle',x:c.x,y:c.y,r:e.r+60,total:1.1,dmg:dmg(1.2)});
-        emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'地底王の最後の怒り！',color:'#ff6040'});}break;
+        emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:(DATA.enemies[e.type].ultimate||{}).name||'最後の怒り！',color:'#ff6040'});}break;
     case 'crossCrack': // 地割れの十字（怒ると八方）
       {const n=ph2?8:4;for(let i=0;i<n;i++)T({shape:'rect',x:e.x,y:e.y,angle:ang+i*TAU/n,len:mv.len+e.r,width:mv.width,total:wind,dmg:dmg(mv.dmg)});}break;
     case 'rockfall': // 落石：あちこちに天井から岩
@@ -6688,7 +6692,16 @@ function updateSpecial(w,e,p,dt){
       if(S.step===0){ // 跳んで部屋の中心へ
         const k=clamp(1-e.timer/1.1,0,1);e.x=S.from[0]+(S.to[0]-S.from[0])*k;e.y=S.from[1]+(S.to[1]-S.from[1])*k;e.z=Math.sin(Math.PI*k)*90;
         if(e.timer<=0){e.z=0;S.step=1;e.timer=ud.charge||5;
-          emit(w,{type:'roarWave',x:e.x,y:e.y,r:200});emit(w,{type:'ultWarn',x:e.x,y:e.y,text:'落ちてきた岩の陰に隠れろ！'});
+          emit(w,{type:'roarWave',x:e.x,y:e.y,r:200});emit(w,{type:'ultWarn',x:e.x,y:e.y,text:ud.warn||'落ちてきた岩の陰に隠れろ！'});
+          T({shape:'circle',x:e.x,y:e.y,r:1400,total:e.timer,dmg:0,ult:true});
+          if(ud.mode==='safe'){ // 安全な輪（泡など）が現れる。爆発の瞬間に輪の中にいれば助かる
+            const M=w.map;S.safe=[];
+            for(let tries=0;S.safe.length<(ud.zones||4)&&tries<200;tries++){const a=(S.safe.length/(ud.zones||4))*TAU+rand(-0.5,0.5)+tries*0.9,dd=rand(e.r+120,e.r+240),x=e.x+Math.cos(a)*dd,y=e.y+Math.sin(a)*dd;
+              if(circleHitsWall(M,x,y,40)||S.safe.some(z=>Math.hypot(z.x-x,z.y-y)<170))continue;S.safe.push({x,y,r:ud.zoneR||56});}
+            for(const z of S.safe)w.hazards.push({id:w.nextId++,kind:'safe',x:z.x,y:z.y,r:z.r,t:0,life:e.timer+0.3,tick:99,acc:0,dmg:0,delay:0,visual:true,col:ud.zoneCol||'#7fd8ff'});
+            w.safeZones=S.safe;
+            return;
+          }
           // 着地の衝撃で天井から岩が落ちてくる（岩は隠れ場所になる）
           const M=w.map,rocks=[],ps=Object.values(w.players);
           for(let tries=0;rocks.length<(ud.rocks||5)&&tries<200;tries++){
@@ -6704,20 +6717,19 @@ function updateSpecial(w,e,p,dt){
           w.coverRocks=[];for(const [tx,ty] of rocks)for(const [x,y] of [[tx,ty],[tx+1,ty],[tx,ty+1],[tx+1,ty+1]]){M.tiles[y*M.W+x]=TILE_OBS.rock;w.coverRocks.push([x,y]);}
           M.version++;
           for(const [tx,ty] of rocks)T({shape:'circle',x:(tx+1)*TILE,y:(ty+1)*TILE,r:46,total:0.5,dmg:e.atk*0.8,small:true});
-          T({shape:'circle',x:e.x,y:e.y,r:1400,total:e.timer,dmg:0,ult:true});
         }
         return;
       }
       if(S.step===1){ // 力をためる：時間が来たら大爆発。岩の陰（グラドスとの間に岩がある）にいれば助かる
         if(e.timer<=0){
           const M=w.map,cov=new Set((w.coverRocks||[]).map(([x,y])=>y*M.W+x));
-          const hidden=q=>{const dx=q.x-e.x,dy=q.y-e.y,D=Math.hypot(dx,dy),n=Math.ceil(D/8);for(let i=1;i<n;i++){const x=Math.floor((e.x+dx*i/n)/TILE),y=Math.floor((e.y+dy*i/n)/TILE);if(cov.has(y*M.W+x))return true;}return false;};
-          emit(w,{type:'explode',x:e.x,y:e.y,r:900});emit(w,{type:'ultBlast',x:e.x,y:e.y});
+          const hidden=q=>{if(S.safe)return S.safe.some(z=>Math.hypot(q.x-z.x,q.y-z.y)<=z.r+q.r*0.5);const dx=q.x-e.x,dy=q.y-e.y,D=Math.hypot(dx,dy),n=Math.ceil(D/8);for(let i=1;i<n;i++){const x=Math.floor((e.x+dx*i/n)/TILE),y=Math.floor((e.y+dy*i/n)/TILE);if(cov.has(y*M.W+x))return true;}return false;};
+          emit(w,{type:'explode',x:e.x,y:e.y,r:900});emit(w,{type:'ultBlast',x:e.x,y:e.y,el:ud.el||null});
           for(const q of Object.values(w.players)){if(q.dead)continue;
-            if(hidden(q)){emit(w,{type:'bossTxt',x:q.x,y:q.y-30,text:'岩の陰で助かった！',color:'#7fe09a'});continue;}
+            if(hidden(q)){emit(w,{type:'bossTxt',x:q.x,y:q.y-30,text:S.safe?'助かった！':'岩の陰で助かった！',color:'#7fe09a'});continue;}
             q.dodgeInv=0;q.hitInv=0;q.dodgeTime=0;hitPlayer(w,q,q.stats.maxHp*50+99999,e.x,e.y,e.type,'none');}
           // 岩は爆発で崩れる
-          for(const [x,y] of (w.coverRocks||[]))M.tiles[y*M.W+x]=0;w.coverRocks=null;M.version++;
+          for(const [x,y] of (w.coverRocks||[]))M.tiles[y*M.W+x]=0;w.coverRocks=null;w.safeZones=null;M.version++;
           e.hp=1;e.ultDone=true;e.ult=false;
           emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'力を使い果たした…',color:'#ffd23a'});
           end(3.0);
@@ -11573,6 +11585,13 @@ const Renderer={
   },
   drawHazard(ctx,z){
     if(z.kind==='magma'||z.kind==='fire'){this.drawLava(ctx,z);return;}
+    if(z.kind==='safe'){ // 最後の大技の安全な輪：光る輪と、上へ立ちのぼる粒
+      const tm=this.time||0,pu=0.5+0.5*Math.sin(tm*5);ctx.save();
+      const g=ctx.createRadialGradient(z.x,z.y,z.r*0.2,z.x,z.y,z.r);g.addColorStop(0,'rgba(255,255,255,.28)');g.addColorStop(1,'rgba(255,255,255,.05)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.fill();
+      ctx.strokeStyle=z.col||'#7fd8ff';ctx.lineWidth=3+2*pu;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,TAU);ctx.stroke();
+      ctx.fillStyle=z.col||'#7fd8ff';for(let i=0;i<8;i++){const k=(tm*0.6+i/8)%1,a=i*0.8;ctx.globalAlpha=1-k;ctx.beginPath();ctx.arc(z.x+Math.cos(a)*z.r*0.6,z.y+Math.sin(a)*z.r*0.5-k*30,2.5,0,TAU);ctx.fill();}
+      ctx.restore();return;}
     if(z.kind==='scent'){ // 甘い香り：ふわふわ漂う桃色の霧
       const tm=this.time||0;ctx.save();ctx.globalAlpha=clamp(Math.min(z.t/0.4,(z.life-z.t)/0.6),0,1);
       const g=ctx.createRadialGradient(z.x,z.y,10,z.x,z.y,z.r);g.addColorStop(0,'rgba(255,170,220,.35)');g.addColorStop(1,'rgba(255,170,220,0)');
