@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.31.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.32.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11391,6 +11391,10 @@ const UI={
     this.overlay.querySelectorAll('[data-scroll]').forEach(el=>{scrolls[el.dataset.scroll]=el.scrollTop;});
     this.overlay.innerHTML=html;this.overlay.classList.remove('hidden');
     this.overlay.querySelectorAll('[data-scroll]').forEach(el=>{if(scrolls[el.dataset.scroll])el.scrollTop=scrolls[el.dataset.scroll];});
+    // ペットのプレビュー（装備画面の詳細欄）：ゲーム内と同じ描き方で姿を出す
+    this.overlay.querySelectorAll('canvas.pet-prev').forEach(cv=>{
+      try{Renderer.drawPet(cv.getContext('2d'),{id:'__prev',x:240,y:64,r:80,facing:0,petLook:cv.dataset.look,petLookV:cv.dataset.v|0,preview:true});}catch(e){}
+    });
     if(Input.uiPad)this.restoreFocus();
   },
   hide(){this.overlay.classList.add('hidden');this.overlay.innerHTML='';},
@@ -13657,7 +13661,7 @@ const App={
     const sub=this.gachaSub||'pet';
     const tabs=[['pet','ペット'],['collar','首輪'],['letter','手紙'],['deco','装飾品']];
     const tabBar=`<div class="filters">${tabs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="gachaTab" data-t="${k}">${n}</button>`).join('')}</div>`;
-    const petCard=`<div class="recipe"><div class="rn">ペットガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペット（見た目と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
+    const petCard=`<div class="recipe"><div class="rn">ペットガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペット（種類と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
     const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます。レア度で出る種類が変わります。かぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button><button class="${coins>=10?'primary':''}" data-act="collarGacha10" ${coins>=10?'':'disabled'}>10連（10コイン）</button></div></div>`;
@@ -13773,21 +13777,24 @@ const App={
   lookListHTML(){
     const p=this.profile;
     const own=LOOKS.filter(x=>(p.looks[x.id]||[]).length);
-    if(!own.length)return '<div class="muted">まだペットの見た目がありません（ショップのガチャで出ます）</div>';
-    return `<div class="small muted" style="margin-bottom:6px">見た目は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>{
+    if(!own.length)return '<div class="muted">まだペットがいません（ショップのガチャで出ます）</div>';
+    return `<div class="small muted" style="margin-bottom:6px">ペットは自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>{
       const eq=p.equipped.look===x.id,ask=this.inv.lookAsk===x.id;
       const row=`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="lookSel" data-id="${x.id}"><span class="nm">${x.name}</span>${eq?`<span class="tag">装備中（${LOOK_VARIANTS[p.equipped.lookV|0].name}）</span>`:''}<span class="small muted">${(p.looks[x.id]||[]).length}色</span></div>`;
       if(!ask)return row;
-      // タップした見た目の直下に確認を出す（下までスクロールしなくても決められる）
+      // タップしたペットの直下に確認を出す（下までスクロールしなくても決められる）
       return row+`<div class="itemrow sel" style="flex-wrap:wrap;gap:6px;justify-content:space-between"><span>${x.name}の色を選ぶ（${eq?'いまの色をタップで外す':'色をタップで付ける'}）</span><span class="btnrow" style="margin:0">${this.lookColorBtns(p,x.id)}</span></div>`;
     }).join('');
   },
   lookDetailHTML(){
     const p=this.profile,id=this.inv.petSel,x=LOOKS.find(q=>q.id===id);
-    if(!x||!p.looks[id])return '<div class="muted">見た目を選ぶと詳細が出ます。</div>';
+    if(!x||!p.looks[id])return '<div class="muted">ペットを選ぶと詳細が出ます。</div>';
     const A=PET_ACTS[LOOK_ACT[id]];
-    return `<div class="iname">${x.name}（見た目）</div><div class="small muted" style="margin:6px 0">連れ歩くときの姿です。色を選べます。性能には影響しません。</div>${A?`<div class="eff">サポート行動「${A.name}」：${A.desc}（間隔 ${A.cd}秒）</div>`:''}
-      <div class="btnrow">${this.lookColorBtns(p,id)}</div>`;
+    // プレビューの色：このペットを付けていればその色、付けていなければ持っている最初の色
+    const pv=p.equipped.look===id?(p.equipped.lookV|0):((p.looks[id]||[])[0]|0);
+    return `<div class="iname">${x.name}（ペット）</div><div class="small muted" style="margin:6px 0">連れ歩くペットです。色を選べます。性能には影響しません。</div>${A?`<div class="eff">サポート行動「${A.name}」：${A.desc}（間隔 ${A.cd}秒）</div>`:''}
+      <div class="btnrow">${this.lookColorBtns(p,id)}</div>
+      <canvas class="pet-prev" width="240" height="160" data-look="${id}" data-v="${pv}" style="display:block;margin:10px auto 0;max-width:100%;background:rgba(255,255,255,.05);border-radius:8px"></canvas>`;
   },
   petListHTML(){
     const p=this.profile,own=PETS.filter(x=>p.pets[x.id]);
