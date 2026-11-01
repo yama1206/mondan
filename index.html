@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.38.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.38.4',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3498,7 +3498,7 @@ function skillPtsText(skills){
    素材・装備品・装飾品・回復薬は「パーティ共有の倉庫」。
    キャラクター固有のデータ（装備中アイテム）は
    1P = プロフィール直下（equipped）、2P = profile.p2 に持つ。 */
-const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null,charm:null,pet:null,look:null}); // pet＝首輪（性能）、look＝ペットの見た目（プレイヤーのみ・SLOTS には入れない）
+const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs:null,charm:null,pet:null,look:null}); // pet＝首輪（性能）、look＝相棒の見た目（プレイヤーのみ・SLOTS には入れない）
 /* 仲間（1人プレイの味方AI）：2人まで連れていける。役割は ヒーラー／タンク／アタッカー のうち2つ。
    仲間は who=2,3 のキャラとして装備を持つ（charOf）。将来の協力プレイでも同じ仕組みを使えるよう、
    仲間の操作は Companion.decide にまとめ、プレイヤー入力とは別の経路で動かす。 */
@@ -3510,7 +3510,7 @@ const COMP_FIXED_ROLES=['healer','tank'];
 /* 仲間が出撃時に毎回持っている消耗品（プレイヤーの持ち物からは減らない） */
 // 仲間は出撃のたびに、回復薬・良い回復薬・癒しの香を常に最大数持ってスタートする（アイテムの所持上限まで）
 const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,good_potion:10,heal_all:3}};
-/* ペット：ガチャで出る（全10種・レア度なし）。プレイヤーだけがペット枠に1匹はめられる。
+/* 相棒：ガチャで出る（全10種・レア度なし）。プレイヤーだけが相棒枠に1匹はめられる。
    効果はマルチプレイで連れ歩いているときだけ乗る。stat：maxHpPct／atkPct／potionHealPct（％）、他は加算値 */
 const PETS=[
   {id:'rabbit',name:'回避距離',rar:'N',stat:'dodgeDistPct',base:3,fmt:'回避距離 +{v}%',col:'#f4f0ff'},
@@ -3524,8 +3524,8 @@ const PETS=[
   {id:'wolf',name:'攻撃',rar:'R',stat:'atkPct',base:3,fmt:'攻撃力 +{v}%',col:'#90909a'},
   {id:'dragonling',name:'攻撃',rar:'SR',stat:'atkPct',base:2,fmt:'攻撃力 +{v}%',col:'#e04a4a'},
 ];
-const RARITY={N:{name:'ノーマル',color:'#c8c8c8',w:60},R:{name:'レア',color:'#5fb0ff',w:30},SR:{name:'スーパーレア',color:'#ffb040',w:10},SSR:{name:'最高レア（ペット）',color:'#ff6ad5'}};
-/* ペットの見た目（最高レア）。連れ歩く姿だけで性能は無い */
+const RARITY={N:{name:'ノーマル',color:'#c8c8c8',w:60},R:{name:'レア',color:'#5fb0ff',w:30},SR:{name:'スーパーレア',color:'#ffb040',w:10},SSR:{name:'最高レア（相棒）',color:'#ff6ad5'}};
+/* 相棒の見た目（最高レア）。連れ歩く姿だけで性能は無い */
 const LOOKS=[
   {id:'l_dog',name:'オオカミ',col:'#9aa0aa'},
   {id:'l_cat',name:'ネコ',col:'#c8a060'},
@@ -3548,7 +3548,7 @@ const PET_MAX=1;
 const COLLAR_RMUL={N:1,R:1.5,SR:2};
 const petValue=(pt,lv)=>pt.base*(COLLAR_RMUL[pt.rar]||1)*(1+0.25*((lv||1)-1));
 function applyPet(s,profile,who){
-  if(who||!Net.role)return; // 仲間のペットは無し。ペットの効果はマルチプレイのみ
+  if(who||!Net.role)return; // 仲間の相棒は無し。相棒の効果はマルチプレイのみ
   const id=profile.equipped&&profile.equipped.pet;if(!id||!profile.pets[id])return;
   const pt=PETS.find(x=>x.id===id);if(!pt)return;
   const v=petValue(pt,profile.pets[id].level);
@@ -3685,8 +3685,8 @@ const Save={
   /** バージョン間の移行処理。仕様変更時は migrations[旧バージョン] を追加する */
   migrate(data,v){
     const migrations={
-      15:d=>d, // 15 → 16：ペットの見た目（最高レア）を9種に作り直し（旧い見た目は外れる）
-      14:d=>d, // 14 → 15：コイン・ペット・強化素材を追加（無ければ sanitize で0）
+      15:d=>d, // 15 → 16：相棒の見た目（最高レア）を9種に作り直し（旧い見た目は外れる）
+      14:d=>d, // 14 → 15：コイン・相棒・強化素材を追加（無ければ sanitize で0）
       13:d=>d, // 13 → 14：仲間（companions）を追加。無ければ sanitize で既定の役割と初期装備を支給
       0:d=>d, // version無しの旧形式 → 1
       1:d=>{d.p2=null;return d;}, // 1 → 2：2Pキャラを追加（sanitizeで初期装備を支給）
@@ -3786,7 +3786,7 @@ const Save={
     if(legacySwords)p.items=p.items.filter(i=>!(i.baseId==='iron_sword'&&Profile.equippedBy(p,i.uid)<0));
     if(p.p2&&p.p2.equipped&&!Profile.getItem(p,p.p2.equipped.weapon))p.p2.equipped.weapon=null;
     Profile.grantCompanionStarter(p);
-    // コイン・ペット
+    // コイン・相棒
     p.coins=Math.max(0,d.coins|0);p.petEssence=Math.max(0,d.petEssence|0);p.coinGiftGiven=!!d.coinGiftGiven;
     if(d.giftsGot&&typeof d.giftsGot==='object')for(const k in d.giftsGot)if(d.giftsGot[k])p.giftsGot[k]=true;
     p.pets={};
@@ -4661,7 +4661,7 @@ function damageEnemy(w,p,e,mult,src){
   if(ed.physRes)dmg=Math.max(1,Math.round(dmg*ed.physRes)); // 物理に硬い魔物（地底王）
   // 属性ダメージ：防御力で減らず、会心の影響も受けない。モーションの重さ（倍率）の平方根に比例
   let elHit=null;
-  const ael=src.petElem||s.elem; // ペットの属性攻撃（火の息など）は、持ち主の武器の属性の代わりに使う
+  const ael=src.petElem||s.elem; // 相棒の属性攻撃（火の息など）は、持ち主の武器の属性の代わりに使う
   if(ael&&ael.v>0){
     const em=elemMult(e.type,ael.k);let ed=ael.v*em*Math.sqrt(Math.max(0.2,mult))*(1+((s.elemPct||0)+((s.elemAtk&&s.elemAtk[ael.k])||0))/100); // 属性攻撃強化＋その属性の攻撃強化（シリーズスキル）
     if(guarded)ed*=DATA.enemies[e.type].guard.mult;
@@ -4672,7 +4672,7 @@ function damageEnemy(w,p,e,mult,src){
   if(!e.boss&&!e.mid&&!e.halfFlinched&&e.hp>0&&e.hp<=e.maxHp*0.5){e.halfFlinched=true;e.flinchT=0.45;e.action=null;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'怯み',color:'#ffd27a'});}
   if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
   if(e.sleepT>0)e.sleepT=0; // 睡眠は攻撃されると目を覚ます
-  const inf=src.petInflict||s.inflict; // ペットの状態異常（蜂の毒針）は持ち主の武器の代わりに使う
+  const inf=src.petInflict||s.inflict; // 相棒の状態異常（蜂の毒針）は持ち主の武器の代わりに使う
   if(inf&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
     const k=inf.k;e.buildup=e.buildup||{};e.buildThr=e.buildThr||{};
     const thr=e.buildThr[k]||100;
@@ -4951,7 +4951,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
     if(inPuddle(w.map,p.x,p.y))k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
     if(w.blizzard&&w.blizzard.on)k*=0.92;                      // 吹雪：わずかに遅くなる（ほかの補正と掛け算で共存、終われば戻る）
-    const spd=(p.drawn?s.speed:s.sheathSpeed)*k*(p.buffs.spd&&p.buffs.spd.t>0?1+p.buffs.spd.pct/100:1); // ペットの応援で速くなる
+    const spd=(p.drawn?s.speed:s.sheathSpeed)*k*(p.buffs.spd&&p.buffs.spd.t>0?1+p.buffs.spd.pct/100:1); // 相棒の応援で速くなる
     moveEntity(w.map,p,mx*spd*dt,my*spd*dt);p.walk+=dt*spd/28;
   }
   // 回避：アイテム使用（消費なし）とチャージを中断する
@@ -6349,7 +6349,7 @@ function updateRevive(w,dt){
 }
 /** ワールドを1ステップ進める。inputs = {playerId: 入力} */
 // ===== PETAI BEGIN =====
-/* ペットのサポート：はめている首輪ごとに決まった行動を、ペットのAIが自分で判断して行う（マルチプレイと訓練場のみ）。
+/* 相棒のサポート：はめている首輪ごとに決まった行動を、相棒のAIが自分で判断して行う（マルチプレイと訓練場のみ）。
    attack：敵に向かって攻撃する首輪（ranged は離れた所から撃つ、boss はボスを優先）
    ready／do：飼い主の様子を見て助ける首輪（回復・守り・応援） */
 const PET_ACTS={
@@ -6418,7 +6418,7 @@ function updateWorld(w,dt,inputs){
   for(const id in w.players){const p=w.players[id];before[id]={x:p.x,y:p.y};}
   Companion.tick(w,dt);
   for(const id in w.players){const p=w.players[id];updatePlayer(w,p,p.ai?Companion.decide(w,p):(inputs[id]||EMPTY_INPUT),dt);}
-  updatePets(w,dt); // ペットが首輪ごとの行動でサポートする
+  updatePets(w,dt); // 相棒が首輪ごとの行動でサポートする
   // 手裏剣の2枚目以降：少し間をあけて投げる
   if(w.pendingShots&&w.pendingShots.length){
     for(const q of w.pendingShots)q.t-=dt;
@@ -7997,7 +7997,7 @@ BossArt.A.bone_dragon=(k,H)=>{ // 冥府の骨竜：背骨と左右の肋骨、�
 };
 // ===== BOSSART END =====
 // ===== PETART BEGIN =====
-/* ペットの見た目：横から見た全身。+x が前、単位はペットの大きさ、足元は y=0.65 あたり。戻り値は首輪を描く位置 [x,y,半径] */
+/* 相棒の見た目：横から見た全身。+x が前、単位は相棒の大きさ、足元は y=0.65 あたり。戻り値は首輪を描く位置 [x,y,半径] */
 const PET_ART={
   l_dragon(k,H,C,mv){const d='rgba(0,0,0,.6)',sw=mv?0.16:0.03,fl=Math.sin(k.t*(mv?14:5))*0.35,tw=Math.sin(k.t*(mv?9:3))*0.08,
       MEM='#f8a0b8',BL='#ffe0c0',HN='#fff0d0',DK='#a03a5a',o={g:0.47,sw,knee:0.03,lift:0.08};
@@ -8383,7 +8383,7 @@ const Renderer={
       case 'itemCancel':this.floater(ev.x,ev.y,'中断','#aaaaaa',14,0.8);break;
       case 'itemArea':this.ring(ev.x,ev.y,20,ev.r,ev.color,0.7,4);break;
       case 'buff':this.floater(ev.x,ev.y,(ev.stat==='atk'?'攻撃':'防御')+'UP!',ev.color,16,1.2);break;
-      case 'petAct':this.floater(ev.x,ev.y-6,ev.name,'#ffd0f0',12,1.0);if(ev.tx!=null){this.ring(ev.tx,ev.ty,4,ev.ranged?26:18,ev.collar==='dragonling'?'#ff8040':ev.collar==='beesting'?'#a0e070':'#ffe0f0',0.35);}else this.ring(ev.x,ev.y+12,6,30,'#ffd0f0',0.5);break; // ペットのサポート行動
+      case 'petAct':this.floater(ev.x,ev.y-6,ev.name,'#ffd0f0',12,1.0);if(ev.tx!=null){this.ring(ev.tx,ev.ty,4,ev.ranged?26:18,ev.collar==='dragonling'?'#ff8040':ev.collar==='beesting'?'#a0e070':'#ffe0f0',0.35);}else this.ring(ev.x,ev.y+12,6,30,'#ffd0f0',0.5);break; // 相棒のサポート行動
       case 'swing':if(ev.level>0){this.ring(ev.x,ev.y,10,40+ev.level*20,'#ffd060',0.35,3+ev.level);this.addShake(ev.level*2);}break;
       case 'skill':this.ring(ev.x,ev.y,10,50,'#7fe0ff',0.3);break;
       case 'tgResolve':
@@ -10075,14 +10075,14 @@ const Renderer={
     if(this.multi)this.drawPlayerLabel(ctx,p);
     this.drawPet(ctx,p);
   },
-  /** 設定「他のプレイヤーを薄く表示」：オンラインでは自分以外、ひとりでは仲間（とそのペット）を薄くする */
+  /** 設定「他のプレイヤーを薄く表示」：オンラインでは自分以外、ひとりでは仲間（とその相棒）を薄くする */
   fadeOther(p){
     if(typeof App==='undefined'||!App.settings||!App.settings().fadeOthers||!p)return false;
     if(Net.role)return !App.localInputPid(p.id);
     return typeof Companion!=='undefined'&&Companion.isId&&Companion.isId(p.id);
   },
-  /** 連れ歩くペット（マルチプレイと訓練場）。横から見た全身の姿で、進む向きに合わせて左右を反転する。
-      位置はホストのペットAI（p.pet）に合わせ、無いとき（結果画面の見本など）は飼い主の後ろにつく */
+  /** 連れ歩く相棒（マルチプレイと訓練場）。横から見た全身の姿で、進む向きに合わせて左右を反転する。
+      位置はホストの相棒AI（p.pet）に合わせ、無いとき（結果画面の見本など）は飼い主の後ろにつく */
   drawPet(ctx,p){
     if(!p.petLook||p.dead)return;
     const lk=LOOKS.find(x=>x.id===p.petLook);if(!lk)return;
@@ -11010,7 +11010,7 @@ const Sound={
       [72,76,79,84].forEach((m,i)=>note(m,t+i*0.07,0.35,1));
       this.voice(d,'strings',t+0.3,60,1,0.9);this.crash(d,t+0.28,0.5);
     }else{
-      // SSR（ペット含む）：ファンファーレ
+      // SSR（相棒含む）：ファンファーレ
       let tt=t;
       for(const [m,dd] of [[72,0.2],[76,0.2],[79,0.2],[84,0.5],[83,0.2],[84,0.8]]){note(m,tt,dd*0.95,1);tt+=dd;}
       for(const m of [48,60,64,67])this.voice(d,'pad',t+1.0,m,1.2,1.0);
@@ -11551,7 +11551,7 @@ const UI={
     this.overlay.querySelectorAll('[data-scroll]').forEach(el=>{scrolls[el.dataset.scroll]=el.scrollTop;});
     this.overlay.innerHTML=html;this.overlay.classList.remove('hidden');
     this.overlay.querySelectorAll('[data-scroll]').forEach(el=>{if(scrolls[el.dataset.scroll])el.scrollTop=scrolls[el.dataset.scroll];});
-    // ペットのプレビュー（装備画面の詳細欄）：ゲーム内と同じ描き方で姿を出す
+    // 相棒のプレビュー（装備画面の詳細欄）：ゲーム内と同じ描き方で姿を出す
     this.overlay.querySelectorAll('canvas.pet-prev').forEach(cv=>{
       try{Renderer.drawPet(cv.getContext('2d'),{id:'__prev',x:240,y:64,r:80,facing:0,petLook:cv.dataset.look,petLookV:cv.dataset.v|0,preview:true});}catch(e){}
     });
@@ -11851,7 +11851,7 @@ const Ops={
     return {changed:true,msg:`首輪10連：${rs.length}回回した（${names}）`,color:RARITY[best.rar].color,
       fx:{rar:best.rar,text:`首輪10連結果（${rs.length}回）：${names}`}};
   },
-  /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出はペットと同じ3段階の表示） */
+  /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出は相棒と同じ3段階の表示） */
   letterPull(p,cap){
     const tier=Items.rollLetterTier(1,cap);
     Profile.addItem(p,Items.createLetter(tier));
@@ -11894,7 +11894,7 @@ const Ops={
     const names=rs.map(f=>f.name).join(' ／ ');
     return {changed:true,msg:`手紙10連：${names}`,color:best.color,fx:{rar:best.rar,text:`手紙10連結果：${names}`}};
   },
-  /** ペットガチャ（3コイン）：見た目と色を抽選。同じ見た目の同じ色がかぶったらコイン1枚 */
+  /** 相棒ガチャ（3コイン）：見た目と色を抽選。同じ見た目の同じ色がかぶったらコイン1枚 */
   gacha(p,who,a){
     if((p.coins||0)<3)return {msg:'コインが足りません（3コイン必要）',color:'#ff8060'};
     p.coins-=3;
@@ -12771,7 +12771,7 @@ const App={
       pr.stats.sorties++;
       const pl=addPlayer(this.world,m.pid,computeStats(pr,null,0),pr.bag);
       pl.slot=slotOfPid(m.pid);
-      pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null; // ペット（見た目）と首輪は他の人にも見せる
+      pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null; // 相棒（見た目）と首輪は他の人にも見せる
     });
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
@@ -13048,7 +13048,7 @@ const App={
     if(r.changed&&this.world&&this.world.players[pid]){
       setPlayerStats(this.world,pid,computeStats(m.profile,null,0));
       this.world.players[pid].bag=Object.assign(emptyBag(),m.profile.bag);
-      // ペット（見た目）と首輪は、ほかの人にも見せるので world にも反映する
+      // 相棒（見た目）と首輪は、ほかの人にも見せるので world にも反映する
       const wp=this.world.players[pid];wp.petLook=m.profile.equipped.look||null;wp.petLookV=m.profile.equipped.lookV||0;wp.petCollar=m.profile.equipped.pet||null;
     }
     Net.sendTo(pid,{t:'profile',profile:m.profile});
@@ -13440,7 +13440,7 @@ const App={
       el.className='gfx gfx-'+rar;
       el.innerHTML=`<div class="gfx-in"><div class="gfx-r">${RARITY[rar].name}</div><div class="gfx-t">${esc(text)}</div><div class="gfx-hint">タップして閉じる</div></div>`;
       if(look){
-        // 出たペットの見た目を、ペットと同じ描き方でそのまま見せる
+        // 出た相棒の見た目を、相棒と同じ描き方でそのまま見せる
         try{
           const cv=document.createElement('canvas');cv.width=240;cv.height=160;cv.className='gfx-pet';
           const cx=cv.getContext('2d');
@@ -13670,7 +13670,7 @@ const App={
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
-      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとそのペットを薄く表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
         <div id="updateMsg" class="small muted" style="margin-top:6px"></div></div>
@@ -13819,9 +13819,9 @@ const App={
     const letter=letters+deco;
     // ガチャはタブごとに分けて、選んだものだけを広く出す
     const sub=this.gachaSub||'pet';
-    const tabs=[['pet','ペット'],['collar','首輪'],['letter','手紙'],['deco','装飾品']];
+    const tabs=[['pet','相棒'],['collar','首輪'],['letter','手紙'],['deco','装飾品']];
     const tabBar=`<div class="filters">${tabs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="gachaTab" data-t="${k}">${n}</button>`).join('')}</div>`;
-    const petCard=`<div class="recipe"><div class="rn">ペットガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。ペット（種類と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
+    const petCard=`<div class="recipe"><div class="rn">相棒ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。相棒（種類と色）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
     const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます。レア度で出る種類が変わります。かぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button><button class="${coins>=10?'primary':''}" data-act="collarGacha10" ${coins>=10?'':'disabled'}>10連（10コイン）</button></div></div>`;
@@ -13906,10 +13906,10 @@ const App={
     const opts=[[0,'自分（1P）']].concat(p.companions.map((c,i)=>[CHAR_COUNT+i,'仲間：'+COMP_ROLE_NAME[c.role]]));
     return `<div class="who-sel small">装備する相手：${opts.map(([w,n])=>`<button class="${cur===w?'on':''}" data-act="invWho" data-who="${w}">${n}</button>`).join('')}</div>`;
   },
-  /** 装備画面の「ペット」枠（プレイヤーのみ） */
+  /** 装備画面の「相棒」枠（プレイヤーのみ） */
   petSlotHTML(){
     const p=this.profile,lk=LOOKS.find(x=>x.id===p.equipped.look),pt=PETS.find(x=>x.id===p.equipped.pet);
-    return `<div class="eqslot ${this.inv.filter==='look'?'sel':''}" data-act="filter" data-f="look"><span class="sl">ペット</span>${lk?`<span style="color:#9fe0ff">${lk.name}（${LOOK_VARIANTS[p.equipped.lookV|0].name}）</span>`:'<span class="muted">なし</span>'}</div>`
+    return `<div class="eqslot ${this.inv.filter==='look'?'sel':''}" data-act="filter" data-f="look"><span class="sl">相棒</span>${lk?`<span style="color:#9fe0ff">${lk.name}（${LOOK_VARIANTS[p.equipped.lookV|0].name}）</span>`:'<span class="muted">なし</span>'}</div>`
       +`<div class="eqslot ${this.inv.filter==='pet'?'sel':''}" data-act="filter" data-f="pet"><span class="sl">首輪</span>${pt?`<span style="color:#9fe0ff">${pt.name} Lv${p.pets[pt.id].level}</span>`:'<span class="muted">なし</span>'}</div>`;
   },
   /** 色を選ぶボタン：持っている色ごとに。いま付けている色は「外す」 */
@@ -13937,22 +13937,22 @@ const App={
   lookListHTML(){
     const p=this.profile;
     const own=LOOKS.filter(x=>(p.looks[x.id]||[]).length);
-    if(!own.length)return '<div class="muted">まだペットがいません（ショップのガチャで出ます）</div>';
-    return `<div class="small muted" style="margin-bottom:6px">ペットは自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>{
+    if(!own.length)return '<div class="muted">まだ相棒がいません（ショップのガチャで出ます）</div>';
+    return `<div class="small muted" style="margin-bottom:6px">相棒は自由に選べます（性能は首輪で決まります）</div>`+own.map(x=>{
       const eq=p.equipped.look===x.id,ask=this.inv.lookAsk===x.id;
       const row=`<div class="itemrow ${this.inv.petSel===x.id?'sel':''}" data-act="lookSel" data-id="${x.id}"><span class="nm">${x.name}</span>${eq?`<span class="tag">装備中（${LOOK_VARIANTS[p.equipped.lookV|0].name}）</span>`:''}<span class="small muted">${(p.looks[x.id]||[]).length}色</span></div>`;
       if(!ask)return row;
-      // タップしたペットの直下に確認を出す（下までスクロールしなくても決められる）
+      // タップした相棒の直下に確認を出す（下までスクロールしなくても決められる）
       return row+`<div class="itemrow sel" style="flex-wrap:wrap;gap:6px;justify-content:space-between"><span>${x.name}の色を選ぶ（${eq?'いまの色をタップで外す':'色をタップで付ける'}）</span><span class="btnrow" style="margin:0">${this.lookColorBtns(p,x.id)}</span></div>`;
     }).join('');
   },
   lookDetailHTML(){
     const p=this.profile,id=this.inv.petSel,x=LOOKS.find(q=>q.id===id);
-    if(!x||!p.looks[id])return '<div class="muted">ペットを選ぶと詳細が出ます。</div>';
+    if(!x||!p.looks[id])return '<div class="muted">相棒を選ぶと詳細が出ます。</div>';
     const A=PET_ACTS[LOOK_ACT[id]];
-    // プレビューの色：このペットを付けていればその色、付けていなければ持っている最初の色
+    // プレビューの色：この相棒を付けていればその色、付けていなければ持っている最初の色
     const pv=p.equipped.look===id?(p.equipped.lookV|0):((p.looks[id]||[])[0]|0);
-    return `<div class="iname">${x.name}（ペット）</div><div class="small muted" style="margin:6px 0">連れ歩くペットです。色を選べます。性能には影響しません。</div>${A?`<div class="eff">サポート行動「${A.name}」：${A.desc}（間隔 ${A.cd}秒）</div>`:''}
+    return `<div class="iname">${x.name}（相棒）</div><div class="small muted" style="margin:6px 0">連れ歩く相棒です。色を選べます。性能には影響しません。</div>${A?`<div class="eff">サポート行動「${A.name}」：${A.desc}（間隔 ${A.cd}秒）</div>`:''}
       <div class="btnrow">${this.lookColorBtns(p,id)}</div>
       <canvas class="pet-prev" width="240" height="160" data-look="${id}" data-v="${pv}" style="display:block;margin:10px auto 0;max-width:100%;background:rgba(255,255,255,.05);border-radius:8px"></canvas>`;
   },
@@ -13963,7 +13963,7 @@ const App={
   },
   petDetailHTML(){
     const p=this.profile,id=this.inv.petSel,x=PETS.find(q=>q.id===id);
-    if(!x||!p.pets[id])return '<div class="muted">ペットを選ぶと詳細が出ます。</div>';
+    if(!x||!p.pets[id])return '<div class="muted">相棒を選ぶと詳細が出ます。</div>';
     const eq=p.equipped.pet===id;
     return `<div class="iname" style="color:${RARITY[x.rar].color}">${x.name}の首輪</div><div class="isub">${RARITY[x.rar].name}　${eq?'<span class="tag">装備中</span>':''}</div>
       <div class="eff">首輪：${x.fmt.replace('{v}',petValue(x,1).toFixed(x.stat==='dodgeIframe'?2:1))}（マルチプレイで連れ歩くと効果）</div>
@@ -14003,7 +14003,7 @@ const App={
       return ea-eb||order[a.slot]-order[b.slot]||b.rarity-a.rarity||(b.atk+b.def)-(a.atk+a.def);
     });
     const bulk=!!this.inv.bulk,bsel=this.inv.bulkSel||[];
-    const filters=[[SLOTS[0],SLOT_NAMES[SLOTS[0]]],['all','すべて'],...SLOTS.slice(1).map(s=>[s,SLOT_NAMES[s]])].concat([['costume','重ね着']]).concat(who===0?[['pet','首輪'],['look','ペット']]:[]);
+    const filters=[[SLOTS[0],SLOT_NAMES[SLOTS[0]]],['all','すべて'],...SLOTS.slice(1).map(s=>[s,SLOT_NAMES[s]])].concat([['costume','重ね着']]).concat(who===0?[['pet','首輪'],['look','相棒']]:[]);
     // 防具・手紙はスキルで絞り込めるように、持ち物にあるスキルだけ並べる
     const skillKeys=(f==='pet'||f==='look'||f==='weapon')?[]:[...new Set(p.items.filter(i=>inF(i)).flatMap(i=>Object.keys(skOf(i)).filter(k=>DATA.armorSkills[k])))];
     const skillBar=skillKeys.length?`<div class="filters skillfilters"><button class="${sk?'':'on'}" data-act="skillFilter" data-k="">スキル：すべて</button>${skillKeys.map(k=>`<button class="${sk===k?'on':''}" data-act="skillFilter" data-k="${k}">${DATA.armorSkills[k].name}</button>`).join('')}</div>`:'';
