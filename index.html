@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.62.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.62.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -13581,7 +13581,7 @@ const Friends={
     let P;try{P=await Net.loadLib();}catch(e){this.starting=false;return;}
     let peer;try{peer=new P(this.peerId(this.myId()),{debug:0});}catch(e){this.starting=false;return;}
     this.peer=peer;
-    peer.on('open',()=>{this.ready=true;this.starting=false;if(this.waiters){for(const f of this.waiters)f();this.waiters=null;}});
+    peer.on('open',()=>{this.ready=true;this.starting=false;this.blocked=false;this.retryN=0;this.refreshUI();if(this.waiters){for(const f of this.waiters)f();this.waiters=null;}});
     peer.on('connection',conn=>{
       conn.on('data',d=>{
         if(!d||d.t!=='ask')return;
@@ -13599,10 +13599,22 @@ const Friends={
       if(t==='peer-unavailable'){ // 問い合わせ先がオフライン
         const m=String(err.message||'').match(/f-(\d{8})/);if(m)this.setState(m[1],{online:false});
         return;}
-      if(t==='unavailable-id'){this.starting=false;this.ready=false;this.blocked=true;this.refreshUI();} // 同じフレンドコードの窓口がもう開いている（別のタブなど）
+      if(t==='unavailable-id'){ // 同じフレンドコードの窓口がまだ残っている。
+        // 再読み込み直後は、前のページの窓口が接続サーバーにしばらく（数十秒）残るので、少し待って開き直す
+        this.starting=false;this.ready=false;try{peer.destroy();}catch(e){}if(this.peer===peer)this.peer=null;
+        this.retryN=(this.retryN||0)+1;this.blocked=this.retryN>24?'tab':'wait';this.refreshUI();
+        if(this.retryN<=24)setTimeout(()=>this.start(),5000);
+      }
     });
     peer.on('disconnected',()=>{try{peer.reconnect();}catch(e){}});
     peer.on('close',()=>{this.peer=null;this.ready=false;this.starting=false;});
+  },
+  async tempPeer(){
+    if(this.tmp&&this.tmp.open)return this.tmp;
+    let P;try{P=await Net.loadLib();}catch(e){return null;}
+    return new Promise(res=>{let t;try{t=new P({debug:0});}catch(e){return res(null);}
+      const to=setTimeout(()=>res(null),8000);
+      t.on('open',()=>{clearTimeout(to);this.tmp=t;res(t);});t.on('error',err=>{if(err&&err.type==='peer-unavailable'){const m=String(err.message||'').match(/f-(\d{8})/);if(m)this.setState(m[1],{online:false});}});t.on('close',()=>{if(this.tmp===t)this.tmp=null;});});
   },
   whenReady(){return this.ready?Promise.resolve():new Promise(res=>{(this.waiters=this.waiters||[]).push(res);setTimeout(res,8000);});},
   /** 自分の今の状態（問い合わせへの返事） */
@@ -13614,11 +13626,13 @@ const Friends={
   /** 登録したフレンド全員の状態を問い合わせる */
   async refresh(){
     await this.start();await this.whenReady();
-    if(!this.peer||!this.ready){for(const f of this.list())this.setState(f.id,{online:false,error:true});return;}
+    let asker=this.ready&&this.peer;
+    if(!asker)asker=await this.tempPeer(); // 自分の窓口が開けなくても、問い合わせだけは名前のない接続でできる
+    if(!asker){for(const f of this.list())this.setState(f.id,{online:false,error:true});return;}
     for(const f of this.list()){
       this.setState(f.id,{checking:true});
       let done=false;
-      const conn=this.peer.connect(this.peerId(f.id),{reliable:true,serialization:'json'});
+      const conn=asker.connect(this.peerId(f.id),{reliable:true,serialization:'json'});
       const end=s=>{if(done)return;done=true;this.setState(f.id,s);try{conn.close();}catch(e){}};
       setTimeout(()=>end({online:false}),7000);
       conn.on('open',()=>{try{conn.send({t:'ask',from:this.myId(),name:Net.savedName()});}catch(e){end({online:false});}});
@@ -13642,7 +13656,8 @@ const Friends={
     const L=this.list();
     const req=Object.entries(this.requests).filter(([id])=>!L.some(x=>x.id===id));
     let h='';
-    if(this.blocked)h+=`<div class="small" style="color:#ff9a7a">フレンドの窓口を開けませんでした（このゲームを別のタブでも開いていませんか？）。フレンドからの問い合わせには、もう一方のタブが答えます。</div>`;
+    if(this.blocked==='wait')h+=`<div class="small" style="color:#ffd27a">フレンドの窓口を準備しています（再読み込みの直後は、前の接続が切れるまで1分ほどかかることがあります）…</div>`;
+    else if(this.blocked)h+=`<div class="small" style="color:#ff9a7a">フレンドの窓口を開けませんでした（このゲームを別のタブでも開いていませんか？）。フレンドからの問い合わせには、もう一方のタブが答えます。</div>`;
     h+=req.map(([id,r])=>`<div class="itemrow"><span class="nm">${esc(r.name)}</span><small>あなたを登録しています（${id}）</small><button data-act="friendAccept" data-id="${id}">登録し返す</button></div>`).join('');
     if(!L.length)return h+'<div class="small muted">まだフレンドがいません。相手のフレンドコードを入力して登録しましょう。</div>';
     h+=L.map(f=>{const s=this.state[f.id]||{};
@@ -13669,6 +13684,8 @@ const App={
     if(Profile.grantStones(this.profile))this.dirty=true;
     Net.init();
     setTimeout(()=>Friends.start(),1500); // フレンドからの問い合わせに答える窓口を開く
+    // ページを閉じる・再読み込みするときは窓口をすぐ閉じて、次に開いたとき同じフレンドコードですぐ使えるようにする
+    if(typeof window!=='undefined'&&window.addEventListener){const rel=()=>{try{if(Friends.peer)Friends.peer.destroy();}catch(e){}};window.addEventListener('pagehide',rel);window.addEventListener('beforeunload',rel);}
     applyBossStyles();
     Renderer.init($('#game'));Input.init($('#game'));Input.initTouch();
     Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);
