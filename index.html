@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.47.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.47.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -401,12 +401,12 @@ const DATA={
   weaponSkills:{
     medic:{name:'医療の心得',duration:20,cd:120},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）、回復薬の効果の半分を近くの味方（220の範囲）にも
     fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージにかかる時間が半分。攻撃を受けてもチャージは止まらない
-    iai:{name:'居合の極意',duration:4,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
+    iai:{name:'居合の極意',duration:4,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→35%
     kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
     taunt:{name:'挑発',duration:20,cd:120},         // 槍：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
     sokusha:{name:'速射',duration:20,cd:120},       // 弓：チャージ速度2倍、矢が貫通する（ボスは当たった部位すべてにダメージ）
     inmitsu:{name:'隠密',duration:20,cd:120},
-    gouwan:{name:'剛腕',duration:20,cd:120},       // 槌：ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
+    gouwan:{name:'剛腕',duration:20,cd:120},       // 槌：攻撃力1.2倍、ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
   },
   // Qキーのスキル（武器種の skill に ID を入れると使える。今はどの武器にも付けていない）
   skills:{
@@ -3210,12 +3210,12 @@ const HELP_BASIC=[
 const HELP_WS={
   medic:'回復アイテムの効果1.5倍、蘇生にかかる時間を2秒短縮。回復薬の効果の半分を近くの味方にも回復する',
   fudou:'チャージにかかる時間が50%短くなる。攻撃を受けてもチャージは止まらない',
-  iai:'見切りの判定時間が1.5倍、見切りの攻撃力アップが25%から40%に',
+  iai:'見切りの判定時間が1.5倍、見切りの攻撃力アップが25%から35%に',
   kyodo:'回避のクールタイムが0.3秒短くなり、攻撃力が10%上がる',
   taunt:'発動中はボスのヘイトが最大になり、狙われやすくなる。全方向の90%ガードと、回避距離1.3倍',
   sokusha:'チャージ速度が2倍になり、矢が敵を貫通する。貫通する矢は、ボスの当たった部位すべてにダメージを与える',
   inmitsu:'手裏剣を一度に3枚投げる（通常2枚）。敵から見つからなくなり、追いかけていた敵も追うのをやめる（見つからない効果はボスには効かない）',
-  gouwan:'ボスの頭へのスタン値が2倍。チャージ中も通常の速さで歩ける'
+  gouwan:'攻撃力が1.2倍。ボスの頭へのスタン値が2倍。チャージ中も通常の速さで歩ける'
 };
 const Items={
   /** 上限（maxR）までのレア度から抽選する（製作の装飾品はレア以下） */
@@ -4713,7 +4713,8 @@ function damageEnemy(w,p,e,mult,src){
   const hp_=src.hit||null,part=hp_&&hp_.part; // 当たった部位
   const s=p.stats;let atk=s.atk*(s.power||1);
   if(s.effects.desperate&&p.hp<=s.maxHp*0.3)atk*=1.35;
-  if(p.buffT>0)atk*=1+(s.perfectAtk||0)*(wsActive(p,'iai')?1.6:1);
+  if(p.buffT>0)atk*=1+(s.perfectAtk||0)*(wsActive(p,'iai')?1.4:1); // 居合の極意：見切りの攻撃力アップ 25%→35%
+  if(wsActive(p,'gouwan'))atk*=1.2; // 剛腕：槌の攻撃力1.2倍
   if(wsActive(p,'kyodo'))atk*=1.1;
   if(p.buffs.atk&&p.buffs.atk.t>0)atk*=1+p.buffs.atk.pct/100;
   {const fw=DATA.weaponTypes[s.weaponType];if(fw&&fw.flow&&p.flow>0)atk*=1+p.flow*fw.flow.pct/100;}
