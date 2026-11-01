@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.48.4',date:'2026/11/01'};
+const GAME_VERSION={no:'1.48.5',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -890,16 +890,16 @@ const DATA={
     kubi_gs:{name:'首狩りの大剣',slot:'weapon',st:{k:'sleep',buildup:15},wtype:'greatsword',atk:47,crit:6,slots:2,boss:'headless_knight'},
     onry_tachi:{name:'怨霊の太刀',slot:'weapon',el:{k:'water',v:14},wtype:'tachi',atk:44,crit:14,slots:2,boss:'yomi_samurai'},
     onry_dual:{name:'怨霊の双剣',slot:'weapon',el:{k:'water',v:14},wtype:'dual',atk:43,crit:16,slots:2,boss:'yomi_samurai'},
-    kama_head:{name:'大鎌蟷螂の兜',slot:'head',def:14,skills:{crit_up:4,charge_up:3},slots:2},
-    kama_body:{name:'大鎌蟷螂の鎧',slot:'body',def:18,skills:{crit_up:5,weakness:2},slots:2},
-    kama_arms:{name:'大鎌蟷螂の腕甲',slot:'arms',def:14,skills:{crit_up:4,charge_up:2,weakness:1},slots:2},
-    kama_waist:{name:'大鎌蟷螂の腰当て',slot:'waist',def:13,skills:{crit_up:3,charge_up:3,weakness:1},slots:2},
-    kama_legs:{name:'大鎌蟷螂の脚甲',slot:'legs',def:14,skills:{crit_up:4,charge_up:2,weakness:1},slots:2},
-    armd_head:{name:'大アルマジロの兜',slot:'head',def:14,skills:{dmg_cut:4,dodge_dist:3},slots:2},
-    armd_body:{name:'大アルマジロの鎧',slot:'body',def:18,skills:{dmg_cut:5,def_up:2},slots:2},
-    armd_arms:{name:'大アルマジロの腕甲',slot:'arms',def:14,skills:{dmg_cut:4,dodge_dist:2,def_up:1},slots:2},
-    armd_waist:{name:'大アルマジロの腰当て',slot:'waist',def:13,skills:{dmg_cut:3,dodge_dist:3,def_up:1},slots:2},
-    armd_legs:{name:'大アルマジロの脚甲',slot:'legs',def:14,skills:{dmg_cut:4,dodge_dist:2,def_up:1},slots:2},
+    kama_head:{name:'大鎌蟷螂の兜',slot:'head',def:8,skills:{crit_up:4,charge_up:3},slots:2},
+    kama_body:{name:'大鎌蟷螂の鎧',slot:'body',def:11,skills:{crit_up:5,weakness:2},slots:2},
+    kama_arms:{name:'大鎌蟷螂の腕甲',slot:'arms',def:7,skills:{crit_up:4,charge_up:2,weakness:1},slots:2},
+    kama_waist:{name:'大鎌蟷螂の腰当て',slot:'waist',def:7,skills:{crit_up:3,charge_up:3,weakness:1},slots:2},
+    kama_legs:{name:'大鎌蟷螂の脚甲',slot:'legs',def:8,skills:{crit_up:4,charge_up:2,weakness:1},slots:2},
+    armd_head:{name:'大アルマジロの兜',slot:'head',def:8,skills:{dmg_cut:4,dodge_dist:3},slots:2},
+    armd_body:{name:'大アルマジロの鎧',slot:'body',def:12,skills:{dmg_cut:5,def_up:2},slots:2},
+    armd_arms:{name:'大アルマジロの腕甲',slot:'arms',def:8,skills:{dmg_cut:4,dodge_dist:2,def_up:1},slots:2},
+    armd_waist:{name:'大アルマジロの腰当て',slot:'waist',def:7,skills:{dmg_cut:3,dodge_dist:3,def_up:1},slots:2},
+    armd_legs:{name:'大アルマジロの脚甲',slot:'legs',def:8,skills:{dmg_cut:4,dodge_dist:2,def_up:1},slots:2},
     hana_head:{name:'毒花竜の兜',slot:'head',def:16,skills:{poison_res:4,elem_up:3},slots:2},
     hana_body:{name:'毒花竜の鎧',slot:'body',def:20,skills:{poison_res:5,heal_up:2},slots:2},
     hana_arms:{name:'毒花竜の腕甲',slot:'arms',def:16,skills:{poison_res:4,elem_up:2,heal_up:1},slots:2},
