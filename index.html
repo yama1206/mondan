@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.30.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.30.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -6340,7 +6340,8 @@ const PET_ACTS={
     ready:(w,o)=>o.hp<o.stats.maxHp*0.4,do:(w,pt,o)=>petHeal(w,o,0.2)},
   mole:{name:'土の守り',desc:'飼い主に敵の攻撃の予告が重なると、土の守りで受けるダメージを30%減らす（4秒）',cd:15,
     ready:(w,o)=>w.telegraphs.some(t=>t.dmg>0&&inTelegraph(t,o.x,o.y,o.r)),do:(w,pt,o)=>petGuard(o,4,30)},
-  turtle:{name:'水鉄砲',desc:'離れた所から近くの敵に水をかける（飼い主の攻撃力の35%＋水属性）',cd:6,attack:{mult:0.35,range:300,ranged:true,elem:{k:'water',v:8}}},
+  turtle:{name:'甲羅の盾',desc:'飼い主のHPが5割を切ると、甲羅の盾で受けるダメージを40%減らす（6秒）',cd:25,
+    ready:(w,o)=>o.hp<o.stats.maxHp*0.5,do:(w,pt,o)=>petGuard(o,6,40)},
   fox:{name:'かく乱の噛みつき',desc:'近くの敵に飛びかかって噛みつく（飼い主の攻撃力の35%＋水属性）',cd:5,attack:{mult:0.35,range:320,elem:{k:'water',v:8}}},
   cat:{name:'ひっかき',desc:'近くの敵を短い間隔で何度もひっかく（飼い主の攻撃力の20%＋氷属性）',cd:2.2,attack:{mult:0.2,range:260,elem:{k:'ice',v:8}}},
   wolf:{name:'噛みつき',desc:'飼い主のそばの敵に強く噛みつく（飼い主の攻撃力の50%＋雷属性）',cd:4.5,attack:{mult:0.5,range:340,elem:{k:'thunder',v:8}}},
