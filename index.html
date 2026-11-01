@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.42.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.43.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4856,18 +4856,43 @@ const Companion={
       const d=Math.hypot(e.x-p.x,e.y-p.y);
       if(Math.hypot(e.x-leader.x,e.y-leader.y)<=R.leash&&d<fd){fd=d;foe=e;}
     }
+    const idx=parseInt(String(p.id).slice(1))||0,t=w.time||0;
+    // 移動の仕上げ：味方と重ならないように少し離れ、攻撃の予告の中へは踏み込まない
+    const go=(tx,ty,stop)=>{
+      let m=toward(tx,ty,stop);
+      for(const q of all){if(q===p||q.dead)continue;const dx=p.x-q.x,dy=p.y-q.y,d=Math.hypot(dx,dy);if(d<34&&d>0.1){m.mx+=dx/d*0.6;m.my+=dy/d*0.6;}}
+      const l=Math.hypot(m.mx,m.my);if(l<0.15)return {mx:0,my:0};
+      m={mx:m.mx/l,my:m.my/l};
+      const nx=p.x+m.mx*28,ny=p.y+m.my*28;
+      if((w.telegraphs||[]).some(tg=>tg.dmg>0&&tg.t<tg.total&&inTelegraph(tg,nx,ny,p.r))){const side=idx%2?1:-1;m={mx:-m.my*side,my:m.mx*side};}
+      return m;
+    };
     if(foe){
       I.aim=Math.atan2(foe.y-p.y,foe.x-p.x);
-      if(fd<=R.reach){I.attack=true;return I;}
       // ヒーラーは時々だけ攻撃する（味方が傷ついていない時、数秒おきに少しの間だけ）
-      if(role==='healer'&&!hurtNow&&fd<=R.reach*1.6&&((w.time||0)%5)<1.5){I.attack=true;return I;}
-      if(role==='tank'){const m=toward(foe.x,foe.y,R.reach*0.8);I.mx=m.mx;I.my=m.my;return I;}
-      if(role==='attacker'){const m=toward(foe.x,foe.y,R.reach*0.8);I.mx=m.mx;I.my=m.my;return I;}
-      // ヒーラーは敵の近くまで行かず、指揮者の近くで待つ
+      if(role==='healer'&&!hurtNow&&fd<=R.reach*1.6&&(t%5)<1.5){I.attack=true;return I;}
+      if(role==='tank'||role==='attacker'){
+        // 立ち位置：タンクは敵の正面（指揮者と敵の間）、アタッカーは敵の横〜背中へ回り込む。仲間ごとに違う側へ
+        const toL=Math.atan2(leader.y-foe.y,leader.x-foe.x);
+        const off=role==='tank'?0:(Math.PI*0.6+0.25*Math.sin(t*0.8+idx))*(idx%2?1:-1);
+        const dist=foe.r+R.reach*0.7,sx=foe.x+Math.cos(toL+off)*dist,sy=foe.y+Math.sin(toL+off)*dist;
+        const atSpot=Math.hypot(sx-p.x,sy-p.y)<22;
+        if(fd<=R.reach+foe.r*0.5&&(atSpot||fd<=R.reach*0.8)){I.attack=true;return I;}
+        if(fd<=R.reach&&(t*1.7+idx)%3<2){I.attack=true;return I;} // 間合いに入っていれば、回り込みの途中でも時々攻撃する
+        const m=go(sx,sy,6);I.mx=m.mx;I.my=m.my;return I;
+      }
+      // ヒーラー：指揮者のそばで、敵とは反対側に控える
+      const away=Math.atan2(leader.y-foe.y,leader.x-foe.x)+0.5*Math.sin(t*0.6+idx);
+      const m=go(leader.x+Math.cos(away)*90,leader.y+Math.sin(away)*90,10);I.mx=m.mx;I.my=m.my;return I;
     }
-    // 5) 指揮者について行く
+    // 5) 指揮者のまわりを動き回る：仲間ごとの持ち場（角度）をゆっくり回し、時々少し場所を変える
+    const n=Math.max(1,all.filter(q=>q.ai).length);
+    const rad={healer:85,tank:70,attacker:105}[role]||90;
+    const ang=t*0.35+idx*TAU/n+0.6*Math.sin(t*0.5+idx*1.7),rr=rad*(0.85+0.25*Math.sin(t*0.9+idx*2.3));
+    const tx=leader.x+Math.cos(ang)*rr,ty=leader.y+Math.sin(ang)*rr;
     const ld=Math.hypot(leader.x-p.x,leader.y-p.y);
-    if(ld>R.follow){const m=toward(leader.x,leader.y,R.follow);I.mx=m.mx;I.my=m.my;}
+    if(ld>R.follow*2.2){const m=go(leader.x,leader.y,R.follow);I.mx=m.mx;I.my=m.my;return I;} // 離れすぎたら、まずは指揮者の方へ
+    const m=go(tx,ty,14);I.mx=m.mx;I.my=m.my;
     return I;
   },
 };
