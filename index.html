@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.46.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.46.2',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3214,7 +3214,7 @@ const HELP_WS={
   kyodo:'回避のクールタイムが0.3秒短くなり、攻撃力が10%上がる',
   taunt:'発動中はボスのヘイトが最大になり、狙われやすくなる。全方向の90%ガードと、回避距離1.3倍',
   sokusha:'攻撃力が1.3倍になる',
-  inmitsu:'敵から見つからなくなる。追いかけていた敵も追うのをやめる（ボスには効かない）',
+  inmitsu:'手裏剣を一度に3枚投げる（通常2枚）。敵から見つからなくなり、追いかけていた敵も追うのをやめる（見つからない効果はボスには効かない）',
   gouwan:'ボスの頭へのスタン値が2倍。チャージ中も通常の速さで歩ける'
 };
 const Items={
@@ -5267,8 +5267,9 @@ function fireShuriken(w,p,opt){
   const s=p.stats,wt=DATA.weaponTypes[s.weaponType],sh=wt.shuriken,a=p.facing;
   const mult=(opt&&opt.mult)||1;
   if(!w.pendingShots)w.pendingShots=[];
-  for(let i=0;i<sh.shots;i++){
-    const off=(i-(sh.shots-1)/2)*sh.side;
+  const shots=wsActive(p,'inmitsu')?3:sh.shots; // 隠密中は3枚投げる
+  for(let i=0;i<shots;i++){
+    const off=(i-(shots-1)/2)*sh.side;
     if(i===0)spawnShurikenShot(w,p,a,off,mult);
     else w.pendingShots.push({t:i*(sh.gap||0),pid:p.id,a,off,mult});
   }
