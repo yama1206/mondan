@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.25.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.25.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -13611,7 +13611,8 @@ const App={
     if(!list.length)return h+'<div class="muted small">スキルポイントのある防具を装備していません</div>';
     return h+list.map(x=>{
       const d=DATA.armorSkills[x.id],on=x.level>0,goal=on?(x.level<x.max?skillStepAt(x.level+1):skillStepAt(x.max)):skillStepAt(1);
-      const bar=Math.round(clamp((x.pts-(on?per*Math.min(x.level,x.max-1):0))/per,0,1)*100);
+      const lo=on?skillStepAt(x.level):0,hi=x.level<x.max?skillStepAt(x.level+1):lo;
+      const bar=hi>lo?Math.round(clamp((x.pts-lo)/(hi-lo),0,1)*100):100;
       const head=`<b style="color:${on?'#7fe09a':'#a99fc0'}">${on?'●':'○'} ${d.name}</b>　<small>${x.pts}pt</small>`
         +(on?`　<span class="tag" style="background:#2d8a5a">Lv${x.level}${x.level>=x.max?'（最大）':''}</span>`:'');
       const eff=on?`<div class="small" style="color:#cfe8d0">${d.fmt.replace('{v}',d.vals[x.level-1])}</div>`:'';
