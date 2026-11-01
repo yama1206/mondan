@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.21.4',date:'2026/10/31'};
+const GAME_VERSION={no:'1.21.5',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3496,7 +3496,7 @@ const emptyEquip=()=>({weapon:null,head:null,body:null,arms:null,waist:null,legs
    仲間の操作は Companion.decide にまとめ、プレイヤー入力とは別の経路で動かす。 */
 const COMP_ROLES=['healer','tank','attacker'];
 const COMP_ROLE_NAME={healer:'ヒーラー',tank:'タンク',attacker:'アタッカー'};
-const COMP_COUNT=2, COMP_REVIVES=2, COMP_REVIVE_DELAY=3;
+const COMP_COUNT=2, COMP_REVIVES=Infinity, COMP_REVIVE_DELAY=10; // 仲間の自動復活：回数は無限、間隔は10秒
 /* 仲間の役割は固定：1人目ヒーラー、2人目タンク */
 const COMP_FIXED_ROLES=['healer','tank'];
 /* 仲間が出撃時に毎回持っている消耗品（プレイヤーの持ち物からは減らない） */
@@ -4757,7 +4757,7 @@ const Companion={
       if(p.ai.reviveT<=0){
         p.ai.revives--;p.ai.reviveT=-1;
         p.dead=false;p.revive=0;p.downT=0;
-        p.hp=Math.max(1,Math.round(p.stats.maxHp*CONFIG.coop.reviveHpRatio));
+        p.hp=p.stats.maxHp; // 仲間の自動復活は全回復
         p.hitInv=1.5;p.dodgeTime=0;p.swing=0;
         emit(w,{type:'revive',pid:p.id,by:'auto',x:p.x,y:p.y});
       }
