@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.48.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.48.3',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4597,10 +4597,11 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   const noFx=bossSrc||!!mn;
   if(p.dead)return false;
   if(p.dodgeInv>0){
-    // ジャスト回避：回避の出始めで攻撃をかわすと、回避のクールタイムがリセット（太刀はさらに「見切り」で攻撃力アップ）
+    // ジャスト回避：回避の出始めで攻撃をかわすと、スタミナが半分回復（太刀はさらに「見切り」で攻撃力アップ）
     const wt=DATA.weaponTypes[p.stats.weaponType],pf=wt&&wt.perfect,jw=(pf?pf.window:0.2)*(wsActive(p,'iai')?1.5:1);
     if(p.dodgeTime>0&&w.time-p.dodgeStart<=jw&&!p.perfectThisDodge){
       p.perfectThisDodge=true;p.dodgeCd=0;
+      p.stam=Math.min(CONFIG.stamina.max,(p.stam||0)+CONFIG.stamina.max/2); // ジャスト回避：スタミナゲージの半分が回復
       if(pf){p.buffT=pf.time;emit(w,{type:'perfectDodge',pid:p.id,x:p.x,y:p.y-18});}
       else emit(w,{type:'justDodge',pid:p.id,x:p.x,y:p.y-18});
     }else if(w.time-p.lastEvade>0.4){p.lastEvade=w.time;emit(w,{type:'evade',x:p.x,y:p.y-16});}
