@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.56.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.57.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -7981,6 +7981,34 @@ const BossArt=(()=>{
   const A={}; // ボスごとの描き方
   const top={}; // 上から見た姿で描くボス（向きは回転で表す）
   const size={frost_cat:1.25,forest_rabbit:1.1,grave_rat:1.1}; // 小さく見えるものは少し大きく
+  /* ---- 動きに合わせた見た目（技の最中の追加の描き込み・丸まった姿） ---- */
+  const BALL={armadillo:{b:'#8a7a5a',d:'#3a2e1c',band:'#6a5a3e'},turtle:{b:'#5a7a4a',d:'#1e2e18',band:'#8aa86a'},hermit_crab:{b:'#c08a5a',d:'#4a2a14',band:'#e0b080'}};
+  function drawBall(k,B){ // 丸まった体・殻だけの姿（転がると模様が回る）
+    const c=k.ctx,rot=k.st==='special'&&k.act==='sp_bounceRoll'?k.t*12:0;c.save();c.rotate(rot);
+    E(k,0,0,0.85,0.85,0,B.b,B.d);
+    for(let i=-2;i<=2;i++){c.beginPath();c.ellipse(i*0.28,0,0.1,0.8*Math.sqrt(1-(i*0.3)*(i*0.3)),0,0,TAU);c.strokeStyle=B.band;c.lineWidth=0.08;c.stroke();}
+    E(k,-0.3,-0.35,0.2,0.1,-0.6,'rgba(255,255,255,.25)');
+    if(k.e.type==='hermit_crab')for(const s of [-1,1]){E(k,0.8,s*0.3,0.18,0.12,0,'#d05a3a','#4a1a0a');} // ハサミだけ出している
+    c.restore();
+  }
+  function overlay(k){
+    const c=k.ctx,a=k.act,sp=k.st==='special',t=k.t;
+    if(sp&&a==='sp_ramWall'){c.fillStyle='rgba(160,140,110,.55)';for(let i=0;i<5;i++){const q=(t*2+i/5)%1;c.beginPath();c.arc(-0.6-q*0.8,(i%2?1:-1)*0.4*(0.5+q),0.12*(1-q)+0.04,0,TAU);c.fill();}} // 前足で地面をかく土ぼこり
+    if(sp&&(a==='sp_rootDig'||a==='sp_dirtKick')){const back=a==='sp_dirtKick';c.fillStyle='rgba(110,80,44,.8)';for(let i=0;i<6;i++){const q=(t*3+i/6)%1;c.beginPath();c.arc((back?-1:1)*(0.9+q*0.8),Math.sin(i*2.1)*0.5*q,0.07,0,TAU);c.fill();}} // 掘り返した土・蹴った土
+    if(sp&&a==='sp_mudBath'){c.fillStyle='rgba(100,72,40,.65)';for(const [x,y,r2] of [[-0.3,0.2,0.2],[0.2,-0.25,0.16],[-0.1,-0.1,0.18],[0.35,0.2,0.12]]){c.beginPath();c.ellipse(x,y,r2,r2*0.7,0.3,0,TAU);c.fill();}} // 泥浴び：体に泥
+    if(sp&&a==='sp_threat'){for(const s of [-1,1]){c.save();c.rotate(s*1.2);E(k,0.1,0,0.9,0.4,0,'rgba(170,220,120,.45)','rgba(60,90,30,.8)');c.restore();}} // 威嚇：羽を大きく広げる
+    if(sp&&a==='sp_packHowl'){c.strokeStyle='rgba(220,230,255,.6)';c.lineWidth=0.05;for(let i=0;i<3;i++){const q=(t*1.5+i/3)%1;c.beginPath();c.arc(0.9,0,0.2+q*0.9,-0.6,0.6);c.stroke();}} // 遠吠え
+    if(sp&&(a==='sp_diveLine'||a==='sp_flameRun'||a==='sp_hopBehind')){c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=0.04;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(-0.8,i*0.2);c.lineTo(-1.6-Math.abs(i)*0.2,i*0.22);c.stroke();}} // 風を切る線
+    if(sp&&a==='sp_kickBarrage'){c.strokeStyle='rgba(140,200,255,.6)';c.lineWidth=0.06;for(let i=0;i<2;i++){c.beginPath();c.arc(-0.6,0,0.5+i*0.25,Math.PI-0.8+Math.sin(t*20)*0.3,Math.PI+0.8+Math.sin(t*20)*0.3);c.stroke();}} // 後ろ足キック
+    if(sp&&a==='sp_suckBite'){c.strokeStyle='rgba(150,210,255,.55)';c.lineWidth=0.05;for(let i=0;i<4;i++){const q=1-((t*2+i/4)%1);c.beginPath();c.arc(1.0+q*1.2,0,0.15+q*0.5,Math.PI-0.9,Math.PI+0.9);c.stroke();}} // 吸い込み
+    if(k.e.slime||k.e.slimeT>0){c.fillStyle='rgba(180,230,255,.28)';c.beginPath();c.ellipse(0,0,1.0,0.6,0,0,TAU);c.fill();c.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<4;i++){c.beginPath();c.ellipse(-0.5+i*0.3,-0.2+Math.sin(i)*0.15,0.08,0.03,0.4,0,TAU);c.fill();}} // 粘液のつや
+    if(sp&&a==='sp_sweetScent'){c.fillStyle='rgba(255,180,220,.7)';for(let i=0;i<8;i++){const q=(t*0.8+i/8)%1,an=i*0.8;c.beginPath();c.arc(Math.cos(an)*(0.4+q*1.2),Math.sin(an)*(0.4+q*1.2),0.05,0,TAU);c.fill();}} // 甘い香り
+    if(sp&&a==='sp_discharge'){c.strokeStyle='rgba(255,240,120,.9)';c.lineWidth=0.05;for(let i=0;i<6;i++){const an=i*1.05+t*8;c.beginPath();c.moveTo(Math.cos(an)*0.5,Math.sin(an)*0.5);for(let j=1;j<=3;j++){const rr=0.5+j*0.3;c.lineTo(Math.cos(an+(j%2?0.2:-0.2))*rr,Math.sin(an+(j%2?0.2:-0.2))*rr);}c.stroke();}} // 放電
+    if(sp&&a==='sp_inkCloud'){c.fillStyle='rgba(15,15,25,.6)';for(let i=0;i<5;i++){c.beginPath();c.arc(1.0+i*0.15,Math.sin(i*2)*0.25,0.2+i*0.04,0,TAU);c.fill();}} // 墨を吐く
+    if(sp&&(a==='sp_tentacleBind'||a==='sp_grabHold'||a==='sp_liftThrow')){c.strokeStyle='rgba(255,120,100,.5)';c.lineWidth=0.06;for(const s of [-1,1]){c.beginPath();c.arc(1.0,s*0.1,0.45,s>0?0.3:-1.4,s>0?1.4:-0.3);c.stroke();}} // つかむ
+    if(k.e.frenzy){const g=0.25+0.15*Math.sin(t*8);c.fillStyle=`rgba(220,30,30,${g})`;c.beginPath();c.ellipse(0,0,1.2,0.7,0,0,TAU);c.fill();} // 血のにおいで興奮
+  }
+
   return {H,A,top,mix,
     has(type){return !!A[type];},
     draw(ctx,e,hurt){
@@ -7994,7 +8022,10 @@ const BossArt=(()=>{
       ctx.save();
       if(k.ph2){const a=0.22+0.12*Math.sin(k.t*6),g=ctx.createRadialGradient(0,-r*0.2,r*0.2,0,-r*0.2,r*1.7);g.addColorStop(0,`rgba(255,60,40,${a})`);g.addColorStop(1,'rgba(255,60,40,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,-r*0.2,r*1.7,0,TAU);ctx.fill();}
       ctx.translate(0,-(e.z||0));const sz=size[e.type]||1;ctx.rotate(e.facing||0);ctx.scale(r*sz,r*sz);ctx.lineJoin='round';ctx.lineCap='round';
+      if(st==='special'&&e.action==='sp_shakeBite')ctx.rotate(Math.sin(k.t*30)*0.15); // 噛みついたまま首を振る
+      if((e.curl||e.shell)&&BALL[e.type]){drawBall(k,BALL[e.type]);ctx.restore();return true;} // 丸まる・殻にこもる・甲羅にこもる
       f(k,H);
+      overlay(k);
       ctx.restore();return true;}
   };
 })();
@@ -8217,12 +8248,14 @@ BossArt.A.gale_bird=(k,H)=>{ // 疾風怪鳥：左右に広げた大きな翼、
 };
 BossArt.A.rock_lizard=(k,H)=>{ // 岩肌の大蜥蜴：左右に張り出した脚、背中の岩、くねる長い尾
   const {E,P,L,S,tube}=H,b='#8a7a5a',d='#342c1c',r1='#a8a296',r2='#7a746a',c=k.ctx,w=Math.sin(k.p*0.5)*0.15;
-  tube(k,[-0.55,0,-0.9,w,-1.2,-w*0.5,-1.55,w],0.32,0.06,b,d);
+  if(k.e.tailLost){tube(k,[-0.55,0,-0.8,w*0.4],0.32,0.22,b,d);E(k,-0.82,w*0.4,0.08,0.1,0,'#c86a5a');} // 尾を切ったあと：短い切り口
+  else tube(k,[-0.55,0,-0.9,w,-1.2,-w*0.5,-1.55,w],0.32,0.06,b,d);
   for(const [x,i] of [[0.35,0],[-0.4,1]])for(const s of [-1,1]){const o=Math.sin(k.p+i*Math.PI+(s>0?Math.PI:0))*0.15;L(k,[x,s*0.15,x+0.05+o,s*0.5,x+0.2+o,s*0.6],d,0.12);for(let j=0;j<3;j++)L(k,[x+0.2+o,s*0.6,x+0.3+o,s*(0.52+j*0.08)],d,0.03);}
   E(k,0,0,0.68,0.32,0,b,d);
   for(const [x,y,sz] of [[-0.4,0.05,0.16],[-0.05,-0.08,0.2],[0.3,0.06,0.14]]){const pts=[];for(let i=0;i<6;i++){const a=i/6*TAU;pts.push(x+Math.cos(a)*sz*(0.8+0.3*Math.sin(i*2.3)),y+Math.sin(a)*sz);}P(k,pts,r1,d);L(k,[x-sz*0.4,y-sz*0.3,x,y-sz*0.5],'#e8e0d0',0.02);}
   P(k,[0.6,-0.24,1.15,-0.1,1.22,0,1.15,0.1,0.6,0.24],b,d);P(k,[0.65,-0.1,0.9,0,0.65,0.1],r2,d);
   TD.eyes(k,H,0.82,0.17,0.045,'#d8a020');if(k.wind)E(k,1.25,0,0.14,0.13,0,r2,d);
+  if(k.act==='sp_tongueGrab'&&k.st==='special'){const len=0.5+Math.abs(Math.sin(k.t*7))*2.6;S(k,[1.2,0,1.2+len*0.5,Math.sin(k.t*12)*0.06,1.2+len,0],'#d05a70',0.08);P(k,[1.2+len,0,1.35+len,-0.08,1.3+len,0,1.35+len,0.08],'#d05a70');} // 舌を伸ばす
 };
 // --- 古森 ---
 BossArt.A.forest_rabbit=(k,H)=>{ // 古森の跳ね兎：背中へ倒した長い耳、丸い綿毛の尾、大きな後ろ足
@@ -13239,7 +13272,7 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
