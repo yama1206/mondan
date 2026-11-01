@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.67.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.67.2',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -12661,7 +12661,7 @@ const UI={
     const d=el.dataset;
     // どの欄にあるか（左の装備欄と中央の一覧で同じ項目でも、別物として覚える）
     const col=el.closest?el.closest('[data-scroll]'):null; // 合成したキー（dataset だけのもの）にも対応
-    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||'',d.w||'',d.v||'',col?col.dataset.scroll:''].join('|'); // d.w＝操作説明の武器種、d.v＝相棒の色
+    return [d.act||d.m||'',d.uid||'',d.tab||'',d.f||'',d.id||'',d.key||'',d.deco||'',d.idx||'',d.c||'',d.s||'',d.w||'',d.v||'',d.stage||'',col?col.dataset.scroll:''].join('|'); // d.w＝操作説明の武器種、d.v＝相棒の色、d.stage＝手紙ガチャの区切り
   },
   focusRoot(){
     if(this.modalOpen())return this.modal;
