@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.75.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.76.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3772,7 +3772,27 @@ function costumeOf(src){
   if(src&&typeof src==='object')for(const sl of SLOTS){if(sl==='charm')continue;const b=src[sl];if(typeof b==='string'&&DATA.equipment[b]&&DATA.equipment[b].slot===sl)out[sl]=b;}
   return out;
 }
+/** ひとりプレイの仲間の自動装備：一番進んだステージで倒した緊急ボスの武器と防具（頭〜脚）を自動で持つ（手紙はそのまま）。
+    武器は役割に合わせる（ヒーラー＝片手剣、タンク＝槍。無ければ近い武器種）。倒した緊急ボスがいなければ自分で選んだ装備 */
+const COMP_AUTO_SET={meadow_bull:'bull',wolf:'wolf',hydra:'hydra',aquarios:'aqua',grados:'grados',volcano_dragon:'dragon',ice_ape:'ape',yomi_samurai:'onry'};
+const COMP_AUTO_WTYPE={healer:['sword','tachi','dual','lance','greatsword','hammer','bow','shuriken'],tank:['lance','greatsword','sword','hammer','tachi','dual','bow','shuriken']};
+function compAutoBoss(profile){
+  let best=null;
+  for(const q of DATA.quests)if(q.urgent&&QuestRules.done(profile,q.id)>0){const st=stageById(q.stage),b=q.boss||(st.enemySet||{}).boss;if(b&&COMP_AUTO_SET[b]&&(!best||q.stage>best.stage))best={stage:q.stage,boss:b};}
+  return best;
+}
+function compAutoGear(profile,who){
+  if(who<CHAR_COUNT)return null;
+  const ab=compAutoBoss(profile);if(!ab)return null;
+  const role=(profile.companions[who-CHAR_COUNT]||{}).role||'tank',ov={};
+  const ws=Object.keys(DATA.equipment).filter(id=>{const e=DATA.equipment[id];return e.slot==='weapon'&&e.boss===ab.boss;});
+  for(const t of COMP_AUTO_WTYPE[role]||COMP_AUTO_WTYPE.tank){const c=ws.filter(id=>DATA.equipment[id].wtype===t).sort((a,b)=>DATA.equipment[b].atk-DATA.equipment[a].atk)[0];if(c){ov.weapon=Items.createEquipment(c);break;}}
+  const set=DATA.armorSets[COMP_AUTO_SET[ab.boss]];
+  if(set)for(const sl of ['head','body','arms','waist','legs'])if(set.pieces[sl]&&DATA.equipment[set.pieces[sl]])ov[sl]=Items.createEquipment(set.pieces[sl]);
+  return {boss:ab.boss,stage:ab.stage,ov};
+}
 function computeStats(profile,override,who){
+  if(!override&&who>=CHAR_COUNT){const ag=compAutoGear(profile,who);if(ag)override=ag.ov;} // 仲間の自動装備
   const P=CONFIG.player,ch=charOf(profile,who||0);
   const s={maxHp:P.baseHp,atk:P.baseAtk,def:P.baseDef,
     crit:P.baseCrit,critDmg:P.baseCritDmg,moveSpd:0,atkSpd:0,dodgeIframe:P.baseDodgeIframe,drainChance:0,
@@ -15733,7 +15753,9 @@ const App={
   whoSelectHTML(){
     const p=this.profile,cur=this.inv.who||0;
     const opts=[[0,'自分']].concat(p.companions.map((c,i)=>[CHAR_COUNT+i,'仲間：'+COMP_ROLE_NAME[c.role]]));
-    return `<div class="who-sel small">装備する相手：${opts.map(([w,n])=>`<button class="${cur===w?'on':''}" data-act="invWho" data-who="${w}">${n}</button>`).join('')}</div>`;
+    const ag=cur>=CHAR_COUNT?compAutoGear(p,cur):null;
+    const note=ag?`<div class="small" style="color:#7fe09a;margin-top:4px">仲間は「${esc(DATA.enemies[ag.boss].name)}」（ステージ${ag.stage}の緊急ボス）の武器と防具を自動で持っています。ここで選んだ武器・防具は使われません（手紙は選んだものを使います）</div>`:'';
+    return `<div class="who-sel small">装備する相手：${opts.map(([w,n])=>`<button class="${cur===w?'on':''}" data-act="invWho" data-who="${w}">${n}</button>`).join('')}</div>${note}`;
   },
   /** 装備画面の「相棒」枠（プレイヤーのみ） */
   petSlotHTML(){
