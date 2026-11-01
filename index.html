@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.62.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.63.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -12800,11 +12800,15 @@ function validateData(){
   for(const k in DATA.enemyElem){const d=DATA.enemyElem[k];bad(E[k],`属性：魔物「${k}」がありません`);for(const x of [d.atk,...(d.weak||[]),...(d.strong||[])].filter(Boolean))bad(DATA.elements[x],`属性：「${x}」がありません`);}
   for(const id in DATA.equipment){const b=DATA.equipment[id];if(b.el)bad(DATA.elements[b.el.k],`装備「${id}」：属性「${b.el.k}」がありません`);}
   for(const k in DATA.enemyStatus){bad(E[k],`状態異常：魔物「${k}」がありません`);bad(DATA.playerStatus[DATA.enemyStatus[k].k],`状態異常：「${DATA.enemyStatus[k].k}」がありません`);}
+  for(const k in DECO_COST){bad(DATA.decorations[k],`装飾品の素材：「${k}」がありません`);for(const m in DECO_COST[k])bad(M[m],`装飾品「${k}」：素材「${m}」がありません`);}
   for(const it of DATA.shop)if(it.type==='mat')bad(M[it.mat],`ショップ「${it.id}」：素材「${it.mat}」がありません`);
   for(const k in DATA.armorSets)for(const sl in DATA.armorSets[k].pieces)bad(eqOk(DATA.armorSets[k].pieces[sl]),`防具一式「${k}」：装備「${DATA.armorSets[k].pieces[sl]}」がありません`);
   return errs;
 }
 if(typeof window!=='undefined'&&window.addEventListener)window.addEventListener('load',()=>{const e=validateData();if(e.length)console.warn('データ確認:\n'+e.join('\n'));});
+/** 装飾品の製作素材：種類ごとに、ステージ1〜3のボスの素材を使う（指定の無い種類は r_deco の素材） */
+const DECO_COST={atk_jewel:{bull_horn:2,bull_hide:1},crit_jewel:{kama_scythe:2,cave_fang__kama_mantis:1},critdmg_jewel:{wolf_fang:2,wolf_pelt:1},weak_jewel:{gale_talon:2,gale_feather:1},boss_jewel:{hydra_scale:2,toxic_gland:1},minion_jewel:{queen_jelly:2,poison_spore:1},def_jewel:{armd_plate:2,rock_scale__armadillo:1},life_jewel:{sanshou_hide:2,sanshou_mucus:1},guard_jewel:{rhino_plate:2,rhino_horn:1},steady_jewel:{mire_giant_clay:2,mire_core:1},antidote_jewel:{venom_shell:2,venom_king_fang:1},resist_jewel:{hana_petal:2,flower_pollen:1},heal_jewel:{toad_gland:2,toxic_gland:1},regen_jewel:{slime_gel__bog_leech:2,poison_spore:1},swift_jewel:{boar_tusk:2,boar_hide:1},leap_jewel:{rabbit_fur:2,rabbit_tuft:1},evade_jewel:{lizard_scale:2,lizard_spine:1},horn_jewel:{stag_mandible:2,stag_shell:1},quick_jewel:{yado_shell:2,hard_shell:1},gather_jewel:{mud_whale_scale:2,mire_core:1},lucky_jewel:{wolf_claw:2,wolf_pelt:1},rescue_jewel:{bull_hide:2,bull_horn:1},elem_jewel:{flower_pollen:2,hana_petal:1}};
+function decoCost(id){return DECO_COST[id]||(DATA.recipes.find(r=>r.id==='r_deco')||{cost:{}}).cost;}
 /** 装備・装飾品の製作にかかるお金（素材の数で決まる。recipe に gold があればその値） */
 function craftGold(r){
   if(r.gold!=null)return r.gold;
@@ -13054,10 +13058,11 @@ const Ops={
   craft(p,who,a){
     const r=DATA.recipes.find(x=>x.id===a.id);if(!r)return {};
     if(r.stage&&QuestRules.stage(p)<r.stage)return {msg:'まだ製作できません',color:'#888'};
-    if(!Profile.hasMats(p,r.cost))return {msg:'素材が足りません',color:'#ff8060'};
+    const cost=r.out.type==='deco'&&a.deco&&DATA.decorations[a.deco]?decoCost(a.deco):r.cost;
+    if(!Profile.hasMats(p,cost))return {msg:'素材が足りません',color:'#ff8060'};
     const gold=craftGold(r);if((p.gold||0)<gold)return {msg:'お金が足りません（'+gold+'G 必要）',color:'#ff8060'};
     if(r.out.type==='item'){const c=DATA.consumables[r.out.id];if((p.bag[r.out.id]||0)>=c.max)return {msg:c.name+'は上限まで持っています',color:'#888'};}
-    Profile.spendMats(p,r.cost);p.gold-=gold;
+    Profile.spendMats(p,cost);p.gold-=gold;
     let label,sel=null;
     if(r.out.type==='equip'){
       const it=Items.createEquipment(r.out.id);
@@ -15500,9 +15505,9 @@ const App={
         info=`${b.slot==='weapon'?DATA.weaponTypes[b.wtype].name:SLOT_NAMES[b.slot]}　${b.slot==='weapon'?`攻撃力 ${b.atk} / 会心率 ${b.crit}%${b.el?` / ${DATA.elements[b.el.k].name}属性 ${b.el.v}`:''}${b.st?` / ${DATA.playerStatus[b.st.k].name}（状態異常・蓄積 ${b.st.buildup}）`:''}`:`防御力 ${b.def} / 装飾品スロット ${b.slots||0}`}${b.skills?`<br><span style="color:#9ad8ff">${skillPtsText(b.skills)}</span>`:''}${set?`<br><span style="color:#7fe09a">${set.name}（シリーズスキル「${set.bonus}」）</span>`:''}`;
       }else if(r.out.type==='deco'){
         // 装飾品は種類ごとに選んで作る（レアリティはレア以下の中からランダム）
-        const g0=craftGold(r),can0=Profile.hasMats(p,r.cost)&&(p.gold||0)>=g0;
-        const cost0=Object.keys(r.cost).map(k=>{const have=p.materials[k]||0;return `<span class="${have>=r.cost[k]?'ok':'ng'}">${DATA.materials[k].name} ${have}/${r.cost[k]}</span>`;}).join('');
-        return Object.keys(DATA.decorations).map(id=>{const dd=DATA.decorations[id],sk=DATA.armorSkills[dd.skill];
+        const g0=craftGold(r);
+        return Object.keys(DATA.decorations).map(id=>{const dd=DATA.decorations[id],sk=DATA.armorSkills[dd.skill],dc=decoCost(id),can0=Profile.hasMats(p,dc)&&(p.gold||0)>=g0;
+          const cost0=Object.keys(dc).map(k=>{const have=p.materials[k]||0;return `<span class="${have>=dc[k]?'ok':'ng'}">${DATA.materials[k].name} ${have}/${dc[k]}</span>`;}).join('');
           return `<div class="recipe"><div class="rn"><span class="gem" style="background:${dd.color};color:${dd.color}"></span>${dd.name}</div><div class="muted">${sk?sk.name:dd.skill}の装飾品（レア以下のどれかが出る）</div><div class="cost">${cost0}${g0?`<span class="${(p.gold||0)>=g0?'ok':'ng'}">${g0}G</span>`:''}</div>
           <div class="btnrow"><button class="${can0?'primary':''}" data-act="craft" data-id="${r.id}" data-deco="${id}" ${can0?'':'disabled'}>製作する</button></div></div>`;}).join('');
       }
