@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.20.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.21.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -12190,6 +12190,99 @@ function applyBossStyles(){
     if(ms.length>=2){ms[0].dmg=Math.round(ms[0].dmg*1.15*100)/100;ms[ms.length-1].dmg=Math.round(ms[ms.length-1].dmg*0.85*100)/100;}
   }
 }
+/* ===== フレンド：フレンドコードを登録しておくと、相手が部屋を作っているときに一覧からすぐ参加できる =====
+   しくみ（サーバーなし）：ゲームを開いている間、各自が PeerJS に「フレンド用の窓口」（ID＝接頭辞+f-フレンドコード）を置く。
+   フレンド一覧を開くと、登録した相手の窓口に問い合わせ、オンラインか・部屋を作っているか（部屋コードと人数）を返してもらう。
+   問い合わせてきた相手が自分を登録していなければ「あなたを登録している人」として表示し、ワンタッチで登録し返せる */
+const Friends={
+  peer:null,ready:false,starting:false,state:{},requests:{},
+  makeId(){let s='';for(let i=0;i<8;i++)s+=Math.floor(Math.random()*10);return s;},
+  myId(){const p=App.profile;if(!p.friendId||!/^\d{8}$/.test(p.friendId)){p.friendId=this.makeId();App.dirty=true;App.save&&App.save();}return p.friendId;},
+  list(){const p=App.profile;if(!Array.isArray(p.friends))p.friends=[];return p.friends;},
+  peerId(id){return NET.PREFIX+'f-'+id;},
+  /** 窓口を開く（起動時と、フレンド画面を開いたとき）。開けなくてもゲームには影響しない */
+  async start(){
+    if(this.peer||this.starting)return;
+    this.starting=true;
+    let P;try{P=await Net.loadLib();}catch(e){this.starting=false;return;}
+    let peer;try{peer=new P(this.peerId(this.myId()),{debug:0});}catch(e){this.starting=false;return;}
+    this.peer=peer;
+    peer.on('open',()=>{this.ready=true;this.starting=false;if(this.waiters){for(const f of this.waiters)f();this.waiters=null;}});
+    peer.on('connection',conn=>{
+      conn.on('data',d=>{
+        if(!d||d.t!=='ask')return;
+        try{conn.send(this.myStatus());}catch(e){}
+        if(d.from&&/^\d{8}$/.test(d.from)&&d.from!==this.myId()){
+          const f=this.list().find(x=>x.id===d.from);
+          if(f){if(d.name&&f.name!==d.name){f.name=String(d.name).slice(0,12);App.dirty=true;}}
+          else{this.requests[d.from]={name:String(d.name||'？').slice(0,12),t:Date.now()};this.refreshUI();}
+        }
+        setTimeout(()=>{try{conn.close();}catch(e){}},1500);
+      });
+    });
+    peer.on('error',err=>{
+      const t=err&&err.type;
+      if(t==='peer-unavailable'){ // 問い合わせ先がオフライン
+        const m=String(err.message||'').match(/f-(\d{8})/);if(m)this.setState(m[1],{online:false});
+        return;}
+      if(t==='unavailable-id'){this.starting=false;this.ready=false;this.blocked=true;this.refreshUI();} // 同じフレンドコードの窓口がもう開いている（別のタブなど）
+    });
+    peer.on('disconnected',()=>{try{peer.reconnect();}catch(e){}});
+    peer.on('close',()=>{this.peer=null;this.ready=false;this.starting=false;});
+  },
+  whenReady(){return this.ready?Promise.resolve():new Promise(res=>{(this.waiters=this.waiters||[]).push(res);setTimeout(res,8000);});},
+  /** 自分の今の状態（問い合わせへの返事） */
+  myStatus(){
+    const hosting=Net.role==='host'&&Net.code;
+    return {t:'status',name:Net.savedName(),code:hosting?Net.code:null,count:hosting?Net.members.length:0,max:NET.MAX,inGame:!!App.inGame,guest:Net.role==='guest'};
+  },
+  setState(id,s){this.state[id]=Object.assign({t:Date.now()},s);this.refreshUI();},
+  /** 登録したフレンド全員の状態を問い合わせる */
+  async refresh(){
+    await this.start();await this.whenReady();
+    if(!this.peer||!this.ready){for(const f of this.list())this.setState(f.id,{online:false,error:true});return;}
+    for(const f of this.list()){
+      this.setState(f.id,{checking:true});
+      let done=false;
+      const conn=this.peer.connect(this.peerId(f.id),{reliable:true,serialization:'json'});
+      const end=s=>{if(done)return;done=true;this.setState(f.id,s);try{conn.close();}catch(e){}};
+      setTimeout(()=>end({online:false}),7000);
+      conn.on('open',()=>{try{conn.send({t:'ask',from:this.myId(),name:Net.savedName()});}catch(e){end({online:false});}});
+      conn.on('data',d=>{if(d&&d.t==='status'){if(d.name&&d.name!==f.name){f.name=String(d.name).slice(0,12);App.dirty=true;}end({online:true,code:d.code||null,count:d.count|0,max:d.max|0,inGame:!!d.inGame,guest:!!d.guest});}});
+      conn.on('error',()=>end({online:false}));
+    }
+  },
+  add(id,name){
+    id=String(id||'').replace(/\D/g,'');
+    if(!/^\d{8}$/.test(id))return 'フレンドコードは8桁の数字です';
+    if(id===this.myId())return '自分のフレンドコードです';
+    const L=this.list();if(L.some(x=>x.id===id))return 'もう登録しています';
+    if(L.length>=30)return '登録できるのは30人までです';
+    L.push({id,name:String(name||'').slice(0,12)||'フレンド'});delete this.requests[id];App.dirty=true;App.save&&App.save();
+    this.refresh();return null;
+  },
+  remove(id){const L=this.list(),i=L.findIndex(x=>x.id===id);if(i>=0){L.splice(i,1);App.dirty=true;App.save&&App.save();}delete this.state[id];this.refreshUI();},
+  /** 状態の表示だけを書き換える（入力中の文字は消さない） */
+  refreshUI(){const el=typeof document!=='undefined'&&document.getElementById('friendList');if(el&&App.state==='online')el.innerHTML=this.listHTML();},
+  listHTML(){
+    const L=this.list();
+    const req=Object.entries(this.requests).filter(([id])=>!L.some(x=>x.id===id));
+    let h='';
+    if(this.blocked)h+=`<div class="small" style="color:#ff9a7a">フレンドの窓口を開けませんでした（このゲームを別のタブでも開いていませんか？）。フレンドからの問い合わせには、もう一方のタブが答えます。</div>`;
+    h+=req.map(([id,r])=>`<div class="itemrow"><span class="nm">${esc(r.name)}</span><small>あなたを登録しています（${id}）</small><button data-act="friendAccept" data-id="${id}">登録し返す</button></div>`).join('');
+    if(!L.length)return h+'<div class="small muted">まだフレンドがいません。相手のフレンドコードを入力して登録しましょう。</div>';
+    h+=L.map(f=>{const s=this.state[f.id]||{};
+      let st='<span class="muted">未確認</span>',btn='';
+      if(s.checking)st='<span class="muted">確認中…</span>';
+      else if(s.online&&s.code){const full=s.max&&s.count>=s.max;st=`<span style="color:#7fe09a">部屋を作っています（${s.count}/${s.max}人${s.inGame?'・冒険中':''}）</span>`;btn=full?'<button disabled>満員</button>':`<button class="primary" data-act="friendJoin" data-id="${f.id}" style="background:#2d8a5a;border-color:#6fd8a0">参加する</button>`;}
+      else if(s.online)st=`<span style="color:#9fd0ff">オンライン${s.guest?'（ほかの部屋に参加中）':''}</span>`;
+      else if(s.online===false)st='<span class="muted">オフライン</span>';
+      return `<div class="itemrow"><span class="nm">${esc(f.name)}</span><small>${f.id}</small>${st}${btn}<button data-act="friendDel" data-id="${f.id}">削除</button></div>`;}).join('');
+    return h;
+  },
+  /** フレンドの部屋に参加する */
+  join(id,name){const s=this.state[id];if(!s||!s.code){this.refresh();return;}Net.join(s.code,name);},
+};
 const App={
   profile:null,world:null,state:'camp',localId:'p1',returnState:'camp',settingsReturn:'camp',
   inv:{tab:'equip',filter:'weapon',sel:null,decoPick:null,who:0},lastPlayers:1,inGame:false,
@@ -12201,6 +12294,7 @@ const App={
     Renderer.zoomMul=this.profile.settings.mapZoom||1;
     if(Profile.grantStones(this.profile))this.dirty=true;
     Net.init();
+    setTimeout(()=>Friends.start(),1500); // フレンドからの問い合わせに答える窓口を開く
     applyBossStyles();
     Renderer.init($('#game'));Input.init($('#game'));Input.initTouch();
     Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);
@@ -12861,7 +12955,7 @@ const App={
     this.state=st;
     switch(st){
       case 'camp':this.world=null;this.inGame=false;UI.notes.style.top='';UI.show(this.campHTML());break;
-      case 'online':UI.show(this.onlineHTML());break;
+      case 'online':UI.show(this.onlineHTML());if(was!=='online')Friends.refresh();break;
       case 'board':UI.show(this.boardHTML());break;
       case 'smith':
         if(was!=='smith'){this.smithCat='weapon';this.smithSub='all';this.smithSkillF=null;} // 入るたびに武器から
@@ -12945,6 +13039,12 @@ const App={
         const el=document.getElementById('netCode');let v=el?el.value:(this.netCodeDraft||'');
         v=ds.act==='padClear'?'':ds.act==='padBack'?v.slice(0,-1):(v+ds.id).replace(/\D/g,'').slice(0,6);
         this.netCodeDraft=v;this.goto('online');break;}
+      case 'friendAdd':{const el=document.getElementById('friendCode');const err=Friends.add(el&&el.value);if(err)UI.notify(err,'#ff8060');else{if(el)el.value='';UI.notify('フレンドを登録しました','#7fe09a');}Friends.refreshUI();break;}
+      case 'friendAccept':{const r=Friends.requests[ds.id];const err=Friends.add(ds.id,r&&r.name);if(err)UI.notify(err,'#ff8060');Friends.refreshUI();break;}
+      case 'friendDel':Friends.remove(ds.id);break;
+      case 'friendRefresh':Friends.refresh();break;
+      case 'friendJoin':Friends.join(ds.id,this.readNetName());break;
+      case 'friendCopy':{const id=Friends.myId();try{navigator.clipboard.writeText(id).then(()=>UI.notify('フレンドコードをコピーしました','#7fe0ff'),()=>UI.notify('フレンドコード：'+id,'#7fe0ff',6));}catch(e){UI.notify('フレンドコード：'+id,'#7fe0ff',6);}break;}
       case 'netStart':this.startOnline();break;
       case 'netReady':{const me=Net.lobbyList().find(m=>m.pid===Net.myPid);Net.setReady(!(me&&me.ready));break;}
       case 'toLobby':
@@ -13246,6 +13346,11 @@ const App={
       <div class="filters" style="margin:6px 0">${[1,2,3,4,5,6,7,8,9,0].map(d=>`<button data-act="padDigit" data-id="${d}">${d}</button>`).join('')}<button data-act="padBack">⌫ 1字消す</button><button data-act="padClear">全部消す</button></div>
       <div class="menu-col"><button class="primary" data-act="netJoin" style="background:#2d8a5a;border-color:#6fd8a0">部屋に参加する</button><button data-act="camp">戻る</button></div>
       <p id="netStatus" class="small" style="min-height:1.5em"></p>
+      <h3 style="margin:12px 0 6px">フレンド</h3>
+      <div class="small" style="line-height:1.8">あなたのフレンドコード：<b style="letter-spacing:.15em;font-size:1.15em">${Friends.myId()}</b> <button data-act="friendCopy">コピー</button><br><span class="muted">相手にこのコードを伝えて登録してもらうと、あなたが部屋を作ったときに相手の一覧から参加できます（ゲームを開いている間だけ届きます）</span></div>
+      <label class="field">フレンドコードを登録<input id="friendCode" maxlength="8" inputmode="numeric" pattern="[0-9]*" placeholder="8桁の数字" style="letter-spacing:.15em"></label>
+      <div class="menu-col"><button data-act="friendAdd">登録する</button><button data-act="friendRefresh">フレンドの状態を更新</button></div>
+      <div id="friendList" style="margin:6px 0">${Friends.listHTML()}</div>
       <p class="small muted">※全員が同じHTMLファイルを使ってください。ネットワーク環境（会社・学校・一部のモバイル回線など）によってはつながらないことがあります。</p></div>`;
   },
   lobbyHTML(){
