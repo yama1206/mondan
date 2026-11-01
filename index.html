@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.26.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.26.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -13879,7 +13879,7 @@ const App={
     const setKeys=Object.keys(DATA.armorSets).filter(k=>availEq.some(id=>seriesOf(id)===k));
     const hasMisc=availEq.some(id=>DATA.equipment[id].slot!=='weapon'&&DATA.equipment[id].slot!=='charm'&&!seriesOf(id));
     const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
-      :cat==='armor'?[...partTabs,['series','シリーズ'],...(hasMisc?[['misc','その他']]:[])]:[];
+      :cat==='armor'?[['all','すべて'],...partTabs,['series','シリーズ'],...(hasMisc?[['misc','その他']]:[])]:[];
     let sub=this.smithSub||'all';
     const armorSubOk=k=>subs.some(([x])=>x===k)||k==='series'||(k.startsWith('set:')&&setKeys.includes(k.slice(4)));
     if(cat==='armor'&&!armorSubOk(sub))sub=subs[0][0];
@@ -13896,6 +13896,7 @@ const App={
       if(cat==='weapon')return b.slot==='weapon'&&(sub==='all'||b.wtype===sub);
       if(b.slot==='weapon'||b.slot==='charm')return false;
       if(skillF&&!((b.skills||{})[skillF]>0))return false;
+      if(sub==='all')return true; // 防具のすべて
       if(sub.startsWith('slot:'))return b.slot===sub.slice(5);
       const se=seriesOf(r.out.id);
       if(sub==='series')return !!se;
