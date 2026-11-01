@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.22.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.22.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -491,7 +491,7 @@ const DATA={
     armd:{name:'大アルマジロシリーズ',bonus:'甲殻の守り',desc:'防御力+12、吹き飛び-50%',
       pieces:{head:'armd_head',body:'armd_body',arms:'armd_arms',waist:'armd_waist',legs:'armd_legs'},eff:{def:12,knockRes:50}},
     hana:{name:'毒花竜シリーズ',bonus:'冥花の香り',desc:'冥属性の耐性+30、状態異常耐性+10%',
-      pieces:{head:'hana_head',body:'hana_body',arms:'hana_arms',waist:'hana_waist',legs:'hana_legs'},eff:{elemRes:{mei:30},statusRes:10}},
+      pieces:{head:'hana_head',body:'hana_body',arms:'hana_arms',waist:'hana_waist',legs:'hana_legs'},eff2:{statusRes:100},eff:{statusPct:30}},
     yado:{name:'巨大ヤドカリシリーズ',bonus:'殻の眠り守り',desc:'最大HP+60、睡眠耐性（状態異常耐性+10%）',
       pieces:{head:'yado_head',body:'yado_body',arms:'yado_arms',waist:'yado_waist',legs:'yado_legs'},eff:{maxHp:60,statusRes:10}},
     dorc:{name:'泥鯨シリーズ',bonus:'氷潮の守り',desc:'氷属性の耐性+30、最大HP+40',
@@ -3351,13 +3351,22 @@ function bossOnlyMats(){
 }
 /** シリーズスキル：2部位で弱め（効果×SERIES_WEAK_RATIO）、全部位で強め */
 const SERIES_WEAK_NEED=2, SERIES_WEAK_RATIO=0.5;
-const SERIES_EFF_LABEL={maxHp:['最大HP',''],crit:['会心率','%'],atkPct:['攻撃力','%'],itemDelayAdj:['アイテム使用時間','秒'],dmgCut:['被ダメージ軽減','%'],knockRes:['ノックバック耐性','%'],moveSpd:['移動速度','%'],dodgeDistPct:['回避距離','%'],def:['防御力',''],'elemRes.fire':['火属性耐性','%'],'elemRes.ice':['氷属性耐性','%'],'elemRes.water':['水属性耐性','%'],'elemRes.thunder':['雷属性耐性','%'],'elemRes.mei':['冥属性耐性','%'],statusRes:['状態異常耐性','%'],regen:['毎秒HP回復',''],critDmg:['会心ダメージ','%'],poisonRes:['毒耐性','%']};
+const SERIES_EFF_LABEL={statusPct:['状態異常強化','%'],maxHp:['最大HP',''],crit:['会心率','%'],atkPct:['攻撃力','%'],itemDelayAdj:['アイテム使用時間','秒'],dmgCut:['被ダメージ軽減','%'],knockRes:['ノックバック耐性','%'],moveSpd:['移動速度','%'],dodgeDistPct:['回避距離','%'],def:['防御力',''],'elemRes.fire':['火属性耐性','%'],'elemRes.ice':['氷属性耐性','%'],'elemRes.water':['水属性耐性','%'],'elemRes.thunder':['雷属性耐性','%'],'elemRes.mei':['冥属性耐性','%'],statusRes:['状態異常耐性','%'],regen:['毎秒HP回復',''],critDmg:['会心ダメージ','%'],poisonRes:['毒耐性','%']};
 /** 効果（入れ子のオブジェクト）を s に ratio 倍して足す */
 function applySeriesEff(s,eff,ratio){
   for(const k in eff){const v=eff[k];
     if(v&&typeof v==='object'){if(!s[k])s[k]={};applySeriesEff(s[k],v,ratio);}
     else s[k]+=v*ratio;}
 }
+/** 効果を ratio 倍した新しい効果を作る（入れ子対応） */
+function scaleSeriesEff(eff,ratio){const o={};for(const k in eff){const v=eff[k];o[k]=(v&&typeof v==='object')?scaleSeriesEff(v,ratio):v*ratio;}return o;}
+/** 2部位効果と5部位効果。eff2 を書いていないシリーズは、従来どおり効果を半分ずつに分ける */
+function seriesParts(set){
+  if(set.eff2)return {two:set.eff2,five:set.eff||{}};
+  return {two:scaleSeriesEff(set.eff,SERIES_WEAK_RATIO),five:scaleSeriesEff(set.eff,SERIES_WEAK_RATIO)};
+}
+/** シリーズスキルの2行の説明（2部位・5部位） */
+function seriesTextHTML(set){const pt=seriesParts(set);return `2部位：${seriesEffText(pt.two,1)}<br>5部位：${seriesEffText(pt.five,1)}`;}
 /** 効果の説明文（例：最大HP+15、会心率+5%） */
 function seriesEffText(eff,ratio){
   const out=[];
@@ -3399,7 +3408,7 @@ function computeStats(profile,override,who){
   const s={maxHp:P.baseHp,atk:P.baseAtk,def:P.baseDef,
     crit:P.baseCrit,critDmg:P.baseCritDmg,moveSpd:0,atkSpd:0,dodgeIframe:P.baseDodgeIframe,drainChance:0,
     effects:{},weaponType:'sword',weaponName:'素手',weaponRarity:0,decoCapped:[],
-    atkPct:0,dodgeCdMult:1,itemDelayAdj:0,sets:[],
+    atkPct:0,dodgeCdMult:1,itemDelayAdj:0,statusPct:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
     weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,mei:0},
     dodgeDistPct:0,chargeSpdPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
@@ -3434,12 +3443,14 @@ function computeStats(profile,override,who){
   for(const k in decoPts)s.skillPts[k]=(s.skillPts[k]||0)+decoPts[k]; // 装飾品のポイント
   s.skillList=armorSkillLevels(s.skillPts);
   applyArmorSkills(s,s.skillList);
-  // 防具シリーズのシリーズスキル（スキルポイントとは別の仕組み）：2部位で弱め（効果の半分）、全部位で強め
+  // 防具シリーズのシリーズスキル（スキルポイントとは別の仕組み）：2部位で「2部位効果」、全部位で「2部位効果＋5部位効果」
   for(const id in DATA.armorSets){
     const set=DATA.armorSets[id],full=Object.keys(set.pieces).length,n=Object.keys(set.pieces).filter(sl=>wearing[sl]===set.pieces[sl]).length;
-    const strong=n>=full,weak=!strong&&n>=SERIES_WEAK_NEED;
-    if(n>0)s.sets.push({id,name:set.name,bonus:set.bonus,desc:set.desc,weakDesc:seriesEffText(set.eff,SERIES_WEAK_RATIO),count:n,need:full,weakNeed:SERIES_WEAK_NEED,active:strong,weakOn:weak});
-    if(strong)applySeriesEff(s,set.eff,1);else if(weak)applySeriesEff(s,set.eff,SERIES_WEAK_RATIO);
+    const {two,five}=seriesParts(set);
+    const on2=n>=SERIES_WEAK_NEED,on5=n>=full;
+    if(n>0)s.sets.push({id,name:set.name,bonus:set.bonus,twoText:seriesEffText(two,1),fiveText:seriesEffText(five,1),count:n,need:full,weakNeed:SERIES_WEAK_NEED,active:on5,weakOn:on2&&!on5,twoOn:on2});
+    if(on2)applySeriesEff(s,two,1);
+    if(on5)applySeriesEff(s,five,1);
   }
   const wt=DATA.weaponTypes[s.weaponType];
   s.atk*=1+s.atkPct/100;
@@ -4667,7 +4678,7 @@ function damageEnemy(w,p,e,mult,src){
   if(s.inflict&&!e.dead){ // 武器の状態異常：命中ごとに蓄積し、しきい値に達すると発動。発動するたびにしきい値が上がる
     const k=s.inflict.k;e.buildup=e.buildup||{};e.buildThr=e.buildThr||{};
     const thr=e.buildThr[k]||100;
-    e.buildup[k]=(e.buildup[k]||0)+s.inflict.buildup;
+    e.buildup[k]=(e.buildup[k]||0)+s.inflict.buildup*(1+(s.statusPct||0)/100); // 状態異常強化で蓄積が増える
     if(e.buildup[k]>=thr){e.buildup[k]=0;e.buildThr[k]=thr+50;applyStatus(w,e,k);}
   }
   // 怯み（一時停止・ノックバック）は、ある程度ダメージが蓄積したときだけ起こる。2秒攻撃が途切れると蓄積はリセット
@@ -13619,7 +13630,7 @@ const App={
     h+=`<div class="col-t">発動中の特殊効果</div>`+(effs.length?effs.map(e=>`<div class="eff"><b>${DATA.effects[e].name}</b>：${DATA.effects[e].desc}</div>`).join(''):'<div class="muted small">なし</div>');
     if(st.decoCapped.length)h+=`<div class="ng small" style="margin-top:6px">装着上限を超えた装飾品は無効：${st.decoCapped.join('、')}</div>`;
     h+=this.skillBlockHTML(st);
-    h+=`<div class="col-t">防具シリーズ（シリーズスキル）</div>`+(st.sets&&st.sets.length?st.sets.map(s=>`<div class="eff" style="${s.active||s.weakOn?'':'opacity:.6'}"><b style="color:${s.active||s.weakOn?'#7fe09a':'#a99fc0'}">${s.name} ${s.count}/${s.need}</b>${s.active?'　強め発動中':s.weakOn?'　弱め発動中':''}<br>弱（${s.weakNeed}部位）：「${s.bonus}」${s.weakDesc}<br>強（${s.need}部位）：「${s.bonus}」${s.desc}</div>`).join(''):'<div class="muted small">なし</div>');
+    h+=`<div class="col-t">防具シリーズ（シリーズスキル）</div>`+(st.sets&&st.sets.length?st.sets.map(s=>`<div class="eff" style="${s.twoOn?'':'opacity:.6'}"><b style="color:${s.twoOn?'#7fe09a':'#a99fc0'}">${s.name} ${s.count}/${s.need}</b>${s.active?'　5部位で全効果発動中':s.twoOn?'　2部位効果発動中':''}<br>「${s.bonus}」<br>${s.twoText?`2部位：${s.twoText}<br>5部位：${s.fiveText}`:''}</div>`).join(''):'<div class="muted small">なし</div>');
     return h;
   },
   /** 防具スキル：合計ポイント・発動中の段階・次の段階までの残り */
@@ -13804,7 +13815,7 @@ const App={
     else{
       h+=sec('スキルポイント（この装備共通）',base.skills&&Object.keys(base.skills).length?Object.keys(base.skills).map(k=>{const d=DATA.armorSkills[k];return d?row(d.name,'+'+base.skills[k]+'pt'):'';}).join('')+`<div class="small muted">同じスキルを合計${CONFIG.skillPoints.per}ポイントそろえると発動します</div>`:'<div class="muted small">なし</div>');
       const set=Object.values(DATA.armorSets).find(s=>s.pieces[it.slot]===it.baseId);
-      if(set)h+=sec('シリーズ',`<div class="eff"><b style="color:#7fe09a">${set.name}</b>：${Object.keys(set.pieces).length}部位のうち2部位で弱め、全部位で強めの「${set.bonus}」が発動<br>弱：${seriesEffText(set.eff,SERIES_WEAK_RATIO)}<br>強：${set.desc}</div>`);
+      if(set)h+=sec('シリーズ',`<div class="eff"><b style="color:#7fe09a">${set.name}</b>：「${set.bonus}」<br>${seriesTextHTML(set)}</div>`);
     }
     if(it.enchant&&it.slot!=='charm'&&it.slot!=='weapon'){const en=it.enchant,sk=en.skills||{};h+=sec(`付与スキル（${DATA.enchantTiers[en.t-1].name}の玉）`,Object.keys(sk).map(k=>{const d=DATA.armorSkills[k];return d?row(d.name,'+'+sk[k]+'pt'):'';}).join('')||'<div class="muted small">なし</div>');}
     if(it.slot!=='charm'&&it.affixes.length)h+=sec('付加ステータス',it.affixes.length?it.affixes.map(a=>{const st=DATA.affixes[a.id].stat;return row(STAT_NAMES[st],fmtStat(st,a.v));}).join(''):'<div class="muted small">なし</div>');
@@ -13928,7 +13939,7 @@ const App={
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
     const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${CONFIG.skillPoints.per}そろえると発動（別のシリーズと組み合わせてもOK）</div>`:'';
     // シリーズのタブを開いた時だけ、そのシリーズのシリーズスキルを出す
-    const setDetail=cat==='armor'&&sub.startsWith('set:')&&DATA.armorSets[sub.slice(4)]?(()=>{const S=DATA.armorSets[sub.slice(4)];return `<div class="small" style="margin-bottom:8px;color:#7fe09a">シリーズスキル（頭・胴・腕・腰・脚のうち2部位で弱め、5部位で強め）：${S.name}「${S.bonus}」<br>弱：${seriesEffText(S.eff,SERIES_WEAK_RATIO)}<br>強：${S.desc}</div>`;})():'';
+    const setDetail=cat==='armor'&&sub.startsWith('set:')&&DATA.armorSets[sub.slice(4)]?(()=>{const S=DATA.armorSets[sub.slice(4)];return `<div class="small" style="margin-bottom:8px;color:#7fe09a">シリーズスキル（頭・胴・腕・腰・脚のうち2部位・5部位で発動）：${S.name}「${S.bonus}」<br>${seriesTextHTML(S)}</div>`;})():'';
     const reinf=cat==='reinforce'?this.reinforceHTML()+this.enchantHTML():'';
     return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能（数値・付加ステータス・スロット数・特殊効果）は打ってみてのお楽しみだ。',
       `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${seriesRow}${skillRow}${wtInfo}${setInfo}${setDetail}${reinf}${this.recipeListHTML(match,cat==='weapon'||cat==='armor').replace('class="col full" data-scroll="craft"','')}</div>`);
