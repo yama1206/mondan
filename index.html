@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.47.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.48.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -5052,7 +5052,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
     if(inPuddle(w.map,p.x,p.y))k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
     if(w.blizzard&&w.blizzard.on)k*=0.92;                      // 吹雪：わずかに遅くなる（ほかの補正と掛け算で共存、終われば戻る）
-    const spd=(p.drawn?s.speed:s.sheathSpeed)*k*(p.buffs.spd&&p.buffs.spd.t>0?1+p.buffs.spd.pct/100:1); // 相棒の応援で速くなる
+    const spd=(p.drawn?s.speed*0.5:s.sheathSpeed)*k*(p.buffs.spd&&p.buffs.spd.t>0?1+p.buffs.spd.pct/100:1); // 相棒の応援で速くなる
     moveEntity(w.map,p,mx*spd*dt,my*spd*dt);p.walk+=dt*spd/28;
   }
   // 回避：アイテム使用（消費なし）とチャージを中断する
@@ -6654,9 +6654,10 @@ const PET_ACTS={
 function petsActive(w){return true;} // 1人プレイでも連れ歩けて、サポート行動もする
 function petHeal(w,o,ratio){const amt=Math.min(o.stats.maxHp-o.hp,Math.round(o.stats.maxHp*ratio));if(amt>0){o.hp+=amt;emit(w,{type:'heal',x:o.x,y:o.y-20,amount:amt});}}
 function petGuard(o,t,pct){if(!(o.buffs.def&&o.buffs.def.t>0&&o.buffs.def.pct>=pct))o.buffs.def={t,pct};}
-function petTarget(w,o,at){
+function petTarget(w,o,at,pt){
   let best=null,bd=1e9;
   for(const e of w.enemies){if(e.dead||e.hidden)continue;const d=Math.hypot(e.x-o.x,e.y-o.y);if(d>at.range)continue;
+    if(pt&&!lineOfSight(w.map,pt.x,pt.y,e.x,e.y))continue; // 壁の向こうの敵は狙わない
     const score=d-(at.boss&&e.boss?1000:0);if(score<bd){bd=score;best=e;}}
   return best;
 }
@@ -6674,16 +6675,16 @@ function updatePets(w,dt){
     pt.cd-=dt;pt.t+=dt;
     if(o.dead&&pt.st!=='follow'){pt.st='follow';pt.tgt=null;}
     if(pt.st==='follow'&&pt.cd<=0&&A&&!o.dead){
-      if(A.attack){const e=petTarget(w,o,A.attack);if(e){pt.st=A.attack.ranged?'shoot':'dash';pt.tgt=e.id;pt.cd=A.cd;pt.t=0;}}
+      if(A.attack){const e=petTarget(w,o,A.attack,pt);if(e){pt.st=A.attack.ranged?'shoot':'dash';pt.tgt=e.id;pt.cd=A.cd;pt.t=0;}}
       else if(A.ready(w,o)){A.do(w,pt,o);pt.cd=A.cd;pt.st='cheer';pt.t=0;emit(w,{type:'petAct',x:pt.x,y:pt.y-12,name:A.name,collar:LOOK_ACT[o.petLook],pid:o.id});}
     }
     const e=pt.tgt!=null?w.enemies.find(x=>x.id===pt.tgt&&!x.dead&&!x.hidden):null;
-    if((pt.st==='dash'||pt.st==='shoot')&&!e){pt.st='back';pt.tgt=null;}
+    if((pt.st==='dash'||pt.st==='shoot')&&(!e||!lineOfSight(w.map,pt.x,pt.y,e.x,e.y))){pt.st='back';pt.tgt=null;} // 見えなくなったら戻る
     let tx,ty,sp=Math.max(200,(o.stats.speed||200)*1.15);
     if(pt.st==='dash'){const a=Math.atan2(pt.y-e.y,pt.x-e.x);tx=e.x+Math.cos(a)*(e.r+8);ty=e.y+Math.sin(a)*(e.r+8);sp=Math.max(sp,340);
       if(Math.hypot(pt.x-tx,pt.y-ty)<16||pt.t>2.5){petStrike(w,pt,o,e,A);pt.st='back';pt.t=0;pt.tgt=null;}}
     else if(pt.st==='shoot'){tx=pt.x;ty=pt.y;pt.f=Math.atan2(e.y-pt.y,e.x-pt.x);if(pt.t>0.45){petStrike(w,pt,o,e,A);pt.st='follow';pt.tgt=null;}}
-    else{const f=o.facing||0,back=o.r*1.9;tx=o.x-Math.cos(f)*back;ty=o.y-Math.sin(f)*back+o.r*0.2;
+    else{const f=o.facing||0,back=o.r*2.6;tx=o.x-Math.cos(f)*back;ty=o.y-Math.sin(f)*back+o.r*0.2;
       if(pt.st==='back'&&Math.hypot(pt.x-tx,pt.y-ty)<30)pt.st='follow';if(pt.st==='cheer'&&pt.t>0.8)pt.st='follow';}
     const dx=tx-pt.x,dy=ty-pt.y,d=Math.hypot(dx,dy);
     pt.moving=d>3;
@@ -10403,7 +10404,7 @@ const Renderer={
     if(p.preview){pp.x=tx;pp.y=ty;}else{pp.x+=(tx-pp.x)*0.3;pp.y+=(ty-pp.y)*0.3;}
     pp.f=tf;
     const st=src?src.st:'follow',moving=src?!!src.moving:!!p.moving;
-    const r=p.preview?p.r*0.5:p.r*0.62,t=this.time||0,run=st==='dash'?2:1;
+    const r=p.preview?p.r*0.5:p.r*1.24,t=this.time||0,run=st==='dash'?2:1;
     const k={ctx,c:x=>x,lw:Math.max(0.06,1.3/r),ph2:false,t,p:t*9*run,fast:run,wind:st==='shoot'||st==='dash'};
     const H=BossArt.H,dir=Math.cos(tf)<0?-1:1;
     ctx.save();ctx.translate(pp.x,pp.y);
