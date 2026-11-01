@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.22.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.23.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -272,6 +272,7 @@ const CONFIG={
   pickupRadius:26,magnetRadius:80,
   difficulty:{hpPerClear:0.18,atkPerClear:0.10,maxHp:3.0,maxAtk:2.2},
   // 同じ画面での協力プレイ
+  stamina:{max:4,regenSec:2}, // スタミナ：4つに分かれたゲージ。回避で1つ減り、1つ回復するのに2秒
   coop:{hpPerExtraPlayer:0.5,leash:640,reviveRadius:20,reviveTime:5,reviveHpRatio:0.35,reviveWait:30,ghostSpeed:1.6},
   // reviveRadius：倒れた仲間と重なっているとみなす距離／reviveTime：重なって動かずにいる秒数／reviveWait：蘇生を待てる秒数（過ぎると力尽きる）
   // 視野：プレイヤーから radius まで、壁に遮られない範囲だけが見える。
@@ -4396,7 +4397,7 @@ function populate(w,stage,quest){
 }
 function addPlayer(w,id,stats,bag){
   const n=Object.keys(w.players).length;
-  const p={id,slot:n,type:'player',x:w.playerStart.x,y:w.playerStart.y+(n===0?0:(n%2?1:-1)*32*Math.ceil(n/2)),r:CONFIG.player.radius,hp:stats.maxHp,stats,revive:0,
+  const p={id,slot:n,type:'player',x:w.playerStart.x,y:w.playerStart.y+(n===0?0:(n%2?1:-1)*32*Math.ceil(n/2)),r:CONFIG.player.radius,hp:stats.maxHp,stats,revive:0,stam:CONFIG.stamina.max,
     facing:0,atkTimer:0,swing:0,swingTotal:0.2,swingAngle:0,swingDir:1,combo:0,dodgeCd:0,dodgeTime:0,dodgeDir:{x:1,y:0},
     dodgeInv:0,hitInv:0,skillCd:0,bag:Object.assign(emptyBag(),bag||{}),sel:0,potionCd:0,hurt:0,buffs:{},kx:0,ky:0,dead:false,walk:0,moving:false,lastEvade:-9,
     using:null,charging:false,charge:0,buffT:0,dodgeStart:-9,perfectThisDodge:false,drawn:false,sheathing:null,flow:0,flowT:0,
@@ -4863,7 +4864,7 @@ function updatePlayer(w,p,inp,dt){
   // 解毒薬の即時使用（状態異常の表示から押したとき）：麻痺・睡眠中でも使える
   if(inp.cure&&(p.bag.antidote||0)>0&&cureStatus(w,p)){p.bag.antidote--;emit(w,{type:'itemUsed',pid:p.id,item:'antidote'});}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
-  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
+  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec);p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
   // 回復薬・良い回復薬：飲み始めてから3秒かけてジワジワ回復する
   if(p.drip){const dr=p.drip;dr.t+=dt;
@@ -4937,11 +4938,11 @@ function updatePlayer(w,p,inp,dt){
     moveEntity(w.map,p,mx*spd*dt,my*spd*dt);p.walk+=dt*spd/28;
   }
   // 回避：アイテム使用（消費なし）とチャージを中断する
-  if(inp.dodge&&p.dodgeCd<=0){
+  if(inp.dodge&&p.dodgeCd<=0&&p.stam>=1){
     if(p.using){const cid=p.using.item;p.using=null;if(!DRIP_ITEMS.includes(cid))emit(w,{type:'itemCancel',pid:p.id,x:p.x,y:p.y-26});}
     p.charging=false;p.charge=0;p.sheathing=null; // 納刀動作も中断（抜刀したまま）
     p.dodgeDir=p.moving?{x:mx,y:my}:{x:Math.cos(p.facing),y:Math.sin(p.facing)};
-    p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd-(wsActive(p,'kyodo')?0.3:0);
+    p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd-(wsActive(p,'kyodo')?0.3:0);p.stam-=1;
     p.dodgeInv=P.dodgeTime+s.dodgeIframe;
     p.dodgeStart=w.time;p.perfectThisDodge=false;
     emit(w,{type:'dodge',x:p.x,y:p.y,pid:p.id});
@@ -10151,18 +10152,29 @@ const Renderer={
     ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();ctx.stroke();
   },
   /** プレイヤー1人分の情報パネル（名前・HP・能力・武器） */
+  /** スタミナゲージ（4つに分かれる）。回復中の1つは少しずつ満たされていく */
+  drawStamGauge(ctx,x,y,w,h,p){
+    const max=CONFIG.stamina.max,gap=4,seg=(w-gap*(max-1))/max,v=p.stam||0;
+    for(let i=0;i<max;i++){
+      const sx=x+i*(seg+gap),f=clamp(v-i,0,1);
+      ctx.fillStyle='#2a2438';ctx.fillRect(sx,y,seg,h);
+      if(f>0){ctx.fillStyle=f>=1?'#7fe0ff':'#4a8ea0';ctx.fillRect(sx,y,seg*f,h);}
+      ctx.strokeStyle='rgba(255,255,255,.3)';ctx.strokeRect(sx,y,seg,h);
+    }
+  },
   drawPlayerPanel(ctx,x,y,p,multi){
     const s=p.stats,pc=PLAYER_COLORS[p.slot%PLAYER_COLORS.length];
     if(!multi){ // 1人プレイ：左上はHPだけ（状態異常は付いているときだけ小さく出す）
       const hk=clamp(p.hp/s.maxHp,0,1),bx=x+44,bw=266,by=y+8;
       const sts=[];if(p.slowT>0)sts.push(['鈍足','#9ad8ff']);if(p.poisoned>0||p.poisonT>0)sts.push(['毒','#a8e060']);if(p.paraT>0)sts.push(['麻痺','#ffe040']);if(p.sleepT>0)sts.push(['睡眠','#b898ff']);if(p.curseT>0)sts.push(['呪い','#c070ff']);
-      this.panel(ctx,x,y,310,sts.length?58:36);
+      this.panel(ctx,x,y,310,(sts.length?58:36)+16);
       ctx.textAlign='left';ctx.font=`bold 15px ${FONT}`;ctx.fillStyle='#ffd23a';ctx.fillText('HP',x+10,y+18);
       ctx.fillStyle='#3a1d22';ctx.fillRect(bx,by,bw,18);
       ctx.fillStyle=p.dead?'#555':(hk>0.5?'#46c46a':(hk>0.25?'#e0b030':'#e04848'));ctx.fillRect(bx,by,bw*hk,18);
       ctx.strokeStyle='rgba(255,255,255,.3)';ctx.strokeRect(bx,by,bw,18);
       ctx.fillStyle='#fff';ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';
       ctx.fillText(p.dead?(p.out?'幽霊':'戦闘不能'):`HP ${Math.ceil(p.hp)} / ${s.maxHp}`,bx+bw/2,by+9);
+      this.drawStamGauge(ctx,bx,by+24,bw,8,p);
       if(sts.length){ctx.textAlign='left';ctx.font=`bold 12px ${FONT}`;let xx=x+10;for(const [t,c] of sts){ctx.fillStyle=c;ctx.fillText(t,xx,y+46);xx+=ctx.measureText(t).width+10;}}
       return;
     }
@@ -10176,6 +10188,7 @@ const Renderer={
     ctx.strokeStyle='rgba(255,255,255,.3)';ctx.strokeRect(bx,y+10,bw,18);
     ctx.fillStyle='#fff';ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';
     ctx.fillText(p.dead?(p.out?'幽霊':'戦闘不能'):`HP ${Math.ceil(p.hp)} / ${s.maxHp}`,bx+bw/2,y+19);
+    this.drawStamGauge(ctx,bx,y+31,bw,7,p);
     ctx.textAlign='left';ctx.fillStyle='#cfc7e6';ctx.font=`12px ${FONT}`;
     ctx.fillText(`攻撃 ${s.atk}  防御 ${s.def}  会心 ${s.crit}%  ${(1/s.attackInterval).toFixed(1)}回/秒`,x+10,y+46);
     ctx.fillStyle='#8a82a2';ctx.font=`11px ${FONT}`;
@@ -12058,7 +12071,7 @@ const Net={
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
         using:p.using?{item:p.using.item,t:r3(p.using.t),total:p.using.total}:null,ws:p.ws?{id:p.ws.id,t:r1(p.ws.t)}:null,charging:p.charging,charge:r3(p.charge),buffT:r3(p.buffT),buffs:p.buffs,drawn:p.drawn,flow:p.flow,
         sheathing:p.sheathing?{t:r3(p.sheathing.t),total:p.sheathing.total}:null,slowT:r3(p.slowT||0),poisoned:r3(p.poisoned||0),poisonT:r3(p.poisonT||0),paraT:r3(p.paraT||0),sleepT:r3(p.sleepT||0),curseT:r3(p.curseT||0),
-        dodgeCd:r3(p.dodgeCd),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
+        dodgeCd:r3(p.dodgeCd),stam:r3(p.stam||0),moving:p.moving,walk:r1(p.walk),...(this.changedOnly(p,full)?{stats:p.stats,info:p.info}:{})})),
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
