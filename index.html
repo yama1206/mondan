@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.45.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.45.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4149,7 +4149,7 @@ function buildStageMap(L){
   }
   // 9) 地図をランダムに左右・上下反転する（スタートが左上・右上・左下・右下のどれかになる）
   flipStageMap(map,RNG.next()<0.5,RNG.next()<0.5);
-  // 10) 大人数（4人以上）のときに使う、四隅のスタート地点：それぞれの角にいちばん近い部屋（ボス部屋以外・重複なし）
+  // 10) ステージ4以降で、ときどき使う四隅のスタート地点：それぞれの角にいちばん近い部屋（ボス部屋以外・重複なし）
   {const used=new Set(),pts=[];
     for(const [cx,cy] of [[0,0],[W,0],[0,H],[W,H]]){let best=null,bd=1e9;
       for(const rm of map.roomList){if(rm.kind==='boss'||used.has(rm))continue;const R=rm.rect,mx=(R[0]+R[2])/2,my=(R[1]+R[3])/2,d=Math.hypot(mx-cx,my-cy);if(d<bd){bd=d;best=rm;}}
@@ -4267,10 +4267,10 @@ function flipStageMap(map,fx,fy){
   if(map.bossRect)map.bossX1=map.bossRect[0];
   if(map.bossSide){if(fx&&map.bossSide==='right')map.bossSide='left';if(fy)map.bossSide={top:'bottom',bottom:'top'}[map.bossSide]||map.bossSide;}
 }
-/** 4人以上のとき、ときどき全員を四隅のスタート地点に分けて出発させる（そのまわりの魔物は取り除く） */
+/** ステージ4以降、ときどき全員を四隅のスタート地点に分けて出発させる（仲間はプレイヤーと一緒。そのまわりの魔物は取り除く） */
 function scatterStart(w){
   const pts=w.map.cornerSpawns;if(!pts||pts.length<2)return false;
-  const ps=shuffle(Object.values(w.players)),order=shuffle(pts.slice());
+  const ps=shuffle(Object.values(w.players).filter(p=>!p.ai)),order=shuffle(pts.slice());
   ps.forEach((p,i)=>{const s=order[i%order.length],k=Math.floor(i/order.length);p.x=s.x+k*28;p.y=s.y;});
   w.enemies=w.enemies.filter(e=>e.boss||!order.some(s=>Math.hypot(e.x-s.x,e.y-s.y)<260));
   for(const p of ps)emit(w,{type:'bossTxt',x:p.x,y:p.y-40,text:'バラバラに出発！',color:'#9fe0ff'});
@@ -13078,7 +13078,7 @@ const App={
       pl.slot=slotOfPid(m.pid);
       pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null; // 相棒（見た目）と首輪は他の人にも見せる
     });
-    if(n>=4&&RNG.next()<0.5)scatterStart(this.world); // 4人以上：半分くらいの確率で、四隅からバラバラに出発
+    if(n>=2&&(q.stage|0)>=4&&!q.explore&&RNG.next()<0.5)scatterStart(this.world); // ステージ4以降：半分くらいの確率で、四隅からバラバラに出発（オンラインで2人以上のとき）
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
     Net.broadcastStart(this.world);
