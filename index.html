@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.42.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.42.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3540,10 +3540,12 @@ const LOOKS=[
 const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling',l_turtle:'turtle',l_bird:'owl',l_hamster:'bee',l_ghost:'beesting',l_penguin:'penguin',l_fox:'fox'};
 /* 見た目の色違い：1つの見た目に4色（基本色＋色違い3つ）。色は色相をずらして作る */
 /* 色ごとのレア度（rar）と、ガチャで出る重み（w。合計100＝出る確率%） */
-const LOOK_VARIANTS=[{name:'基本色',hue:0,rar:'N',w:55},{name:'色違い1',hue:110,rar:'R',w:28},{name:'色違い2',hue:220,rar:'SR',w:13},{name:'色違い3',hue:300,rar:'SSR',w:4}];
-const LOOK_RAR_NAME={N:'ノーマル',R:'レア',SR:'スーパーレア',SSR:'最高レア'};
+// rar はガチャ演出の強さ（R/SR/SSR）。表示名と色は装飾品のレア度（レア・エピック・レジェンダリー）の色に合わせる
+const LOOK_VARIANTS=[{name:'基本色',hue:0,rar:'R',w:55},{name:'色違い1',hue:110,rar:'SR',w:28},{name:'色違い2',hue:220,rar:'SR',w:13},{name:'色違い3',hue:300,rar:'SSR',w:4}];
+const LOOK_RAR_NAME={R:'レア',SR:'エピック',SSR:'レジェンド'};
+const LOOK_RAR_COLOR={R:'#4aa3ff',SR:'#c06bff',SSR:'#ffb030'};
 /** 色の表示名：「色違い2（スーパーレア）」のように、レア度の色つきで出す */
-const lookVarLabel=v=>{const V=LOOK_VARIANTS[v]||LOOK_VARIANTS[0];return `<span style="color:${RARITY[V.rar].color}">${V.name}（${LOOK_RAR_NAME[V.rar]}）</span>`;};
+const lookVarLabel=v=>{const V=LOOK_VARIANTS[v]||LOOK_VARIANTS[0];return `<span style="color:${LOOK_RAR_COLOR[V.rar]}">${V.name}（${LOOK_RAR_NAME[V.rar]}）</span>`;};
 /** ガチャの色の抽選：レア度の重みで選ぶ */
 function rollLookVariant(){let r=RNG.next()*LOOK_VARIANTS.reduce((a,v)=>a+v.w,0);for(let i=0;i<LOOK_VARIANTS.length;i++){r-=LOOK_VARIANTS[i].w;if(r<0)return i;}return 0;}
 /* 首輪の性能は今は常にレベル1（強化は未実装） */
@@ -12047,8 +12049,8 @@ const Ops={
     const rank={N:0,R:1,SR:2,SSR:3};
     const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
     const names=rs.map(f=>f.text).join(' ／ ');
-    return {changed:true,msg:`10連：${rs.length}回回した（${names}）`,color:RARITY[best.rar].color,
-      fx:{rar:best.rar,text:`10連結果（${rs.length}回）：${names}`,look:(rs.find(f=>f.look)||{}).look,lookV:(rs.find(f=>f.look)||{}).lookV}};
+    return {changed:true,msg:`10連：${rs.length}回回した（${names}）`,color:best.rcol||RARITY[best.rar].color,
+      fx:{rar:best.rar,rname:best.rname,rcol:best.rcol,text:`10連結果（${rs.length}回）：${names}`,look:(rs.find(f=>f.look)||{}).look,lookV:(rs.find(f=>f.look)||{}).lookV}};
   },
   /** 首輪ガチャの10連（10コイン）。1回ずつ首輪ガチャと同じ抽選 */
   collarGacha10(p,who,a){
@@ -12114,7 +12116,7 @@ const Ops={
     const have=p.looks[lk.id]||[];
     if(!have.includes(v)){
       p.looks[lk.id]=[...have,v].sort();
-      return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:RARITY[V.rar].color,fx:{rar:V.rar,text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
+      return {changed:true,msg:`${lk.name}（${vn}）が仲間になった！`,color:LOOK_RAR_COLOR[V.rar],fx:{rar:V.rar,rname:LOOK_RAR_NAME[V.rar],rcol:LOOK_RAR_COLOR[V.rar],text:`${lk.name}（${vn}）が仲間になった！`,look:lk.id,lookV:v}};
     }
     p.coins=(p.coins||0)+1;
     return {changed:true,msg:`${lk.name}（${vn}）がかぶった → コイン +1`,color:'#ffd23a',fx:{rar:'N',text:`${lk.name}（${vn}）がかぶった → コイン +1`}};
@@ -13645,11 +13647,11 @@ const App={
     this.doOp('gacha10',{});
   },
   /** ガチャの演出。レア度が高いほど大きく・長く出す */
-  gachaFx(rar,text,look,lookV){
+  gachaFx(rar,text,look,lookV,rname,rcol){
     try{
       const el=document.createElement('div');
       el.className='gfx gfx-'+rar;
-      el.innerHTML=`<div class="gfx-in"><div class="gfx-r">${RARITY[rar].name}</div><div class="gfx-t">${esc(text)}</div><div class="gfx-hint">タップして閉じる</div></div>`;
+      el.innerHTML=`<div class="gfx-in"><div class="gfx-r"${rcol?` style="color:${rcol}"`:''}>${rname||RARITY[rar].name}</div><div class="gfx-t">${esc(text)}</div><div class="gfx-hint">タップして閉じる</div></div>`;
       if(look){
         // 出た相棒の見た目を、相棒と同じ描き方でそのまま見せる
         try{
@@ -13672,7 +13674,7 @@ const App={
     // ガチャの結果は、レア度に応じた溜めのあとで出す（最高レアは3秒）
     const show=()=>{
       if(r.msg)UI.notify(r.msg,r.color||'#888',2.5);
-      if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look,r.fx.lookV);
+      if(r.fx)this.gachaFx(r.fx.rar,r.fx.text,r.fx.look,r.fx.lookV,r.fx.rname,r.fx.rcol);
       if(r.fx&&['gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha'].includes(act))Sound.gachaResult(r.fx.rar);
     };
     const tame=['gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha'].includes(act)&&r.fx?(r.fx.rar==='SSR'?3:1):0;
@@ -14032,7 +14034,7 @@ const App={
     const sub=this.gachaSub||'pet';
     const tabs=[['pet','相棒'],['collar','首輪'],['letter','手紙'],['deco','装飾品']];
     const tabBar=`<div class="filters">${tabs.map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="gachaTab" data-t="${k}">${n}</button>`).join('')}</div>`;
-    const petCard=`<div class="recipe"><div class="rn">相棒ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。相棒（種類と色）がかぶるとコイン1枚。<br>色の出る確率：${LOOK_VARIANTS.map(v=>`<span style="color:${RARITY[v.rar].color}">${v.name}（${LOOK_RAR_NAME[v.rar]}）${v.w}%</span>`).join('　')}<br>所持 ${coins}枚</div>
+    const petCard=`<div class="recipe"><div class="rn">相棒ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。相棒（種類と色）がかぶるとコイン1枚。<br>色の出る確率：${LOOK_VARIANTS.map(v=>`<span style="color:${LOOK_RAR_COLOR[v.rar]}">${v.name}（${LOOK_RAR_NAME[v.rar]}）${v.w}%</span>`).join('　')}<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
     const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます。レア度で出る種類が変わります。かぶるとコイン1枚戻ります。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=1?'primary':''}" data-act="collarGacha" ${coins>=1?'':'disabled'}>1回回す（1コイン）</button><button class="${coins>=10?'primary':''}" data-act="collarGacha10" ${coins>=10?'':'disabled'}>10連（10コイン）</button></div></div>`;
