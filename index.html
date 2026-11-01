@@ -243,13 +243,13 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.45.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.46.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
   player:{radius:12,baseSpeed:185,baseHp:125,baseAtk:10,baseDef:2,baseCrit:5,baseCritDmg:50,
-    dodgeSpeed:520,dodgeTime:0.2,dodgeCd:1.0,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
+    dodgeSpeed:347,dodgeTime:0.2,dodgeCd:1.0,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
     startPotions:3,maxPotions:10,hitInvuln:0.35,
     itemWalk:0.35,minItemDelay:0.3,sheatheWalk:0.5}, // sheatheWalk：納刀動作中の移動速度倍率 // アイテム使用中の移動速度倍率、発動時間の下限
   enemySight:330,
@@ -5028,6 +5028,8 @@ function updatePlayer(w,p,inp,dt){
     p.dodgeTime-=dt;
     const ds=P.dodgeSpeed*(1+(s.dodgeDistPct||0)/100)*(wsActive(p,'taunt')?1.3:1); // 回避距離アップ（防具スキル）のときだけ伸びる
     moveEntity(w.map,p,p.dodgeDir.x*ds*dt,p.dodgeDir.y*ds*dt);
+    // 大剣のチャージを続けたまま回避中：押している間はたまり続け、離したらチャージをやめる
+    if(p.charging){if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100);else{p.charging=false;p.charge=0;}}
     return;
   }
   // ガード：押している間だけ。抜刀していなければ抜く。攻撃・チャージ・アイテム使用中は構えられない
@@ -5056,7 +5058,9 @@ function updatePlayer(w,p,inp,dt){
   // 回避：アイテム使用（消費なし）とチャージを中断する
   if(inp.dodge&&p.dodgeCd<=0&&p.stam>=1){
     if(p.using){const cid=p.using.item;p.using=null;if(!DRIP_ITEMS.includes(cid))emit(w,{type:'itemCancel',pid:p.id,x:p.x,y:p.y-26});}
-    p.charging=false;p.charge=0;p.sheathing=null; // 納刀動作も中断（抜刀したまま）
+    // チャージは中断する。ただし大剣は、攻撃ボタンを押したままならチャージを続ける
+    if(!(p.charging&&inp.attack&&s.weaponType==='greatsword')){p.charging=false;p.charge=0;}
+    p.sheathing=null; // 納刀動作も中断（抜刀したまま）
     p.dodgeDir=p.moving?{x:mx,y:my}:{x:Math.cos(p.facing),y:Math.sin(p.facing)};
     p.dodgeTime=P.dodgeTime;p.dodgeCd=s.dodgeCd-(wsActive(p,'kyodo')?0.3:0);p.stam-=1;
     p.dodgeInv=P.dodgeTime+s.dodgeIframe;
