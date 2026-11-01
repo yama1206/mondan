@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.60.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.60.4',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3797,6 +3797,9 @@ const Save={
         slots:Array.isArray(x.slots)?x.slots.slice(0,3).map(u=>{if(u&&decoIds.has(u)&&!usedDecos.has(u)){usedDecos.add(u);return u;}return null;}):[]};
       if(base.slot==='charm'){it.skills={};if(x.skills&&typeof x.skills==='object')for(const k in x.skills)if(DATA.armorSkills[k])it.skills[k]=clamp(x.skills[k]|0,1,15);it.def=0;}
       if(base.slot!=='charm'&&base.slot!=='weapon'&&x.enchant&&typeof x.enchant==='object'){const sk={};if(x.enchant.skills&&typeof x.enchant.skills==='object')for(const k in x.enchant.skills)if(DATA.armorSkills[k])sk[k]=clamp(x.enchant.skills[k]|0,1,15);if(Object.keys(sk).length)it.enchant={t:clamp(x.enchant.t|0,1,3),skills:sk};}
+      // 持っている武器・防具の性能は、いつも鍛冶屋の今の数値に合わせる（強化・霊玉強化のぶんは上乗せして残す）
+      if(base.slot==='weapon'){let ba=0,bc=0;for(let i=0;i<it.bossLv;i++){const st=BOSS_REINF_STATS[i]||{};ba+=st.atk||0;bc+=st.crit||0;}it.atk=(base.atk||0)+ba;it.crit=(base.crit||0)+bc;}
+      else if(base.slot!=='charm')it.def=Math.max(1,base.def||0)+it.reinforce;
       Profile.fitSlots(it,usedDecos);
       p.items.push(it);itemIds.add(it.uid);noteUid(it.uid);
     }
