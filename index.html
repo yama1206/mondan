@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.40.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.40.4',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -766,7 +766,7 @@ const DATA={
     worm_faulds:{name:'大蚯蚓の腰巻',slot:'waist',def:6,skills:{gather_up:3,hp_up:3,rare_up:1},slots:1},
     worm_greaves:{name:'大蚯蚓の這い脚',slot:'legs',def:7,skills:{gather_up:4,hp_up:2,rare_up:1},slots:1},
     kama_sword:{name:'大鎌蟷螂の剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'sword',atk:22,crit:11,slots:2,boss:'kama_mantis'},
-    kama_dual:{name:'大鎌蟷螂の雷双剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'dual',atk:26,crit:15,slots:2,boss:'kama_mantis'},
+    kama_dual:{name:'大鎌蟷螂の雷双剣',slot:'weapon',el:{k:'thunder',v:11},wtype:'dual',atk:21,crit:15,slots:2,boss:'kama_mantis'},
     armd_hammer:{name:'大アルマジロの殻槌',slot:'weapon',st:{k:'slow',buildup:15},wtype:'hammer',atk:15,crit:1,slots:2,boss:'armadillo'},
     armd_gs:{name:'大アルマジロの甲羅剣',slot:'weapon',st:{k:'slow',buildup:15},wtype:'greatsword',atk:14,crit:4,slots:2,boss:'armadillo'},
     hana_gs:{name:'毒花竜の冥花大剣',slot:'weapon',el:{k:'mei',v:14},wtype:'greatsword',atk:27,crit:6,slots:2,boss:'flower_dragon'},
