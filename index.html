@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.69.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.70.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -7606,9 +7606,32 @@ const GEAR_LOOKS={
   eel:{main:'#4a5ac0',dark:'#222a6a',accent:'#ffe858',light:'#7a8ae0',eye:'#ffe040',beast:'eel',blade:'#ffe858'},
   worm:{main:'#b07a8a',dark:'#5a3a44',accent:'#f0c8d0',light:'#d09aa8',eye:'#ffe060',beast:'worm',blade:'#f0c8d0'},
 };
+/** ステージ4以降のボス武器（bw_ボス_武器種）の見た目に使う GEAR_LOOKS の名前 */
+const BOSS_WEAPON_LOOK={twin_shark:'shark',mola_fish:'mola',deep_octopus:'octo',aquarios:'aqua',turtle:'turtle',thunderEel:'eel',giantWorm:'worm',
+  crystal_guardian:'guard',quake_dragon:'ondo',giant_bat:'gbat',crystal_scorpion:'scorp',mole:'mole',centipede:'centi',grados:'grados',
+  scarab:'syaku',fire_phoenix:'phoenix',crimson_serpent:'serpent',fire_griffon:'griffon',lava_giant:'lava',volcano_dragon:'dragon',felgnas:'felg',
+  ice_bear:'shiro',ice_unicorn:'tsuno',eternal_beast:'mammoth',frost_cat:'fcat',ice_deer:'deer',frost_wyvern:'wyv',ice_ape:'ape',
+  headless_knight:'kubi',yomi_samurai:'onry',abyss_spider:'abyss',ghost_moth:'gmoth',grave_rat:'grat',black_wolf:'bwolf',bone_dragon:'bdragon'};
+Object.assign(GEAR_LOOKS,{ // 武器だけに使う見た目（防具は無いボス）
+  griffon:{main:'#c88a3a',dark:'#5a3a14',accent:'#ffe0a0',light:'#f0c070',eye:'#ffe060',blade:'#ffd8a0'},
+  fcat:{main:'#e8f0f8',dark:'#6a7a90',accent:'#a8e8ff',light:'#ffffff',eye:'#60d0ff',blade:'#d8f4ff'},
+  gmoth:{main:'#6a5a7a',dark:'#2a2234',accent:'#d0b0ff',light:'#a090c0',eye:'#ff70ff',blade:'#d8d0f0'},
+  grat:{main:'#7a6a5a',dark:'#3a2e24',accent:'#f0b0b8',light:'#a8988a',eye:'#ff4040',blade:'#d8ccb8'},
+  bdragon:{main:'#d8d0b8',dark:'#4a3a5a',accent:'#b898ff',light:'#f0ead8',eye:'#ff70ff',blade:'#e8e0f0'},
+});
+// 武器の飾り（WEAPON_ART）の組み合わせ。生き物の特徴が武器に出るように
+for(const [k,w] of Object.entries({shark:['fin','fang'],mola:['fin','bubble'],octo:['tentacle'],aqua:['fin','spine','bubble'],turtle:['shell','fin'],eel:['bolt','fin'],worm:['segment'],
+  guard:['crystal'],ondo:['horn','spine'],gbat:['wing','fang'],scorp:['crystal','stinger'],mole:['claw','crystal'],centi:['segment','spine'],grados:['crystal','spine'],
+  syaku:['shell','flame'],phoenix:['feather','flame'],serpent:['snake','flame'],griffon:['feather','claw'],lava:['flame','crystal'],dragon:['spine','flame'],felg:['horn','flame'],
+  shiro:['fur','claw'],tsuno:['unihorn','ice'],mammoth:['fur','tusk'],fcat:['claw','ice'],deer:['antler','ice'],wyv:['spine','ice'],ape:['fur','ice'],
+  kubi:['skull','ghost'],onry:['ghost','tassel'],abyss:['web'],gmoth:['mothwing','ghost'],grat:['rattail','fang'],bdragon:['bone','skull','ghost']}))if(GEAR_LOOKS[k])GEAR_LOOKS[k].w=w;
 function gearLook(id){
   if(!id)return null;
   if(id==='fang_king')return GEAR_LOOKS.fang;
+  if(id.startsWith('bw_')){ // ボスの名前入りの武器（bw_ボス_武器種）は、そのボスの見た目
+    const b=Object.keys(BOSS_WEAPON_LOOK).find(k=>id.startsWith('bw_'+k+'_'));
+    return b?GEAR_LOOKS[BOSS_WEAPON_LOOK[b]]:null;
+  }
   return GEAR_LOOKS[id.split('_')[0]]||null;
 }
 /* ボス装備の見た目（beast ごとの描き方）。部位：head=兜 / body=胴の模様 / waist=腰 / arm=肩（左右それぞれ） / foot=足 / tail=尻尾 / under=体の下に描くもの
@@ -8294,6 +8317,136 @@ const WEAPON_ART={
     for(let i=0;i<5;i++){const t=0.18+i*0.17,p=g.along(t),s=i%2?1:-1,nx=Math.sin(p.a)*s,ny=-Math.cos(p.a)*s,tx=Math.cos(p.a),ty=Math.sin(p.a),bx=p.x+nx*g.hw,by=p.y+ny*g.hw;
       ctx.beginPath();ctx.moveTo(bx-tx*1.3,by-ty*1.3);ctx.lineTo(bx+nx*3.2,by+ny*3.2);ctx.lineTo(bx+tx*1.3,by+ty*1.3);ctx.closePath();ctx.fill();}
     ctx.fillStyle=l.light;for(let i=0;i<4;i++){const p=g.along(0.2+i*0.2);ctx.beginPath();ctx.arc(p.x,p.y,g.hw*0.45,0,TAU);ctx.fill();}
+  },
+  /* ---- ステージ4以降のボス武器の飾り ---- */
+  fin(ctx,g,l){ // 背びれ：刃の背に反ったひれ（槌は頭の上、弓は弧の外側）
+    const draw=(x,y,a,sz)=>{ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=l.main;ctx.strokeStyle=l.dark;ctx.lineWidth=0.9;
+      ctx.beginPath();ctx.moveTo(-sz,0);ctx.quadraticCurveTo(-sz*0.2,-sz*1.5,sz*0.9,-sz*1.3);ctx.quadraticCurveTo(sz*0.3,-sz*0.5,sz,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();};
+    if(g.kind==='hammer'){const h=g.head;draw((h.x0+h.x1)/2,-h.hy,0,5);return;}
+    if(g.kind==='bow'){const p=g.along(0.5);draw(p.x,p.y,p.a-Math.PI/2+Math.PI,5);return;}
+    const p=g.along(0.45);draw(p.x,-g.hw,0,Math.max(4,(g.x1-g.x0)*0.12));
+  },
+  bubble(ctx,g,l){ // 泡：刃のまわりに浮かぶ小さな泡
+    const t=Renderer.time||0;ctx.strokeStyle=l.accent;ctx.lineWidth=0.8;
+    for(let i=0;i<4;i++){const k=(t*0.6+i/4)%1,p=g.kind==='hammer'?{x:g.head.x1-2,y:-g.head.hy,a:0}:g.along(0.3+i*0.18);
+      ctx.globalAlpha=0.8*(1-k);ctx.beginPath();ctx.arc(p.x+Math.sin(t*3+i)*2,p.y-(g.hw||3)-3-k*8,1.2+i%2,0,TAU);ctx.stroke();}
+    ctx.globalAlpha=1;
+  },
+  tentacle(ctx,g,l){ // 触手：刃に巻きつく触手と吸盤
+    const t=Renderer.time||0;
+    if(g.kind==='hammer'){const h=g.head;ctx.strokeStyle=l.main;ctx.lineWidth=2.4;ctx.lineCap='round';
+      for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(h.x1,sg*4);ctx.quadraticCurveTo(h.x1+8,sg*(8+Math.sin(t*3)*2),h.x1+4,sg*14);ctx.stroke();}ctx.lineCap='butt';return;}
+    ctx.strokeStyle=l.main;ctx.lineWidth=2.2;ctx.lineCap='round';ctx.beginPath();
+    for(let i=0;i<=20;i++){const p=g.along(0.05+i*0.045),w=Math.sin(i*0.9+t*2)*((g.hw||2)+2.5);const x=p.x+Math.sin(p.a)*w,y=p.y-Math.cos(p.a)*w;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();ctx.lineCap='butt';ctx.fillStyle=l.accent;
+    for(let i=2;i<20;i+=4){const p=g.along(0.05+i*0.045),w=Math.sin(i*0.9+t*2)*((g.hw||2)+2.5);ctx.beginPath();ctx.arc(p.x+Math.sin(p.a)*w,p.y-Math.cos(p.a)*w,0.9,0,TAU);ctx.fill();}
+  },
+  crystal(ctx,g,l){ // 結晶：刃から生えるとがった結晶と、きらめき
+    const t=Renderer.time||0;
+    const shard=(x,y,a,len,w)=>{ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=0.7;
+      ctx.beginPath();ctx.moveTo(0,-w);ctx.lineTo(len*0.75,-w*0.8);ctx.lineTo(len,0);ctx.lineTo(len*0.75,w*0.8);ctx.lineTo(0,w);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.moveTo(len*0.2,-w*0.4);ctx.lineTo(len*0.7,-w*0.4);ctx.lineTo(len*0.85,0);ctx.closePath();ctx.fill();ctx.restore();};
+    if(g.kind==='hammer'){const h=g.head;shard(h.x1,0,0,9,3);shard(h.x1-3,-h.hy,-0.9,7,2.2);shard(h.x1-3,h.hy,0.9,7,2.2);}
+    else for(let i=0;i<3;i++){const p=g.along(0.3+i*0.25),sd=i%2?1:-1,a=p.a-sd*Math.PI/2+sd*0.6;shard(p.x+Math.sin(p.a)*g.hw*sd,p.y-Math.cos(p.a)*g.hw*sd,a,5+i,1.8);}
+    const k=(t*0.8)%1,p=g.kind==='hammer'?{x:g.head.x1+6,y:0}:g.along(0.3+k*0.6);ctx.fillStyle='#ffffff';ctx.globalAlpha=Math.sin(k*Math.PI);
+    ctx.beginPath();ctx.moveTo(p.x,p.y-3);ctx.lineTo(p.x+0.8,p.y-0.8);ctx.lineTo(p.x+3,p.y);ctx.lineTo(p.x+0.8,p.y+0.8);ctx.lineTo(p.x,p.y+3);ctx.lineTo(p.x-0.8,p.y+0.8);ctx.lineTo(p.x-3,p.y);ctx.lineTo(p.x-0.8,p.y-0.8);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+  },
+  flame(ctx,g,l){ // 炎：刃（槌は頭）からゆらめく炎
+    const t=Renderer.time||0,pts=g.kind==='hammer'?[0,0.33,0.66,1].map(k=>({x:g.head.x0+(g.head.x1-g.head.x0)*k,y:-g.head.hy,a:0})):[0.25,0.45,0.65,0.85].map(k=>g.along(k));
+    pts.forEach((p,i)=>{const h=5+2.5*Math.sin(t*9+i*1.7),nx=Math.sin(p.a),ny=-Math.cos(p.a),bx=p.x+nx*(g.kind==='hammer'?0:(g.hw||2)),by=p.y+ny*(g.kind==='hammer'?0:(g.hw||2));
+      for(const [c,sc] of [[l.accent,1],['#fff0a0',0.5]]){ctx.fillStyle=c;ctx.globalAlpha=sc===1?0.85:0.9;ctx.beginPath();
+        ctx.moveTo(bx-ny*2.2*sc,by+nx*2.2*sc);ctx.quadraticCurveTo(bx+nx*h*0.6+ny*1.5,by+ny*h*0.6-nx*1.5,bx+nx*h*sc+Math.sin(t*7+i)*1.2,by+ny*h*sc);
+        ctx.quadraticCurveTo(bx+nx*h*0.5-ny*1.5,by+ny*h*0.5+nx*1.5,bx+ny*2.2*sc,by-nx*2.2*sc);ctx.closePath();ctx.fill();}});
+    ctx.globalAlpha=1;
+  },
+  ice(ctx,g,l){ // 氷：刃に張りついたつららと、冷気の粒
+    const t=Renderer.time||0;ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=0.6;
+    const icicle=(x,y,nx,ny,len)=>{ctx.beginPath();ctx.moveTo(x-ny*1.6,y+nx*1.6);ctx.lineTo(x+nx*len,y+ny*len);ctx.lineTo(x+ny*1.6,y-nx*1.6);ctx.closePath();ctx.fill();ctx.stroke();};
+    if(g.kind==='hammer'){const h=g.head;for(let x=h.x0+2;x<h.x1;x+=4)icicle(x,h.hy,0,1,4+((x|0)%3));}
+    else for(let i=0;i<5;i++){const p=g.along(0.2+i*0.15),nx=-Math.sin(p.a),ny=Math.cos(p.a);icicle(p.x+nx*g.hw,p.y+ny*g.hw,nx,ny,3+(i%3)*1.5);}
+    ctx.fillStyle='#ffffff';for(let i=0;i<3;i++){const k=(t*0.5+i/3)%1,p=g.kind==='hammer'?{x:g.head.x1,y:0}:g.along(0.4+i*0.2);ctx.globalAlpha=0.8*(1-k);ctx.beginPath();ctx.arc(p.x+k*4,p.y-4-k*6,0.9,0,TAU);ctx.fill();}
+    ctx.globalAlpha=1;
+  },
+  bolt(ctx,g,l){ // 稲妻：刃の上を走るジグザグの光
+    const t=Renderer.time||0;if(((t*4)|0)%3===2)return; // ときどき消えてチカチカする
+    ctx.strokeStyle=l.accent;ctx.lineWidth=1.3;ctx.shadowColor=l.accent;ctx.shadowBlur=4;ctx.beginPath();
+    if(g.kind==='hammer'){const h=g.head;ctx.moveTo(h.x0,-h.hy+2);for(let i=1;i<=5;i++)ctx.lineTo(h.x0+(h.x1-h.x0)*i/5,(i%2?1:-1)*h.hy*0.6);}
+    else for(let i=0;i<=8;i++){const p=g.along(0.1+i*0.11),j=(i%2?1:-1)*((g.hw||2)+1.5)*((((t*12)|0)+i)%2?1:0.4);const x=p.x+Math.sin(p.a)*j,y=p.y-Math.cos(p.a)*j;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();ctx.shadowBlur=0;
+  },
+  segment(ctx,g,l){ // 体節：刃を横切る節の帯と、短い脚
+    ctx.strokeStyle=l.dark;ctx.lineWidth=1;
+    if(g.kind==='hammer'){const h=g.head;for(let x=h.x0+3;x<h.x1;x+=3.5){ctx.beginPath();ctx.moveTo(x,-h.hy);ctx.lineTo(x,h.hy);ctx.stroke();}return;}
+    for(let i=1;i<9;i++){const p=g.along(i/9),nx=Math.sin(p.a),ny=-Math.cos(p.a),w=(g.hw||2)+0.5;ctx.beginPath();ctx.moveTo(p.x-nx*w,p.y-ny*w);ctx.lineTo(p.x+nx*w,p.y+ny*w);ctx.stroke();
+      if(g.kind==='blade'){ctx.strokeStyle=l.accent;ctx.beginPath();ctx.moveTo(p.x+nx*w,p.y+ny*w);ctx.lineTo(p.x+nx*(w+2.5)-1,p.y+ny*(w+2.5));ctx.moveTo(p.x-nx*w,p.y-ny*w);ctx.lineTo(p.x-nx*(w+2.5)-1,p.y-ny*(w+2.5));ctx.stroke();ctx.strokeStyle=l.dark;}}
+  },
+  wing(ctx,g,l){ // 皮膜の翼：根元から広がるコウモリの翼
+    const p=g.kind==='bow'?g.along(0.5):g.kind==='hammer'?{x:g.head.x0,y:0}:{x:g.gx,y:0};
+    for(const sg of [-1,1]){ctx.fillStyle=l.light;ctx.strokeStyle=l.dark;ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p.x-3,p.y+sg*11);ctx.quadraticCurveTo(p.x-5,p.y+sg*7,p.x-8,p.y+sg*8);ctx.quadraticCurveTo(p.x-8,p.y+sg*4,p.x-11,p.y+sg*4);ctx.closePath();ctx.fill();ctx.stroke();}
+  },
+  claw(ctx,g,l){ // 爪：根元（槌は頭の先）から生える3本の鉤爪
+    const base=g.kind==='hammer'?{x:g.head.x1,y:0,a:0}:g.kind==='bow'?g.along(1):{x:g.gx+2,y:0,a:0};
+    ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=0.7;
+    for(let i=-1;i<=1;i++){ctx.save();ctx.translate(base.x,base.y+i*(g.kind==='hammer'?6:3.5));ctx.rotate((base.a||0)+i*0.35);
+      ctx.beginPath();ctx.moveTo(0,-1.4);ctx.quadraticCurveTo(6,-2.5,8,1.8);ctx.quadraticCurveTo(5,0,0,1.4);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
+  },
+  tusk(ctx,g,l){ // 牙（マンモス）：刃に沿って大きく反る白い牙
+    if(g.kind==='hammer'){const h=g.head;ctx.strokeStyle=l.accent;ctx.lineWidth=3;ctx.lineCap='round';for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(h.x1-2,sg*h.hy*0.6);ctx.quadraticCurveTo(h.x1+10,sg*(h.hy+2),h.x1+6,sg*(h.hy+9));ctx.stroke();}ctx.lineCap='butt';return;}
+    const a=g.along(0.15),m=g.along(0.6),b=g.along(0.95),off=(p,d)=>({x:p.x-Math.sin(p.a)*d,y:p.y+Math.cos(p.a)*d});
+    const A=off(a,(g.hw||2)+1),M=off(m,(g.hw||2)+7),B=off(b,(g.hw||2)+1);
+    ctx.strokeStyle=l.accent;ctx.lineWidth=2.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.quadraticCurveTo(M.x,M.y,B.x,B.y);ctx.stroke();
+    ctx.strokeStyle=l.dark;ctx.lineWidth=0.6;ctx.stroke();ctx.lineCap='butt';
+  },
+  antler(ctx,g,l){ // 枝角：根元から左右に枝分かれして広がる角
+    const p=g.kind==='bow'?g.along(0):g.kind==='hammer'?{x:(g.head.x0+g.head.x1)/2,y:0}:{x:g.gx,y:0},yo=g.kind==='hammer'?g.head.hy:(g.hw||2);
+    ctx.strokeStyle=l.accent;ctx.lineWidth=1.8;ctx.lineCap='round';
+    for(const sg of [-1,1]){ctx.beginPath();ctx.moveTo(p.x,p.y+sg*yo);ctx.quadraticCurveTo(p.x-2,p.y+sg*(yo+8),p.x-8,p.y+sg*(yo+11));
+      ctx.moveTo(p.x-1,p.y+sg*(yo+5));ctx.lineTo(p.x+4,p.y+sg*(yo+9));ctx.moveTo(p.x-4,p.y+sg*(yo+9));ctx.lineTo(p.x-2,p.y+sg*(yo+14));ctx.stroke();}
+    ctx.lineCap='butt';
+  },
+  unihorn(ctx,g,l){ // 一本角：先端にねじれた角（槌は頭の先、弓は上の先）
+    const p=g.kind==='hammer'?{x:g.head.x1,y:0,a:0}:g.kind==='bow'?g.along(0):g.along(1),a=g.kind==='bow'?p.a+Math.PI:p.a;
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(a);ctx.fillStyle=l.accent;ctx.strokeStyle=l.dark;ctx.lineWidth=0.7;
+    ctx.beginPath();ctx.moveTo(0,-2.4);ctx.lineTo(12,0);ctx.lineTo(0,2.4);ctx.closePath();ctx.fill();ctx.stroke();
+    for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(i*3,-2.4+i*0.6);ctx.lineTo(i*3+2,2.4-i*0.6);ctx.stroke();}ctx.restore();
+  },
+  skull(ctx,g,l){ // どくろ：根元（槌は頭の中央）に小さな頭蓋骨
+    const p=g.kind==='bow'?g.along(0.5):g.kind==='hammer'?{x:(g.head.x0+g.head.x1)/2,y:0}:{x:g.gx-2,y:0};
+    ctx.fillStyle='#ece6d4';ctx.strokeStyle=l.dark;ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(p.x,p.y-0.5,3.6,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillRect(p.x-2,p.y+2,4,2);ctx.fillStyle=l.eye||'#000';ctx.beginPath();ctx.arc(p.x-1.3,p.y-0.8,0.9,0,TAU);ctx.arc(p.x+1.3,p.y-0.8,0.9,0,TAU);ctx.fill();
+  },
+  ghost(ctx,g,l){ // 人魂：刃のまわりを漂う青白い炎
+    const t=Renderer.time||0;
+    for(let i=0;i<2;i++){const k=(t*0.35+i*0.5)%1,p=g.kind==='hammer'?{x:g.head.x0+(g.head.x1-g.head.x0)*k,y:0,a:0}:g.along(0.2+k*0.75),sg=i?1:-1,d=((g.kind==='hammer'?g.head.hy:(g.hw||2))+5)*sg;
+      const x=p.x+Math.sin(p.a)*d,y=p.y-Math.cos(p.a)*d+Math.sin(t*4+i)*1.5;ctx.globalAlpha=0.75*Math.sin(k*Math.PI);
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(x,y,2.3,0,TAU);ctx.fill();ctx.beginPath();ctx.moveTo(x-2.2,y);ctx.quadraticCurveTo(x-6,y-1+Math.sin(t*6)*1.5,x-8,y);ctx.quadraticCurveTo(x-5,y+1.5,x-2,y+1.5);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(x+0.4,y-0.3,0.9,0,TAU);ctx.fill();}
+    ctx.globalAlpha=1;
+  },
+  tassel(ctx,g,l){ // 房飾り：武者の刀の根元に下がる房
+    const t=Renderer.time||0,p=g.kind==='bow'?g.along(0.5):g.kind==='hammer'?{x:g.head.x0-2,y:0}:{x:g.gx-3,y:0};
+    ctx.strokeStyle=l.accent;ctx.lineWidth=0.9;for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(p.x,p.y+2);ctx.quadraticCurveTo(p.x-3+i*0.6,p.y+6,p.x-5+i+Math.sin(t*3)*1.2,p.y+11);ctx.stroke();}
+    ctx.fillStyle=l.main;ctx.beginPath();ctx.arc(p.x,p.y+2,1.8,0,TAU);ctx.fill();
+  },
+  web(ctx,g,l){ // 蜘蛛の巣：根元に張った巣と、刃を伝う糸
+    const p=g.kind==='bow'?g.along(0.5):g.kind==='hammer'?{x:g.head.x0,y:0}:{x:g.gx,y:0},R=8;
+    ctx.strokeStyle=l.accent;ctx.globalAlpha=0.75;ctx.lineWidth=0.6;
+    for(let i=0;i<6;i++){const a=Math.PI*0.5+i*Math.PI/5;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+Math.cos(a)*R,p.y+Math.sin(a)*R);ctx.stroke();}
+    for(const rr of [3,5.5,8]){ctx.beginPath();for(let i=0;i<6;i++){const a=Math.PI*0.5+i*Math.PI/5,x=p.x+Math.cos(a)*rr,y=p.y+Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}
+    if(g.kind==='blade'){ctx.beginPath();ctx.moveTo(g.x0,(g.hw||2)+0.5);ctx.quadraticCurveTo((g.x0+g.x1)/2,(g.hw||2)+3,g.x1-2,0.5);ctx.stroke();}
+    ctx.globalAlpha=1;ctx.fillStyle=l.eye;ctx.beginPath();ctx.arc(p.x-R*0.6,p.y+R*0.5,1.4,0,TAU);ctx.fill();
+  },
+  mothwing(ctx,g,l){ // 蛾の羽：根元に開いた一対の羽と、目玉模様
+    const p=g.kind==='bow'?g.along(0.5):g.kind==='hammer'?{x:g.head.x0,y:0}:{x:g.gx,y:0},t=Renderer.time||0,fl=0.85+0.15*Math.sin(t*8);
+    for(const sg of [-1,1]){ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,sg*fl);ctx.fillStyle=l.light;ctx.strokeStyle=l.dark;ctx.lineWidth=0.7;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-2,9,-9,10);ctx.quadraticCurveTo(-12,5,-8,1);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle=l.accent;ctx.beginPath();ctx.arc(-6,6,1.8,0,TAU);ctx.fill();ctx.fillStyle=l.dark;ctx.beginPath();ctx.arc(-6,6,0.8,0,TAU);ctx.fill();ctx.restore();}
+  },
+  rattail(ctx,g,l){ // ネズミの尻尾：根元から垂れて巻く細い尻尾
+    const t=Renderer.time||0,p=g.kind==='bow'?g.along(1):g.kind==='hammer'?{x:g.head.x0-2,y:0}:{x:g.gx-3,y:0};
+    ctx.strokeStyle=l.accent;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x,p.y);
+    ctx.bezierCurveTo(p.x-6,p.y+4,p.x-2,p.y+10+Math.sin(t*3)*1.5,p.x-9,p.y+12);ctx.quadraticCurveTo(p.x-13,p.y+10,p.x-11,p.y+8);ctx.stroke();ctx.lineCap='butt';
   },
   frog(ctx,g,l){ // 毒蛙：毒の斑点と、先端のねばつく玉
     ctx.fillStyle=l.accent;
