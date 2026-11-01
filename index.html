@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.67.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.67.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4273,7 +4273,7 @@ const QuestRules={
     if(TEST_MODE.allQuests)return true; // テスト用：すべての依頼に挑める
     if(q.stage>this.stage(p))return false;
     if(q.urgent)return this.urgentOpen(p,q.stage);
-    if(this.strong(q)&&!this.minionsOpen(p,q.stage))return false;
+    if(this.strong(q))return this.minionsOpen(p,q.stage); // 強敵は、雑魚の依頼を2つ達成すると全部いっぺんに出る（前提の依頼は見ない）
     if(!q.after)return true;
     // 前提が緊急ボスの強敵は、雑魚の依頼をすべて達成すれば出る（緊急の達成は待たない）
     const pre=questById(q.after);
