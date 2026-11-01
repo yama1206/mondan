@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.44.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.45.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3970,7 +3970,7 @@ function buildStageMap(L){
   let bossSide=pick(['right','top','bottom']);
   // 1) スタートから右へ進む道。2列目以降は、同じ列で上下に1回ずれることもある
   const key=(c,r)=>c*10+r,nodes=new Map(),links=[];
-  let c=0,r=randInt(0,G.rows-1),vert=0;
+  let c=0,r=RNG.next()<0.5?0:G.rows-1,vert=0; // スタートは左上か左下の部屋（あとで左右・上下を反転して4つの角のどれかにする）
   const path=[{c,r}];nodes.set(key(c,r),{c,r,kind:'start'});
   for(;;){
     const opts=[],atEnd=c===G.cols-1;
@@ -4147,6 +4147,14 @@ function buildStageMap(L){
       for(let i=0;i<k;i++){const p=randomFloor(map,rm.rect,2);if(p)map.gatherSpots.push({x:p.x,y:p.y,kind:pick(['ore_a','ore_b'])});}
     }
   }
+  // 9) 地図をランダムに左右・上下反転する（スタートが左上・右上・左下・右下のどれかになる）
+  flipStageMap(map,RNG.next()<0.5,RNG.next()<0.5);
+  // 10) 大人数（4人以上）のときに使う、四隅のスタート地点：それぞれの角にいちばん近い部屋（ボス部屋以外・重複なし）
+  {const used=new Set(),pts=[];
+    for(const [cx,cy] of [[0,0],[W,0],[0,H],[W,H]]){let best=null,bd=1e9;
+      for(const rm of map.roomList){if(rm.kind==='boss'||used.has(rm))continue;const R=rm.rect,mx=(R[0]+R[2])/2,my=(R[1]+R[3])/2,d=Math.hypot(mx-cx,my-cy);if(d<bd){bd=d;best=rm;}}
+      if(best){used.add(best);const R=best.rect;pts.push({x:((R[0]+R[2])/2+0.5)*TILE,y:((R[1]+R[3])/2+0.5)*TILE});}}
+    map.cornerSpawns=pts;}
   return map;
 }
 function emit(w,ev){w.events.push(ev);}
@@ -4240,6 +4248,34 @@ const QuestRules={
 };
 /** 依頼（opts.quest）に合わせてダンジョンを作る */
 /** 訓練場の広場（ボスの部屋だけ）。周りは壁、中は床 */
+/** 地図の左右（fx）・上下（fy）反転。タイル・部屋・扉・道・採取場所・水溜まり・スタート・ボスの位置をまとめて動かす */
+function flipStageMap(map,fx,fy){
+  if(!fx&&!fy)return;
+  const W=map.W,H=map.H,PW=W*TILE,PH=H*TILE,t=map.tiles,n=new Uint8Array(W*H);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)n[(fy?H-1-y:y)*W+(fx?W-1-x:x)]=t[y*W+x];
+  map.tiles=n;
+  const tx=x=>fx?W-1-x:x,ty=y=>fy?H-1-y:y,px=x=>fx?PW-x:x,py=y=>fy?PH-y:y;
+  const seen=new Set(),fr=R=>{if(!R||seen.has(R))return;seen.add(R);const a=[tx(R[0]),ty(R[1]),tx(R[2]),ty(R[3])];R[0]=Math.min(a[0],a[2]);R[2]=Math.max(a[0],a[2]);R[1]=Math.min(a[1],a[3]);R[3]=Math.max(a[1],a[3]);};
+  for(const rm of map.roomList)fr(rm.rect);
+  for(const k in map.rooms)fr(map.rooms[k]);
+  fr(map.bossRect);
+  map.doorTiles=(map.doorTiles||[]).map(([x,y])=>[tx(x),ty(y)]);
+  for(const c of map.corridors||[]){c.x=tx(c.x);c.y=ty(c.y);}
+  for(const g of map.gatherSpots||[]){g.x=px(g.x);g.y=py(g.y);}
+  for(const q of map.puddles||[]){q.x=px(q.x);q.y=py(q.y);q.bl=q.bl.map(b=>[fx?-b[0]:b[0],fy?-b[1]:b[1],b[2]]);}
+  for(const k of ['start','bossSpot'])if(map[k]){map[k]={x:px(map[k].x),y:py(map[k].y)};}
+  if(map.bossRect)map.bossX1=map.bossRect[0];
+  if(map.bossSide){if(fx&&map.bossSide==='right')map.bossSide='left';if(fy)map.bossSide={top:'bottom',bottom:'top'}[map.bossSide]||map.bossSide;}
+}
+/** 4人以上のとき、ときどき全員を四隅のスタート地点に分けて出発させる（そのまわりの魔物は取り除く） */
+function scatterStart(w){
+  const pts=w.map.cornerSpawns;if(!pts||pts.length<2)return false;
+  const ps=shuffle(Object.values(w.players)),order=shuffle(pts.slice());
+  ps.forEach((p,i)=>{const s=order[i%order.length],k=Math.floor(i/order.length);p.x=s.x+k*28;p.y=s.y;});
+  w.enemies=w.enemies.filter(e=>e.boss||!order.some(s=>Math.hypot(e.x-s.x,e.y-s.y)<260));
+  for(const p of ps)emit(w,{type:'bossTxt',x:p.x,y:p.y-40,text:'バラバラに出発！',color:'#9fe0ff'});
+  return true;
+}
 function buildArenaMap(){
   const W=30,H=20,tiles=new Uint8Array(W*H).fill(1);
   for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)tiles[y*W+x]=0;
@@ -13042,6 +13078,7 @@ const App={
       pl.slot=slotOfPid(m.pid);
       pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null; // 相棒（見た目）と首輪は他の人にも見せる
     });
+    if(n>=4&&RNG.next()<0.5)scatterStart(this.world); // 4人以上：半分くらいの確率で、四隅からバラバラに出発
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
     Net.broadcastStart(this.world);
