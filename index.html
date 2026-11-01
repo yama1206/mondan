@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.60.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.60.3',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3758,6 +3758,13 @@ const Save={
     const srcBag=(d.bag&&typeof d.bag==='object')?d.bag:{potion:d.potions|0};
     for(const id of ITEM_ORDER)p.bag[id]=clamp(srcBag[id]|0,0,DATA.consumables[id].max);
     p.gold=Math.max(0,d.gold|0);
+    // フレンドコードとフレンド一覧はアップデートをまたいでも必ず引き継ぐ（セーブに無ければ端末の控えから戻す）
+    {let fid=typeof d.friendId==='string'&&/^\d{8}$/.test(d.friendId)?d.friendId:null;
+     if(!fid)try{const b=localStorage.getItem('kourou_friend_id');if(b&&/^\d{8}$/.test(b))fid=b;}catch(e){}
+     if(fid)p.friendId=fid;
+     let fl=Array.isArray(d.friends)?d.friends:null;
+     if(!fl)try{fl=JSON.parse(localStorage.getItem('kourou_friends')||'null');}catch(e){}
+     p.friends=(Array.isArray(fl)?fl:[]).filter(f=>f&&typeof f.id==='string'&&/^\d{8}$/.test(f.id)).map(f=>({id:f.id,name:String(f.name||'').slice(0,12)||'フレンド'}));}
     if(d.progress&&typeof d.progress==='object'){
       p.progress.stage=clamp(d.progress.stage|0||1,1,maxStageId());
       if(d.progress.done&&typeof d.progress.done==='object')for(const id in d.progress.done)if(DATA.quests.some(q=>q.id===id))p.progress.done[id]=Math.max(0,d.progress.done[id]|0);
@@ -13501,7 +13508,10 @@ function applyBossStyles(){
 const Friends={
   peer:null,ready:false,starting:false,state:{},requests:{},
   makeId(){let s='';for(let i=0;i<8;i++)s+=Math.floor(Math.random()*10);return s;},
-  myId(){const p=App.profile;if(!p.friendId||!/^\d{8}$/.test(p.friendId)){p.friendId=this.makeId();App.dirty=true;App.save&&App.save();}return p.friendId;},
+  myId(){const p=App.profile;if(!p.friendId||!/^\d{8}$/.test(p.friendId)){let b=null;try{b=localStorage.getItem('kourou_friend_id');}catch(e){}p.friendId=(b&&/^\d{8}$/.test(b))?b:this.makeId();App.dirty=true;App.save&&App.save();}
+    try{if(localStorage.getItem('kourou_friend_id')!==p.friendId)localStorage.setItem('kourou_friend_id',p.friendId);}catch(e){} // 端末にも控えを残す（セーブが消えても同じコードに戻せる）
+    return p.friendId;},
+  backupList(){try{localStorage.setItem('kourou_friends',JSON.stringify(this.list()));}catch(e){}},
   list(){const p=App.profile;if(!Array.isArray(p.friends))p.friends=[];return p.friends;},
   peerId(id){return NET.PREFIX+'f-'+id;},
   /** 窓口を開く（起動時と、フレンド画面を開いたとき）。開けなくてもゲームには影響しない */
@@ -13562,10 +13572,10 @@ const Friends={
     if(id===this.myId())return '自分のフレンドコードです';
     const L=this.list();if(L.some(x=>x.id===id))return 'もう登録しています';
     if(L.length>=30)return '登録できるのは30人までです';
-    L.push({id,name:String(name||'').slice(0,12)||'フレンド'});delete this.requests[id];App.dirty=true;App.save&&App.save();
+    L.push({id,name:String(name||'').slice(0,12)||'フレンド'});delete this.requests[id];App.dirty=true;App.save&&App.save();this.backupList();
     this.refresh();return null;
   },
-  remove(id){const L=this.list(),i=L.findIndex(x=>x.id===id);if(i>=0){L.splice(i,1);App.dirty=true;App.save&&App.save();}delete this.state[id];this.refreshUI();},
+  remove(id){const L=this.list(),i=L.findIndex(x=>x.id===id);if(i>=0){L.splice(i,1);App.dirty=true;App.save&&App.save();this.backupList();}delete this.state[id];this.refreshUI();},
   /** 状態の表示だけを書き換える（入力中の文字は消さない） */
   refreshUI(){const el=typeof document!=='undefined'&&document.getElementById('friendList');if(el&&App.state==='online')el.innerHTML=this.listHTML();},
   listHTML(){
