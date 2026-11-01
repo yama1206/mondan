@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.68.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.68.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -286,7 +286,7 @@ const CONFIG={
 };
 
 const SLOTS=['weapon','head','body','arms','waist','legs','charm']; // charm＝手紙（モンハンのお守り）
-const PRESET_SLOTS=['head','body','arms','waist','legs','charm'],PRESET_MAX=5; // 装備プリセット：防具と手紙（武器は入れない）
+const PRESET_SLOTS=['weapon','head','body','arms','waist','legs','charm'],PRESET_MAX=5; // 装備プリセット：武器・防具・手紙
 /** 持ち物（使うアイテム）の並び順。選択の切り替えはこの順 */
 const ITEM_ORDER=['potion','good_potion','heal_all','antidote','atk_horn','def_horn','flash','pit_trap','shock_trap','bomb','poison_bottle','para_bottle','sleep_bottle'];
 /** 持っている消耗品のID（ITEM_ORDER の順）。切り替えの輪や表示はこれだけを使う */
@@ -12920,7 +12920,7 @@ const Ops={
     Profile.attachDeco(p,a.uid,Number(a.idx)|0,a.deco||null);
     return {changed:true};
   },
-  /** 装備プリセット：今の防具（頭〜脚・手紙）と、それに付けている装飾品を登録する */
+  /** 装備プリセット：今の武器・防具（頭〜脚・手紙）と、それに付けている装飾品を登録する */
   presetSave(p,who,a){
     const i=Number(a.idx)|0;if(i<0||i>=PRESET_MAX)return {};
     const ch=charOf(p,who),eq={},decos={};
@@ -12928,14 +12928,18 @@ const Ops={
     if(!Array.isArray(p.presets))p.presets=[];
     const old=p.presets[i];
     p.presets[i]={name:(old&&old.name)||('プリセット'+(i+1)),eq,decos};
-    return {changed:true,msg:`${p.presets[i].name}に今の防具と装飾品を登録しました`,color:'#7fe09a'};
+    return {changed:true,msg:`${p.presets[i].name}に今の装備と装飾品を登録しました`,color:'#7fe09a'};
   },
   /** 装備プリセットに切り替える。ほかのキャラや武器に付いていた装備・装飾品は、こちらに付け替える */
   presetLoad(p,who,a){
     const pr=(p.presets||[])[Number(a.idx)|0];if(!pr)return {msg:'まだ登録されていません',color:'#888'};
-    const ch=charOf(p,who);let miss=0;
+    const ch=charOf(p,who);let miss=0,busy=0;
     for(const sl of PRESET_SLOTS){
       const uid=pr.eq[sl],it=uid?Profile.getItem(p,uid):null;
+      if(sl==='weapon'){ // 武器は外せないので、登録が無い・無くなったときは今の武器のまま。ほかのキャラが使っている武器は取らない
+        if(uid&&!it)miss++;if(!it)continue;
+        const ow=Profile.equippedBy(p,uid);if(ow>=0&&ow!==who){busy++;continue;}
+        ch.equipped.weapon=uid;continue;}
       if(uid&&!it){miss++;ch.equipped[sl]=null;continue;}
       if(!it){ch.equipped[sl]=null;continue;}
       const owner=Profile.equippedBy(p,uid);if(owner>=0&&owner!==who)charOf(p,owner).equipped[it.slot]=null;
@@ -12946,7 +12950,12 @@ const Ops={
       for(let k=0;k<it.slots.length;k++)it.slots[k]=null; // いったん外して（手元に残る）、登録した並びに付け直す
       want.forEach((d,k)=>{if(d&&k<it.slots.length){if(Profile.getDeco(p,d))Profile.attachDeco(p,it.uid,k,d);else miss++;}});
     }
-    return {changed:true,msg:`${pr.name}に切り替えました${miss?`（売却などで無くなった${miss}点は外しています）`:''}`,color:'#7fe09a'};
+    return {changed:true,msg:`${pr.name}に切り替えました${miss?`（売却などで無くなった${miss}点は外しています）`:''}${busy?'（武器はほかの仲間が使っているので今のままです）':''}`,color:'#7fe09a'};
+  },
+  presetName(p,who,a){
+    const i=Number(a.idx)|0,pr=(p.presets||[])[i];if(!pr)return {};
+    const n=String(a.name||'').replace(/[<>&"']/g,'').trim().slice(0,16);if(!n)return {msg:'名前を入れてください',color:'#888'};
+    pr.name=n;return {changed:true,msg:`名前を「${n}」にしました`,color:'#7fe09a'};
   },
   presetDel(p,who,a){
     const i=Number(a.idx)|0;if(!p.presets||!p.presets[i])return {};
@@ -14232,7 +14241,7 @@ const App={
   /** 参加者から届いた装備・製作の操作を、その人のデータに対して実行する */
   hostCmd(pid,d){
     const m=Net.member(pid);
-    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','bossReinforce','enchant','sellMany','costume','petEquip','lookEquip','gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha','presetSave','presetLoad','presetDel'];
+    const allowed=['equip','unequip','sell','deco','craft','buy','sellMat','reinforce','bossReinforce','enchant','sellMany','costume','petEquip','lookEquip','gacha','gacha10','collarGacha','collarGacha10','letterGacha','letterGacha10','decoGacha','presetSave','presetLoad','presetDel','presetName'];
     if(!m||!allowed.includes(d.act))return;
     const args=(d.args&&typeof d.args==='object')?d.args:{};
     let r={};
@@ -14529,8 +14538,12 @@ const App={
       case 'skillFilter':this.inv.skill=ds.k||null;this.renderInventory();break;
       case 'invWho':this.inv.who=+ds.who||0;this.inv.sel=null;this.renderInventory();break;
       case 'presetSave':{const i=+ds.idx||0,ex=(this.profile.presets||[])[i];
-        if(ex)UI.confirm(`${esc(ex.name)}を今の防具と装飾品で上書きしますか？`,()=>this.doOp('presetSave',{idx:i}));else this.doOp('presetSave',{idx:i});break;}
+        if(ex)UI.confirm(`${esc(ex.name)}を今の装備と装飾品で上書きしますか？`,()=>this.doOp('presetSave',{idx:i}));else this.doOp('presetSave',{idx:i});break;}
       case 'presetLoad':this.doOp('presetLoad',{idx:+ds.idx||0});break;
+      case 'presetName':{const i=+ds.idx||0,ex=(this.profile.presets||[])[i];if(!ex)break;let val=ex.name;
+        UI.confirm(`プリセットの名前（16文字まで）<br><input id="presetNameIn" maxlength="16" value="${esc(ex.name)}" style="width:100%;margin-top:6px">`,()=>this.doOp('presetName',{idx:i,name:val}),{yes:'決定',no:'やめる',yesClass:'primary',focusYes:true});
+        const inp=document.getElementById('presetNameIn');if(inp){inp.addEventListener('input',()=>{val=inp.value;});inp.addEventListener('keydown',e=>e.stopPropagation());setTimeout(()=>{try{inp.focus();inp.select();}catch(e){}},30);}
+        break;}
       case 'presetDel':{const i=+ds.idx||0,ex=(this.profile.presets||[])[i];if(ex)UI.confirm(`${esc(ex.name)}を削除しますか？`,()=>this.doOp('presetDel',{idx:i}));break;}
       case 'petSel':this.inv.petSel=ds.id;this.renderInventory();break;
       case 'gacha':this.gachaRoll();break;
@@ -15114,15 +15127,15 @@ const App={
   /** 装備プリセットの一覧：防具（頭〜脚・手紙）と装飾品の組み合わせを登録して、いっぺんに切り替える */
   presetListHTML(p,who){
     const ch=charOf(p,who),L=p.presets||[];
-    let h=`<div class="small muted" style="margin-bottom:6px">今つけている防具・手紙と、それに付けた装飾品をまとめて登録できます（武器は入りません）。「切り替え」でいっぺんに付け替えます。</div>`;
+    let h=`<div class="small muted" style="margin-bottom:6px">今つけている武器・防具・手紙と、それに付けた装飾品をまとめて登録できます。「切り替え」でいっぺんに付け替えます。</div>`;
     for(let i=0;i<PRESET_MAX;i++){
       const pr=L[i];
-      const cur=pr&&PRESET_SLOTS.every(sl=>(pr.eq[sl]||null)===(ch.equipped[sl]||null));
+      const cur=pr&&PRESET_SLOTS.every(sl=>(sl==='weapon'&&!pr.eq.weapon)||(pr.eq[sl]||null)===(ch.equipped[sl]||null));
       const lines=pr?PRESET_SLOTS.map(sl=>{const u=pr.eq[sl],it=u?Profile.getItem(p,u):null;
         const dn=it?(pr.decos[u]||[]).map(d=>{const dd=Profile.getDeco(p,d);return dd?DATA.decorations[dd.decoId].name:null;}).filter(Boolean):[];
         return `<div class="small"><span class="muted">${SLOT_NAMES[sl]}：</span>${it?`<span style="color:${eqColor(it)}">${itemName(it)}</span>${dn.length?`<span class="muted">（${dn.join('・')}）</span>`:''}`:(u?'<span class="ng">無くなった装備</span>':'<span class="muted">なし</span>')}</div>`;}).join(''):'<div class="small muted">未登録</div>';
       h+=`<div class="recipe"><div class="rn">${pr?esc(pr.name):'プリセット'+(i+1)}${cur?' <span class="tag">装備中</span>':''}</div>${lines}
-        <div class="btnrow"><button class="${pr?'primary':''}" data-act="presetLoad" data-idx="${i}" ${pr?'':'disabled'}>切り替え</button><button data-act="presetSave" data-idx="${i}">今の装備を登録</button>${pr?`<button data-act="presetDel" data-idx="${i}">削除</button>`:''}</div></div>`;
+        <div class="btnrow"><button class="${pr?'primary':''}" data-act="presetLoad" data-idx="${i}" ${pr?'':'disabled'}>切り替え</button><button data-act="presetSave" data-idx="${i}">今の装備を登録</button>${pr?`<button data-act="presetName" data-idx="${i}">名前</button><button data-act="presetDel" data-idx="${i}">削除</button>`:''}</div></div>`;
     }
     return h;
   },
