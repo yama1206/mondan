@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.34.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.34.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8008,8 +8008,8 @@ const PET_ART={
     H.bwing(k,0.08,-0.24,0.82,-2.25+fl*0.8,MEM,C,d);
     if(k.wind)H.flame(k,1.08,-0.5,0.25,0.08,'#ff6a20','#ffd040');return [0.44,-0.34,0.17];},
   l_dog(k,H,C,mv){const d='rgba(0,0,0,.6)',sw=mv?0.18:0.04,tw=Math.sin(k.t*(mv?10:3))*0.1,W='#e8e4dc',DK='#4a4e5a',o={g:0.47,sw,knee:0.02,lift:0.08};
-    // ふさふさの尻尾（先が白い）
-    H.E(k,-0.82,0.02+tw*0.5,0.34,0.13,0.55+tw,C,d);H.E(k,-1.06,0.18+tw*0.8,0.12,0.08,0.6+tw,W);
+    // ふさふさの尻尾
+    H.E(k,-0.82,0.02+tw*0.5,0.34,0.13,0.55+tw,C,d);
     // 奥の脚（暗め）
     for(const [x,ph] of [[-0.42,0],[0.32,1.6]])H.leg(k,x,0.08,ph,DK,0.12,Object.assign({paw:DK},o));
     // 胴：前が高い引き締まった体、背中の濃い毛、白いお腹
