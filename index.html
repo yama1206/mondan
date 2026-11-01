@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.38.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.38.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3941,6 +3941,11 @@ const MAPGEN={cellW:22,cellH:14,cols:6,rows:4,bossW:40,bossH:34}; // bossW・bos
 const TILE_OBS={tree:4,rock:5,pillar:6,tomb:7};
 // 水溜まり（通れるが、踏むと移動が遅くなる）。layouts の puddle:[最少,最多] で部屋ごとに置く
 const TILE_PUDDLE=8,PUDDLE_SLOW=0.7;
+/** 水溜まりの中にいるか：まるい形があればその形で、無ければタイルで判定 */
+function inPuddle(map,x,y){
+  if(map.puddles)return map.puddles.some(q=>Math.abs(x-q.x)<q.r&&Math.abs(y-q.y)<q.r&&q.bl.some(b=>Math.hypot(x-q.x-b[0],y-q.y-b[1])<b[2]));
+  return map.tiles[Math.floor(y/TILE)*map.W+Math.floor(x/TILE)]===TILE_PUDDLE;
+}
 // ステージ別の見た目（layouts の theme）。wall：壁の描き方、speck：床の模様
 const THEME_PAL={
   meadow:{wall:'blob',base:'#2c5626',blobs:['#3c7434','#4a8640','#25491f'],lip:'#4a3a22',lipDark:'#2f2514',floor:['#6fa84c','#7ab356'],speck:'flower'},
@@ -4092,6 +4097,8 @@ function buildStageMap(L){
           const px=(x+0.5)*TILE-p.x,py=(y+0.5)*TILE-p.y;
           if(bl.some(b=>Math.hypot(px-b[0],py-b[1])<b[2]))map.tiles[y*W+x]=TILE_PUDDLE;
         }
+        // 見た目と遅くなる範囲は、まるい形（bl）で決める。タイルは通れるかどうかの判定用
+        (map.puddles||(map.puddles=[])).push({x:Math.round(p.x),y:Math.round(p.y),r:Math.round(ext*TILE),bl:bl.map(b=>b.map(Math.round))});
       }
     }
   }
@@ -4922,7 +4929,7 @@ function updatePlayer(w,p,inp,dt){
     if(p.using)k=Math.min(k,P.itemWalk);                      // アイテム使用中はゆっくり歩ける
     if(p.guarding)k=Math.min(k,GUARD_CFG.move);                // ガード中はかなり遅い
     if(p.slowT>0)k*=p.slowMult||0.6;                           // 鈍足（迷い霊）
-    if(w.map.tiles[Math.floor(p.y/TILE)*w.map.W+Math.floor(p.x/TILE)]===TILE_PUDDLE)k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
+    if(inPuddle(w.map,p.x,p.y))k*=PUDDLE_SLOW; // 水溜まりの中：少し遅くなる
     if(w.blizzard&&w.blizzard.on)k*=0.92;                      // 吹雪：わずかに遅くなる（ほかの補正と掛け算で共存、終われば戻る）
     const spd=(p.drawn?s.speed:s.sheathSpeed)*k*(p.buffs.spd&&p.buffs.spd.t>0?1+p.buffs.spd.pct/100:1); // ペットの応援で速くなる
     moveEntity(w.map,p,mx*spd*dt,my*spd*dt);p.walk+=dt*spd/28;
@@ -8414,7 +8421,7 @@ const Renderer={
           g.fillStyle='#7a5530';g.fillRect(px+3,py+3,TILE-6,TILE-6);
           g.strokeStyle='#3e2a17';g.lineWidth=2;g.strokeRect(px+4,py+4,TILE-8,TILE-8);
           g.beginPath();g.moveTo(px+5,py+5);g.lineTo(px+TILE-5,py+TILE-5);g.moveTo(px+TILE-5,py+5);g.lineTo(px+5,py+TILE-5);g.stroke();
-        }else if(t===TILE_PUDDLE){
+        }else if(t===TILE_PUDDLE&&!map.puddles){
           this.drawPuddle(g,px,py,h,x,y,map);
         }else if(t===3){
           g.fillStyle='#5a1f1f';g.fillRect(px,py,TILE,TILE);
@@ -8434,6 +8441,7 @@ const Renderer={
         if(!left&&!up)this.drawPillar(g,px+TILE,py+TILE,theme);
       }else if(t===7)this.drawTomb(g,px+TILE/2,py+TILE/2,h);
     }
+    if(map.puddles&&map.puddles.length)this.drawRoundPuddles(g,map);
     return c;
   },
   forestWall(g,px,py,h,below){
@@ -8515,6 +8523,24 @@ const Renderer={
         if(h%5===0){g.fillStyle='rgba(255,255,255,.9)';g.fillRect(px+(h%26)+3,py+((h>>3)%26)+3,2,2);}
         if(h%11===0){g.strokeStyle='rgba(150,180,200,.35)';g.lineWidth=1;g.beginPath();g.moveTo(px+4,py+((h>>4)%20)+8);g.quadraticCurveTo(px+16,py+((h>>4)%20)+4,px+28,py+((h>>4)%20)+8);g.stroke();}
         break;
+    }
+  },
+  /** まるい水溜まり：円を重ねた形で、床の上だけに描く（壁・障害物には重ねない） */
+  drawRoundPuddles(g,map){
+    for(const q of map.puddles){
+      const x0=Math.max(0,Math.floor((q.x-q.r)/TILE)),x1=Math.min(map.W-1,Math.floor((q.x+q.r)/TILE)),y0=Math.max(0,Math.floor((q.y-q.r)/TILE)),y1=Math.min(map.H-1,Math.floor((q.y+q.r)/TILE));
+      g.save();g.beginPath();
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const t=map.tiles[y*map.W+x];if(t===0||t===TILE_PUDDLE)g.rect(x*TILE,y*TILE,TILE,TILE);}
+      g.clip();
+      const path=(pad)=>{g.beginPath();for(const b of q.bl){const r=b[2]+pad;g.moveTo(q.x+b[0]+r,q.y+b[1]);g.arc(q.x+b[0],q.y+b[1],r,0,TAU);}};
+      g.fillStyle='rgba(20,50,70,.45)';path(0);g.fill();            // 縁の泥
+      g.fillStyle='rgba(58,128,176,.88)';path(-3);g.fill();         // 水面
+      const h=(q.x*73856093^q.y*19349663)>>>0;
+      g.fillStyle='rgba(150,215,240,.35)';
+      for(const b of q.bl){g.fillRect(q.x+b[0]-b[2]*0.4+(h%7),q.y+b[1]-b[2]*0.3,Math.max(6,b[2]*0.5),2);}
+      g.strokeStyle='rgba(210,240,255,.45)';g.lineWidth=1;
+      for(const b of q.bl)if(b[2]>18){g.beginPath();g.arc(q.x+b[0]+b[2]*0.25,q.y+b[1]+b[2]*0.2,3.5,0,TAU);g.stroke();}
+      g.restore();
     }
   },
   // 水溜まり：水面と、まわりの縁（隣も水溜まりなら縁を描かずにつなげる）
@@ -8601,7 +8627,7 @@ const Renderer={
     // 水溜まりの中を歩くと、足元に波紋（見た目だけ。移動の速さは別の処理で決まる）
     for(const p of ps){
       if(!p.moving||p.dead||!w.map.tiles)continue;
-      if(w.map.tiles[Math.floor(p.y/TILE)*w.map.W+Math.floor(p.x/TILE)]!==TILE_PUDDLE)continue;
+      if(!inPuddle(w.map,p.x,p.y))continue;
       const k=(this.time*1.6+(p.id?p.id.length*0.37:0))%1;
       ctx.save();ctx.strokeStyle=`rgba(210,240,255,${(1-k)*0.6})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y+8,6+k*12,3+k*5,0,0,TAU);ctx.stroke();ctx.restore();
     }
@@ -12269,7 +12295,7 @@ const Net={
     return s;
   },
   startMessage(w,pid){
-    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
+    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),puddles:w.map.puddles,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
       quest:w.quest,questId:w.questId,diff:w.diff,bossId:w.bossId,pc:w.playerCount};
   },
   broadcastStart(w){
@@ -12333,7 +12359,7 @@ const Net={
   },
   buildMirror(d){
     const m=d.map;
-    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
+    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),puddles:m.puddles||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
     const w={mirror:true,time:0,map,players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],hazards:[],gathers:[],
       quest:d.quest,questId:d.questId,diff:d.diff,bossId:d.bossId,playerCount:d.pc,status:'playing'};
     if(m.doorClosed)this.closeDoor(w);
