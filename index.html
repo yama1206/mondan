@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.21.5',date:'2026/10/31'};
+const GAME_VERSION={no:'1.21.6',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3031,7 +3031,7 @@ const DATA={
     {id:'r_armd_arms',out:{type:'equip',id:'armd_arms'},cost:{armd_plate:2,hard_shell:1},stage:1},
     {id:'r_armd_waist',out:{type:'equip',id:'armd_waist'},cost:{armd_plate:2,leech_skin:2},stage:1},
     {id:'r_armd_legs',out:{type:'equip',id:'armd_legs'},cost:{armd_plate:1,hard_shell:2},stage:1},
-    {id:'r_hana_head',out:{type:'equip',id:'hana_head'},cost:{hana_petal:2,curse_powder:1},stage:2},
+    {id:'r_hana_head',out:{type:'equip',id:'hana_head'},cost:{hana_petal:2,spider_silk:1},stage:2},
     {id:'r_hana_body',out:{type:'equip',id:'hana_body'},cost:{hana_petal:3,toxic_gland:1},stage:2},
     {id:'r_hana_arms',out:{type:'equip',id:'hana_arms'},cost:{hana_petal:2,spider_silk:1},stage:2},
     {id:'r_hana_waist',out:{type:'equip',id:'hana_waist'},cost:{hana_petal:2,toxic_gland:2},stage:2},
