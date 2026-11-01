@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.61.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.62.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -6967,6 +6967,20 @@ function updateHazards(w,dt){
 /** ボスの技ごとの属性・状態異常（enemies の atkEl / atkSt）*/
 function bossAtkEl(e,k){const d=DATA.enemies[e.type];return d&&d.atkEl?d.atkEl[k]:undefined;}
 function bossAtkSt(e,k){const d=DATA.enemies[e.type];return d&&d.atkSt?d.atkSt[k]:undefined;}
+/** 描画の補間：シミュレーションは1/60秒ごとだが、画面はそれより細かく描くことがあるので、
+    直前のステップの位置と今の位置の間を割合 a で補って描く（描いたあとは元に戻す） */
+function lerpLists(w){return [Object.values(w.players),w.enemies,w.projectiles,w.drops];}
+function snapPrevPos(w){for(const L of lerpLists(w))for(const o of L){o._px=o.x;o._py=o.y;}}
+function applyRenderLerp(w,a){
+  const saved=[];
+  for(const L of lerpLists(w))for(const o of L){
+    if(o._px===undefined)continue;
+    const dx=o.x-o._px,dy=o.y-o._py;if(!dx&&!dy)continue;
+    if(dx*dx+dy*dy>120*120)continue; // ワープなどの大きな移動は補間しない
+    saved.push(o,o.x,o.y);o.x=o._px+dx*a;o.y=o._py+dy*a;
+  }
+  return ()=>{for(let i=0;i<saved.length;i+=3){saved[i].x=saved[i+1];saved[i].y=saved[i+2];}};
+}
 function bossOf(w){for(const e of w.enemies)if(e.id===w.bossId)return e;return null;}
 function triggerBoss(w){
   const b=bossOf(w);if(!b||b.state!=='sleep')return;
@@ -13345,7 +13359,7 @@ const Net={
   flushProfiles(){for(const pid of this.profDirty){const m=this.member(pid);if(m)this.sendTo(pid,{t:'profile',profile:m.profile});}this.profDirty.clear();},
   hostFrame(dt){
     this.snapT+=dt;
-    if(this.snapT>=1/NET.SNAP_HZ&&App.world){this.snapT=0;this.broadcast(this.snapshot(App.world));this.outEvents=[];}
+    if(this.snapT>=1/NET.SNAP_HZ&&App.world){this.snapT=Math.min(this.snapT-1/NET.SNAP_HZ,1/NET.SNAP_HZ);this.broadcast(this.snapshot(App.world));this.outEvents=[];}
     this.profT+=dt;
     if(this.profT>=1){this.profT=0;this.flushProfiles();}
   },
@@ -13365,7 +13379,7 @@ const Net={
   snapshot(w,full){
     this.statT+=1/NET.SNAP_HZ;
     if(this.statT>=2){this.statT=0;full=true;}
-    const s={t:'s',time:r1(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
+    const s={t:'s',time:r3(w.time),status:w.status,quest:w.quest,pc:w.playerCount,door:w.map.doorClosed,
       players:Object.values(w.players).map(p=>({id:p.id,slot:p.slot,petLook:p.petLook||null,petLookV:p.petLookV||0,petCollar:p.petCollar||null,pet:p.pet?{x:r1(p.pet.x),y:r1(p.pet.y),f:r3(p.pet.f),st:p.pet.st,moving:p.pet.moving}:null,x:r1(p.x),y:r1(p.y),r:p.r,hp:Math.ceil(p.hp),facing:r3(p.facing),
         swing:r3(p.swing),swingTotal:r3(p.swingTotal),swingAngle:r3(p.swingAngle),swingDir:p.swingDir,dodgeTime:r3(p.dodgeTime),dodgeInv:r3(p.dodgeInv),
         hitInv:r3(p.hitInv),hurt:r3(p.hurt),dead:p.dead,revive:r3(p.revive),reviveNeed:r1(p.reviveNeed||CONFIG.coop.reviveTime),downT:r1(p.downT||0),out:!!p.out,bag:p.bag,sel:p.sel,potionCd:r3(p.potionCd),skillCd:r3(p.skillCd),
@@ -13461,6 +13475,8 @@ const Net={
   closeDoor(w){for(const [x,y] of w.map.doorTiles)w.map.tiles[y*w.map.W+x]=3;w.map.doorClosed=true;w.map.version++;},
   /** 届いた状態を反映。位置は目標値として持ち、毎フレーム滑らかに追従させる */
   applySnap(w,s){
+    // ホストの時刻の見積もり（届いた間隔のブレは平らにならす）
+    if(this.srvT===undefined||Math.abs(s.time-this.srvT)>0.5)this.srvT=s.time;else this.srvT+=(s.time-this.srvT)*0.1;
     w.time=s.time;w.status=s.status;w.quest=s.quest;w.playerCount=s.pc;
     if(s.door&&!w.map.doorClosed)this.closeDoor(w);
     const merge=(oldList,newList)=>{
@@ -13470,6 +13486,7 @@ const Net={
         const x=o?o.x:n.x,y=o?o.y:n.y;
         const t=Object.assign(o||{},n);
         t.tx=n.x;t.ty=n.y;t.x=x;t.y=y;
+        const h=t.hist||(t.hist=[]);h.push(s.time,n.x,n.y);if(h.length>18)h.splice(0,h.length-18); // 届いた位置の履歴（ホストの時刻つき）
         return t;
       });
     };
@@ -13489,8 +13506,23 @@ const Net={
   },
   guestFrame(dt){
     const w=App.world;if(!w)return;
-    const k=1-Math.exp(-dt*18);
-    const smooth=o=>{if(o.tx!==undefined){o.x+=(o.tx-o.x)*k;o.y+=(o.ty-o.y)*k;}};
+    // 届いた位置を少し遅れて（約0.08秒）なめらかに再生する。間の位置は前後の2つから補間する
+    if(this.srvT!==undefined)this.srvT+=dt;
+    const rt=(this.srvT||0)-0.08,k=1-Math.exp(-dt*18);
+    const smooth=o=>{
+      const h=o.hist;
+      if(h&&h.length>=6&&this.srvT!==undefined){
+        let n=h.length;
+        if(rt>=h[n-3]){const ex=Math.min(rt-h[n-3],0.05),pt=h[n-6],dtp=h[n-3]-pt; // 最新より先：少しだけ先読みして、あとは止める
+          let x=h[n-2],y=h[n-1];if(dtp>0&&ex>0){const vx=(h[n-2]-h[n-5])/dtp,vy=(h[n-1]-h[n-4])/dtp;if(vx*vx+vy*vy<1500*1500){x+=vx*ex;y+=vy*ex;}}
+          o.x+=(x-o.x)*0.5;o.y+=(y-o.y)*0.5;return;}
+        for(let i=n-6;i>=0;i-=3){if(h[i]<=rt){const t0=h[i],t1=h[i+3],a=t1>t0?(rt-t0)/(t1-t0):1;
+          const x0=h[i+1],y0=h[i+2],x1=h[i+4],y1=h[i+5];
+          if((x1-x0)**2+(y1-y0)**2>200*200){o.x=x1;o.y=y1;}else{o.x=x0+(x1-x0)*a;o.y=y0+(y1-y0)*a;}return;}}
+        o.x=h[1];o.y=h[2];return;
+      }
+      if(o.tx!==undefined){o.x+=(o.tx-o.x)*k;o.y+=(o.ty-o.y)*k;}
+    };
     for(const id in w.players)smooth(w.players[id]);
     w.enemies.forEach(smooth);w.projectiles.forEach(smooth);w.drops.forEach(smooth);
     for(const t of w.telegraphs)t.t=Math.min(t.total,t.t+dt);
@@ -13665,6 +13697,7 @@ const App={
       this.acc+=dt;let n=0;
       while(this.acc>=CONFIG.step&&n<6){
         const w=this.world,inputs={};
+        snapPrevPos(w); // 描画の補間用に、1ステップ前の位置を覚えておく
         for(const pid in w.players){
           if(Companion.isId(pid))inputs[pid]=EMPTY_INPUT; // 仲間はAIが操作する
           else if(Net.role==='host'&&pid!=='p1')inputs[pid]=Net.takeInput(pid);
@@ -13685,7 +13718,10 @@ const App={
     this.saveTimer+=dt;
     if(this.dirty&&this.saveTimer>3)this.save();
     Renderer.update(dt);
-    Renderer.draw(this.world,this.localId,this);
+    // 高リフレッシュレート（144Hzなど）の画面でも、ゲームの1ステップ（1/60秒）の間を補間して滑らかに描く
+    const lerpW=Net.role!=='guest'&&this.world&&!this.world.mirror?this.world:null;
+    const undo=lerpW?applyRenderLerp(lerpW,clamp(this.acc/CONFIG.step,0,1)):null;
+    try{Renderer.draw(this.world,this.localId,this);}finally{if(undo)undo();}
     this.updateSound();
   },
   /** BGMの切り替え（ステージ→ボス→怒り）と、聞こえる位置・チャージ音 */
