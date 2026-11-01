@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.70.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.71.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3970,7 +3970,7 @@ const Profile={
       p2:{equipped:emptyEquip()},
       companions:[{role:'healer',equipped:emptyEquip()},{role:'tank',equipped:emptyEquip()}],
       coins:0,pets:{},looks:{},petEssence:0,
-      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,allyDamageNumbers:true,fadeOthers:false,autoRestock:false,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
+      bag:Object.assign(emptyBag(),{potion:CONFIG.player.startPotions}),gold:0,settings:{damageNumbers:true,allyDamageNumbers:true,allyAtkVol:0.6,fadeOthers:false,autoRestock:false,screenShake:true,showControls:true,vision:true,padSwitch:false,hudScale:CONFIG.hud.scale,mapZoom:1,bgmVol:0.7,sfxVol:0.8,touchSize:1,touchAlpha:0.85},
       stats:{clears:0,kills:0,sorties:0},nextUid:1,
       progress:{stage:1,done:{}}, // 依頼の進行：解放済みステージ、依頼ごとの達成回数
       bestiary:{},giftsGot:{}}; // モンスター図鑑：魔物ごとの討伐数（1以上で登録済み）／giftsGot：受け取ったプレゼント
@@ -12649,8 +12649,13 @@ const Sound={
   play(name,x,y,opt){
     if(!this.ready||this.ctx.state!=='running')return;
     const fx=SFX[name];if(!fx)return;
-    const k=this.sfxGain(name,x,y,fx.gap);if(k<=0.02)return;
+    const k=this.sfxGain((opt&&opt.key)||name,x,y,fx.gap)*((opt&&opt.vol!=null)?opt.vol:1);if(k<=0.02)return;
     fx.play(this,this.sfx,this.now()+0.005,k,opt||{});
+  },
+  /** ほかのプレイヤー（と仲間）の攻撃の音は、設定の「味方の攻撃の音量」で小さくできる */
+  allyVol(pid){
+    if(!pid||typeof App==='undefined'||!App.localInputPid||App.localInputPid(pid)&&!(typeof Companion!=='undefined'&&Companion.isId&&Companion.isId(pid)))return 1;
+    const v=App.settings&&App.settings().allyAtkVol;return typeof v==='number'?v:1;
   },
   /** ゲームの出来事に合わせて効果音を鳴らす */
   onEvent(ev){
@@ -12659,10 +12664,10 @@ const Sound={
     // 他のプレイヤー（仲間を含む）が回復薬・良い回復薬を使ったときの音は鳴らさない
     if(ev.pid&&ev.item&&DRIP_ITEMS.includes(ev.item)&&typeof App!=='undefined'&&App.localInputPid&&!App.localInputPid(ev.pid))return;
     switch(ev.type){
-      case 'swing':this.play(ev.level>0?'swingHeavy':'swing',x,y,{w:ev.w,level:ev.level});break;
+      case 'swing':this.play('atk',x,y,{w:ev.w,level:ev.level,vol:this.allyVol(ev.pid),key:'atk'+(ev.pid||'')});break;
       case 'damage':
         if(ev.target==='player')this.play(ev.dot?'dot':'hurt',x,y);
-        else this.play(ev.guard?'guard':ev.crit?'crit':'hit',x,y,{head:ev.head});
+        else this.play(ev.guard?'guard':ev.crit?'crit':'hit',x,y,{head:ev.head,vol:this.allyVol(ev.pid)});
         break;
       case 'kill':if(!ev.noCount)this.play(ev.boss?'bossKill':'kill',x,y);else this.play('crumble',x,y);if(ev.boss&&ev.enemy)this.bossCry(ev.enemy,x,y,'death');break;
       case 'dodge':this.play('dodge',x,y);break;
@@ -12717,6 +12722,41 @@ const SFX={
     else if(w==='dual'){S.noise(o,t,0.08,{bp:1400,to:3200,vol:0.16*k,q:2});S.noise(o,t+0.05,0.08,{bp:1600,to:3600,vol:0.14*k,q:2});}
     else if(w==='tachi'){S.noise(o,t,0.15,{bp:1200,to:4000,vol:0.2*k,q:2.5});S.tone(o,t+0.02,2600,0.12,{to:3400,vol:0.03*k,type:'triangle'});}
     else S.noise(o,t,0.12,{bp:900,to:2600,vol:0.2*k,q:2});
+  }},
+  /** 攻撃の音：武器種ごと。大剣・槌・弓はチャージ段階（level）が上がるほど重く・鋭くなる */
+  atk:{gap:0.035,play(S,o,t,k,p){
+    const w=p.w||'sword',L=p.level|0;
+    if(w==='greatsword'){
+      S.noise(o,t,0.28+L*0.05,{bp:280-L*30,to:1100+L*250,vol:(0.3+L*0.04)*k,q:1.4});
+      S.tone(o,t+0.05,95-L*10,0.3+L*0.12,{to:45-L*5,vol:(0.22+L*0.08)*k});
+      if(L>=1)S.noise(o,t+0.06,0.25+L*0.1,{lp:420,vol:(0.12+L*0.06)*k});
+      if(L>=2){S.tone(o,t+0.06,520,0.5,{to:500,vol:0.05*k,type:'triangle'});S.tone(o,t+0.06,780,0.4,{to:760,vol:0.03*k,type:'triangle'});}
+      if(L>=3){S.tone(o,t+0.08,62,0.75,{to:28,slide:0.5,vol:0.38*k});S.noise(o,t+0.08,0.6,{lp:260,vol:0.3*k});S.noise(o,t+0.02,0.2,{hp:3500,vol:0.08*k});}
+    }else if(w==='hammer'){
+      S.noise(o,t,0.2,{bp:240,to:700,vol:0.26*k,q:1.5});
+      S.tone(o,t+0.06,140-L*25,0.28+L*0.12,{to:52-L*8,vol:(0.3+L*0.1)*k});
+      S.noise(o,t+0.06,0.1+L*0.06,{lp:900-L*200,vol:(0.18+L*0.07)*k});
+      if(L>=1)S.tone(o,t+0.065,330,0.09,{to:250,vol:0.07*k,type:'square',lp:1400});
+      if(L>=2){S.tone(o,t+0.08,55,0.8,{to:26,slide:0.6,vol:0.42*k});S.noise(o,t+0.1,0.7,{lp:200,vol:0.32*k});}
+    }else if(w==='bow'){
+      const f=196+L*45;
+      S.tone(o,t,f,0.22+L*0.04,{to:f*0.97,vol:(0.12+L*0.03)*k,type:'triangle'});S.tone(o,t,f*2,0.12,{vol:0.04*k,type:'triangle'});
+      S.noise(o,t,0.04,{hp:3200,vol:0.1*k});
+      S.noise(o,t+0.02,0.16+L*0.05,{bp:2200+L*400,to:700,vol:(0.12+L*0.05)*k,q:2});
+      if(L>=2)S.tone(o,t+0.03,1900+L*200,0.25,{to:900,vol:0.04*k});
+      if(L>=3){S.noise(o,t,0.06,{bp:5000,vol:0.12*k});S.tone(o,t,f*1.5,0.3,{to:f*1.45,vol:0.06*k,type:'triangle'});}
+    }else if(w==='tachi'){
+      S.noise(o,t,0.14,{bp:1500,to:5200,vol:0.2*k,q:3});S.tone(o,t+0.03,3000,0.18,{to:3500,vol:0.035*k,type:'triangle'});S.tone(o,t+0.03,4500,0.1,{vol:0.015*k});
+    }else if(w==='dual'){
+      S.noise(o,t,0.07,{bp:1500,to:3400,vol:0.15*k,q:2.2});S.noise(o,t+0.06,0.07,{bp:1700,to:3800,vol:0.13*k,q:2.2});
+      S.tone(o,t+0.01,2400,0.04,{vol:0.03*k,type:'triangle'});S.tone(o,t+0.07,2700,0.04,{vol:0.03*k,type:'triangle'});
+    }else if(w==='lance'){
+      S.noise(o,t,0.11,{bp:2200,to:800,vol:0.2*k,q:2.5});S.tone(o,t+0.04,620,0.08,{to:340,vol:0.06*k,type:'square',lp:1800});
+    }else if(w==='shuriken'){
+      S.tone(o,t,3800,0.07,{to:5200,vol:0.04*k,type:'triangle'});S.noise(o,t,0.09,{bp:3000,to:4500,vol:0.1*k,q:3});S.noise(o,t+0.05,0.06,{bp:3400,vol:0.06*k,q:3});
+    }else{ // 片手剣
+      S.noise(o,t,0.12,{bp:900,to:2700,vol:0.2*k,q:2});S.tone(o,t+0.03,1800,0.06,{to:1700,vol:0.03*k,type:'triangle'});
+    }
   }},
   swingHeavy:{gap:0.05,play(S,o,t,k,p){S.noise(o,t,0.3,{bp:300,to:1400,vol:0.36*k,q:1.5});S.tone(o,t+0.04,110,0.35,{to:50,vol:0.3*k*Math.min(1,0.5+0.25*(p.level||1))});}},
   hit:{gap:0.03,play(S,o,t,k,p){S.tone(o,t,170,0.1,{to:60,vol:0.32*k});S.noise(o,t,0.06,{lp:2600,vol:0.22*k});if(p.head)S.tone(o,t,700,0.08,{to:500,vol:0.06*k,type:'triangle'});}},
@@ -15118,6 +15158,7 @@ const App={
       case 'cartCommit':this.cartCommit();break;
       case 'toggleSetting':this.settings()[ds.key]=!!el.checked;this.save();break;
       case 'vol':
+        if(ds.key==='allyAtkVol'){this.settings().allyAtkVol=clamp(Number(ds.id),0,1);this.save();Sound.ui('click');}
         if(ds.key==='bgmVol'||ds.key==='sfxVol'){this.settings()[ds.key]=clamp(Number(ds.id),0,1);this.save();Sound.setVolumes(this.settings().bgmVol,this.settings().sfxVol);Sound.ui('click');}
         this.goto('settings');UI.restoreFocus();break;
       case 'touchSize':this.settings().touchSize=clamp(Number(ds.id)||1,0.6,1.5);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus();break;
@@ -15410,7 +15451,7 @@ const App={
         <div class="filters" style="margin-top:6px">${[0.8,0.9,1,1.15,1.3,1.5].map(v=>`<button class="${Math.abs((s.mapZoom||1)-v)<0.001?'on':''}" data-act="mapZoom" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">HP・回避などの表示の大きさ（いまは ${Math.round((s.hudScale||CONFIG.hud.scale)*100)}%）
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
-      ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
+      ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量'],['allyAtkVol','味方（ほかのプレイヤー・仲間）の攻撃の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
         <div class="filters" style="margin-top:6px">${[0,1,2,3,4,5,6,7,8,9,10].map(i=>i/10).map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100)+'%'}</button>`).join('')}</div></div>`).join('')}
       <div class="row" style="margin-top:14px"><button class="danger" data-act="reset">セーブデータをリセット</button></div>
       <div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div></div>`;
