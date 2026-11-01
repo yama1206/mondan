@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.26.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.26.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -13713,9 +13713,11 @@ const App={
         :`<div class="eqslot" data-act="filter" data-f="${sl}"><span class="sl">${SLOT_NAMES[sl]}</span><span class="muted">なし</span></div>`;
     }).join('')}${who===0?this.petSlotHTML():''}<div class="col-t">ステータス</div>${this.statsBlockHTML(st)}</div>`;
     const order={weapon:0,head:1,body:2,arms:3,waist:4,legs:5};
-    const isArm=['head','body','arms','waist','legs'].includes(f),sk=this.inv.skill||null;
+    const ARM_SLOTS=['head','body','arms','waist','legs'];
+    const isArm=ARM_SLOTS.includes(f)||f==='all',sk=this.inv.skill||null;
+    const inF=i=>f==='all'?ARM_SLOTS.includes(i.slot):i.slot===f;
     const skOf=it=>it.skills||((DATA.equipment[it.baseId]||{}).skills)||{};
-    const items=(f==='pet'||f==='look'?[]:p.items.filter(i=>(f==='all'||i.slot===f)&&(!sk||(skOf(i)[sk]||0)>0))).sort((a,b)=>{
+    const items=(f==='pet'||f==='look'?[]:p.items.filter(i=>inF(i)&&(!sk||(skOf(i)[sk]||0)>0))).sort((a,b)=>{
       // 武器は攻撃力順、防具は防御力順（同じ値なら高レア順）
       if(f==='weapon')return (b.atk||0)-(a.atk||0)||b.rarity-a.rarity;
       if(isArm)return (b.def||0)-(a.def||0)||b.rarity-a.rarity;
@@ -13724,9 +13726,9 @@ const App={
       return ea-eb||order[a.slot]-order[b.slot]||b.rarity-a.rarity||(b.atk+b.def)-(a.atk+a.def);
     });
     const bulk=!!this.inv.bulk,bsel=this.inv.bulkSel||[];
-    const filters=SLOTS.map(s=>[s,SLOT_NAMES[s]]).concat([['costume','重ね着']]).concat(who===0?[['pet','首輪'],['look','ペット']]:[]);
+    const filters=[[SLOTS[0],SLOT_NAMES[SLOTS[0]]],['all','すべて'],...SLOTS.slice(1).map(s=>[s,SLOT_NAMES[s]])].concat([['costume','重ね着']]).concat(who===0?[['pet','首輪'],['look','ペット']]:[]);
     // 防具・手紙はスキルで絞り込めるように、持ち物にあるスキルだけ並べる
-    const skillKeys=(f==='pet'||f==='look'||f==='all'||f==='weapon')?[]:[...new Set(p.items.filter(i=>i.slot===f).flatMap(i=>Object.keys(skOf(i)).filter(k=>DATA.armorSkills[k])))];
+    const skillKeys=(f==='pet'||f==='look'||f==='weapon')?[]:[...new Set(p.items.filter(i=>inF(i)).flatMap(i=>Object.keys(skOf(i)).filter(k=>DATA.armorSkills[k])))];
     const skillBar=skillKeys.length?`<div class="filters skillfilters"><button class="${sk?'':'on'}" data-act="skillFilter" data-k="">スキル：すべて</button>${skillKeys.map(k=>`<button class="${sk===k?'on':''}" data-act="skillFilter" data-k="${k}">${DATA.armorSkills[k].name}</button>`).join('')}</div>`:'';
     const mid=`<div class="col col-mid" data-scroll="mid"><div class="filters"><button data-act="worn" style="background:#2d4a6a;border-color:#6a9ad0">装備中（防具・ステータス・スキル）</button></div><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>${skillBar}
       <div class="small muted" style="margin-bottom:6px">所持装備 ${p.items.length}件　◇=空きスロット ◆=装飾品</div>
