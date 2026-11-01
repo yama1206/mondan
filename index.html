@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.60.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.60.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -420,7 +420,7 @@ const DATA={
   consumables:{
     potion:{name:'回復薬',short:'回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.4,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復。片手剣の医療の心得中は近くの味方にも半分'},
     good_potion:{name:'良い回復薬',short:'良回復薬',delay:2.0,max:10,color:'#ff7070',effect:{type:'heal',ratio:0.6,drip:3},desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（毒・呪いも治る）'},
-    heal_all:{name:'癒しの香',short:'癒しの香',delay:2.0,max:3,color:'#ffb6d6',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
+    heal_all:{name:'癒しお香',short:'癒しお香',delay:2.0,max:3,color:'#8dffc0',effect:{type:'place',kind:'heal',arm:0,r:95,life:10,rate:0.1},desc:'足元に設置。範囲（キノコの胞子と同じ広さ）の味方のHPを1秒ごとに最大HPの10%回復（10秒間・毒と呪いも治る）'},
     antidote:{name:'解毒薬',short:'解毒薬',delay:1.0,max:5,color:'#9ff0d0',effect:{type:'cure'},desc:'毒・麻痺・睡眠・呪いを解除する。状態異常になったときに出る「解毒薬を使う」からは、すぐ使える'},
     atk_horn:{name:'闘志の角笛',short:'闘志の角笛',delay:2.0,max:3,color:'#ff9a4a',effect:{type:'buff',stat:'atk',pct:15,time:60,radius:220},desc:'周囲の味方全員の攻撃力+15%（60秒）'},
     def_horn:{name:'守りの角笛',short:'守りの角笛',delay:2.0,max:3,color:'#6ab0ff',effect:{type:'buff',stat:'def',pct:20,time:60,radius:220},desc:'周囲の味方全員の受けるダメージ-20%（60秒）'},
@@ -1377,7 +1377,7 @@ const DATA={
   /* プレイヤーにかかる状態異常。time：秒（防具スキル「状態異常耐性」で短くなる）
      poison：毒（tick 秒ごとに最大HPの pct ずつ減る。毒ではHP1より下がらない。「毒耐性」で減る量が下がる）
      paralysis：麻痺（その場で動けない。治ったあと immune 秒はもう一度かからない）
-     curse：呪い（受けるダメージ +dmgUp%）。回復薬・癒しの香で毒と呪いは治る */
+     curse：呪い（受けるダメージ +dmgUp%）。回復薬・癒しお香で毒と呪いは治る */
   playerStatus:{
     poison:{name:'毒',color:'#a8e060',time:8,tick:1,pct:0.025},
     paralysis:{name:'麻痺',color:'#ffe040',time:1.6,immune:5},
@@ -2281,7 +2281,7 @@ const DATA={
   shop:[
     {id:'potion',name:'回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの40%回復',price:15,type:'item',item:'potion'},
     {id:'good_potion',name:'良い回復薬',desc:'飲み始めた瞬間から3秒かけて、自分のHPを最大HPの60%回復（毒・呪いも治る）',price:30,type:'item',item:'good_potion'},
-    {id:'heal_all',name:'癒しの香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:100,type:'item',item:'heal_all'},
+    {id:'heal_all',name:'癒しお香',desc:'足元に設置する香。範囲の味方を10秒間回復',price:100,type:'item',item:'heal_all'},
     {id:'antidote',name:'解毒薬',desc:'毒・麻痺・睡眠・呪いを解除する',price:20,type:'item',item:'antidote'},
     {id:'atk_horn',name:'闘志の角笛',desc:'周囲の味方全員の攻撃力+15%（60秒）',price:100,type:'item',item:'atk_horn'},
     {id:'def_horn',name:'守りの角笛',desc:'周囲の味方全員の受けるダメージ-20%（60秒）',price:100,type:'item',item:'def_horn'},
@@ -3539,7 +3539,7 @@ const COMP_COUNT=2, COMP_REVIVES=Infinity, COMP_REVIVE_DELAY=10; // 仲間の自
 /* 仲間の役割は固定：1人目ヒーラー、2人目タンク */
 const COMP_FIXED_ROLES=['healer','tank'];
 /* 仲間が出撃時に毎回持っている消耗品（プレイヤーの持ち物からは減らない） */
-// 仲間は出撃のたびに、回復薬・良い回復薬・癒しの香を常に最大数持ってスタートする（アイテムの所持上限まで）
+// 仲間は出撃のたびに、回復薬・良い回復薬・癒しお香を常に最大数持ってスタートする（アイテムの所持上限まで）
 const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,good_potion:10,heal_all:3}};
 /* 相棒：ガチャで出る（全10種・レア度なし）。プレイヤーだけが相棒枠に1匹はめられる。
    効果はマルチプレイで連れ歩いているときだけ乗る。stat：maxHpPct／atkPct／potionHealPct（％）、他は加算値 */
@@ -5030,7 +5030,7 @@ function updatePlayer(w,p,inp,dt){
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   if(TEST_MODE.invincible)p.heldT=0;
   if(p.heldT>0){p.heldT-=dt;p.moving=false;p.charging=false;p.charge=0;p.using=null;p.kx*=0.5;p.ky*=0.5;return;} // ボスに掴まれている・ひるんでいる間は動けない
-  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec*(s.stamRegen||1)*(wsActive(p,'kyodo')?1.5:1)); // 疾風・狂人化で回復が速くなるp.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
+  p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec*(s.stamRegen||1)*(wsActive(p,'kyodo')?1.5:1));p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;} // 疾風・狂人化でスタミナの回復が速くなる
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
   // 回復薬・良い回復薬：飲み始めてから3秒かけてジワジワ回復する
   if(p.drip){const dr=p.drip;dr.t+=dt;
@@ -5158,7 +5158,7 @@ function updatePlayer(w,p,inp,dt){
     const id=ITEM_ORDER[p.sel],c=DATA.consumables[id];
     if((p.bag[id]||0)<=0)emit(w,{type:'info',pid:p.id,text:c.name+'を持っていません'});
     else if(c.effect.type==='heal'&&!c.effect.radius&&p.hp>=s.maxHp&&!(p.poisonT>0)&&!(p.curseT>0))emit(w,{type:'info',pid:p.id,text:'体力は満タンです'});
-    else if(c.effect.type==='place'&&c.effect.kind==='heal'&&(w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done)||(p.using&&p.using.item===id)))emit(w,{type:'info',pid:p.id,text:'癒しの香は効果が切れるまで置けません'});
+    else if(c.effect.type==='place'&&c.effect.kind==='heal'&&(w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done)||(p.using&&p.using.item===id)))emit(w,{type:'info',pid:p.id,text:'癒しお香は効果が切れるまで置けません'});
     else if(p.potionCd<=0){
       p.using={item:id,t:0,total:Math.max(P.minItemDelay,c.delay+s.itemDelayAdj)};
       emit(w,{type:'itemStart',pid:p.id,x:p.x,y:p.y,item:id});
@@ -5197,7 +5197,7 @@ function applyItem(w,p,id){
       const hl=Math.round(q.stats.maxHp*ef.ratio*(p.stats.healMult||1)*(wsActive(p,'medic')?1.5:1));
       q.hp=Math.min(q.stats.maxHp,q.hp+hl);
       emit(w,{type:'heal',x:q.x,y:q.y-20,amount:hl});
-      // 回復薬は状態異常を治さない（解毒薬の役目）。良い回復薬・癒しの香は治す
+      // 回復薬は状態異常を治さない（解毒薬の役目）。良い回復薬・癒しお香は治す
       if(id!=='potion'&&(q.poisonT>0||q.curseT>0)){q.poisonT=0;q.curseT=0;emit(w,{type:'status',pid:q.id,x:q.x,y:q.y-34,text:'状態異常が治った',color:'#7fe09a'});}
       // 片手剣の「医療の心得」中の回復薬：効果の半分を近くの味方（220の範囲）にも
       if(id==='potion'&&q===p&&wsActive(p,'medic')){const share=Math.round(hl/2);for(const id2 in w.players){const a=w.players[id2];if(a===p||a.dead||Math.hypot(a.x-p.x,a.y-p.y)>220)continue;a.hp=Math.min(a.stats.maxHp,a.hp+share);emit(w,{type:'heal',x:a.x,y:a.y-20,amount:share});}}
@@ -5261,7 +5261,7 @@ function updatePlaced(w,dt){
       }
       continue;
     }
-    // 癒しの香：10秒間、範囲の味方を1秒ごとに最大HPの10%回復（毒と呪いも治る）
+    // 癒しお香：10秒間、範囲の味方を1秒ごとに最大HPの10%回復（毒と呪いも治る）
     if(o.kind==='heal'){
       if(o.t>=ef.life){o.done=true;continue;}
       o.acc=(o.acc||0)+dt;
@@ -5269,7 +5269,7 @@ function updatePlaced(w,dt){
         o.acc-=1;
         const owner=w.players[o.owner],mul=owner?(owner.stats.healMult||1)*(wsActive(owner,'medic')?1.5:1):1;
         for(const id in w.players){const q=w.players[id];if(q.dead||Math.hypot(q.x-o.x,q.y-o.y)>=o.r)continue;
-          // 癒しの香が重なっても、味方は1秒に1回分しか回復しない（効果は重ならない）
+          // 癒しお香が重なっても、味方は1秒に1回分しか回復しない（効果は重ならない）
           if(q.incHealT!==undefined&&w.time-q.incHealT<0.95)continue;
           q.incHealT=w.time;
           const hl=Math.round(q.stats.maxHp*ef.rate*mul);
@@ -9703,13 +9703,26 @@ const Renderer={
       ctx.strokeText(left.toFixed(1),0,-28);ctx.fillStyle='#ff8a6a';ctx.fillText(left.toFixed(1),0,-28);
       ctx.globalAlpha=0.12;ctx.fillStyle='#ff4020';ctx.beginPath();ctx.arc(0,0,ef.area||110,0,TAU);ctx.fill();
     }else if(o.kind==='heal'){
-      // 薄いピンクの範囲と残り時間
-      const pulse=0.5+0.5*Math.sin(this.time*4),left=Math.max(0,(ef.life||10)-o.t);
-      ctx.globalAlpha=0.2+0.08*pulse;ctx.fillStyle='#ffb6d6';ctx.beginPath();ctx.arc(0,0,o.r,0,TAU);ctx.fill();
-      ctx.globalAlpha=0.75;ctx.strokeStyle='#ffd0e6';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(0,0,o.r,0,TAU);ctx.stroke();ctx.setLineDash([]);
-      ctx.globalAlpha=1;ctx.fillStyle='#ffe0f0';ctx.beginPath();ctx.arc(0,0,6,0,TAU);ctx.fill();
-      ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';
-      ctx.strokeText(left.toFixed(1),0,-14);ctx.fillStyle='#ffd0e6';ctx.fillText(left.toFixed(1),0,-14);
+      // 癒しお香：敵の攻撃（赤・橙の塗り）と見分けやすいよう、ミント色の光＋回る二重の輪＋立ちのぼる「＋」と香炉
+      const T=this.time,left=Math.max(0,(ef.life||10)-o.t),R=o.r,pulse=0.5+0.5*Math.sin(T*3);
+      const g=ctx.createRadialGradient(0,0,R*0.15,0,0,R);g.addColorStop(0,'rgba(220,255,236,.32)');g.addColorStop(1,'rgba(120,255,190,.10)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();
+      ctx.lineWidth=2.5;ctx.strokeStyle=`rgba(150,255,200,${0.7+0.25*pulse})`;ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.stroke();
+      ctx.save();ctx.rotate(T*0.6);ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,255,255,.55)';ctx.setLineDash([10,8]);ctx.beginPath();ctx.arc(0,0,R-7,0,TAU);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+      // 立ちのぼる＋マーク
+      for(let i=0;i<9;i++){
+        const ph=((T*0.45+i*0.37)%1),a=i*2.4+(o.id||0),rr=R*(0.25+0.6*((i*0.53)%1));
+        const x=Math.cos(a)*rr,y=Math.sin(a)*rr*0.8-ph*22,sz=3+2*(1-ph);
+        ctx.globalAlpha=Math.sin(ph*Math.PI)*0.9;ctx.fillStyle=i%2?'#ffffff':'#8dffc0';
+        ctx.fillRect(x-sz,y-sz*0.32,sz*2,sz*0.64);ctx.fillRect(x-sz*0.32,y-sz,sz*0.64,sz*2);
+      }
+      // 香炉と煙
+      ctx.globalAlpha=1;ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,6,9,3,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#c89a4a';ctx.beginPath();ctx.moveTo(-8,-2);ctx.lineTo(8,-2);ctx.lineTo(6,5);ctx.lineTo(-6,5);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#e8c070';ctx.fillRect(-9,-4,18,3);
+      for(let i=0;i<3;i++){const ph=((T*0.7+i/3)%1);ctx.globalAlpha=0.5*(1-ph);ctx.fillStyle='#e8fff2';ctx.beginPath();ctx.arc(Math.sin(T*2+i*2)*3*ph,-6-ph*18,2.5+ph*4,0,TAU);ctx.fill();}
+      ctx.globalAlpha=1;ctx.font=`bold 12px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';
+      ctx.strokeText(left.toFixed(1),0,-30);ctx.fillStyle='#b8ffd8';ctx.fillText(left.toFixed(1),0,-30);
     }
     ctx.restore();
   },
