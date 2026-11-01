@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.46.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.47.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -400,11 +400,11 @@ const DATA={
   // 武器スキル（Qで発動。効果は duration 秒、再使用まで cd 秒）。武器種の ws に ID を入れる
   weaponSkills:{
     medic:{name:'医療の心得',duration:20,cd:120},   // 片手剣：回復アイテムの効果1.5倍、蘇生時間2秒短縮（通常5秒）、回復薬の効果の半分を近くの味方（220の範囲）にも
-    fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージにかかる時間が半分、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない
+    fudou:{name:'不動の構え',duration:20,cd:120},   // 大剣：チャージにかかる時間が半分。攻撃を受けてもチャージは止まらない
     iai:{name:'居合の極意',duration:4,cd:120},     // 太刀：見切りの判定時間1.5倍、見切りの攻撃力アップ25%→40%
     kyodo:{name:'狂人化',duration:20,cd:120},       // 双剣：回避のクールタイム0.3秒短縮、攻撃力10%アップ
     taunt:{name:'挑発',duration:20,cd:120},         // 槍：ボスのヘイトが上がりやすい、全方位90%ガード、回避距離1.3倍
-    sokusha:{name:'速射',duration:20,cd:120},       // 弓：攻撃力1.3倍（火力アップ）
+    sokusha:{name:'速射',duration:20,cd:120},       // 弓：チャージ速度2倍、矢が貫通する（ボスは当たった部位すべてにダメージ）
     inmitsu:{name:'隠密',duration:20,cd:120},
     gouwan:{name:'剛腕',duration:20,cd:120},       // 槌：ボスの頭へのスタン値2倍、チャージ中も通常の速さで歩ける       // 手裏剣：敵から見つからない。追いかけていた敵も追うのをやめる（ボスは対象外）
   },
@@ -3209,11 +3209,11 @@ const HELP_BASIC=[
 /** 武器スキルの説明（DATA.weaponSkills の ID ごと） */
 const HELP_WS={
   medic:'回復アイテムの効果1.5倍、蘇生にかかる時間を2秒短縮。回復薬の効果の半分を近くの味方にも回復する',
-  fudou:'チャージにかかる時間が50%短くなる、3段階目の攻撃力1.2倍。攻撃を受けてもチャージは止まらない',
+  fudou:'チャージにかかる時間が50%短くなる。攻撃を受けてもチャージは止まらない',
   iai:'見切りの判定時間が1.5倍、見切りの攻撃力アップが25%から40%に',
   kyodo:'回避のクールタイムが0.3秒短くなり、攻撃力が10%上がる',
   taunt:'発動中はボスのヘイトが最大になり、狙われやすくなる。全方向の90%ガードと、回避距離1.3倍',
-  sokusha:'攻撃力が1.3倍になる',
+  sokusha:'チャージ速度が2倍になり、矢が敵を貫通する。貫通する矢は、ボスの当たった部位すべてにダメージを与える',
   inmitsu:'手裏剣を一度に3枚投げる（通常2枚）。敵から見つからなくなり、追いかけていた敵も追うのをやめる（見つからない効果はボスには効かない）',
   gouwan:'ボスの頭へのスタン値が2倍。チャージ中も通常の速さで歩ける'
 };
@@ -4715,7 +4715,6 @@ function damageEnemy(w,p,e,mult,src){
   if(s.effects.desperate&&p.hp<=s.maxHp*0.3)atk*=1.35;
   if(p.buffT>0)atk*=1+(s.perfectAtk||0)*(wsActive(p,'iai')?1.6:1);
   if(wsActive(p,'kyodo'))atk*=1.1;
-  if(wsActive(p,'sokusha'))atk*=1.3; // 速射：弓の火力アップ
   if(p.buffs.atk&&p.buffs.atk.t>0)atk*=1+p.buffs.atk.pct/100;
   {const fw=DATA.weaponTypes[s.weaponType];if(fw&&fw.flow&&p.flow>0)atk*=1+p.flow*fw.flow.pct/100;}
   let dmg=atk*mult*rand(0.92,1.08);
@@ -5029,7 +5028,7 @@ function updatePlayer(w,p,inp,dt){
     const ds=P.dodgeSpeed*(1+(s.dodgeDistPct||0)/100)*(wsActive(p,'taunt')?1.3:1); // 回避距離アップ（防具スキル）のときだけ伸びる
     moveEntity(w.map,p,p.dodgeDir.x*ds*dt,p.dodgeDir.y*ds*dt);
     // 大剣のチャージを続けたまま回避中：押している間はたまり続け、離したらチャージをやめる
-    if(p.charging){if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'fudou')?2:1);else{p.charging=false;p.charge=0;}}
+    if(p.charging){if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'fudou')||wsActive(p,'sokusha')?2:1);else{p.charging=false;p.charge=0;}}
     return;
   }
   // ガード：押している間だけ。抜刀していなければ抜く。攻撃・チャージ・アイテム使用中は構えられない
@@ -5094,11 +5093,11 @@ function updatePlayer(w,p,inp,dt){
   }
   else if(wt.charge){
     if(p.charging){
-      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'fudou')?2:1); // チャージ速度（防具スキル）
+      if(inp.attack)p.charge+=dt*(1+(p.stats.chargeSpdPct||0)/100)*(wsActive(p,'fudou')||wsActive(p,'sokusha')?2:1); // チャージ速度（防具スキル）
       else{
         const lv=chargeLevel(wt.charge,p.charge);
         p.charging=false;p.charge=0;
-        playerAttack(w,p,{mult:lv?wt.charge.mult[lv-1]*(lv===3&&wsActive(p,'fudou')?1.2:1):1,stunMult:lv&&wt.charge.stunMult?wt.charge.stunMult[lv-1]:1,level:lv});
+        playerAttack(w,p,{mult:lv?wt.charge.mult[lv-1]:1,stunMult:lv&&wt.charge.stunMult?wt.charge.stunMult[lv-1]:1,level:lv});
       }
     }else if(!inp.attack)p.chargeLock=false;
     else if(p.atkTimer<=0&&!p.chargeLock){p.charging=true;p.charge=0;}
@@ -5252,7 +5251,7 @@ function fireArrow(w,p,opt){
   const s=p.stats,bw=DATA.weaponTypes[s.weaponType].bow,a=p.facing,lv=(opt&&opt.level)||0;
   const coat=p.coat&&p.coat.shots>0?p.coat:null;
   w.projectiles.push({id:w.nextId++,kind:'playerArrow',owner:'player',pid:p.id,x:p.x+Math.cos(a)*16,y:p.y+Math.sin(a)*16,
-    vx:Math.cos(a)*bw.speed,vy:Math.sin(a)*bw.speed,angle:a,r:7,life:bw.life,hit:new Set(),status:coat?coat.status:null,mult:(opt&&opt.mult)||1});
+    vx:Math.cos(a)*bw.speed,vy:Math.sin(a)*bw.speed,angle:a,r:7,life:bw.life,hit:new Set(),status:coat?coat.status:null,mult:(opt&&opt.mult)||1,pierce:wsActive(p,'sokusha'),hitP:new Set()});
   if(coat){coat.shots--;if(coat.shots<=0){p.coat=null;emit(w,{type:'info',pid:p.id,text:'瓶の中身がなくなった'});}}
   emit(w,{type:'swing',pid:p.id,combo:false,level:lv,x:p.x,y:p.y,w:s.weaponType});
 }
@@ -6415,7 +6414,18 @@ function updateProjectiles(w,dt){
     }else if(alive&&(pr.kind==='playerArrow'||pr.kind==='playerShuriken')){
       const p=w.players[pr.pid];
       if(p)for(const e of w.enemies){
-        if(e.dead||e.hidden||pr.hit.has(e.id))continue;
+        if(e.dead||e.hidden)continue;
+        if(pr.pierce){ // 速射の矢：止まらずに貫通し、通り抜けた部位それぞれに一度ずつ当たる
+          for(const q of bossPartsOf(e)){
+            if(Math.hypot(q.x-pr.x,q.y-pr.y)>=q.r+pr.r)continue;
+            const key=e.id+':'+(q.part?q.part.id:'body');if(pr.hitP.has(key))continue;pr.hitP.add(key);
+            damageEnemy(w,p,e,pr.mult||1,{arrow:true,hit:q});
+            if(pr.status&&!pr.hit.has(e.id))applyStatus(w,e,pr.status);
+            pr.hit.add(e.id);if(e.dead)break;
+          }
+          continue;
+        }
+        if(pr.hit.has(e.id))continue;
         const hit=projPart(e,pr.x,pr.y,pr.r,pr.x-pr.vx*dt,pr.y-pr.vy*dt);if(hit){pr.hit.add(e.id);damageEnemy(w,p,e,pr.mult||1,{arrow:true,hit});if(pr.status)applyStatus(w,e,pr.status);alive=false;break;}
       }
     }else if(alive&&pr.kind==='wave'){
