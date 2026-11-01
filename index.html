@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.83.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.84.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1356,10 +1356,10 @@ const DATA={
     cave_wing:{name:'コウモリの翼膜',color:'#7a60a0',desc:'洞窟コウモリの薄くて丈夫な翼。（晶石の大洞窟）'},
     cave_fang:{name:'鋭牙',color:'#f0f0e0',desc:'洞窟コウモリの鋭い牙。（晶石の大洞窟）'},
     cave_fang__kama_mantis:{name:'大鎌蟷螂の鋭牙',color:'#f0f0e0',desc:'草原の大鎌蟷螂から採れる鋭牙。（風渡る草原）'},
-    rock_scale:{name:'岩殻の鱗',color:'#8a8e98',desc:'岩殻トカゲの硬い鱗。（晶石の大洞窟）'},
+    rock_scale:{name:'岩殻の鱗',color:'#8a8e98',desc:'ロックワームの体をおおう硬い岩の板。（晶石の大洞窟）'},
     rock_scale__fire_griffon:{name:'翼獅子の岩鱗',color:'#8a8e98',desc:'火口の翼獅子から採れる岩殻の鱗。（灼熱の火山）'},
     rock_scale__armadillo:{name:'巨躯アルマジロの岩鱗',color:'#8a8e98',desc:'草原の巨躯アルマジロから採れる岩殻の鱗。（風渡る草原）'},
-    rock_tooth:{name:'岩トカゲの牙',color:'#c8c0a8',desc:'岩殻トカゲの太い牙。稀少素材。（晶石の大洞窟）'},
+    rock_tooth:{name:'岩虫の大あご',color:'#c8c0a8',desc:'ロックワームの太い大あご。稀少素材。（晶石の大洞窟）'},
     spider_silk:{name:'鍾乳蜘蛛の糸',color:'#e8e8f8',desc:'鍾乳蜘蛛が張る、強い糸。（晶石の大洞窟）'},
     spider_silk__abyss_spider:{name:'冥蜘蛛の糸',color:'#e8e8f8',desc:'冥府の大蜘蛛から採れる鍾乳蜘蛛の糸。（忘却の地下墓地）'},
     spider_silk__fire_phoenix:{name:'不死鳥の炎糸',color:'#e8e8f8',desc:'焦土の不死鳥から採れる鍾乳蜘蛛の糸。（灼熱の火山）'},
@@ -1992,8 +1992,8 @@ const DATA={
     worker_bee:{name:'働き蜂',ai:'dasher',look:'gen',hp:30,atk:10,def:1,r:10,speed:170,color:'#c8a030',drops:'worker_bee',dash:{wind:0.45,speed:600,dist:190,cd:[2.2,3.2]},gen:{body:'oval',legs:6,head:'antler',wings:true,tail:true},pal:{body:'#d8b040',dark:'#4a3410',spot:'#2a2010',eye:'#ff5070'}},
     cave_bat:{name:'洞窟コウモリ',ai:'dasher',look:'bat',hp:44,atk:13,def:1,r:11,speed:150,color:'#4a3a6a',drops:'cave_bat',dash:{wind:0.45,speed:640,dist:210,cd:[2.4,3.4]},
       pal:{body:'#4a3a6a',dark:'#1e1630',wing:'#7a60a0',eye:'#ff5070',fang:'#f0f0e0'}},
-    rock_shell:{name:'岩殻トカゲ',ai:'goblin',look:'rockShell',hp:120,atk:17,def:10,r:16,speed:88,color:'#7a7a80',drops:'rock_shell',guard:{arc:120*Math.PI/180,mult:0.3},
-      pal:{body:'#6a6e78',dark:'#2a2e36',shell:'#9aa0aa',eye:'#ffd060'}},
+    rock_shell:{name:'ロックワーム',ai:'mimic',look:'rockShell',hp:120,atk:17,def:8,r:16,speed:80,color:'#7a7a80',drops:'rock_shell',mimic:true,windup:0.4,
+      pal:{body:'#5a4e48',dark:'#24201e',shell:'#7a7a74',light:'#9a9a90',jaw:'#e0d0a8',eye:'#ff9040'}},
     cave_spider:{name:'鍾乳蜘蛛',ai:'archer',look:'spider',hp:52,atk:11,def:2,r:12,speed:100,color:'#5a4a6a',drops:'cave_spider',aimTime:0.9,web:{time:2.5,mult:0.5},
       pal:{body:'#5a4a6a',dark:'#261c33',leg:'#3a2e48',eye:'#ff4040'}},
     crystal_slime:{name:'輝晶スライム',ai:'dasher',look:'crystalSlime',hp:70,atk:14,def:3,r:14,speed:96,color:'#7ad8e8',drops:'crystal_slime',
@@ -2645,7 +2645,7 @@ const DATA={
     {id:'min_4_water_spirit',stage:4,name:'水霊の討伐',desc:'水霊を10体倒せ。',goal:{type:'kill',target:'water_spirit',count:10},reward:{gold:360,mats:{spirit_essence:2}}},
     {id:'min_4_crab',stage:4,name:'滝守の甲殻獣の討伐',desc:'滝守の甲殻獣を10体倒せ。',goal:{type:'kill',target:'crab',count:10},reward:{gold:360,mats:{crab_shell:2}}},
     {id:'min_4_eel',stage:4,name:'雷電ウナギの討伐',desc:'雷電ウナギを10体倒せ。',goal:{type:'kill',target:'eel',count:10},reward:{gold:360,mats:{eel_sac:2}}},
-    {id:'min_5_rock_shell',stage:5,name:'岩殻トカゲの討伐',desc:'岩殻トカゲを10体倒せ。',goal:{type:'kill',target:'rock_shell',count:10},reward:{gold:650,mats:{rock_scale:2}}},
+    {id:'min_5_rock_shell',stage:5,name:'ロックワームの討伐',desc:'ロックワームを10体倒せ。',goal:{type:'kill',target:'rock_shell',count:10},reward:{gold:650,mats:{rock_scale:2}}},
     {id:'min_5_cave_spider',stage:5,name:'鍾乳蜘蛛の討伐',desc:'鍾乳蜘蛛を10体倒せ。',goal:{type:'kill',target:'cave_spider',count:10},reward:{gold:650,mats:{spider_silk:2}}},
     {id:'min_6_scorpion',stage:6,name:'火口の大蠍の討伐',desc:'火口の大蠍を10体倒せ。',goal:{type:'kill',target:'scorpion',count:10},reward:{gold:750,mats:{crater_shell:2}}},
     {id:'min_7_snow_monkey',stage:7,name:'雪山の小猿の討伐',desc:'雪山の小猿を10体倒せ。',goal:{type:'kill',target:'snow_monkey',count:10},reward:{gold:750,mats:{snow_monkey_fur:2}}},
@@ -2720,7 +2720,7 @@ const DATA={
     stag_beetle:{stage:[2],role:'ボス',desc:'古森に棲む巨大なクワガタ。大顎のある正面からの攻撃はほとんど弾かれてしまう。向きを変えるのは遅い。',tip:'横や後ろへ回り込んで攻めよう。罠にかかったりスタンしている間は、正面からでも攻撃が通る。'},
     worker_bee:{stage:[3],role:'子分',desc:'女王蜂が呼ぶ小さな蜂。群れで飛び回り、すばやく突っ込んでくる。',tip:'体力は少ない。女王蜂より先に片づけよう。'},
     cave_bat:{stage:[5],role:'雑魚',desc:'洞窟の天井に張りつく小さなコウモリ。素早く飛び回り、上空から急降下して襲いかかる。',tip:'急降下の前に影が見える。直線から外れて、降りてきたところを叩こう。'},
-    rock_shell:{stage:[5],role:'雑魚',desc:'岩のような鱗に覆われたトカゲ。正面からの攻撃にとても強く、体当たりを仕掛けてくる。',tip:'正面は硬い。横や後ろに回り込もう。'},
+    rock_shell:{stage:[5],role:'雑魚',desc:'岩の板をまとった長い虫。洞窟の壁や岩にそっくりに化けてじっと待ち、すぐそばまで近づいた獲物に大あごで噛みつく。',tip:'壁ぎわや岩のそばは要注意。怪しい岩は先に攻撃すると正体を現す。'},
     cave_spider:{stage:[5],role:'雑魚',desc:'鍾乳石の陰に巣を張る蜘蛛。糸を吐いて動きを鈍らせる。',tip:'糸に当たると足が遅くなる。巣の近くへは深入りしない。'},
     crystal_slime:{stage:[5],role:'雑魚',desc:'結晶をまとったスライム。体当たりのほかに、結晶の破片を飛ばしてくる。',tip:'破片は直線で飛ぶ。少し離れて、揺れたら横へ。'},
     mole:{stage:[5],role:'ボス',desc:'結晶を食べて育った大きな土竜。地面に潜り、プレイヤーの足元から飛び出して攻撃する。',tip:'潜っている間は攻撃が届かない。飛び出した後に隙がある。'},
@@ -4914,6 +4914,7 @@ function spawnEnemy(w,type,x,y,opt){
     dead:false,boss:!!d.boss,phase:1,cds:{bite:0,charge:2,slam:3,sweep:1.5,roar:4,orb:2,summon:5},action:null,hitSet:null,chargeLeft:0,chargeChain:0,
     anim:rand(0,10),strafeDir:RNG.next()<0.5?1:-1,strafeT:rand(1,2),aimTime:d.aimTime||0.8,stunPts:0,stunMax:d.stunMax||0,
     elite:el,summoned:!!opt.summoned,bossMinion:opt.bossMinion||null,revived:!!opt.revived,baseAtk:atk,baseSpeed:d.speed,empowerT:0,z:0};
+  if(d.mimic)placeMimic(w.map,e);
   w.enemies.push(e);return e;
 }
 function populate(w,stage,quest){
@@ -5992,6 +5993,48 @@ function updateGoblin(w,e,p,d,dt){
     return;
   }
   if(d>e.r+p.r+6)steerTo(w,e,p,e.speed,dt);else e.facing=ang;
+}
+/** ロックワーム：壁ぎわや岩のそばで岩に化けてじっと待つ。すぐそばまで来た相手に大あごで噛みつき、そのあとは追いかける。
+    相手が遠くへ行くと元の場所へ戻って、また岩に化ける。攻撃を受けると正体を現す */
+function updateMimic(w,e,p,d,dt){
+  const ang=Math.atan2(p.y-e.y,p.x-e.x);
+  if(e.homeX==null){e.homeX=e.x;e.homeY=e.y;}
+  if(e.mimic){
+    if(e.hurt>0||e.stun>0){e.mimic=0;e.state='chase';e.cd=0.5;return;}
+    if(d<e.r+p.r+26){
+      e.mimic=0;e.facing=ang;e.state='windup';e.timer=0.3;e.atkAngle=ang;
+      addTelegraph(w,{shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+40,arc:Math.PI*0.7,total:0.3,dmg:e.atk*1.4,owner:e.id,small:true});
+    }
+    return;
+  }
+  if(e.state==='chase'||e.state==='home'){
+    if(d>280)e.farT=(e.farT||0)+dt;else{e.farT=0;if(e.state==='home')e.state='chase';}
+    if(e.farT>3){
+      e.state='home';
+      const hx=e.homeX-e.x,hy=e.homeY-e.y,hd=Math.hypot(hx,hy);
+      if(hd<6){e.mimic=e.mimicLook||'wall';e.farT=0;e.state='idle';return;}
+      const sp=Math.min(hd,e.speed*dt);if(moveEntity(w.map,e,hx/hd*sp,hy/hd*sp)){e.homeX=e.x;e.homeY=e.y;}
+      e.facing=Math.atan2(hy,hx);return;
+    }
+  }
+  updateGoblin(w,e,p,d,dt);
+}
+/** 擬態する魔物の置き場所：近くの壁や岩に接した床を探して、その際に寄せる。接しているのが岩・柱なら岩に、それ以外は壁に化ける */
+function placeMimic(map,e){
+  const cx=Math.floor(e.x/TILE),cy=Math.floor(e.y/TILE),c=[];
+  for(let y=cy-5;y<=cy+5;y++)for(let x=cx-5;x<=cx+5;x++){
+    if(isWall(map,x,y))continue;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx,ny=y+dy;if(!isWall(map,nx,ny))continue;
+      const v=(nx<0||ny<0||nx>=map.W||ny>=map.H)?1:map.tiles[ny*map.W+nx];
+      c.push([x,y,dx,dy,(v===TILE_OBS.rock||v===TILE_OBS.pillar)?'rock':'wall']);
+    }
+  }
+  e.mimic='wall';e.mimicLook='wall';
+  if(!c.length)return;
+  const [x,y,dx,dy,lk]=c[Math.floor(RNG.next()*c.length)];
+  e.x=x*TILE+TILE/2+dx*(TILE/2-e.r+2);e.y=y*TILE+TILE/2+dy*(TILE/2-e.r+2);
+  e.mimic=lk;e.mimicLook=lk;e.homeX=e.x;e.homeY=e.y;
 }
 /** 固定の遠距離型（動かない花）：狙いを定めて撃つ。花粉（ダメージなし）は麻痺だけ */
 function updateTurret(w,e,p,d,dt){
@@ -7372,7 +7415,7 @@ function updateFox(w,e,p,d,dt){
   else if(!los||d>260)steerTo(w,e,p,e.speed,dt);
   else{const sa=ang+Math.PI/2*(e.strafeDir||1);moveEntity(w.map,e,Math.cos(sa)*e.speed*0.7*dt,Math.sin(sa)*e.speed*0.7*dt);e.facing=ang;}
 }
-const ENEMY_AI={turret:updateTurret,goblin:updateGoblin,archer:updateArcher,dasher:updateDasher,slime:updateSlime,beetle:updateBeetle,
+const ENEMY_AI={turret:updateTurret,goblin:updateGoblin,mimic:updateMimic,archer:updateArcher,dasher:updateDasher,slime:updateSlime,beetle:updateBeetle,
   spore:updateSpore,ghost:updateGhost,knight:updateKnight,shaman:updateShaman,bull:updateBull,wolf:updateWolf,dragon:updateDragon,pattern:updateBossPattern,wyvern:updateWyvern,bomb:updateBomb,molten:updateMolten,twin:updateTwin,iceBeetle:updateIceBeetle,owl:updateOwl,fox:updateFox};
 function separateBodies(w){
   const es=w.enemies;
@@ -9695,6 +9738,47 @@ const MobArt=(()=>{
   const legs=(H,n,xs,len,t,col,w)=>{for(let i=0;i<n;i++){const x=xs[i],sw=Math.sin(t+i*1.7)*0.18;for(const s of [-1,1])H.L([x,s*0.45,x+sw*s,s*(0.45+len)],col,w);}};
   return {
     __h:(c,hurt)=>__mk(c,hurt),
+    cave_bat(c,e,H,pal,t){ // 洞窟コウモリ：指の骨が透ける大きな膜の翼、毛の生えた小さな体、大きな耳、牙
+      const d=pal.dark,dash=e.state==='dash'||e.state==='windup',fl=Math.sin(t*(dash?24:14)),sp=dash?0.55:0.85+fl*0.35;
+      c.translate(0,-(e.z||0)/e.r);
+      for(const s of [-1,1]){c.save();c.scale(1,s*sp);
+        H.P([0.15,0.2,0.5,0.65,0.35,1.3,0.0,1.65,-0.3,1.35,-0.5,1.5,-0.7,1.05,-0.9,0.95,-0.6,0.55,-0.25,0.3],pal.wing,d);
+        H.L([0.15,0.25,0.35,1.3],d,0.07);H.L([0.1,0.3,0.0,1.6],d,0.06);H.L([0.0,0.3,-0.5,1.45],d,0.06);H.L([-0.1,0.3,-0.85,1.0],d,0.06);
+        H.E(0.35,1.32,0.07,0.07,0,'#d8d0c0');c.restore();}
+      H.E(-0.35,0,0.32,0.22,0,pal.body,d);
+      H.E(0,0,0.5,0.4,0,pal.body,d);
+      for(const s of [-1,1])H.L([-0.2,s*0.25,-0.05,s*0.12],'rgba(255,255,255,.18)',0.05);
+      for(const s of [-1,1])H.P([0.25,s*0.12,0.15,s*0.55,0.5,s*0.3],pal.wing,d);
+      H.E(0.42,0,0.26,0.24,0,pal.body,d);
+      H.E(0.62,0,0.08,0.1,0,'#c06a8a');
+      for(const s of [-1,1]){H.E(0.5,s*0.13,0.07,0.07,0,pal.eye);H.P([0.62,s*0.06,0.78,s*0.1,0.64,s*0.15],pal.fang);}
+    },
+    crystal_slime(c,e,H,pal,t){ // 輝晶スライム：半透明の体から結晶が何本も生え、中の核が光る
+      c.rotate(-e.facing);c.translate(0,-(e.z||0)/e.r);
+      const d=pal.dark,f=e.facing,k=Math.sin(t*5)*0.07,sq=e.state==='windup'?0.15:0,gl=0.55+0.35*Math.sin(t*3);
+      c.save();c.globalAlpha*=0.82;H.E(0,0.15,1.05+k+sq,0.88-k-sq,0,pal.body,d);c.restore();
+      c.save();c.globalAlpha*=gl;H.E(0,0.2,0.5,0.4,0,'#bff8ff');c.restore();
+      H.E(0,0.2,0.24,0.2,0,pal.core);
+      for(const [a,l,w2] of [[-2.2,0.55,0.13],[-1.65,0.75,0.16],[-1.1,0.6,0.13],[-0.35,0.42,0.11],[-2.85,0.4,0.11]]){c.save();c.translate(Math.cos(a)*0.62,0.15+Math.sin(a)*0.55-k*0.5);c.rotate(a);
+        H.P([-0.1,-w2,l*0.75,-w2,l,0,l*0.75,w2,-0.1,w2],'#9ff0ff',d);H.P([-0.1,-w2,l*0.75,-w2,l,0,-0.1,0],'#eaffff');c.restore();}
+      H.E(-0.4,-0.1,0.22,0.1,-0.5,'rgba(255,255,255,.5)');
+      for(const s of [-1,1]){const ex=Math.cos(f)*0.35+Math.cos(f+Math.PI/2)*s*0.25,ey=0.3+Math.sin(f)*0.2+Math.sin(f+Math.PI/2)*s*0.15;H.E(ex,ey,0.1,0.12,0,'#ffffff');H.E(ex+Math.cos(f)*0.03,ey+Math.sin(f)*0.03,0.055,0.07,0,pal.eye);}
+    },
+    rock_shell(c,e,H,pal,t){ // ロックワーム：岩の板をまとった節のある長い虫。頭には4枚の大あご（噛みつく前に大きく開く）
+      const d=pal.dark,bite=e.state==='windup',op=bite?0.55:e.state==='recover'?0.05:0.18+Math.sin(t*4)*0.06;
+      const seg=[[-1.75,0.42],[-1.25,0.55],[-0.7,0.68],[-0.1,0.78]];
+      seg.forEach(([x,rr],i)=>{const y=Math.sin(t*6-i*0.9)*0.12;
+        for(const s of [-1,1])H.L([x,y+s*rr*0.7,x-0.12,y+s*(rr+0.22)],d,0.07);
+        H.E(x,y,rr*0.75,rr,0,pal.body,d);
+        H.P([x-rr*0.55,y-rr*0.7,x-rr*0.1,y-rr*0.98,x+rr*0.5,y-rr*0.75,x+rr*0.6,y+rr*0.6,x+rr*0.05,y+rr*0.95,x-rr*0.6,y+rr*0.65],pal.shell,d);
+        H.P([x-rr*0.3,y-rr*0.5,x+rr*0.25,y-rr*0.55,x+rr*0.05,y-rr*0.05],pal.light);});
+      H.E(0.45,0,0.38,0.62,0,pal.body,d);
+      H.P([0.2,-0.55,0.55,-0.42,0.62,0.0,0.55,0.42,0.2,0.55,0.08,0],pal.shell,d);
+      H.E(0.72,0,0.1+op*0.25,0.12+op*0.35,0,'#3a1418');
+      for(let j=0;j<4;j++){const s=j<2?-1:1,a=s*(j%2?0.25+op*0.7:0.75+op*0.9);c.save();c.translate(0.68,s*(j%2?0.12:0.3));c.rotate(a);
+        H.P([0,-0.1,0.45,-0.12,0.75,0.0,0.62,0.04,0.4,0.03,0,0.1],pal.jaw,d);c.restore();}
+      for(const s of [-1,1])H.E(0.42,s*0.3,0.08,0.08,0,pal.eye);
+    },
     goblin(c,e,H,pal,t){ // ゴブリン：とがった長い耳、ぼろの肩当て、こん棒
       const d=pal.dark,sw=e.state==='windup'?-1.1:Math.sin(t*10)*0.15;
       H.E(-0.15,0,0.62,0.9,0,'#6a4a2a',d); // ぼろ布の肩
@@ -10597,6 +10681,7 @@ const Renderer={
     const hurt=e.hurt>0;
     ctx.save();ctx.translate(e.x,e.y);
     if(e.hidden){this.drawBurrow(ctx,e);ctx.restore();return;}
+    if(e.mimic&&!(e.hurt>0)){this.drawMimic(ctx,e);ctx.restore();return;}
     if(e.camo)ctx.globalAlpha*=0.4; // 待ち伏せ中：草に紛れて見えにくい
     if(e.ult){ // 最後の大技・不死鳥の再生：体のまわりに力がうずまく（攻撃が通らない印）
       const tm=this.time||0,reb=e.action==='sp_rebirth';ctx.save();
@@ -10712,6 +10797,21 @@ const Renderer={
     }
     ctx.restore();
     // 敵の体力は表示しない（モンハン式）
+  },
+  /** 岩に化けているロックワーム：障害物の岩、または洞窟の壁のかけらにそっくり。ときどき目が一瞬だけ光る */
+  drawMimic(ctx,e){
+    const k=e.r/16,blink=((this.time||0)+e.id*1.7)%4.5<0.18;
+    ctx.save();ctx.scale(k,k);
+    if(e.mimic==='rock')this.drawRock(ctx,0,0,0);
+    else{
+      ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(1,8,15,6,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#33285a';ctx.beginPath();ctx.moveTo(-15,7);ctx.lineTo(-12,-6);ctx.lineTo(-4,-12);ctx.lineTo(7,-10);ctx.lineTo(15,-2);ctx.lineTo(12,9);ctx.lineTo(-6,11);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#3a2e66';ctx.beginPath();ctx.moveTo(-10,-5);ctx.lineTo(-4,-10);ctx.lineTo(6,-8);ctx.lineTo(-1,-2);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#1a1430';ctx.beginPath();ctx.moveTo(-6,11);ctx.lineTo(12,9);ctx.lineTo(10,5);ctx.lineTo(-4,7);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(138,230,255,.7)';ctx.beginPath();ctx.moveTo(6,-3);ctx.lineTo(9,-11);ctx.lineTo(11,-2);ctx.closePath();ctx.fill();
+    }
+    if(blink){ctx.fillStyle='#ff9040';ctx.beginPath();ctx.arc(-3,0,1.6,0,TAU);ctx.arc(3,0,1.6,0,TAU);ctx.fill();}
+    ctx.restore();
   },
   /** 雑魚の新しい見た目（MobArt にあるものだけ）。描いたら true */
   drawMobArt(ctx,e,hurt,ed){
@@ -14267,7 +14367,7 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,ult:!!e.ult,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,ult:!!e.ult,camo:!!e.camo,mimic:e.mimic||0,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
