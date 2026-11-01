@@ -243,13 +243,13 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.48.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.48.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
   // レベルは無し。強さは装備と装飾品だけで決まる（素の能力は以前のLv3相当）
   player:{radius:12,baseSpeed:185,baseHp:125,baseAtk:10,baseDef:2,baseCrit:5,baseCritDmg:50,
-    dodgeSpeed:347,dodgeTime:0.2,dodgeCd:1.0,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
+    dodgeSpeed:347,dodgeTime:0.2,dodgeCd:0,baseDodgeIframe:0.08,skillCd:6,potionHealRatio:0.4,potionCd:0.8,
     startPotions:3,maxPotions:10,hitInvuln:0.35,
     itemWalk:0.35,minItemDelay:0.3,sheatheWalk:0.5}, // sheatheWalk：納刀動作中の移動速度倍率 // アイテム使用中の移動速度倍率、発動時間の下限
   enemySight:330,
@@ -10743,7 +10743,7 @@ const Renderer={
     const hasItems=ownedItemIds(bag).length>0;
     const wsd=(!multi&&s.ws)?DATA.weaponSkills[s.ws]:null;
     return {
-      dodge:{id:'dodge',key:keys.dodge,label:'回避',cd:p.dodgeCd,max:s.dodgeCd,col:'#7fe0ff'},
+      dodge:{id:'dodge',key:keys.dodge,label:'回避',cd:p.dodgeCd,max:s.dodgeCd||1,col:'#7fe0ff'},
       weapon:{key:'',label:wlabel,sub:wsub,cd:0,max:1,col:wcol,fill:wfill},
       heal:(hasItems||using)?{key:keys.heal,label:`${ci.short}×${bag[sel]||0}`,sub:using?'使用中…':(keys.cycle+'で切替'),cd:p.potionCd,max:CONFIG.player.potionCd,col:ci.color,empty:(bag[sel]||0)<=0&&!using,fill:using?using.t/using.total:0}:null,
       skill:wsd?{key:keys.skill,label:wsd.name,sub:'',cd:p.skillCd,max:wsd.cd,col:p.ws?'#a8ff8a':'#ffd23a',fill:p.ws?clamp(p.ws.t/wsd.duration,0,1):0}:null, // キー（例：[Y]）を下に出して、何を押せば発動するか分かるようにする
