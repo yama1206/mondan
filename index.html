@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.56.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.56.2',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -8280,7 +8280,10 @@ BossArt.A.giant_frog=(k,H)=>{ // 大蛙：左右に折りたたんだ大きな�
   E(k,-0.1,0,0.68,0.55,0,g,d);
   c.fillStyle=k.c(sp);for(const [x,y,r] of [[-0.4,0.2,0.1],[-0.1,-0.25,0.08],[-0.5,-0.15,0.08],[0.1,0.15,0.06]]){c.beginPath();c.arc(x,y,r,0,TAU);c.fill();}
   E(k,0.5,0,0.4,0.48,0,g,d);
-  E(k,0.82,0,0.08+0.04*sac,0.25+0.06*sac,0,'#f2f2c4',d,0.025);
+  const croak=k.act==='sp_croak'&&k.st==='special',tng=k.act==='sp_tongueSwallow'&&k.st==='special';
+  const sc=croak?1.6+0.4*Math.sin(k.t*20):1; // 鳴き声：喉袋を大きくふくらませる
+  E(k,0.82,0,(0.08+0.04*sac)*sc,(0.25+0.06*sac)*sc,0,'#f2f2c4',d,0.025);
+  if(tng){const len=0.4+Math.abs(Math.sin(k.t*6))*2.0;S(k,[0.9,0,0.9+len*0.5,Math.sin(k.t*10)*0.05,0.9+len,0],'#e06a8a',0.12);E(k,0.95+len,0,0.12,0.1,0,'#f08aa0',d);} // 舌を伸ばす
   for(const s of [-1,1]){E(k,0.5,s*0.35,0.15,0.14,0,g,d);E(k,0.52,s*0.37,0.11,0.1,0,k.ph2?'#ff5a2a':'#f0d040');E(k,0.53,s*0.37,0.09,0.03,0,'#111');}
   if(k.wind&&k.act==='beam')S(k,[0.9,0,1.3,Math.sin(k.t*20)*0.04,1.6,0],'#e06a8a',0.1);
 };
@@ -8290,7 +8293,8 @@ BossArt.A.bog_leech=(k,H)=>{ // 沼底の吸血蛭：うねる体節の体、背
   tube(k,pts,0.3,0.48,b,d);
   for(let i=1;i<7;i++){const [x,y,a]=along(pts,i/7);c.save();c.translate(x,y);c.rotate(a);L(k,[0,-0.2,0.02,0.2],d,0.025);c.restore();}
   S(k,pts,st,0.06);
-  const hx=pts[14],hy=pts[15];E(k,hx+0.18,hy,0.2,0.24,0,'#3a0a14',d);
+  const hx=pts[14],hy=pts[15],lat=k.act==='sp_latch'&&k.st==='special',pl=lat?1.25+0.15*Math.sin(k.t*12):1;E(k,hx+0.18,hy,0.2*pl,0.24*pl,0,'#3a0a14',d);
+  if(lat){c.fillStyle=k.c('#d02030');for(let i=0;i<4;i++){const q=(k.t*1.5+i/4)%1;c.beginPath();c.arc(hx+0.2-q*0.9,hy+Math.sin(i*2.3)*0.3,0.05*(1-q)+0.02,0,TAU);c.fill();}} // 吸血中：吸盤が脈打ち、血のしずく
   for(let i=0;i<10;i++){const a=i/10*TAU;P(k,[hx+0.18+Math.cos(a)*0.2,hy+Math.sin(a)*0.22,hx+0.18+Math.cos(a+0.15)*0.1,hy+Math.sin(a+0.15)*0.11,hx+0.18+Math.cos(a+0.3)*0.2,hy+Math.sin(a+0.3)*0.22],'#f4e8e0');}
   for(const s of [-1,1])E(k,hx-0.05,hy+s*0.15,0.03,0.03,0,k.ph2?'#ff3a2a':'#f0d040');
 };
@@ -8310,14 +8314,19 @@ BossArt.A.hydra=(k,H)=>{ // 腐沼の多頭竜：どっしりした胴から前�
   TD.quad(k,H,{fx:0.35,bx:-0.45,wid:0.5,pw:0.16,len:0.75,b,d,paw:d,
     tail:w=>T(k,[-0.7,0,-1.05,w,-1.4,w*2],b,d,0.2),
     back:()=>{for(let i=0;i<5;i++)P(k,[-0.6+i*0.25,-0.08,-0.5+i*0.25,0,-0.6+i*0.25,0.08],be,d,0.02);}});
-  [[-0.65,0],[0,1.7],[0.65,3.4]].forEach(([a,ph],i)=>{const sw=Math.sin(k.t*2.5+ph)*0.1;const hx=0.35+Math.cos(a+sw)*0.85,hy=Math.sin(a+sw)*0.85;
+  const cut=k.e.headsCut||0; // 落ちた首：左→右の順に、切り口だけ残す
+  [[-0.65,0],[0,1.7],[0.65,3.4]].forEach(([a,ph],i)=>{const sw=Math.sin(k.t*2.5+ph)*0.1;
+    if((i===0&&cut>=1)||(i===2&&cut>=2)){const sx=0.4+Math.cos(a)*0.38,sy=Math.sin(a)*0.38;T(k,[0.4,Math.sin(a)*0.2,sx,sy],b,d,0.18);E(k,sx,sy,0.1,0.1,0,'#8a2a2a',d);E(k,sx,sy,0.05,0.05,0,'#c85050');return;}
+    const hx=0.35+Math.cos(a+sw)*0.85,hy=Math.sin(a+sw)*0.85;
     T(k,[0.4,Math.sin(a)*0.2,0.4+Math.cos(a)*0.45,Math.sin(a)*0.45,hx,hy],i===1?'#3e6a3e':b,d,0.18);
     c.save();c.translate(hx,hy);c.rotate(a*0.6+sw);E(k,0,0,0.2,0.15,0,b,d);TD.snout(k,H,0.1,0.1,0.25,b,d);TD.eyes(k,H,0.08,0.1,0.035,'#e0d020');
     if(k.wind)for(const s of [-1,1])P(k,[0.25,s*0.06,0.3,s*0.02,0.35,s*0.06],'#fff');c.restore();});
 };
 BossArt.A.venomKing=(k,H)=>{ // 沼地の毒蟲王：連なる体節、背の毒トゲ、左右に生えた無数の脚、王冠をかぶった頭と大顎
   const {E,P,L,S}=H,b='#6a3a8a',d='#22102e',ac='#a8e040',gold='#e8c040',c=k.ctx;
-  const seg=[];for(let i=0;i<6;i++)seg.push([-1.05+i*0.3,Math.sin(k.t*3-i*0.9)*0.1]);
+  const coil=k.act==='sp_coil'&&k.st==='special';const seg=[];
+  if(coil){for(let i=0;i<6;i++){const a=k.t*2+i/6*TAU*0.92;seg.push([0.75+Math.cos(a)*0.55,Math.sin(a)*0.55]);}} // 巻きつき：体を輪にして相手を締める
+  else for(let i=0;i<6;i++)seg.push([-1.05+i*0.3,Math.sin(k.t*3-i*0.9)*0.1]);
   seg.forEach(([x,y],i)=>{for(const s of [-1,1]){const o=Math.sin(k.p*1.5+i+(s>0?1.5:0))*0.06;L(k,[x,y,x+o,y+s*0.38],d,0.05);}});
   seg.forEach(([x,y],i)=>{const r=0.24+i*0.015;E(k,x,y,r,r*1.1,0,b,d);for(const s of [-1,1]){P(k,[x-0.06,y+s*r*0.6,x,y+s*r*1.35,x+0.06,y+s*r*0.6],'#4a2a5a',d,0.02);E(k,x,y+s*r*1.35,0.035,0.035,0,ac);}E(k,x,y,0.05,0.05,0,ac);});
   const [hx,hy]=seg[5];c.save();c.translate(hx+0.3,hy);
@@ -8347,6 +8356,7 @@ BossArt.A.queen_bee=(k,H)=>{ // 毒霧の女王蜂：縞模様の大きな腹と
     c.save();c.translate(-0.1,s*0.12);c.rotate(s*(2.3+bz));E(k,0.35,0,0.38,0.14,0,'rgba(220,240,255,.45)','rgba(120,140,170,.7)',0.02);c.restore();}
   E(k,0,0,0.3,0.28,0,th,d);c.fillStyle='rgba(240,200,80,.6)';for(let i=0;i<6;i++){c.beginPath();c.arc(-0.15+i*0.06,Math.sin(i*2)*0.12,0.025,0,TAU);c.fill();}
   E(k,0.35,0,0.2,0.24,0,bl,d);
+  if(k.act==='sp_royalJelly'&&k.st==='special'){E(k,0.68,0,0.18,0.16,0,'#fff2b0','#c8a030',0.02);E(k,0.64,-0.04,0.06,0.04,0,'#ffffff');} // ローヤルゼリーを抱えて食べる
   for(const s of [-1,1]){E(k,0.38,s*0.16,0.1,0.08,0,k.ph2?'#a01a1a':'#3a2a1a','#000',0.02);S(k,[0.5,s*0.08,0.72,s*0.22,0.85,s*0.18],d,0.03);}
   const cr=[];for(let i=0;i<10;i++){const a=i/10*TAU,rr=i%2?0.16:0.09;cr.push(0.3+Math.cos(a)*rr,Math.sin(a)*rr);}P(k,cr,gold,'#8a6a10',0.02);
 };
@@ -13229,7 +13239,7 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,camo:!!e.camo,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
