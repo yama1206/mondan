@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.54.3',date:'2026/11/01'};
+const GAME_VERSION={no:'1.54.4',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -13566,7 +13566,10 @@ const App={
     const q=questById(w.questId),stage=stageById(q.stage);
     const res={};for(const pid of pids)res[pid]={rewards:[],left:[],notes:[]};
     // 依頼の報酬（ゴールド・素材・装飾品）は受け取る人ごとに渡す。同じ画面の2人は共有の倉庫に1回分
+    const testRun=TEST_MODE.allQuests||TEST_MODE.invincible;
+    if(testRun){this.revertRunGains();this.bossRewards={};this.lostCount=0;this.sessionCounts={};} // テスト中：この探索で手に入れたものは全部取り消し、報酬も渡さない
     for(const pid of this.rewardReceivers()){
+      if(testRun){res[pid].notes.push('テスト中なので、報酬・図鑑・クリアの記録は残りません');continue;}
       const R=q.reward,list=[];
       if(R.gold)list.push({type:'gold',n:R.gold});
       for(const k in (R.mats||{}))list.push({type:'mat',id:k,n:R.mats[k]});
@@ -13576,7 +13579,6 @@ const App={
         for(let i=0;i<nl;i++)list.push({type:'equip',item:Items.createLetter(Items.rollLetterTier(bst,DATA.letterCap(q.stage)))});}
       for(const l of list)res[pid].rewards.push(this.grantLoot(l,pid));
       // 進行の記録とステージ解放（テスト中は記録しない：クリア済みにならない）
-      if(TEST_MODE.allQuests||TEST_MODE.invincible){res[pid].notes.push('テスト中なので、クリアの記録は残りません');continue;}
       const pr=this.profileFor(pid),pg=pr.progress||(pr.progress={stage:1,done:{}});
       const keysBefore=QuestRules.urgentOpen(pr,q.stage),minBefore=QuestRules.minionsOpen(pr,q.stage);
       pg.done[q.id]=(pg.done[q.id]||0)+1;
@@ -13700,6 +13702,7 @@ const App={
   /** モンスター図鑑に討伐を記録する（受け取る人それぞれのデータに）。初めて倒した魔物は通知 */
   registerKill(type){
     if(!DATA.enemies[type])return;
+    if(TEST_MODE.allQuests||TEST_MODE.invincible)return; // テスト中は図鑑に記録しない
     for(const pid of this.rewardReceivers()){
       const pr=this.profileFor(pid);if(!pr)continue;
       const b=pr.bestiary||(pr.bestiary={});
