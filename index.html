@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.56.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.56.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -8997,14 +8997,20 @@ const MobArt=(()=>{
       for(const s of [-1,1]){H.E(0.6,s*0.32,0.17,0.17,0,pal.body,d);H.E(0.64,s*0.32,0.11,0.11,0,pal.eye);H.E(0.67,s*0.32,0.04,0.08,0,'#1a1008');}
     },
     swamp_croc(c,e,H,pal,t){ // 沼喰いワニ：鱗板の並んだ背、長い口と歯、太い尻尾、横に張った脚
-      const d=pal.dark,w=Math.sin(t*6)*0.2,op=e.state==='windup'?0.25:0;
+      const d=pal.dark,w=Math.sin(t*6)*0.2,op=e.state==='windup'?1:0;
       H.P([-0.7,-0.3,-1.9,w*0.5-0.08,-2.3,w,-1.9,w*0.5+0.08,-0.7,0.3],pal.body,d); // 尻尾
       for(const [x,ph] of [[-0.45,0],[0.4,1.6]])for(const s of [-1,1]){const k=Math.sin(t*10+ph+(s>0?Math.PI:0))*0.15;H.P([x,s*0.4,x-0.15+k,s*0.85,x+0.15+k,s*0.9,x+0.15,s*0.4],pal.body,d);}
       H.E(-0.05,0,0.95,0.5,0,pal.body,d);
       for(let i=0;i<5;i++)for(const s of [-1,1])H.E(-0.6+i*0.3,s*0.18,0.1,0.08,0,pal.plate);
-      for(const s of [-1,1]){c.save();c.translate(0.8,0);c.rotate(s*op);H.P([0,s*0.02,0,s*0.35,0.9,s*0.18,1.05,s*0.02],pal.body,d);
-        for(let i=0;i<4;i++)H.P([0.2+i*0.2,s*(0.3-i*0.04),0.25+i*0.2,s*(0.2-i*0.03),0.3+i*0.2,s*(0.29-i*0.04)],pal.teeth);c.restore();}
-      for(const s of [-1,1])H.E(0.7,s*0.3,0.09,0.09,0,pal.eye);
+      // 口：上から見ると、開いたときは上あごが持ち上がって短く見え、その先に下あごと赤い口の中が見える
+      if(op){H.P([0.55,-0.3,1.8,-0.17,1.95,0,1.8,0.17,0.55,0.3],pal.body,d); // 下あご
+        H.P([0.75,-0.2,1.7,-0.1,1.82,0,1.7,0.1,0.75,0.2],'#b0505e');
+        for(let i=0;i<5;i++)for(const s of [-1,1]){const x=0.95+i*0.18,y=s*(0.19-i*0.018);H.P([x-0.04,y,x,y-s*0.09,x+0.04,y],pal.teeth);}}
+      const L=op?1.35:1.85; // 上あごの長さ（開くと短く見える）
+      H.P([0.55,-0.32,L-0.15,-0.15,L,0,L-0.15,0.15,0.55,0.32],pal.body,d); // 上あご
+      for(let i=0;i<5;i++)for(const s of [-1,1]){const x=0.75+i*(L-0.95)/5,y=s*(0.3-i*0.03);H.P([x-0.035,y,x,y+s*0.08,x+0.035,y],pal.teeth);}
+      for(const s of [-1,1])H.E(L-0.12,s*0.05,0.03,0.025,0,'#1a2010'); // 鼻の穴
+      for(const s of [-1,1]){H.E(0.7,s*0.27,0.11,0.1,0,pal.body,d);H.E(0.72,s*0.27,0.06,0.06,0,pal.eye);}
     },
     worker_bee(c,e,H,pal,t){ // 働き蜂：縞のある腹と毒針、胸、羽ばたく翅
       const d=pal.dark,fl=Math.sin(t*40)*0.3;
