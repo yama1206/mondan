@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.42.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.42.2',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -3543,6 +3543,8 @@ const LOOK_ACT={l_dog:'wolf',l_cat:'cat',l_hedgehog:'mole',l_dragon:'dragonling'
 // rar はガチャ演出の強さ（R/SR/SSR）。表示名と色は装飾品のレア度（レア・エピック・レジェンダリー）の色に合わせる
 const LOOK_VARIANTS=[{name:'基本色',hue:0,rar:'R',w:55},{name:'色違い1',hue:110,rar:'SR',w:28},{name:'色違い2',hue:220,rar:'SR',w:13},{name:'色違い3',hue:300,rar:'SSR',w:4}];
 const LOOK_RAR_NAME={R:'レア',SR:'エピック',SSR:'レジェンド'};
+/* 相棒ごとの専用の色（色相をずらす代わりにこの色で描く）。相棒ID → 色の番号 → {col:体, W:明るい毛, DK:濃い毛} */
+const LOOK_COLOR_OVERRIDE={l_dog:{3:{col:'#2c2c34',W:'#5a5a66',DK:'#141418'}}}; // オオカミのレジェンドは黒い狼
 const LOOK_RAR_COLOR={R:'#4aa3ff',SR:'#c06bff',SSR:'#ffb030'};
 /** 色の表示名：「色違い2（スーパーレア）」のように、レア度の色つきで出す */
 const lookVarLabel=v=>{const V=LOOK_VARIANTS[v]||LOOK_VARIANTS[0];return `<span style="color:${LOOK_RAR_COLOR[V.rar]}">${V.name}（${LOOK_RAR_NAME[V.rar]}）</span>`;};
@@ -8200,7 +8202,7 @@ const PET_ART={
     // 手前の翼
     H.bwing(k,0.08,-0.24,0.82,-2.25+fl*0.8,MEM,C,d);
     if(k.wind)H.flame(k,1.08,-0.5,0.25,0.08,'#ff6a20','#ffd040');return [0.44,-0.34,0.17];},
-  l_dog(k,H,C,mv){const d='rgba(0,0,0,.6)',sw=mv?0.18:0.04,tw=Math.sin(k.t*(mv?10:3))*0.1,W='#e8e4dc',DK='#4a4e5a',o={g:0.47,sw,knee:0.02,lift:0.08};
+  l_dog(k,H,C,mv){const d='rgba(0,0,0,.6)',sw=mv?0.18:0.04,tw=Math.sin(k.t*(mv?10:3))*0.1,W=(k.pal&&k.pal.W)||'#e8e4dc',DK=(k.pal&&k.pal.DK)||'#4a4e5a',o={g:0.47,sw,knee:0.02,lift:0.08};
     // ふさふさの尻尾
     H.E(k,-0.82,0.02+tw*0.5,0.34,0.13,0.55+tw,C,d);
     // 奥の脚（暗め）
@@ -10310,12 +10312,13 @@ const Renderer={
       ctx.restore();
     }
     ctx.translate(0,-hop);
-    const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0];
-    if(hv.hue&&'filter' in ctx)ctx.filter=`hue-rotate(${hv.hue}deg)`;
+    const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0],ov=(LOOK_COLOR_OVERRIDE[lk.id]||{})[p.petLookV|0];
+    if(ov)k.pal=ov; // 専用の色（色相をずらさず、決めた色で描く）
+    else if(hv.hue&&'filter' in ctx)ctx.filter=`hue-rotate(${hv.hue}deg)`;
     ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';
     ctx.translate(0,0.18); // 体を下げて脚を短く見せる（足元の高さはそのまま）
     const draw=PET_ART[lk.id]||PET_ART.l_dog;
-    const neck=draw(k,H,lk.col,moving)||[0.5,-0.2,0.32];
+    const neck=draw(k,H,(ov&&ov.col)||lk.col,moving)||[0.5,-0.2,0.32];
     if(p.petCollar){const c=PETS.find(x=>x.id===p.petCollar);if(c){ctx.filter='none';ctx.strokeStyle=RARITY[c.rar].color;ctx.lineWidth=0.09;ctx.beginPath();ctx.ellipse(neck[0],neck[1],neck[2]*0.45,neck[2],0.2,0,TAU);ctx.stroke();ctx.fillStyle='#ffd23a';ctx.beginPath();ctx.arc(neck[0]+neck[2]*0.3,neck[1]+neck[2]*0.95,0.08,0,TAU);ctx.fill();}}
     ctx.restore();
   },
