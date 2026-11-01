@@ -87,6 +87,7 @@ button.danger:hover{background:#6e2a3a}
 .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
 .filters button{padding:4px 9px;font-size:12px}
 .filters button.on{background:#4a3d6e;border-color:#8a7ac0}
+.padsel button.on{background:#4a3d6e;color:#fff;border:2px solid #f3d48a;box-shadow:0 0 6px rgba(243,212,138,.6)} /* 操作説明：選んでいるコントローラーの表示 */
 .st-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed #262036;font-size:13px}
 .st-row span:last-child{color:#f0ead8}
 .sec{margin:10px 0}.sec-t{font-size:12px;color:#a99fc0;margin-bottom:4px;border-bottom:1px solid #2e2840;padding-bottom:2px}
@@ -242,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.45.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.45.3',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -14578,7 +14579,7 @@ const App={
         <div class="small muted">効果は${sk.duration}秒間、使ったあと${sk.cd}秒は再使用できません</div></div></div>`;
     }
     return `<div class="panel inv-panel"><div class="inv-top"><button data-act="helpBack">戻る（Esc）</button><h2 style="margin:0">操作説明</h2><div class="inv-meta">表示：${PAD_TYPE_NAMES[type]}${sel==='auto'?'（自動）':''}</div></div>
-      <div class="small muted" style="margin:-4px 0 6px">コントローラーの表示：${padBtns}</div>
+      <div class="small muted padsel" style="margin:-4px 0 6px">コントローラーの表示：${padBtns}</div>
       ${tabs}
       <div class="inv-body">${body}</div></div>`;
   },
