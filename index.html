@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.62.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.62.3',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1738,7 +1738,7 @@ const DATA={
       pal:{body:'#4a6a3a',dark:'#1e2e18',rage:'#6a4a20',rageDark:'#3a2010',eye:'#ffe060',rageEye:'#ff4020'}},
     venomKing:{name:'沼地の毒蟲王',ai:'pattern',look:'venomKing',hp:3200,atk:28,def:9,r:36,speed:100,stunMax:140,stunTime:4,color:'#5a3a6a',drops:'venom_king',boss:true,moveStyle:'serpent',specials:[{k:'coil',cd:11,wind:0.5,dmg:0.6,r:50,hold:1.8,tick:0.4,range:[0,130]},{k:'venomBite',cd:7,wind:0.45,dmg:1.0,r:90,range:[0,150]}],
       pattern:[
-        {k:'swarm',wind:0.7,cd:25,n:2,kind:'leech',max:4,st:'poison'}, // 毒蟲を産む
+        {k:'swarm',wind:0.7,cd:30,n:2,kind:'leech',max:4,st:'poison'}, // 毒蟲を産む
         {k:'pool',wind:0.9,cd:5,dmg:0.9,r:85,life:6,st:'poison'}, // 毒液だまり
         {k:'combo',wind:0.7,cd:5,dmg:1.0,r:110,arc:1.3,hits:2,step:0.4,st:'poison'}, // 大顎の二連噛み
         {k:'charge',wind:0.7,cd:6,dmg:1.3}, // 体節をうねらせて突進
