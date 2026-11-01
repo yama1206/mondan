@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.79.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.80.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1645,7 +1645,7 @@ const DATA={
         {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'}, // ぬめりの水たまり
         {k:'charge',wind:0.9,cd:6,dmg:1.2}, // ゆったり体当たり
       ]},
-    quake_dragon:{name:'地底の轟音竜',ai:'pattern',look:'gen',hp:3300,atk:26,def:8,r:44,speed:98,color:'#7a6a4a',drops:'quake_dragon',boss:true,stunMax:150,stunTime:4,gen:{body:'long',legs:4,head:'horn',tail:true},pal:{body:'#7a6a4a',dark:'#3a3020',spot:'#d8c890',eye:'#ffe060'},
+    quake_dragon:{name:'地底の轟音竜',ai:'pattern',look:'gen',hp:3300,atk:26,def:8,r:44,speed:98,color:'#7a6a4a',drops:'quake_dragon',boss:true,moveStyle:'lumber',specials:[{k:'stompWaves',cd:9,wind:0.9,dmg:0.9,st:'slow',range:[0,320]},{k:'crossCrack',cd:11,wind:1.0,dmg:1.2,len:420,width:60,range:[0,400]},{k:'rockfall',cd:13,wind:1.0,dmg:1.0,r:60,n:7,spread:300,range:[0,800]},{k:'ramWall',cd:12,wind:1.2,dmg:1.5,range:[150,600],los:true}],stunMax:150,stunTime:4,gen:{body:'long',legs:4,head:'horn',tail:true},pal:{body:'#7a6a4a',dark:'#3a3020',spot:'#d8c890',eye:'#ffe060'},
       pattern:[
         {k:'slam',wind:1.1,cd:5,dmg:1.4,r:170,st:'slow'}, // 轟音の地響き
         {k:'beam',wind:1.0,cd:6,dmg:1.2,len:340,width:70}, // 咆哮の衝撃波をまっすぐ
@@ -1729,7 +1729,7 @@ const DATA={
         {k:'slam',wind:0.8,cd:5,dmg:1.0,r:110}, // 腕を叩きつける
       ],
       pal:{body:'#2a4a7a',dark:'#101e36',spot:'#70b0e0',eye:'#e0f0ff'}},
-    giant_bat:{name:'洞窟の大蝙蝠',ai:'pattern',look:'bat',hp:2400,atk:24,def:5,r:28,speed:130,color:'#4a3a6a',drops:'giant_bat',boss:true,stunMax:110,stunTime:4,
+    giant_bat:{name:'洞窟の大蝙蝠',ai:'pattern',look:'bat',hp:2400,atk:24,def:5,r:28,speed:130,color:'#4a3a6a',drops:'giant_bat',boss:true,moveStyle:'flutter',specials:[{k:'stompWaves',cd:9,wind:0.8,dmg:0.7,st:'sleep',range:[0,320]},{k:'diveLine',cd:7,wind:0.7,dmg:1.1,len:500,range:[120,480],los:true},{k:'latch',cd:10,wind:0.45,r:70,drain:0.3,time:4,range:[0,130]}],stunMax:110,stunTime:4,
       pattern:[
         {k:'leap',wind:0.7,cd:4.5,dmg:1.0,r:80,range:450}, // 天井から急降下
         {k:'shot',wind:0.6,cd:4,n:1,speed:380,dmg:0.9,kind:'soul',st:'sleep',stChance:0.5,volleys:3,gap:0.3}, // 超音波を三連射
@@ -1737,7 +1737,7 @@ const DATA={
         {k:'charge',wind:0.5,cd:4,dmg:1.1}, // 低く飛んで体当たり
       ],
       pal:{body:'#4a3a6a',dark:'#221a36',wing:'#8a7ab8',eye:'#ffe060'}},
-    crystal_scorpion:{name:'晶毒の大蠍',ai:'pattern',look:'scorpion',hp:3000,atk:27,def:10,r:34,speed:90,color:'#6a4a8a',drops:'crystal_scorpion',boss:true,stunMax:130,stunTime:4,
+    crystal_scorpion:{name:'晶毒の大蠍',ai:'pattern',look:'scorpion',hp:3000,atk:27,def:10,r:34,speed:90,color:'#6a4a8a',drops:'crystal_scorpion',boss:true,moveStyle:'skitter',specials:[{k:'grabHold',cd:10,wind:0.45,dmg:0.8,r:95,range:[0,160]},{k:'stingerStab',cd:7,wind:0.7,dmg:1.1,len:240,width:36,range:[0,300]},{k:'sandAmbush',cd:12,dmg:1.2,r:80,range:[100,600]}],stunMax:130,stunTime:4,
       pattern:[
         {k:'combo',wind:0.6,cd:4,dmg:1.0,r:85,arc:1.2,hits:2,step:0.4}, // 左右のハサミで二連
         {k:'beam',wind:0.8,cd:5,dmg:1.2,len:220,width:40,st:'poison'}, // 尾の毒針を突き出す
@@ -2028,7 +2028,7 @@ const DATA={
     shaman:{name:'墓地の呪術師',ai:'shaman',hp:60,atk:8,def:1,r:12,speed:84,color:'#9a5ac0',drops:'shaman',
       empower:{range:230,time:10,atk:1.3,speed:1.15,cd:[6,8]},revive:{range:280,max:2,hp:0.6,age:30,cd:[5,7]},
       pal:{body:'#5a3a7a',dark:'#2a1640',robe:'#7a4aa0',eye:'#ff90ff'}},
-    mole:{name:'結晶喰いの土竜',ai:'pattern',look:'mole',hp:2700,atk:24,def:8,r:32,speed:105,stunMax:120,stunTime:4,color:'#8a6a4a',drops:'mole',boss:true,
+    mole:{name:'結晶喰いの土竜',ai:'pattern',look:'mole',hp:2700,atk:24,def:8,r:32,speed:105,stunMax:120,stunTime:4,color:'#8a6a4a',drops:'mole',boss:true,moveStyle:'nearsighted',specials:[{k:'tunnel',cd:10,wind:0.7,dmg:1.1,r:60,len:420,el:'thunder',range:[100,500]},{k:'molehills',cd:9,wind:0.6,dmg:1.1,r:62,n:4,el:'thunder',range:[0,700]},{k:'dirtKick',cd:7,wind:0.6,dmg:0.9,r:170,range:[0,220]}],
       pattern:[
         {k:'burrow',wind:0.9,cd:6,dmg:1.4,r:90}, // 潜って真下から
         {k:'combo',wind:0.6,cd:4,dmg:0.9,r:110,arc:1.6,hits:3,step:0.3}, // 大きな爪でひっかき連打
@@ -2037,7 +2037,7 @@ const DATA={
         {k:'charge',wind:0.6,cd:5,dmg:1.2}, // 土をかき分けて突進
       ],
       pal:{body:'#8a6a4a',dark:'#3e2e1e',claw:'#e8e0c8',crystal:'#9ae8ff',rage:'#a06a3a',rageDark:'#4a2a10',eye:'#ffe060',rageEye:'#ff6020'}},
-    centipede:{name:'晶殻の大百足',ai:'pattern',look:'centipede',hp:3000,atk:27,def:9,r:30,speed:118,stunMax:130,stunTime:4,color:'#8a4a3a',drops:'centipede',boss:true,
+    centipede:{name:'晶殻の大百足',ai:'pattern',look:'centipede',hp:3000,atk:27,def:9,r:30,speed:118,stunMax:130,stunTime:4,color:'#8a4a3a',drops:'centipede',boss:true,moveStyle:'serpent',specials:[{k:'coil',cd:11,wind:0.5,dmg:0.6,r:50,hold:1.8,tick:0.4,range:[0,130]},{k:'venomBite',cd:7,wind:0.45,dmg:1.1,r:90,range:[0,150]},{k:'flameRun',cd:12,wind:0.9,dmg:1.2,len:560,range:[150,560],los:true}],
       pattern:[
         {k:'combo',wind:0.6,cd:4,dmg:1.0,r:120,arc:1.5,hits:3,step:0.35,st:'poison'}, // 毒あごで連続で噛む
         {k:'charge',wind:0.7,cd:5,dmg:1.2,times:3}, // くねりながら三連突進
@@ -6350,6 +6350,15 @@ function startSpecial(w,e,p,mv){
         w.telegraphs=w.telegraphs.filter(t=>t.owner!==e.id);
         T({shape:'circle',x:c.x,y:c.y,r:e.r+60,total:1.1,dmg:dmg(1.2)});
         emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:(DATA.enemies[e.type].ultimate||{}).name||'最後の怒り！',color:'#ff6040'});}break;
+    case 'molehills': // モグラ：あちこちに土を盛り上げ、少しして結晶ごと突き上げる（盛り土が目印）
+      {const ps=Object.values(w.players).filter(q=>!q.dead),n=mv.n+(ph2?2:0);
+        for(let i=0;i<n;i++){const q=ps[i%Math.max(1,ps.length)]||p,a=rand(0,TAU),R=i<ps.length?0:rand(60,220);let x=q.x+Math.cos(a)*R,y=q.y+Math.sin(a)*R;if(circleHitsWall(w.map,x,y,20)){x=q.x;y=q.y;}
+          w.hazards.push({id:w.nextId++,kind:'mound',x,y,r:mv.r*0.8,t:0,life:wind+0.6+i*0.15+0.4,tick:99,acc:0,dmg:0,delay:0,visual:true});
+          T({shape:'circle',x,y,r:mv.r,total:wind+0.6+i*0.15,dmg:dmg(mv.dmg)});}
+        emit(w,{type:'roarWave',x:e.x,y:e.y,r:50});e.timer=wind+0.4;}break;
+    case 'stingerStab': // サソリ：尾の毒針を、狙い直しながら三度突き出す
+      for(let i=0;i<3;i++){const a=ang+(i===1?0:(i?0.28:-0.28))*(RNG.next()<0.5?1:-1);T({shape:'rect',x:e.x,y:e.y,angle:a,len:mv.len+e.r,width:mv.width,total:wind+i*0.42,dmg:dmg(mv.dmg),st:'poison'});}
+      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'毒針！',color:'#c8a0ff'});e.timer=wind+0.95;break;
     case 'crossCrack': // 地割れの十字（怒ると八方）
       {const n=ph2?8:4;for(let i=0;i<n;i++)T({shape:'rect',x:e.x,y:e.y,angle:ang+i*TAU/n,len:mv.len+e.r,width:mv.width,total:wind,dmg:dmg(mv.dmg)});}break;
     case 'rockfall': // 落石：あちこちに天井から岩
@@ -11585,6 +11594,13 @@ const Renderer={
   },
   drawHazard(ctx,z){
     if(z.kind==='magma'||z.kind==='fire'){this.drawLava(ctx,z);return;}
+    if(z.kind==='mound'){ // 盛り土：土が盛り上がり、結晶の先がのぞく
+      const k=clamp(z.t/0.5,0,1),sh=Math.sin((this.time||0)*30)*1.2*k;ctx.save();ctx.translate(z.x+sh,z.y);
+      ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,4,z.r*1.1,z.r*0.45,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#6a4a2e';ctx.beginPath();ctx.ellipse(0,0,z.r*k,z.r*0.6*k,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#8a6a42';ctx.beginPath();ctx.ellipse(-z.r*0.2*k,-z.r*0.15*k,z.r*0.55*k,z.r*0.3*k,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#9ae8ff';for(const [dx,h] of [[-6,10],[4,14],[10,8]]){ctx.beginPath();ctx.moveTo(dx*k-3,-2);ctx.lineTo(dx*k,-h*k);ctx.lineTo(dx*k+3,-2);ctx.closePath();ctx.fill();}
+      ctx.restore();return;}
     if(z.kind==='safe'){ // 最後の大技の安全な輪：光る輪と、上へ立ちのぼる粒
       const tm=this.time||0,pu=0.5+0.5*Math.sin(tm*5);ctx.save();
       const g=ctx.createRadialGradient(z.x,z.y,z.r*0.2,z.x,z.y,z.r);g.addColorStop(0,'rgba(255,255,255,.28)');g.addColorStop(1,'rgba(255,255,255,.05)');
