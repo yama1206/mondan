@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.38.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.38.3',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4783,6 +4783,26 @@ const Companion={
         emit(w,{type:'revive',pid:p.id,by:'auto',x:p.x,y:p.y});
       }
     }
+    // 引っかかり対策：飼い主（プレイヤー）から離れたまま、しばらくほとんど動けていない仲間は、プレイヤーのそばへワープ
+    const leader=Object.values(w.players).find(q=>!q.ai&&!q.dead);
+    if(!leader)return;
+    for(const p of Object.values(w.players)){
+      if(!p.ai||p.dead||p.out)continue;
+      const A=p.ai,far=Math.hypot(p.x-leader.x,p.y-leader.y);
+      if(A.sx==null||Math.hypot(p.x-A.sx,p.y-A.sy)>24||far<170){A.sx=p.x;A.sy=p.y;A.stuckT=0;continue;}
+      A.stuckT=(A.stuckT||0)+dt;
+      if(A.stuckT<2.5)continue;
+      // プレイヤーの後ろ側から順に、壁でない場所を探す
+      const f=leader.facing||0;let ok=null;
+      find:for(const da of [Math.PI,Math.PI*0.75,-Math.PI*0.75,Math.PI/2,-Math.PI/2,0])for(const dist of [40,60,28]){
+        const x=leader.x+Math.cos(f+da)*dist,y=leader.y+Math.sin(f+da)*dist;
+        if(!isWall(w.map,Math.floor(x/TILE),Math.floor(y/TILE))){ok={x,y};break find;}
+      }
+      if(!ok)ok={x:leader.x,y:leader.y};
+      emit(w,{type:'warp',x:p.x,y:p.y});
+      p.x=ok.x;p.y=ok.y;A.sx=p.x;A.sy=p.y;A.stuckT=0;
+      emit(w,{type:'warp',x:p.x,y:p.y});
+    }
   },
   /** 仲間の入力を決める */
   decide(w,p){
@@ -8334,6 +8354,7 @@ const Renderer={
       case 'spore':this.ring(ev.x,ev.y,10,ev.r,'#a8e060',0.5,4);this.burst(ev.x,ev.y,'#b8f070',18,160);break;
       case 'slimeLand':this.burst(ev.x,ev.y,'#7fe07a',14,150);this.addShake(3);break;
       case 'roarWave':this.ring(ev.x,ev.y,20,ev.r+30,'#ffe0a0',0.55,7);this.addShake(10);break;
+      case 'warp':this.ring(ev.x,ev.y,4,34,'#9fe0ff',0.45,3);break; // 仲間のワープ
       case 'heavySwing':this.addShake(5);break;
       case 'empower':this.floater(ev.x,ev.y,'強化!','#d080ff',14,1.0);this.ring(ev.x,ev.y+14,6,34,'#c070ff',0.4,3);break;
       case 'revived':this.floater(ev.x,ev.y-20,'よみがえった!','#d080ff',16,1.2);this.ring(ev.x,ev.y,6,50,'#c070ff',0.6,4);this.burst(ev.x,ev.y,'#d8c8ff',16,140);break;
