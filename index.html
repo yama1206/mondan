@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.55.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.56.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -8952,6 +8952,68 @@ const MobArt=(()=>{
       H.E(0,-0.05,0.85-pf,0.8-pf,0,pal.cap);
       for(const [x,y,r2] of [[-0.35,-0.3,0.18],[0.3,-0.35,0.14],[0.05,0.15,0.2],[-0.45,0.3,0.12],[0.45,0.25,0.13]])H.E(x,y,r2,r2*0.85,0,pal.spot);
       if(e.state==='windup')for(let i=0;i<8;i++){const a=i*TAU/8;H.E(Math.cos(a)*1.2,Math.sin(a)*1.2,0.08,0.08,0,'#d8e8a0');}
+    },
+    // ---- ステージ3 ----
+    bloater(c,e,H,pal,t){ // 膨張体：毒袋でぱんぱんの体、浮き出た筋、小さな顔
+      c.rotate(-e.facing);const d=pal.dark,k=1+Math.sin(t*4)*0.05+(e.state==='windup'?0.15:0),f=e.facing;
+      for(let i=0;i<4;i++){const a=i*TAU/4+0.78;H.L([Math.cos(a)*0.6,Math.sin(a)*0.6,Math.cos(a)*1.05,Math.sin(a)*1.05],d,0.12);}
+      H.E(0,0,0.95*k,0.9*k,0,pal.body,d);
+      for(let i=0;i<5;i++){const a=i*1.25;H.L([0,0,Math.cos(a)*0.55*k,Math.sin(a)*0.55*k,Math.cos(a+0.3)*0.8*k,Math.sin(a+0.3)*0.8*k],'#6a7a38',0.05);}
+      for(const [x,y,r2] of [[-0.35,-0.3,0.16],[0.35,0.25,0.2],[-0.2,0.45,0.12],[0.4,-0.4,0.1]])H.E(x*k,y*k,r2,r2,0,pal.spot);
+      H.E(-0.25,-0.4,0.22,0.12,-0.6,'rgba(255,255,255,.35)');
+      const fx=Math.cos(f)*0.7,fy=Math.sin(f)*0.7;H.E(fx,fy,0.24,0.2,f,'#6a7a38',d);
+      for(const s of [-1,1])H.E(fx+Math.cos(f+Math.PI/2)*s*0.1,fy+Math.sin(f+Math.PI/2)*s*0.1,0.05,0.05,0,pal.eye);
+    },
+    carnivore_plant(c,e,H,pal,t){ // 食虫花：地面の葉と、トゲの並んだ二枚の捕虫葉（ハエトリグサ）
+      const d=pal.dark,op=e.state==='windup'?0.75:0.35+Math.sin(t*2)*0.08;
+      for(let i=0;i<6;i++){const a=i*TAU/6+0.5;c.save();c.rotate(a);H.P([0.2,0,0.85,-0.32,1.3,0,0.85,0.32],pal.leaf,d);c.restore();}
+      for(const s of [-1,1]){c.save();c.rotate(s*op);
+        H.P([0,0,0.4,s*0.5,1.0,s*0.55,1.3,s*0.2,1.25,0],pal.leaf,d);H.P([0.1,0,0.45,s*0.38,1.0,s*0.42,1.18,s*0.15,1.15,0],pal.mouth);
+        for(let i=0;i<6;i++){const x=0.35+i*0.16,y=s*(0.5-Math.abs(i-2.5)*0.04);H.P([x-0.04,y,x,y+s*0.22,x+0.04,y],pal.tooth);}
+        c.restore();}
+      H.E(0,0,0.18,0.18,0,'#2a5a1a',d);
+    },
+    leech(c,e,H,pal,t){ // 血吸いヒル：体節の輪、前の丸い吸盤と歯
+      const d=pal.dark;
+      for(let i=5;i>=0;i--){const x=-1.0+i*0.36,y=Math.sin(t*8+i)*0.12,r2=0.38+Math.sin(i/5*Math.PI)*0.12;H.E(x,y,r2,r2*1.05,0,pal.body,d);H.L([x-0.05,y-r2*0.8,x-0.05,y+r2*0.8],pal.ring,0.05);}
+      H.E(1.05,Math.sin(t*8+6)*0.12,0.32,0.36,0,pal.ring,d);H.E(1.1,Math.sin(t*8+6)*0.12,0.18,0.2,0,'#3a0a0a');
+      for(let i=0;i<6;i++){const a=i*TAU/6;H.E(1.1+Math.cos(a)*0.13,Math.sin(t*8+6)*0.12+Math.sin(a)*0.15,0.035,0.035,0,'#ffe8e8');}
+    },
+    parasite(c,e,H,pal,t){ // 寄生体：ふわふわ浮くかさと、垂れ下がる触手、光る胞子
+      c.rotate(-e.facing);const d=pal.dark,fl=Math.sin(t*3)*0.1;
+      for(let i=0;i<6;i++){const a=i*TAU/6+0.3,w=Math.sin(t*4+i)*0.25;H.L([Math.cos(a)*0.5,Math.sin(a)*0.5+fl,Math.cos(a+w*0.3)*0.95,Math.sin(a+w*0.3)*0.95+fl,Math.cos(a+w)*1.35,Math.sin(a+w)*1.35+fl],pal.body,0.12);}
+      H.E(0,fl,0.8,0.75,0,pal.body,d);H.E(0,fl-0.1,0.55,0.48,0,'#a87ac0');
+      for(const [x,y] of [[-0.3,-0.25],[0.25,-0.3],[0,0.2],[0.35,0.15],[-0.35,0.2]])H.E(x,y+fl,0.09,0.09,0,pal.spore);
+      H.E(0,fl,0.16,0.16,0,'#2a1a3a');H.E(0.04,fl-0.04,0.06,0.06,0,pal.eye);
+      for(let i=0;i<4;i++){const q=(t*0.5+i/4)%1,a=i*1.7;H.E(Math.cos(a)*(0.6+q*0.6),Math.sin(a)*(0.6+q*0.6)-q*0.5,0.06*(1-q),0.06*(1-q),0,pal.spore);}
+    },
+    poison_frog(c,e,H,pal,t){ // 毒沼ガエル：折りたたんだ大きな後ろ足、派手な毒の斑点、飛び出た目
+      const d=pal.dark,j=e.state==='windup'?0.15:0;
+      for(const s of [-1,1]){H.P([-0.4,s*0.45,-0.95,s*(1.0+j),-0.25,s*(1.15+j),0.1,s*0.6],pal.body,d);H.P([-0.3,s*(1.1+j),-0.6,s*(1.35+j),-0.05,s*(1.3+j)],'#3a7a2a',d);
+        H.P([0.45,s*0.4,0.75,s*0.8,0.95,s*0.7,0.65,s*0.35],pal.body,d);}
+      H.E(0,0,0.85,0.68,0,pal.body,d);
+      for(const [x,y,r2] of [[-0.4,-0.2,0.14],[-0.1,0.3,0.12],[0.2,-0.25,0.11],[-0.45,0.25,0.1],[0.1,0.02,0.09]])H.E(x,y,r2,r2,0,pal.spot);
+      H.E(0.55,0,0.4,0.42,0,pal.body,d);
+      for(const s of [-1,1]){H.E(0.6,s*0.32,0.17,0.17,0,pal.body,d);H.E(0.64,s*0.32,0.11,0.11,0,pal.eye);H.E(0.67,s*0.32,0.04,0.08,0,'#1a1008');}
+    },
+    swamp_croc(c,e,H,pal,t){ // 沼喰いワニ：鱗板の並んだ背、長い口と歯、太い尻尾、横に張った脚
+      const d=pal.dark,w=Math.sin(t*6)*0.2,op=e.state==='windup'?0.25:0;
+      H.P([-0.7,-0.3,-1.9,w*0.5-0.08,-2.3,w,-1.9,w*0.5+0.08,-0.7,0.3],pal.body,d); // 尻尾
+      for(const [x,ph] of [[-0.45,0],[0.4,1.6]])for(const s of [-1,1]){const k=Math.sin(t*10+ph+(s>0?Math.PI:0))*0.15;H.P([x,s*0.4,x-0.15+k,s*0.85,x+0.15+k,s*0.9,x+0.15,s*0.4],pal.body,d);}
+      H.E(-0.05,0,0.95,0.5,0,pal.body,d);
+      for(let i=0;i<5;i++)for(const s of [-1,1])H.E(-0.6+i*0.3,s*0.18,0.1,0.08,0,pal.plate);
+      for(const s of [-1,1]){c.save();c.translate(0.8,0);c.rotate(s*op);H.P([0,s*0.02,0,s*0.35,0.9,s*0.18,1.05,s*0.02],pal.body,d);
+        for(let i=0;i<4;i++)H.P([0.2+i*0.2,s*(0.3-i*0.04),0.25+i*0.2,s*(0.2-i*0.03),0.3+i*0.2,s*(0.29-i*0.04)],pal.teeth);c.restore();}
+      for(const s of [-1,1])H.E(0.7,s*0.3,0.09,0.09,0,pal.eye);
+    },
+    worker_bee(c,e,H,pal,t){ // 働き蜂：縞のある腹と毒針、胸、羽ばたく翅
+      const d=pal.dark,fl=Math.sin(t*40)*0.3;
+      for(const s of [-1,1])H.E(-0.1,s*(0.7+fl*0.2),0.6,0.28,s*0.4,'rgba(230,245,255,.55)','rgba(0,0,0,.3)');
+      H.E(-0.65,0,0.6,0.42,0,pal.body,d);
+      for(const x of [-0.95,-0.7,-0.45])H.E(x,0,0.08,0.38,0,pal.spot);
+      H.P([-1.2,-0.08,-1.5,0,-1.2,0.08],'#1a1008');
+      H.E(0.1,0,0.35,0.35,0,'#6a4a20',d);H.E(0.55,0,0.28,0.3,0,'#2a2010',d);
+      for(const s of [-1,1]){H.E(0.6,s*0.18,0.1,0.13,0,pal.eye);H.L([0.75,s*0.1,1.1,s*0.3],'#2a2010',0.05);}
     },
   };
 })();
