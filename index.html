@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.54.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.54.3',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -13575,7 +13575,8 @@ const App={
       {const nl=R.letters??1,bst=(q.urgent||q.boss)?1.5:1.25;
         for(let i=0;i<nl;i++)list.push({type:'equip',item:Items.createLetter(Items.rollLetterTier(bst,DATA.letterCap(q.stage)))});}
       for(const l of list)res[pid].rewards.push(this.grantLoot(l,pid));
-      // 進行の記録とステージ解放
+      // 進行の記録とステージ解放（テスト中は記録しない：クリア済みにならない）
+      if(TEST_MODE.allQuests||TEST_MODE.invincible){res[pid].notes.push('テスト中なので、クリアの記録は残りません');continue;}
       const pr=this.profileFor(pid),pg=pr.progress||(pr.progress={stage:1,done:{}});
       const keysBefore=QuestRules.urgentOpen(pr,q.stage),minBefore=QuestRules.minionsOpen(pr,q.stage);
       pg.done[q.id]=(pg.done[q.id]||0)+1;
