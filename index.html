@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.30.2',date:'2026/10/31'};
+const GAME_VERSION={no:'1.30.3',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -8540,7 +8540,7 @@ const Renderer={
     const k=clamp(t.t/t.total,0,1);
     const EL={fire:['255,90,40','255,150,110'],water:['70,160,255','140,200,255'],thunder:['255,225,60','255,245,150'],ice:['140,225,255','200,240,255'],mei:['190,90,255','210,130,255']};
     const ec=(!t.kind&&t.el&&EL[t.el])||null; // 属性のある攻撃は属性の色で予兆を出す
-    const C=t.kind==='poison'?'120,220,60':t.kind==='curse'?'190,90,255':ec?ec[0]:'255,60,40',C2=t.kind==='poison'?'150,240,90':t.kind==='curse'?'210,130,255':ec?ec[1]:'255,90,60';
+    const C=t.kind==='poison'?'120,220,60':t.kind==='curse'?'190,90,255':ec?ec[0]:'235,235,240',C2=t.kind==='poison'?'150,240,90':t.kind==='curse'?'210,130,255':ec?ec[1]:'255,255,255';
     ctx.save();
     ctx.fillStyle=`rgba(${C},0.16)`;ctx.strokeStyle=`rgba(${C2},${0.5+0.4*k})`;ctx.lineWidth=2;
     const prog=`rgba(${C},${0.25+0.2*k})`;
