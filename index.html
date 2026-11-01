@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.63.2',date:'2026/11/01'};
+const GAME_VERSION={no:'1.63.3',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -387,7 +387,7 @@ const DATA={
       flow:{max:10,pct:6,keep:1.5,decay:0.25}, // 勢い：当てるたびに+1段階（1段階で威力+pct%）。keep秒当てないとdecay秒ごとに1段階下がる
       marks:{move:'〇',speed:'◎',power:'△',reach:'△'},feature:'攻撃を当て続けると「勢い」がたまり、威力が最大+60%まで上がる'},
     hammer:{ws:'gouwan',name:'槌',knockback:true,range:70,arc:110*Math.PI/180,interval:0.72,active:0.10,power:1.5,move:1.0,swing:0.26,sheathe:0.8,
-      charge:{levels:[0.6,1.2],mult:[1.63,1.95],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
+      charge:{levels:[0.6,1.2],mult:[2.2,3.0],stunMult:[1.6,2.4],move:0.5},stun:{base:12,headArc:100*Math.PI/180},
       marks:{move:'〇',speed:'△',power:'◎',reach:'△'},feature:'長押しでチャージ。ボスの頭に当てるとスタン値がたまる'},
     lance:{ws:'taunt',name:'槍',guard:{mult:0.2},range:83,arc:24*Math.PI/180,interval:0.5,active:0.12,power:1.0,move:0.78,swing:0.24,sheathe:1.1,
       marks:{move:'▽',speed:'〇',power:'〇',reach:'〇'},feature:'前に突き出す槍。ガード長押しで構える（動きは極端に遅く、受けるダメージ80%軽減）。納刀に1.1秒'},
