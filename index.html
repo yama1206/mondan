@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.26.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.26.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -12953,7 +12953,7 @@ const App={
       case 'online':UI.show(this.onlineHTML());if(was!=='online')Friends.refresh();break;
       case 'board':UI.show(this.boardHTML());break;
       case 'smith':
-        if(was!=='smith'){this.smithCat='weapon';this.smithSub='all';this.smithSkillF=null;} // 入るたびに武器から
+        if(was!=='smith'){this.smithCat='weapon';this.smithSub='all';this.smithSkillF=null;this.smithSkillOpen=false;} // 入るたびに武器から
         UI.show(this.smithHTML());
         if(was!=='smith'&&Input.uiPad)UI.restoreFocus(UI.padKey({dataset:{act:'smithCat',c:'weapon'}}));
         break;
@@ -13010,6 +13010,7 @@ const App={
         // シリーズのタブは、開いているときにもう一度押すと閉じる（部位の先頭に戻る）
         this.smithSub=(ds.s==='series'&&inS)?'slot:head':ds.s;this.goto('smith');break;}
       case 'smithSkill':this.smithSkillF=(this.smithSkillF===ds.s)?null:ds.s;this.goto('smith');break;
+      case 'smithSkillOpen':this.smithSkillOpen=!this.smithSkillOpen;this.goto('smith');break;
       case 'reinforce':this.doOp('reinforce',{uid:ds.uid});break;
       case 'enchant':this.doOp('enchant',{uid:ds.uid,t:Number(ds.t)});break;
       case 'chooseQuest':this.questSel=ds.id;this.goto('lobby');Net.broadcastLobby();break;
@@ -13906,7 +13907,8 @@ const App={
     // シリーズを開いたとき：すべてのシリーズ防具、または選んだシリーズの防具だけを見る
     const seriesRow=inSeries?`<div class="filters" style="margin-bottom:8px">${[['series','すべてのシリーズ'],...setKeys.map(k=>['set:'+k,DATA.armorSets[k].name])].map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
     // 防具のスキルで絞り込み：押したスキルで絞り、もう一度押すと解除
-    const skillRow=cat==='armor'&&skillKeys.length?`<div class="filters" style="margin-bottom:8px"><span class="small" style="margin-right:6px">スキルで絞込</span>${skillKeys.map(k=>`<button class="${skillF===k?'on':''}" data-act="smithSkill" data-s="${k}">${DATA.armorSkills[k]?DATA.armorSkills[k].name:k}</button>`).join('')}</div>`:'';
+    const skOpen=!!this.smithSkillOpen,skLabel=skillF&&DATA.armorSkills[skillF]?DATA.armorSkills[skillF].name:'すべて';
+    const skillRow=cat==='armor'&&skillKeys.length?`<div class="filters" style="margin-bottom:8px"><button class="${skillF?'on':''}" data-act="smithSkillOpen">スキルで絞込：${skLabel} ${skOpen?'▲':'▼'}</button>${skOpen?`<div class="filters" style="margin-top:6px;width:100%">${skillKeys.map(k=>`<button class="${skillF===k?'on':''}" data-act="smithSkill" data-s="${k}">${DATA.armorSkills[k]?DATA.armorSkills[k].name:k}</button>`).join('')}</div>`:''}</div>`:'';
     const wt=DATA.weaponTypes[sub];
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
     const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${skillStepsText(4)}そろえると段階発動（別のシリーズと組み合わせてもOK）</div>`:'';
