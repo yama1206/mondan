@@ -243,7 +243,9 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.54.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.54.2',date:'2026/11/01'};
+/* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
+const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -4245,7 +4247,7 @@ function questGoalText(g,np){
 }
 /** 依頼の受注条件：ステージが解放されていること。緊急依頼は同じステージの通常の依頼をすべて達成していること */
 const QuestRules={
-  stage(p){return clamp((p.progress&&p.progress.stage)||1,1,maxStageId());},
+  stage(p){if(TEST_MODE.allQuests)return maxStageId();return clamp((p.progress&&p.progress.stage)||1,1,maxStageId());},
   done(p,id){return (p.progress&&p.progress.done[id])||0;},
   /** 雑魚の依頼：そのステージの討伐依頼（緊急・強敵・探索以外） */
   minions(stage){return DATA.quests.filter(q=>q.stage===stage&&q.goal&&q.goal.type==='kill'&&!q.urgent&&!q.explore);},
@@ -4257,6 +4259,7 @@ const QuestRules={
   /** 緊急依頼は、そのステージの強敵ボスをすべて倒すと出る */
   urgentOpen(p,stage){const st=DATA.quests.filter(q=>q.stage===stage&&this.strong(q));return st.length>0&&st.every(q=>this.done(p,q.id)>0);},
   available(p,q){
+    if(TEST_MODE.allQuests)return true; // テスト用：すべての依頼に挑める
     if(q.stage>this.stage(p))return false;
     if(q.urgent)return this.urgentOpen(p,q.stage);
     if(this.strong(q)&&!this.minionsOpen(p,q.stage))return false;
@@ -4621,6 +4624,7 @@ function inTelegraph(t,x,y,r){
 function wsActive(p,id){return !!(p&&p.ws&&p.ws.id===id&&!p.dead);}
 /* ---------- 被ダメージ・与ダメージ ---------- */
 function hitPlayer(w,p,raw,sx,sy,src,el,st){
+  if(TEST_MODE.invincible)return false; // テスト用：プレイヤーは無敵
   const srcT=src||w._atk,bossSrc=!!((DATA.enemies[srcT]||{}).boss); // ボスの攻撃は技ごとの属性・状態異常だけを使う
   const mn=w._atkEnt&&w._atkEnt.bossMinion?w._atkEnt.bossMinion:null; // ボスが呼んだ子分：属性なし。状態異常は子分ごとの設定のみ
   const noFx=bossSrc||!!mn;
@@ -4669,6 +4673,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
 }
 /** プレイヤーを状態異常にする（状態異常耐性で時間が短くなる） */
 function inflictPlayer(w,p,k){
+  if(TEST_MODE.invincible)return;
   const d=DATA.playerStatus[k];if(!d||p.dead)return;
   const time=d.time*(1-clamp(p.stats.statusRes||0,0,100)/100);if(time<=0.05)return;
   if(k==='poison'){if(!(p.poisonT>0))p.poisonTick=d.tick;p.poisonT=Math.max(p.poisonT||0,time);}
@@ -4683,6 +4688,7 @@ function downPlayer(w,p){p.hp=0;p.dead=true;p.revive=0;p.downT=CONFIG.coop.reviv
   emit(w,{type:'playerDead',pid:p.id,x:p.x,y:p.y});}
 /** 毒の雲などの継続ダメージ：のけぞらず、無敵時間も発生しない（回避中は受けない） */
 function dotPlayer(w,p,raw,el){
+  if(TEST_MODE.invincible)return;
   if(p.dead||p.dodgeInv>0)return;
   let dmg=raw*(60/(60+p.stats.def));
   if(p.buffs.def&&p.buffs.def.t>0)dmg*=1-p.buffs.def.pct/100;
@@ -5022,6 +5028,7 @@ function updatePlayer(w,p,inp,dt){
   // 解毒薬の即時使用（状態異常の表示から押したとき）：麻痺・睡眠中でも使える
   if(inp.cure&&(p.bag.antidote||0)>0&&cureStatus(w,p)){p.bag.antidote--;emit(w,{type:'itemUsed',pid:p.id,item:'antidote'});}
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
+  if(TEST_MODE.invincible)p.heldT=0;
   if(p.heldT>0){p.heldT-=dt;p.moving=false;p.charging=false;p.charge=0;p.using=null;p.kx*=0.5;p.ky*=0.5;return;} // ボスに掴まれている・ひるんでいる間は動けない
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec*(s.stamRegen||1)*(wsActive(p,'kyodo')?1.5:1)); // 疾風・狂人化で回復が速くなるp.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;}
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
@@ -14283,7 +14290,7 @@ const App={
   },
   campHTML(){
     const p=this.profile;
-    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}<br>${this.updateBarHTML()}<br><button data-act="gifts" class="${DATA.gifts.some(g=>!p.giftsGot[g.id])?'gift-new':''}">🎁 プレゼント${DATA.gifts.some(g=>!p.giftsGot[g.id])?'！':''}</button></div><div class="panel camp"><h1>モンスターダンジョンズ</h1>      <div class="campinfo">${this.charLine(0)}</div>
+    return `<div class="gver">ver ${GAME_VERSION.no}　${GAME_VERSION.date}${TEST_MODE.allQuests||TEST_MODE.invincible?'　<span style="color:#ff8a6a">テスト中（'+[TEST_MODE.allQuests?'全依頼':'',TEST_MODE.invincible?'無敵':''].filter(Boolean).join('・')+'）</span>':''}<br>${this.updateBarHTML()}<br><button data-act="gifts" class="${DATA.gifts.some(g=>!p.giftsGot[g.id])?'gift-new':''}">🎁 プレゼント${DATA.gifts.some(g=>!p.giftsGot[g.id])?'！':''}</button></div><div class="panel camp"><h1>モンスターダンジョンズ</h1>      <div class="campinfo">${this.charLine(0)}</div>
       <div class="menu-col"><button class="primary" data-act="board">依頼ボード（依頼を選んで出発）</button>
       <button data-act="training" style="background:#3a5a8a;border-color:#7aa8e0">🏋 訓練場（報酬なし・時間制限なし）</button>
       <button class="primary" data-act="online" style="background:#2d8a5a;border-color:#6fd8a0">オンライン協力（別々のPC・最大5人）</button>
