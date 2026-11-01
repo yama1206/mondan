@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.58.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.59.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:true,invincible:true};
 const CONFIG={
@@ -9063,6 +9063,61 @@ const MobArt=(()=>{
       H.P([-1.2,-0.08,-1.5,0,-1.2,0.08],'#1a1008');
       H.E(0.1,0,0.35,0.35,0,'#6a4a20',d);H.E(0.55,0,0.28,0.3,0,'#2a2010',d);
       for(const s of [-1,1]){H.E(0.6,s*0.18,0.1,0.13,0,pal.eye);H.L([0.75,s*0.1,1.1,s*0.3],'#2a2010',0.05);}
+    },
+    // ---- ステージ4 ----
+    crab(c,e,H,pal,t){ // 滝守の甲殻獣：甲羅の模様、左右の大きなハサミ、8本の脚、目柄
+      const d=pal.dark,op=e.state==='windup'?0.35:0.1+Math.sin(t*3)*0.05;
+      for(let i=0;i<4;i++){const x=-0.5+i*0.25,sw=Math.sin(t*12+i)*0.1;for(const s of [-1,1])H.L([x,s*0.55,x-0.15+sw,s*0.95,x-0.3+sw,s*1.1],d,0.1);}
+      for(const s of [-1,1]){H.L([0.45,s*0.45,0.85,s*0.75],pal.body,0.18);c.save();c.translate(1.0,s*0.8);c.rotate(s*0.3);
+        H.E(0,0,0.35,0.24,0,pal.body,d);H.P([0.2,-0.05,0.65,-0.18-op,0.45,0.0],pal.shell,d);H.P([0.2,0.05,0.62,0.15+op,0.4,0.05],pal.shell,d);c.restore();}
+      H.E(0,0,0.85,0.7,0,pal.body,d);H.E(-0.05,0,0.65,0.52,0,pal.shell);
+      for(const [x,y] of [[-0.3,-0.2],[-0.3,0.2],[0.1,0],[-0.55,0]])H.E(x,y,0.12,0.1,0,'#c86a3a');
+      H.L([-0.6,0,0.3,0],'#a85a2a',0.05);
+      for(const s of [-1,1]){H.L([0.6,s*0.18,0.85,s*0.25],d,0.06);H.E(0.88,s*0.26,0.08,0.08,0,pal.eye,d);}
+    },
+    eel(c,e,H,pal,t){ // 雷電ウナギ：細長くうねる体、背と腹に続くひれ、光る斑点、平たい頭
+      const d=pal.dark,pts=[];for(let i=0;i<8;i++)pts.push(-1.6+i*0.38,Math.sin(t*8-i*0.9)*0.22);
+      for(const s of [-1,1]){c.beginPath();c.moveTo(pts[0],pts[1]+s*0.12);for(let i=1;i<8;i++)c.lineTo(pts[i*2],pts[i*2+1]+s*(0.32-i*0.015));c.strokeStyle=H.C('#7a8ae0');c.lineWidth=0.14;c.stroke();}
+      c.beginPath();c.moveTo(pts[0],pts[1]);for(let i=1;i<8;i++)c.lineTo(pts[i*2],pts[i*2+1]);c.strokeStyle=d;c.lineWidth=0.5;c.stroke();c.strokeStyle=H.C(pal.body);c.lineWidth=0.4;c.stroke();
+      for(let i=1;i<7;i++){const g=0.5+0.5*Math.sin(t*10+i);c.fillStyle=`rgba(255,232,88,${0.4+0.6*g})`;c.beginPath();c.arc(pts[i*2],pts[i*2+1],0.07,0,TAU);c.fill();}
+      const hx=pts[14],hy=pts[15];H.P([hx-0.1,hy-0.26,hx+0.4,hy-0.18,hx+0.62,hy,hx+0.4,hy+0.18,hx-0.1,hy+0.26],pal.body,d);
+      for(const s of [-1,1])H.E(hx+0.32,hy+s*0.12,0.06,0.06,0,pal.eye);
+      if(e.state==='windup')for(let i=0;i<4;i++){const a=i*1.6+t*10;H.L([Math.cos(a)*0.6,Math.sin(a)*0.6,Math.cos(a+0.3)*1.0,Math.sin(a+0.3)*1.0],pal.spark,0.06);}
+    },
+    jellyfish(c,e,H,pal,t){ // 泡沫クラゲ：上から見た丸い傘、透けた放射の模様、ゆらゆら広がる触手
+      c.rotate(-e.facing);const d=pal.dark,pu=1+Math.sin(t*3)*0.08;
+      for(let i=0;i<8;i++){const a=i*TAU/8,w=Math.sin(t*3+i)*0.3;H.L([Math.cos(a)*0.6,Math.sin(a)*0.6,Math.cos(a+w*0.3)*1.1,Math.sin(a+w*0.3)*1.1,Math.cos(a+w)*1.45,Math.sin(a+w)*1.45],'rgba(160,200,255,.7)',0.06);}
+      c.globalAlpha*=0.82;H.E(0,0,0.95*pu,0.95*pu,0,pal.body,d);c.globalAlpha/=0.82;
+      for(let i=0;i<4;i++){const a=i*TAU/4+0.4;H.E(Math.cos(a)*0.32,Math.sin(a)*0.32,0.18,0.1,a,'#e8a8d8');}
+      for(let i=0;i<8;i++){const a=i*TAU/8;H.L([Math.cos(a)*0.2,Math.sin(a)*0.2,Math.cos(a)*0.88*pu,Math.sin(a)*0.88*pu],'rgba(90,128,176,.35)',0.03);}
+      H.E(-0.3,-0.35,0.22,0.1,-0.6,'rgba(255,255,255,.5)');
+    },
+    piranha(c,e,H,pal,t){ // 川牙ピラニア：ずんぐりした体、突き出た下あごの鋭い歯、尾びれ
+      const d=pal.dark,w=Math.sin(t*14)*0.25,op=e.state==='windup'?0.2:0.05;
+      H.P([-0.75,0,-1.25,-0.45+w,-1.1,w*0.5,-1.25,0.45+w],pal.body,d);
+      for(const s of [-1,1])H.P([0,s*0.5,-0.3,s*0.85,-0.45,s*0.55],'#a04a3a',d);
+      H.E(0,0,0.85,0.65,0,pal.body,d);H.E(0.05,0.15,0.6,0.35,0,pal.belly);
+      for(let i=0;i<4;i++)H.L([-0.4+i*0.18,-0.5,-0.35+i*0.18,0.5],'rgba(90,30,24,.35)',0.03);
+      H.P([0.6,-0.4,1.05,-0.15-op,1.1,0,1.05,0.15+op,0.6,0.4],pal.body,d);
+      for(let i=0;i<5;i++){const y=-0.12+i*0.06;H.P([0.95,y-0.03,1.1+(i%2)*0.03,y,0.95,y+0.03],pal.teeth);}
+      for(const s of [-1,1])H.E(0.55,s*0.28,0.11,0.11,0,pal.eye,d),H.E(0.57,s*0.28,0.05,0.05,0,'#2a0a0a');
+    },
+    water_lizard(c,e,H,pal,t){ // 水棲トカゲ：平たい体の縞、横に張った4本の脚と水かき、ひれのついた長い尾
+      const d=pal.dark,w=Math.sin(t*10)*0.25;
+      H.P([-0.6,-0.12,-1.4,w*0.6-0.12,-1.9,w,-1.4,w*0.6+0.12,-0.6,0.12],pal.body,d);H.L([-0.8,w*0.2,-1.7,w*0.9],pal.stripe,0.05);
+      for(const [x,ph] of [[0.35,0],[-0.4,1.6]])for(const s of [-1,1]){const k=Math.sin(t*12+ph+(s>0?Math.PI:0))*0.18;H.L([x,s*0.3,x+k,s*0.75,x+0.2+k,s*0.85],d,0.14);H.E(x+0.22+k,s*0.88,0.12,0.08,0,'#5ab0a0');}
+      H.E(-0.05,0,0.75,0.42,0,pal.body,d);
+      for(let i=0;i<4;i++)H.L([-0.55+i*0.3,-0.35,-0.55+i*0.3,0.35],pal.stripe,0.08);
+      H.P([0.55,-0.32,1.05,-0.2,1.25,0,1.05,0.2,0.55,0.32],pal.body,d);
+      for(const s of [-1,1])H.E(0.85,s*0.2,0.08,0.08,0,pal.eye);
+    },
+    water_spirit(c,e,H,pal,t){ // 水霊：渦を巻く水の体と、まわりを回る水の粒、光る核
+      c.rotate(-e.facing);const d=pal.dark;
+      c.globalAlpha*=0.75;H.E(0,0,0.95,0.95,0,pal.body);c.globalAlpha/=0.75;
+      for(let i=0;i<3;i++){c.beginPath();for(let j=0;j<=20;j++){const q=j/20,a=t*2+i*TAU/3+q*4,rr=0.85*(1-q*0.8);const x=Math.cos(a)*rr,y=Math.sin(a)*rr;j?c.lineTo(x,y):c.moveTo(x,y);}c.strokeStyle='rgba(220,245,255,.7)';c.lineWidth=0.07;c.stroke();}
+      H.E(0,0,0.32,0.32,0,'#e8f8ff',d);H.E(0,0,0.16,0.16,0,'#ffffff');
+      const f=e.facing;for(const s of [-1,1])H.E(Math.cos(f)*0.15+Math.cos(f+Math.PI/2)*s*0.12,Math.sin(f)*0.15+Math.sin(f+Math.PI/2)*s*0.12,0.05,0.07,0,'#2a5a80');
+      for(let i=0;i<5;i++){const a=t*1.5+i*TAU/5;H.E(Math.cos(a)*1.2,Math.sin(a)*1.2,0.1,0.1,0,'#a8e0ff',d);}
     },
   };
 })();
