@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.27.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.27.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -11485,9 +11485,9 @@ function sellPrice(it){
 }
 const ENCHANT_CAP=[1,1,2,2,3]; // 付与できる効果の数（レア度ごと）
 const REINFORCE_MAX=5,REINFORCE_GOLD=40;
-// 武器の霊玉強化：ボスごとの霊玉を3個と、段階ごとのお金で強化。1〜2段階は攻撃・会心が上がり、3段階目で特殊効果が付く
+// 武器の霊玉強化：ボスごとの霊玉を3個と、段階ごとのお金で強化。1〜2段階は攻撃力が +2 ずつ上がり、3段階目では特殊効果が付く
 const BOSS_REINF_MAX=3,BOSS_REINF_COST=3,BOSS_REINF_GOLD=[300,600,900];
-const BOSS_REINF_STATS=[{atk:3,crit:2},{atk:4,crit:3},{atk:5,crit:3}];
+const BOSS_REINF_STATS=[{atk:2,crit:0},{atk:2,crit:0},{atk:0,crit:0}];
 const BOSS_REINF_EFFECTS=['hunter','critup','desperate','combo','guard','gale','medic','skillcd'];
  // 防具の強化：最大段階と、1段階ごとのお金（×段階数）
 /** データの参照ミスを見つける（魔物・素材・地図・依頼・レシピ・ショップの名前が実在するか） */
@@ -11830,10 +11830,11 @@ const Ops={
     if((p.materials[mat]||0)<BOSS_REINF_COST)return {msg:'霊玉が足りません（'+BOSS_REINF_COST+'個必要）',color:'#ff8060'};
     if((p.gold||0)<gold)return {msg:'お金が足りません（'+gold+'G 必要）',color:'#ff8060'};
     Profile.spendMats(p,{[mat]:BOSS_REINF_COST});p.gold-=gold;
-    const st=BOSS_REINF_STATS[lv];it.atk+=st.atk;it.crit+=st.crit;it.bossLv=lv+1;
+    const st=BOSS_REINF_STATS[lv];it.atk+=st.atk;it.bossLv=lv+1;
     let eff='';
     if(lv+1===BOSS_REINF_MAX){const ids=Object.keys(DATA.enemies);const ei=ids.indexOf(boss);const ef=BOSS_REINF_EFFECTS[(ei<0?0:ei)%BOSS_REINF_EFFECTS.length];if(!it.effects.includes(ef))it.effects.push(ef);eff=`（特殊効果「${DATA.effects[ef].name}」付与）`;}
-    return {changed:true,msg:`${DATA.equipment[it.baseId].name} を強化！ 攻撃 +${st.atk}・会心 +${st.crit}%（${lv+1}/${BOSS_REINF_MAX}）${eff}`,color:'#ffd23a'};
+    const up=st.atk?`攻撃 +${st.atk}`:'';
+    return {changed:true,msg:`${DATA.equipment[it.baseId].name} を強化！ ${up}（${lv+1}/${BOSS_REINF_MAX}）${eff}`,color:'#ffd23a'};
   },
   /** 付与：防具に玉（段階1〜3）で付与スキルを抽選する。付与済みなら作り直し（今の付与を消して抽選し直す）。玉は1個 */
   enchant(p,who,a){
@@ -14033,7 +14034,7 @@ const App={
         ${full?'':`<div class="cost"><span class="${have>=BOSS_REINF_COST?'ok':'ng'}">${esc(mn)} ${have}/${BOSS_REINF_COST}</span><span class="${gold0>=gold?'ok':'ng'}">${gold}G（所持 ${gold0}G）</span></div>`}
         <div class="btnrow"><button class="${can?'primary':''}" data-act="bossReinforce" data-uid="${it.uid}" ${can?'':'disabled'}>${full?'強化済み':'霊玉で強化する'}</button></div></div>`;
     }).join(''):'<div class="muted">ボスの武器を持っていません。</div>';
-    return `<div class="col full" style="margin-bottom:10px"><div class="col-t">ボスの武器の強化（霊玉）</div><div class="small muted" style="margin-bottom:6px">各ボスの霊玉（そのボスからだけ10%で落ちる）を3個使って強化。1〜2段階で攻撃・会心が上がり、3段階目で特殊効果が付きます。</div><div class="recipes">${rows}</div></div>`;
+    return `<div class="col full" style="margin-bottom:10px"><div class="col-t">ボスの武器の強化（霊玉）</div><div class="small muted" style="margin-bottom:6px">各ボスの霊玉（そのボスからだけ10%で落ちる）を3個使って強化。1〜2段階で攻撃力が +2 ずつ上がり、3段階目で特殊効果が付きます。</div><div class="recipes">${rows}</div></div>`;
   },
   reinforceHTML(){
     const p=this.profile,orbs=p.materials.reinforce_orb||0,gold0=p.gold||0;
