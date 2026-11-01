@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.37.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.37.1',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -794,8 +794,8 @@ const DATA={
     bw_armadillo_lance:{name:'巨躯の槍',slot:'weapon',st:{k:'slow',buildup:15},wtype:'lance',atk:17,crit:10,slots:1},
     bw_rhino_shuriken:{name:'鎧犀の手裏剣',slot:'weapon',el:{k:'water',v:5},wtype:'shuriken',atk:12,crit:11,slots:1,boss:'rhino'},
     bw_hermit_crab_lance:{name:'宿借の槍',slot:'weapon',el:{k:'water',v:7},wtype:'lance',atk:23,crit:10,slots:2,boss:'hermit_crab'},
-    bw_forest_rabbit_bow:{name:'跳兎の弓',slot:'weapon',el:{k:'ice',v:7},wtype:'bow',atk:20,crit:10,slots:2,boss:'forest_rabbit'},
-    rabbit_tachi:{name:'跳ね兎の太刀',slot:'weapon',el:{k:'ice',v:7},wtype:'tachi',atk:20,crit:12,slots:2,boss:'forest_rabbit'}, // 覇狼の太刀の代わり（ステージ2の太刀）
+    bw_forest_rabbit_bow:{name:'跳兎の弓',slot:'weapon',el:{k:'water',v:7},wtype:'bow',atk:20,crit:10,slots:2,boss:'forest_rabbit'},
+    rabbit_tachi:{name:'跳ね兎の太刀',slot:'weapon',el:{k:'water',v:7},wtype:'tachi',atk:20,crit:12,slots:2,boss:'forest_rabbit'}, // 覇狼の太刀の代わり（ステージ2の太刀）
     bw_queen_bee_sword:{name:'女王蜂の剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'sword',atk:31,crit:10,slots:2,boss:'queen_bee'},
     bw_giant_frog_greatsword:{name:'大蛙の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:30,crit:4,slots:2,boss:'giant_frog'},
     bw_queen_bee_greatsword:{name:'女王蜂の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:34,crit:4,slots:2,boss:'queen_bee'},
@@ -6209,13 +6209,16 @@ function placeMagma(w){
     w.hazards.push({id:w.nextId++,kind:'magma',x:p.x,y:p.y,r:rand(34,46),t:0,life:1e9,tick:0.6,acc:0,dmg:9,delay:0});
   }
 }
-/** 沼地の毒池：小さく常設。乗ると毒になり、出てからも毒の状態は2秒続く */
+/** 沼地の毒池：常設。スタート以外のすべての部屋に1〜2個。乗ると毒になり、出てからも毒の状態は2秒続く */
 function placeToxPools(w){
   const m=w.map,keys=Object.keys(m.rooms||{}).filter(k=>k!=='start'&&k!=='entrance');
-  for(const k of shuffle(keys).slice(0,Math.min(keys.length,4))){
+  for(const k of keys){
     const room=m.rooms[k];if(!room)continue;
-    const p=randomFloor(m,room,3);if(!p)continue;
-    w.hazards.push({id:w.nextId++,kind:'toxpool',x:p.x,y:p.y,r:20,t:0,life:1e9,tick:0.5,acc:0,dmg:6,delay:0});
+    const n=randInt(1,2);
+    for(let i=0;i<n;i++){
+      const p=randomFloor(m,room,3);if(!p)continue;
+      w.hazards.push({id:w.nextId++,kind:'toxpool',x:p.x,y:p.y,r:rand(34,50),t:0,life:1e9,tick:0.5,acc:0,dmg:6,delay:0});
+    }
   }
 }
 /** 毒の雲：中にいる間、一定間隔でダメージ */
