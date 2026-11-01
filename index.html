@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.82.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.82.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1921,7 +1921,7 @@ const DATA={
     water_spirit:{name:'水霊',ai:'archer',look:'spirit',hp:70,atk:16,def:1,r:13,speed:70,color:'#70c0e8',drops:'water_spirit',aimTime:0.9,arrowSpeed:330,
       pal:{body:'#70c0e8',dark:'#2a5a80',eye:'#ffffff'}},
     /* 水辺のボス（技は pattern に並べる。技の種類は沼地と同じ） */
-    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:88,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,moveStyle:'swim',specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]},{k:'coil',cd:12,wind:0.55,dmg:0.6,r:60,hold:1.6,tick:0.45,el:'water',range:[0,140]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.6,rings:3,el:'water',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:50,el:'water',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'water',txt:'大潮！',txtColor:'#9ad8ff',range:[0,900]},{k:'collapse',cd:16,wind:1.0,dmg:0.9,n:16,r:62,el:'water',txt:'豪雨！',txtColor:'#9ad8ff',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.0,len:420,width:40,el:'water',txt:'激流の渦！',txtColor:'#9ad8ff',below:0.5,range:[0,600]}],ultimate:{mode:'safe',zones:4,zoneR:58,zoneCol:'#9ae8ff',charge:5,el:'water',name:'蒼海竜の大海嘯！',warn:'光る泡の中に逃げ込め！'},
+    aquarios:{name:'蒼海竜アクアリオス',ai:'pattern',look:'aquarios',hp:3400,atk:30,def:8,r:34,speed:88,stunMax:130,stunTime:4,color:'#2a6aa0',drops:'aquarios',boss:true,moveStyle:'swim',specials:[{k:'vortex',cd:13,wind:0.6,dmg:1.3,r:200,pull:110,el:'water',range:[0,650]},{k:'tsunami',cd:12,wind:1.0,dmg:1.3,len:620,width:380,speed:300,el:'water',range:[0,600]},{k:'coil',cd:12,wind:0.55,dmg:0.6,r:60,hold:1.6,tick:0.45,el:'water',range:[0,140]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.6,rings:3,el:'water',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:50,el:'water',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'water',txt:'大潮！',txtColor:'#9ad8ff',range:[0,900]},{k:'collapse',cd:16,wind:1.0,dmg:0.9,n:16,r:62,el:'water',txt:'豪雨！',txtColor:'#9ad8ff',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.0,len:420,width:40,el:'water',txt:'激流の渦！',txtColor:'#9ad8ff',below:0.5,range:[0,600]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:70,el:'water'}, // 激流のブレス
         {k:'sweep',wind:0.8,cd:3.2,dmg:1.1,r:140,arc:2.5}, // 長い体で薙ぎ払う
@@ -2073,7 +2073,7 @@ const DATA={
         {k:'pool',wind:1.0,cd:7,dmg:0.8,r:90,life:6,hz:'fire',el:'fire'}, // 滴る溶岩だまり
       ],
       pal:{body:'#7a4a2a',dark:'#2a1608',rock:'#a06a40',lava:'#ff6a20',core:'#ffb050',rage:'#a03a1a',rageDark:'#3a0a04',eye:'#ffe060',rageEye:'#ffffff'}},
-    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:88,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.7,rings:3,el:'fire',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:52,el:'fire',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'fire',txt:'熱波！',txtColor:'#ffb070',range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:64,el:'fire',txt:'火山弾！',txtColor:'#ffb070',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:440,width:44,el:'fire',txt:'炎獄の旋回ブレス！',below:0.5,range:[0,600]}],ultimate:{mode:'cover',rocks:5,charge:5,el:'fire',name:'炎獄竜の最後の噴火！',warn:'落ちてきた溶岩岩の陰に隠れろ！'},
+    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:88,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.7,rings:3,el:'fire',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:52,el:'fire',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'fire',txt:'熱波！',txtColor:'#ffb070',range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:64,el:'fire',txt:'火山弾！',txtColor:'#ffb070',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:440,width:44,el:'fire',txt:'炎獄の旋回ブレス！',below:0.5,range:[0,600]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:70,el:'fire'}, // 炎獄のブレス
         {k:'shot',wind:0.9,cd:4.5,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire',el:'fire'}, // 火炎弾を扇に
