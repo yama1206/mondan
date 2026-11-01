@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.36.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.37.0',date:'2026/11/01'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -453,7 +453,6 @@ const DATA={
     hydra:{name:'多頭竜シリーズ',bonus:'多頭の執念',pieces:{head:'hydra_helm',body:'hydra_mail',arms:'hydra_vambrace',waist:'hydra_faulds',legs:'hydra_greaves'},eff2:{atk:2},eff:{healPct:10}},
     venom:{name:'毒蟲シリーズ',bonus:'毒蟲の猛毒',pieces:{head:'venom_helm',body:'venom_mail',arms:'venom_vambrace',waist:'venom_faulds',legs:'venom_greaves'},eff2:{critDmg:10},eff:{statusPct:20}},
     mire:{name:'沼巨人シリーズ',bonus:'沼巨人の剛体',pieces:{head:'mire_helm',body:'mire_mail',arms:'mire_vambrace',waist:'mire_faulds',legs:'mire_greaves'},eff2:{maxHp:15},eff:{dmgCut:4}},
-    haro:{name:'覇狼シリーズ',bonus:'覇狼の威風',pieces:{head:'haro_helm',body:'haro_mail',arms:'haro_vambrace',waist:'haro_faulds',legs:'haro_greaves'},eff2:{critDmg:10},eff:{weakCrit:15}},
     toad:{name:'大蛙王シリーズ',bonus:'大蛙王の跳躍',pieces:{head:'toad_helm',body:'toad_mail',arms:'toad_vambrace',waist:'toad_faulds',legs:'toad_greaves'},eff2:{maxHp:10},eff:{healPct:10}},
     octo:{name:'大蛸シリーズ',bonus:'深淵の潮流',pieces:{head:'octo_helm',body:'octo_mail',arms:'octo_vambrace',waist:'octo_faulds',legs:'octo_greaves'},eff2:{atk:2},eff:{elemAtk:{water:10}}},
     scorp:{name:'晶毒蠍シリーズ',bonus:'晶毒の鋭針',pieces:{head:'scorp_helm',body:'scorp_mail',arms:'scorp_vambrace',waist:'scorp_faulds',legs:'scorp_greaves'},eff2:{crit:4},eff:{critDmg:10}},
@@ -796,6 +795,7 @@ const DATA={
     bw_rhino_shuriken:{name:'鎧犀の手裏剣',slot:'weapon',el:{k:'water',v:5},wtype:'shuriken',atk:12,crit:11,slots:1,boss:'rhino'},
     bw_hermit_crab_lance:{name:'宿借の槍',slot:'weapon',el:{k:'water',v:7},wtype:'lance',atk:23,crit:10,slots:2,boss:'hermit_crab'},
     bw_forest_rabbit_bow:{name:'跳兎の弓',slot:'weapon',el:{k:'ice',v:7},wtype:'bow',atk:20,crit:10,slots:2,boss:'forest_rabbit'},
+    rabbit_tachi:{name:'跳ね兎の太刀',slot:'weapon',el:{k:'ice',v:7},wtype:'tachi',atk:20,crit:12,slots:2,boss:'forest_rabbit'}, // 覇狼の太刀の代わり（ステージ2の太刀）
     bw_queen_bee_sword:{name:'女王蜂の剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'sword',atk:31,crit:10,slots:2,boss:'queen_bee'},
     bw_giant_frog_greatsword:{name:'大蛙の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:30,crit:4,slots:2,boss:'giant_frog'},
     bw_queen_bee_greatsword:{name:'女王蜂の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:34,crit:4,slots:2,boss:'queen_bee'},
@@ -1022,15 +1022,6 @@ const DATA={
     abyss_vambrace:{name:'冥蜘蛛の脚腕',slot:'arms',def:24,skills:{status_res:4,evade:2,elem_up:1},slots:2},
     abyss_faulds:{name:'冥蜘蛛の糸垂れ',slot:'waist',def:24,skills:{status_res:3,evade:3,elem_up:1},slots:2},
     abyss_greaves:{name:'冥蜘蛛の爪脚',slot:'legs',def:27,skills:{status_res:4,evade:2,elem_up:1},slots:2},
-    // ステージ2：古森の覇狼の素材（古狼と黒狼の間の強さ。会心と素早さ）
-    haro_tachi:{name:'覇狼の太刀',slot:'weapon',el:{k:'ice',v:7},wtype:'tachi',atk:18,crit:12,slots:2,boss:'forest_king'},
-    haro_db:{name:'覇狼の双剣',slot:'weapon',el:{k:'ice',v:7},wtype:'dual',atk:17,crit:14,slots:2,boss:'forest_king'},
-    haro_lance:{name:'覇狼の槍',slot:'weapon',el:{k:'ice',v:7},wtype:'lance',atk:18,crit:10,slots:2,boss:'forest_king'},
-    haro_helm:{name:'覇狼の兜',slot:'head',def:11,skills:{crit_dmg:4,weakness:3},slots:2},
-    haro_mail:{name:'覇狼の鎧',slot:'body',def:14,skills:{crit_dmg:5,minion_hunter:2},slots:2},
-    haro_vambrace:{name:'覇狼の篭手',slot:'arms',def:10,skills:{crit_dmg:4,weakness:2,minion_hunter:1},slots:2},
-    haro_faulds:{name:'覇狼の草摺',slot:'waist',def:10,skills:{crit_dmg:3,weakness:3,minion_hunter:1},slots:2},
-    haro_greaves:{name:'覇狼の具足',slot:'legs',def:11,skills:{crit_dmg:4,weakness:2,minion_hunter:1},slots:2},
   },
   materials:{
     // ステージ3：腐毒の沼地
@@ -1093,7 +1084,6 @@ const DATA={
     black_wolf_spirit:{name:'黒き古狼の霊玉',color:'#c8a8ff',desc:'黒き古狼からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     stag_beetle_spirit:{name:'大顎クワガタの霊玉',color:'#c8a8ff',desc:'古森の大顎クワガタからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     forest_rabbit_spirit:{name:'跳ね兎の霊玉',color:'#c8a8ff',desc:'古森の跳ね兎からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
-    forest_king_spirit:{name:'覇狼の霊玉',color:'#c8a8ff',desc:'古森の覇狼からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     mole_spirit:{name:'土竜の霊玉',color:'#c8a8ff',desc:'結晶喰いの土竜からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     centipede_spirit:{name:'大百足の霊玉',color:'#c8a8ff',desc:'晶殻の大百足からだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
     grados_spirit:{name:'地底王グラドスの霊玉',color:'#c8a8ff',desc:'地底王グラドスからだけ稀に採れる霊玉。そのボスの武器の強化に使う。'},
@@ -1234,8 +1224,6 @@ const DATA={
     wood:{name:'木材',color:'#a0703a',desc:'古木の採取場で取れる丈夫な木材。（緑風の森林）'},
     herb:{name:'薬草',color:'#58c060',desc:'古木の採取場に生える薬草。（緑風の森林）'},
     forest_mushroom:{name:'森のキノコ',color:'#d08a5a',desc:'古木の根元に生えるキノコ。（緑風の森林）'},
-    haro_fang:{name:'覇狼の牙',color:'#fff0b0',desc:'古森の覇狼の巨大な牙。稀少素材。（緑風の森林）'},
-    oldwood_pelt:{name:'古森の毛皮',color:'#6a8a4a',desc:'苔むした古森の覇狼の毛皮。（緑風の森林）'},
     // ---- 忘却の地下墓地で手に入る素材 ----
     soul_shard:{name:'霊魂の欠片',color:'#9ad8ff',desc:'迷い霊が残した、淡く光る欠片。（忘却の地下墓地）'},
     rotten_cloth:{name:'腐敗した布',color:'#7a7a58',desc:'墓守ゾンビがまとっていたぼろ布。（忘却の地下墓地）'},
@@ -1309,7 +1297,7 @@ const DATA={
   seriesRes:{
     beast:{ice:2,fire:-1},goblin:{fire:1,mei:-1},beetle:{water:2,fire:-2},bone:{mei:2,thunder:-1},
     croc:{water:3,thunder:-2},frog:{water:2,fire:1,thunder:-1},bull:{fire:1,thunder:-1},gale:{thunder:3,ice:-2},
-    lizard:{fire:3,water:-2},wolf:{ice:2,fire:-1},fang:{ice:2,fire:-1},haro:{ice:3,fire:-2},stag:{thunder:2,fire:-2},
+    lizard:{fire:3,water:-2},wolf:{ice:2,fire:-1},fang:{ice:2,fire:-1},stag:{thunder:2,fire:-2},
     hydra:{thunder:-1,ice:1},venom:{ice:1,mei:1,fire:-2},mire:{fire:-2,thunder:1},bwolf:{mei:3,thunder:-2},
   },
   enemyElem:{
@@ -1334,7 +1322,7 @@ const DATA={
     goblin:{weak:['fire']},goblin_archer:{weak:['fire']},slime:{atk:'water',weak:['thunder']},forest_wolf:{weak:['fire'],strong:['ice']},
     meadow_bull:{atk:'fire',weak:['thunder','ice']},rhino:{weak:['thunder']},boar:{weak:['ice']},salamander:{weak:['fire'],strong:['water']},gale_bird:{atk:'thunder',weak:['ice'],strong:['water']},rock_lizard:{atk:'fire',weak:['water','ice']},
     archer:{weak:['mei','fire']},beetle:{weak:['fire'],strong:['water']},mushroom:{weak:['fire']},
-    wolf:{atk:'thunder',weak:['fire'],strong:['ice']},forest_king:{atk:'ice',weak:['fire','thunder']},stag_beetle:{weak:['fire'],strong:['thunder']},
+    wolf:{atk:'thunder',weak:['fire'],strong:['ice']},stag_beetle:{weak:['fire'],strong:['thunder']},
     poison_frog:{atk:'water',weak:['thunder']},leech:{weak:['fire','thunder']},carnivore_plant:{weak:['fire'],strong:['water']},
     bloater:{weak:['fire']},swamp_croc:{atk:'water',weak:['thunder'],strong:['fire']},parasite:{weak:['fire','mei']},
     mole:{weak:['fire']},centipede:{atk:'fire',weak:['ice','water']},grados:{weak:['fire','water','thunder','ice','mei']},
@@ -1377,7 +1365,7 @@ const DATA={
     mole:[{id:'head',name:'頭',x:1.1,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'claw',name:'爪',x:0.6,y:-1.0,r:0.38,mult:1.1}],
     centipede:[{id:'head',name:'頭',x:1.2,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.1,y:0,r:0.32,mult:0.9}],
     grados:[{id:'head',name:'頭',x:0.7,y:0,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},{id:'armL',name:'腕',x:0.3,y:-1.0,r:0.42,mult:0.9},{id:'armR',name:'腕',x:0.3,y:1.0,r:0.42,mult:0.9}],
-    forest_king:'wolf',black_wolf:'wolf',
+    black_wolf:'wolf',
     meadow_bull:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9}],
     salamander:[{id:'head',name:'頭',x:1.25,y:0,r:0.5,mult:1.25,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.3,y:0,r:0.5,mult:0.9}],
     rhino:[{id:'head',name:'頭',x:1.0,y:0,r:0.45,mult:1.25,weak:true,head:true,guard:'dir'},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1,guard:'dir'},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9,guard:'dir'}],
@@ -1837,9 +1825,6 @@ const DATA={
         {k:'shot',wind:0.6,cd:5,n:6,ring:true,speed:260,dmg:0.6,kind:'soul'}, // 綿毛を舞い散らす
       ],
       pal:{body:'#f4eee8',dark:'#b8a8a0',ear:'#ffb8c8',cheek:'#ffb0c0',eye:'#d83c60',rage:'#ffd8c8',rageDark:'#a07060',rageEye:'#ff2040'}},
-    forest_king:{name:'古森の覇狼',ai:'wolf',atkEl:{roar:'ice',sweep:'ice'},hp:2600,atk:24,def:6,r:34,speed:128,stunMax:120,stunTime:4,color:'#5a6a3a',drops:'forest_king',boss:true,
-      moves:['bite','sweep','charge','roar'],rageChain:2,rageCd:0.7,
-      pal:{body:'#5a6a3a',dark:'#2e3a1c',rage:'#6a5a2a',rageDark:'#3a2a10',eye:'#e0ff70',rageEye:'#ff6020',moss:'#7aa040'}},
     cave_bat:{name:'洞窟コウモリ',ai:'dasher',look:'bat',hp:44,atk:13,def:1,r:11,speed:150,color:'#4a3a6a',drops:'cave_bat',dash:{wind:0.45,speed:640,dist:210,cd:[2.4,3.4]},
       pal:{body:'#4a3a6a',dark:'#1e1630',wing:'#7a60a0',eye:'#ff5070',fang:'#f0f0e0'}},
     rock_shell:{name:'岩殻トカゲ',ai:'goblin',look:'rockShell',hp:120,atk:17,def:10,r:16,speed:88,color:'#7a7a80',drops:'rock_shell',guard:{arc:120*Math.PI/180,mult:0.3},
@@ -2145,15 +2130,6 @@ const DATA={
       {type:'mat',id:'poison_spore',chance:0.75,min:1,max:2},
       {type:'mat',id:'forest_mushroom',chance:0.3,min:1,max:1}
       ]},
-    forest_king:{rarityBoost:1.9,rolls:[{type:'mat',id:'forest_king_spirit',chance:0.1,min:1,max:1},
-      {type:'mat',id:'haro_fang',chance:1.0,min:1,max:2},
-      {type:'mat',id:'reinforce_orb',chance:0.6,min:1,max:1},
-      {type:'mat',id:'oldwood_pelt',chance:1.0,min:2,max:3},
-      {type:'mat',id:'wood',chance:0.8,min:1,max:3},
-      {type:'mat',id:'herb',chance:0.8,min:1,max:3},
-      {type:'deco',chance:0.7},
-      {type:'deco',chance:0.3},
-    ]},
     // 採取ポイント（古木の採取場）
     gather_wood:{rarityBoost:1.0,rolls:[{type:'mat',id:'wood',chance:1.0,min:1,max:2},{type:'mat',id:'herb',chance:0.2,min:1,max:1}]},
     gather_herb:{rarityBoost:1.0,rolls:[{type:'mat',id:'herb',chance:1.0,min:1,max:2}]},
@@ -2495,10 +2471,9 @@ const DATA={
     {id:'n_beast',stage:7,after:'n_ape',boss:'eternal_beast',name:'【強敵】永久凍土の巨象',desc:'永久凍土に棲む巨大な象が、牙を構えて突進してくる。冷気の扇に注意。',goal:{type:'boss'},reward:{gold:2600,mats:{beast_hide:3,beast_fang:2}}},
     {id:'n_cat',stage:7,after:'n_beast',boss:'frost_cat',name:'【強敵】白霜の大山猫',desc:'白霜をまとった大山猫が、素早く飛びかかってくる。氷の破片を避けろ。',goal:{type:'boss'},reward:{gold:2500,mats:{beast_fang:3,crystal_shard:2}}},
     {id:'free_n',stage:7,explore:true,name:'【探索】氷雪地帯',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'s1_haro',stage:2,after:'s1_boss',boss:'forest_king',name:'【強敵】古森の覇狼',desc:'古森の広場に、森林を支配する巨大な狼が現れた。前方を薙ぎ払う爪と、周囲を吹き飛ばす咆哮に気をつけろ。怒ると突進が止まらなくなるぞ。',goal:{type:'boss'},reward:{gold:1200,mats:{wood:3,herb:3,reinforce_orb:2},decos:1}},
     {id:'ex_flower_dragon',stage:2,after:'s2_sanshou',boss:'flower_dragon',name:'【強敵】古森の毒花竜',desc:'古森の奥で花を咲かせる竜。冥の力を帯びた花びらで薙ぎ払い、地面から根を突き出す。',goal:{type:'boss'},reward:{gold:1260,mats:{spider_silk:2,toxic_gland:2}}},
     {id:'ex_hermit_crab',stage:2,after:'ex_flower_dragon',boss:'hermit_crab',name:'【強敵】樹海の巨大ヤドカリ',desc:'大きな殻を背負ったヤドカリ。殻ごと突進し、大ハサミで挟む。泡を吐いて眠らせることもある。',goal:{type:'boss'},reward:{gold:1260,mats:{hard_shell:2,swamp_moss:2}}},
-    {id:'s1_stag',stage:2,after:'s1_haro',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:1400,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
+    {id:'s1_stag',stage:2,after:'s1_boss',boss:'stag_beetle',name:'【強敵】古森の大顎クワガタ',desc:'古森の奥に、巨大な大顎を持つクワガタが現れた。正面からの攻撃は硬い大顎に弾かれる。横や後ろに回り込め。',goal:{type:'boss'},reward:{gold:1400,mats:{stag_shell:2,reinforce_orb:2},decos:1}},
     {id:'s2_sanshou',stage:2,after:'s1_rabbit',boss:'salamander',name:'【強敵】樹海の大山椒魚',desc:'湿った森の奥に、長い舌と粘液を操る巨大な両生類が潜んでいる。粘液は水の力を帯びている。',goal:{type:'boss'},reward:{gold:1500,mats:{sanshou_mucus:2,reinforce_orb:2},decos:1}},
     {id:'s1_rabbit',stage:2,after:'s1_stag',boss:'forest_rabbit',name:'【強敵】古森の跳ね兎',desc:'森の奥で、白い毛並みの大きな兎が跳ね回っている。とても素早く、突進の前には足をためる。横へかわして背後から攻めろ。',goal:{type:'boss'},reward:{gold:1600,mats:{rabbit_fur:2,rabbit_tuft:2,reinforce_orb:2},decos:1}},
     {id:'s2_dragon',stage:8,after:'s2_boss',boss:'bone_dragon',name:'【強敵】冥府の骨竜',desc:'冥府の祭壇に封印されていた骨の竜が目を覚ました。追いかけてくる霊魂弾と、呼び出される骸骨兵に注意せよ。',goal:{type:'boss'},reward:{gold:2400,mats:{soul_shard:3,reinforce_orb:3},decos:2}},
@@ -2576,7 +2551,6 @@ const DATA={
     slime:{stage:[1],role:'低速・範囲攻撃型',desc:'跳ねながら近づいてくるスライム。近くでは大きく跳び、着地点の周りを押しつぶす。',tip:'着地点に赤い円が出る。円の外へ出てから反撃しよう。'},
     beetle:{stage:[2],role:'防御型',desc:'硬い甲殻に覆われた大きな甲虫。正面からの攻撃はほとんど弾いてしまう。',tip:'向きを変えるのが遅い。横や背後に回り込んで攻撃しよう。'},
     mushroom:{stage:[2],role:'範囲妨害型',desc:'近づいた者に毒胞子を浴びせるキノコ。胞子の雲の中にいると少しずつ体力が減る。',tip:'緑の円が出たら離れる。雲が消えてから近づき、一気に倒そう。'},
-    forest_king:{stage:[2],role:'ボス',desc:'森林を支配する巨大な狼。突進・前方の薙ぎ払い・周囲への咆哮を使い分ける。',tip:'怒ると突進が何度も続く。帯の向きをよく見て横へ。咆哮は円の外へ。'},
     salamander:{stage:[2],role:'ボス',desc:'湿った森の奥に棲む巨大な両生類。長い舌で狙い、体をくねらせて突っ込み、水の粘液を飛ばす。',tip:'舌は細く長い直線。粘液は水の塊なので、横へよけながら攻めよう。'},
     rhino:{stage:[1],role:'ボス',desc:'硬い装甲をまとった大型のサイ。正面からの攻撃にとても強い。',tip:'正面は弾かれやすい。横や後ろから攻めよう。角の突進は直線。'},
     hanayari:{stage:[2],role:'固定・遠距離型',desc:'地面に根を張った花のモンスター。花びらから鋭い棘を発射する。動けないが、遠くから撃ってくる。',tip:'棘は狙いが定まってから飛ぶ。射線から外れて近づけば、動けない花は怖くない。'},
@@ -2940,6 +2914,7 @@ const DATA={
     {id:'r_bw_rhino_shuriken',out:{type:'equip',id:'bw_rhino_shuriken'},cost:{rhino_horn:4,rhino_plate:3}},
     {id:'r_bw_hermit_crab_lance',out:{type:'equip',id:'bw_hermit_crab_lance'},cost:{yado_shell:4,hard_shell:3},stage:2},
     {id:'r_bw_forest_rabbit_bow',out:{type:'equip',id:'bw_forest_rabbit_bow'},cost:{rabbit_fur:4,rabbit_tuft:3},stage:2},
+    {id:'r_rabbit_tachi',out:{type:'equip',id:'rabbit_tachi'},cost:{rabbit_fur:4,rabbit_tuft:3},stage:2},
     {id:'r_bw_queen_bee_sword',out:{type:'equip',id:'bw_queen_bee_sword'},cost:{queen_jelly:4,poison_spore:3},stage:3},
     {id:'r_bw_giant_frog_greatsword',out:{type:'equip',id:'bw_giant_frog_greatsword'},cost:{toad_gland:4,toxic_gland:3},stage:3},
     {id:'r_bw_queen_bee_greatsword',out:{type:'equip',id:'bw_queen_bee_greatsword'},cost:{queen_jelly:4,poison_spore:3},stage:3},
@@ -3167,15 +3142,6 @@ const DATA={
     {id:'r_bull_arms',out:{type:'equip',id:'bull_vambrace'},cost:{bull_hide:2,bull_horn:1,scrap_iron:2}},
     {id:'r_bull_waist',out:{type:'equip',id:'bull_faulds'},cost:{bull_hide:2,slime_gel:2}},
     {id:'r_bull_legs',out:{type:'equip',id:'bull_greaves'},cost:{bull_hide:2,beast_hide:1,goblin_hide:2}},
-    // 覇狼シリーズ（古森の覇狼）
-    {id:'r_haro_tachi',out:{type:'equip',id:'haro_tachi'},cost:{haro_fang:4,oldwood_pelt:3}},
-    {id:'r_haro_db',out:{type:'equip',id:'haro_db'},cost:{haro_fang:4,oldwood_pelt:3}},
-    {id:'r_haro_lance',out:{type:'equip',id:'haro_lance'},cost:{haro_fang:4,oldwood_pelt:3}},
-    {id:'r_haro_helm',out:{type:'equip',id:'haro_helm'},cost:{oldwood_pelt:2,haro_fang:1,hard_shell:2}},
-    {id:'r_haro_mail',out:{type:'equip',id:'haro_mail'},cost:{oldwood_pelt:3,wolf_pelt:2}},
-    {id:'r_haro_arms',out:{type:'equip',id:'haro_vambrace'},cost:{oldwood_pelt:2,haro_fang:1,wolf_claw:1}},
-    {id:'r_haro_waist',out:{type:'equip',id:'haro_faulds'},cost:{oldwood_pelt:2,wood:3}},
-    {id:'r_haro_legs',out:{type:'equip',id:'haro_greaves'},cost:{oldwood_pelt:2,beast_hide:2,wolf_claw:1}},
     {id:'r_deco',out:{type:'deco'},cost:{wolf_claw:2,wolf_pelt:1}}, // 装飾品：ボス素材で作れるのはレア以下まで
     {id:'r_potion',out:{type:'item',id:'potion',n:2},cost:{herb:2}},
     {id:'r_antidote',out:{type:'item',id:'antidote',n:2},cost:{herb:2}},
@@ -6517,7 +6483,6 @@ const GEAR_LOOKS={
   turtle:{main:'#7aa070',dark:'#3a5a34',accent:'#c8e0b0',light:'#9ac088',eye:'#ffe060',beast:'turtle',blade:'#c8e0b0'},
   eel:{main:'#4a5ac0',dark:'#222a6a',accent:'#ffe858',light:'#7a8ae0',eye:'#ffe040',beast:'eel',blade:'#ffe858'},
   worm:{main:'#b07a8a',dark:'#5a3a44',accent:'#f0c8d0',light:'#d09aa8',eye:'#ffe060',beast:'worm',blade:'#f0c8d0'},
-  haro:{w:['fur','fang'],main:'#5a6a3a',dark:'#2e3a1a',accent:'#fff0b0',light:'#7e9050',orn:'wolf',fur:true,eye:'#a8ff60',blade:'#e8f4b0'},
 };
 function gearLook(id){
   if(!id)return null;
@@ -7523,7 +7488,6 @@ function wolfTop(k,H,o){const {E,P,L,S}=H,c=k.ctx;
 }
 BossArt.A.wolf=(k,H)=>wolfTop(k,H,{b:'#8a8a94',d:'#34343c',belly:'#d4d4da',eye:'#f0c040',mane:'#9a9aa4',stripe:'#6a6a74',scar:true});
 BossArt.A.black_wolf=(k,H)=>wolfTop(k,H,{b:'#2e2e38',d:'#08080c',belly:'#5a5a6e',eye:'#ff5a2a',mane:'#1c1c24',stripe:'#1a1a22'});
-BossArt.A.forest_king=(k,H)=>wolfTop(k,H,{b:'#6a7458',d:'#20281a',belly:'#bcc49c',eye:'#f6e860',mane:'#d8b84a',stripe:'#4a5a3a',moss:'#4a8a2a',crown:true,scar:true});
 BossArt.A.gale_bird=(k,H)=>{ // 疾風怪鳥：左右に広げた大きな翼、扇の尾羽、鉤くちばし、冠羽
   const {E,P,L,S}=H,b='#3d6db5',l='#eef2fa',d='#14284e',bk='#f0b030',c=k.ctx;
   for(let i=0;i<5;i++){c.save();c.translate(-0.4,0);c.rotate(Math.PI+(i-2)*0.2);E(k,0.35,0,0.38,0.09,0,i%2?b:l,d);c.restore();}
