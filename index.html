@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.23.0',date:'2026/10/31'};
+const GAME_VERSION={no:'1.23.1',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -447,8 +447,8 @@ const DATA={
       pieces:{head:'lizard_helm',body:'lizard_mail',arms:'lizard_vambrace',waist:'lizard_faulds',legs:'lizard_greaves'},eff:{maxHp:25,dmgCut:5}},
     lava:{name:'溶岩の巨人シリーズ',bonus:'溶岩の鎧',desc:'防御力+12、攻撃を受けたときの吹き飛び-50%',
       pieces:{head:'lava_helm',body:'lava_mail',arms:'lava_vambrace',waist:'lava_faulds',legs:'lava_greaves'},eff:{def:12,knockRes:50}},
-    dragon:{name:'炎獄竜シリーズ',bonus:'炎獄の加護',desc:'炎属性の耐性+30、攻撃力+8%',
-      pieces:{head:'dragon_helm',body:'dragon_mail',arms:'dragon_vambrace',waist:'dragon_faulds',legs:'dragon_greaves'},eff:{elemRes:{fire:30},atkPct:8}},
+    dragon:{name:'炎獄竜シリーズ',bonus:'炎獄の加護',desc:'攻撃力+10%（2部位）／火属性攻撃+10%、会心率+10%（5部位）',
+      pieces:{head:'dragon_helm',body:'dragon_mail',arms:'dragon_vambrace',waist:'dragon_faulds',legs:'dragon_greaves'},eff2:{atkPct:10},eff:{elemAtk:{fire:10},crit:10}},
     felg:{name:'熔鉄の魔獣シリーズ',bonus:'熔鉄の突進',desc:'移動速度+6%、最大HP+30',
       pieces:{head:'felg_helm',body:'felg_mail',arms:'felg_vambrace',waist:'felg_faulds',legs:'felg_greaves'},eff:{moveSpd:6,maxHp:30}},
     deer:{name:'氷冠の大鹿シリーズ',bonus:'氷冠の守り',desc:'氷属性の耐性+30、防御力+6',
@@ -3352,7 +3352,7 @@ function bossOnlyMats(){
 }
 /** シリーズスキル：2部位で弱め（効果×SERIES_WEAK_RATIO）、全部位で強め */
 const SERIES_WEAK_NEED=2, SERIES_WEAK_RATIO=0.5;
-const SERIES_EFF_LABEL={statusPct:['状態異常強化','%'],maxHp:['最大HP',''],crit:['会心率','%'],atkPct:['攻撃力','%'],itemDelayAdj:['アイテム使用時間','秒'],dmgCut:['被ダメージ軽減','%'],knockRes:['ノックバック耐性','%'],moveSpd:['移動速度','%'],dodgeDistPct:['回避距離','%'],def:['防御力',''],'elemRes.fire':['火属性耐性','%'],'elemRes.ice':['氷属性耐性','%'],'elemRes.water':['水属性耐性','%'],'elemRes.thunder':['雷属性耐性','%'],'elemRes.mei':['冥属性耐性','%'],statusRes:['状態異常耐性','%'],regen:['毎秒HP回復',''],critDmg:['会心ダメージ','%'],poisonRes:['毒耐性','%']};
+const SERIES_EFF_LABEL={'elemAtk.fire':['火属性攻撃','%'],'elemAtk.water':['水属性攻撃','%'],'elemAtk.thunder':['雷属性攻撃','%'],'elemAtk.ice':['氷属性攻撃','%'],'elemAtk.mei':['冥属性攻撃','%'],statusPct:['状態異常強化','%'],maxHp:['最大HP',''],crit:['会心率','%'],atkPct:['攻撃力','%'],itemDelayAdj:['アイテム使用時間','秒'],dmgCut:['被ダメージ軽減','%'],knockRes:['ノックバック耐性','%'],moveSpd:['移動速度','%'],dodgeDistPct:['回避距離','%'],def:['防御力',''],'elemRes.fire':['火属性耐性','%'],'elemRes.ice':['氷属性耐性','%'],'elemRes.water':['水属性耐性','%'],'elemRes.thunder':['雷属性耐性','%'],'elemRes.mei':['冥属性耐性','%'],statusRes:['状態異常耐性','%'],regen:['毎秒HP回復',''],critDmg:['会心ダメージ','%'],poisonRes:['毒耐性','%']};
 /** 効果（入れ子のオブジェクト）を s に ratio 倍して足す */
 function applySeriesEff(s,eff,ratio){
   for(const k in eff){const v=eff[k];
@@ -3411,7 +3411,7 @@ function computeStats(profile,override,who){
     effects:{},weaponType:'sword',weaponName:'素手',weaponRarity:0,decoCapped:[],
     atkPct:0,dodgeCdMult:1,itemDelayAdj:0,statusPct:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
-    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,mei:0},
+    weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,elemAtk:{fire:0,water:0,thunder:0,ice:0,mei:0},reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,mei:0},
     dodgeDistPct:0,chargeSpdPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
   const decoPts={},wearing={},armor=[];
   for(const slot of SLOTS){
@@ -4667,7 +4667,7 @@ function damageEnemy(w,p,e,mult,src){
   // 属性ダメージ：防御力で減らず、会心の影響も受けない。モーションの重さ（倍率）の平方根に比例
   let elHit=null;
   if(s.elem&&s.elem.v>0){
-    const em=elemMult(e.type,s.elem.k);let ed=s.elem.v*em*Math.sqrt(Math.max(0.2,mult))*(1+(s.elemPct||0)/100);
+    const em=elemMult(e.type,s.elem.k);let ed=s.elem.v*em*Math.sqrt(Math.max(0.2,mult))*(1+((s.elemPct||0)+((s.elemAtk&&s.elemAtk[s.elem.k])||0))/100); // 属性攻撃強化＋その属性の攻撃強化（シリーズスキル）
     if(guarded)ed*=DATA.enemies[e.type].guard.mult;
     dmg+=Math.max(0,Math.round(ed));elHit={k:s.elem.k,m:em};
   }
