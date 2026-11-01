@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.30.4',date:'2026/10/31'};
+const GAME_VERSION={no:'1.31.0',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -253,7 +253,7 @@ const CONFIG={
     itemWalk:0.35,minItemDelay:0.3,sheatheWalk:0.5}, // sheatheWalk：納刀動作中の移動速度倍率 // アイテム使用中の移動速度倍率、発動時間の下限
   enemySight:330,
   // 防具スキル：同じスキルのポイントが per 点たまるごとに1段階（最大段階はスキルごとに DATA.armorSkills の max）
-  skillPoints:{per:10,steps:[10,15,20,25,30]}, // 防具スキルの段階に必要なポイント（1段階10、2段階15、以降は+5ずつ）
+  skillPoints:{per:10,steps:[10,15]}, // 防具スキルの段階に必要なポイント（1段階10、2段階15）
   // 強化された魔物（強敵の巣・隠し納骨堂）：体力・攻撃力・大きさの倍率と、倒したときの追加報酬の抽選回数
   elite:{hp:2.2,atk:1.35,size:1.2,bonusRolls:1},
   minionHp:3.6, // ボス以外の魔物の体力倍率（人数に関係なく一定）：従来の3倍 × 1.5 × 0.8（この値を新しい基準にする）
@@ -331,14 +331,14 @@ const DATA={
      apply(s,v)：能力値への反映（computeStats から呼ぶ）。per を書けば、そのスキルだけ1段階に必要なポイントを変えられる
      ※属性（火・水・雷など）や、プレイヤーが与える状態異常（毒・麻痺・睡眠・呪い）はゲームに無いため、それらのスキルは保留 */
   armorSkills:{
-    atk_up:{name:'攻撃',cat:'攻撃',max:3,vals:[4,8,12],fmt:'攻撃力 +{v}',apply:(s,v)=>{s.atk+=v;}},
-    crit_up:{name:'会心率',cat:'会心',max:3,vals:[8,15,22],fmt:'会心率 +{v}%',apply:(s,v)=>{s.crit+=v;}},
-    crit_dmg:{name:'超会心',cat:'会心',max:3,vals:[15,30,45],fmt:'会心ダメージ +{v}%',apply:(s,v)=>{s.critDmg+=v;}},
+    atk_up:{name:'攻撃',cat:'攻撃',max:2,vals:[4,8],fmt:'攻撃力 +{v}',apply:(s,v)=>{s.atk+=v;}},
+    crit_up:{name:'会心率',cat:'会心',max:2,vals:[8,15],fmt:'会心率 +{v}%',apply:(s,v)=>{s.crit+=v;}},
+    crit_dmg:{name:'超会心',cat:'会心',max:2,vals:[15,30],fmt:'会心ダメージ +{v}%',apply:(s,v)=>{s.critDmg+=v;}},
     weakness:{name:'弱点特効',cat:'会心',max:2,vals:[20,40],fmt:'ボスの頭（弱点）への攻撃の会心率 +{v}%',apply:(s,v)=>{s.weakCrit+=v;}},
     boss_hunter:{name:'ボス特効',cat:'攻撃',max:2,vals:[10,20],fmt:'ボスへのダメージ +{v}%',apply:(s,v)=>{s.bossDmgPct+=v;}},
     minion_hunter:{name:'雑魚特効',cat:'攻撃',max:2,vals:[15,30],fmt:'ボス以外へのダメージ +{v}%',apply:(s,v)=>{s.minionDmgPct+=v;}},
-    def_up:{name:'防御',cat:'防御',max:3,vals:[8,16,25],fmt:'防御力 +{v}',apply:(s,v)=>{s.def+=v;}},
-    hp_up:{name:'体力',cat:'防御',max:3,vals:[20,40,60],fmt:'最大HP +{v}',apply:(s,v)=>{s.maxHp+=v;}},
+    def_up:{name:'防御',cat:'防御',max:2,vals:[8,16],fmt:'防御力 +{v}',apply:(s,v)=>{s.def+=v;}},
+    hp_up:{name:'体力',cat:'防御',max:2,vals:[20,40],fmt:'最大HP +{v}',apply:(s,v)=>{s.maxHp+=v;}},
     dmg_cut:{name:'ダメージ軽減',cat:'防御',max:2,vals:[8,15],fmt:'受けるダメージ -{v}%',apply:(s,v)=>{s.dmgCut+=v;}},
     flinch_free:{name:'ひるみ軽減',cat:'防御',max:2,vals:[50,100],fmt:'攻撃を受けたときの吹き飛び -{v}%',apply:(s,v)=>{s.knockRes+=v;}},
     poison_res:{name:'毒耐性',cat:'耐性',max:2,vals:[50,100],fmt:'毒の雲・毒から受けるダメージ -{v}%',apply:(s,v)=>{s.poisonRes+=v;}},
@@ -347,12 +347,12 @@ const DATA={
     regen:{name:'自動回復',cat:'回復',max:2,vals:[0.5,1],fmt:'HPが毎秒 {v} ずつ回復',apply:(s,v)=>{s.regen+=v;}},
     dodge_dist:{name:'回避距離',cat:'移動・回避',max:2,vals:[20,40],fmt:'回避距離 +{v}%',apply:(s,v)=>{s.dodgeDistPct+=v;}},
     charge_up:{name:'短縮',cat:'攻撃',max:2,vals:[20,40],fmt:'チャージが速くたまる +{v}%',apply:(s,v)=>{s.chargeSpdPct+=v;}},
-    evade:{name:'回避性能',cat:'移動・回避',max:3,vals:[0.05,0.1,0.15],fmt:'回避後の無敵 +{v}秒',apply:(s,v)=>{s.dodgeIframe+=v;}},
+    evade:{name:'回避性能',cat:'移動・回避',max:2,vals:[0.05,0.1],fmt:'回避後の無敵 +{v}秒',apply:(s,v)=>{s.dodgeIframe+=v;}},
     item_power:{name:'アイテム使用強化',cat:'アイテム',max:2,vals:[25,50],fmt:'角笛・香の効果範囲と効果時間 +{v}%',apply:(s,v)=>{s.itemPowerPct+=v;}},
     item_speed:{name:'アイテム使用高速化',cat:'アイテム',max:2,vals:[0.3,0.6],fmt:'アイテムの発動 -{v}秒',apply:(s,v)=>{s.itemDelayAdj-=v;}},
     gather_up:{name:'採取強化',cat:'採取・報酬',max:2,vals:[50,100],fmt:'採取ポイントで {v}% の確率でもう1回採取',apply:(s,v)=>{s.gatherBonus+=v;}},
     rescue:{name:'救命',cat:'回復',max:2,vals:[1.5,3],fmt:'仲間を助け起こすのにかかる時間 -{v}秒',apply:(s,v)=>{s.reviveCut+=v;}},
-    elem_up:{name:'属性攻撃強化',cat:'攻撃',max:3,vals:[10,20,30],fmt:'武器の属性ダメージ +{v}%',apply:(s,v)=>{s.elemPct+=v;}},
+    elem_up:{name:'属性攻撃強化',cat:'攻撃',max:2,vals:[10,20],fmt:'武器の属性ダメージ +{v}%',apply:(s,v)=>{s.elemPct+=v;}},
     rare_up:{name:'レア素材率',cat:'採取・報酬',max:2,vals:[20,40],fmt:'確定でない素材・装飾品の出る確率 ×{v}%増し',apply:(s,v)=>{s.rareBonus+=v;}},
   },
   // w: レアリティ別の出現重み [コモン,アンコモン,レア,エピック,レジェンダリー]
