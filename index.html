@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.63.1',date:'2026/11/01'};
+const GAME_VERSION={no:'1.63.2',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -344,7 +344,7 @@ const DATA={
     hp_up:{name:'体力',cat:'防御',max:2,vals:[20,40],fmt:'最大HP +{v}',apply:(s,v)=>{s.maxHp+=v;}},
     dmg_cut:{name:'ダメージ軽減',cat:'防御',max:2,vals:[8,15],fmt:'受けるダメージ -{v}%',apply:(s,v)=>{s.dmgCut+=v;}},
     flinch_free:{name:'ひるみ軽減',cat:'防御',max:2,vals:[50,100],fmt:'攻撃を受けたときの吹き飛び -{v}%',apply:(s,v)=>{s.knockRes+=v;}},
-    poison_res:{name:'毒耐性',cat:'耐性',max:2,vals:[50,100],fmt:'毒の雲・毒から受けるダメージ -{v}%',apply:(s,v)=>{s.poisonRes+=v;}},
+    poison_res:{name:'毒耐性',cat:'耐性',max:2,vals:[50,100],fmt:'毒の雲・毒から受けるダメージ -{v}%（100%なら毒にならない）',apply:(s,v)=>{s.poisonRes+=v;}},
     status_res:{name:'状態異常耐性',cat:'耐性',max:2,vals:[50,100],fmt:'状態異常（鈍足・毒・麻痺・呪い）の時間 -{v}%',apply:(s,v)=>{s.statusRes+=v;}},
     heal_up:{name:'回復量',cat:'回復',max:2,vals:[20,40],fmt:'回復アイテムの回復量 +{v}%',apply:(s,v)=>{s.healPct+=v;}},
     regen:{name:'自動回復',cat:'回復',max:2,vals:[0.5,1],fmt:'HPが毎秒 {v} ずつ回復',apply:(s,v)=>{s.regen+=v;}},
@@ -4685,6 +4685,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
 function inflictPlayer(w,p,k){
   if(TEST_MODE.invincible)return;
   const d=DATA.playerStatus[k];if(!d||p.dead)return;
+  if(k==='poison'&&(p.stats.poisonRes||0)>=100)return; // 毒耐性100%なら毒にならない
   const time=d.time*(1-clamp(p.stats.statusRes||0,0,100)/100);if(time<=0.05)return;
   if(k==='poison'){if(!(p.poisonT>0))p.poisonTick=d.tick;p.poisonT=Math.max(p.poisonT||0,time);}
   else if(k==='paralysis'){if(p.paraT>0||p.paraImmune>0)return;p.paraT=time;p.using=null;p.charging=false;p.charge=0;p.sheathing=null;}
