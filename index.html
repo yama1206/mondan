@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.77.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.77.1',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1644,13 +1644,6 @@ const DATA={
         {k:'leap',wind:1.0,cd:7,dmg:1.3,r:110,range:380}, // 水面から跳ね上がって落ちる
         {k:'pool',wind:1.0,cd:6,dmg:0.7,r:120,life:3.5,hz:'poison'}, // ぬめりの水たまり
         {k:'charge',wind:0.9,cd:6,dmg:1.2}, // ゆったり体当たり
-      ]},
-      pattern:[
-        {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:12,ring:true,speed:260,el:'thunder',volleys:2,gap:0.5}, // 結晶片を全方位に放つ
-        {k:'beam',wind:1.0,cd:5.5,dmg:1.3,len:380,width:44,el:'thunder'}, // 核から光線
-        {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:4,spread:280,r:65,el:'thunder'}, // 結晶柱が生える
-        {k:'sweep',wind:0.6,cd:4,dmg:1.1,r:120,arc:1.5,el:'thunder'}, // 結晶の腕で薙ぐ
-        {k:'slam',wind:1.0,cd:5,dmg:1.2,r:120}, // 体ごと落ちて押し潰す
       ]},
     quake_dragon:{name:'地底の轟音竜',ai:'pattern',look:'gen',hp:3300,atk:26,def:8,r:44,speed:98,color:'#7a6a4a',drops:'quake_dragon',boss:true,stunMax:150,stunTime:4,gen:{body:'long',legs:4,head:'horn',tail:true},pal:{body:'#7a6a4a',dark:'#3a3020',spot:'#d8c890',eye:'#ffe060'},
       pattern:[
