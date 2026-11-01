@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.64.0',date:'2026/11/01'};
+const GAME_VERSION={no:'1.65.0',date:'2026/11/01'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4007,10 +4007,11 @@ const THEME_PAL={
   volcano:{wall:'basalt',base:'#1c1614',blobs:['#2b211d','#32261f'],glow:'#ff6a2a',lip:'#3a1a10',lipDark:'#160a06',floor:['#3a2a26','#41302a'],speck:'lava'},
   snow:{wall:'ice',base:'#9cc4da',blobs:['#b6daee','#8fb8d0'],lip:'#7fa6bd',lipDark:'#4f7790',floor:['#e6f0f7','#dce8f1'],speck:'frost'},
 };
-function buildStageMap(L){
-  const G=MAPGEN;
+function buildStageMap(L,opt){
+  // ボス討伐の依頼（bossOnly）：スタートの部屋とボス部屋だけの短いマップにする
+  const only=!!(opt&&opt.bossOnly),G=only?Object.assign({},MAPGEN,{cols:1,rows:3}):MAPGEN;
   // ボス部屋の位置：右（いつもの）・上・下のどれか。上・下のときは道の最後を一番上・一番下の段にそろえる
-  let bossSide=pick(['right','top','bottom']);
+  let bossSide=only?'right':pick(['right','top','bottom']);
   // 1) スタートから右へ進む道。2列目以降は、同じ列で上下に1回ずれることもある
   const key=(c,r)=>c*10+r,nodes=new Map(),links=[];
   let c=0,r=RNG.next()<0.5?0:G.rows-1,vert=0; // スタートは左上か左下の部屋（あとで左右・上下を反転して4つの角のどれかにする）
@@ -4333,7 +4334,7 @@ function createWorld(opts){
   const L=stage.layout&&DATA.layouts[stage.layout];
   // 訓練場は、ボスの部屋だけの広場（ほかの部屋・雑魚・宝箱はなし）
   const TR=!!quest.training;
-  const map=TR?buildArenaMap():L?buildStageMap(L):buildDungeon();
+  const map=TR?buildArenaMap():L?buildStageMap(L,{bossOnly:goal.type==='boss'}):buildDungeon();
   if(!L&&!TR)Object.assign(map,{theme:'cave',start:{x:6.5*TILE,y:18.5*TILE},bossX1:61,bossSpot:{x:74*TILE,y:19.5*TILE}});
   const w={time:0,map,nextId:1,hazards:[],gathers:[],corpses:[],players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],
     playerCount:np,leash:opts.leash||0,stageId:stage.id,questId:quest.id,placed:[],
