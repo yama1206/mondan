@@ -242,7 +242,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.25.1',date:'2026/10/31'};
+const GAME_VERSION={no:'1.25.2',date:'2026/10/31'};
 const CONFIG={
   step:1/60,
   questTimeLimit:15*60, // 任務の制限時間（秒）。時間切れで強制ゲームオーバー。自由探索は対象外
@@ -12895,7 +12895,7 @@ const App={
       case 'pause':if(code==='Escape')this.goto('playing');else if(code==='KeyI')this.openInventory('pause');break;
       case 'inventory':
         if(code==='Escape'&&this.inv.decoPick){this.inv.decoPick=null;this.renderInventory();}
-        else if(code==='Escape'||code==='KeyI')this.goto(this.returnState);
+        else if(code==='Escape'||code==='KeyI')this.goto(this.returnState||'camp');
         break;
       case 'settings':if(code==='Escape')this.goto(this.settingsReturn);break;
       case 'camp':case 'lobby':if(code==='KeyI')this.openInventory(this.state);break;
@@ -13053,7 +13053,7 @@ const App={
           Net.leave();this.goto('camp');
         });
         break;
-      case 'back':this.goto(this.returnState);break;
+      case 'back':this.goto(this.returnState||'camp');break; // 戻り先が無いときはキャンプへ
       case 'backSettings':this.goto(this.settingsReturn);break;
       case 'tab':this.inv.tab=ds.tab;this.inv.decoPick=null;this.renderInventory();break;
       case 'filter':this.inv.filter=ds.f;this.inv.skill=null;this.inv.worn=false;this.renderInventory();break;
