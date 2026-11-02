@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.2.2',date:'2026/11/02'};
+const GAME_VERSION={no:'2.3.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -363,6 +363,8 @@ const DATA={
     gather_up:{name:'採取強化',cat:'採取・報酬',max:2,vals:[50,100],fmt:'採取ポイントで {v}% の確率でもう1回採取',apply:(s,v)=>{s.gatherBonus+=v;}},
     rescue:{name:'救命',cat:'回復',max:2,vals:[1.5,3],fmt:'仲間を助け起こすのにかかる時間 -{v}秒',apply:(s,v)=>{s.reviveCut+=v;}},
     elem_up:{name:'属性攻撃強化',cat:'攻撃',max:2,vals:[10,20],fmt:'武器の属性ダメージ +{v}%',apply:(s,v)=>{s.elemPct+=v;}},
+    renkiri:{name:'連切',cat:'攻撃',max:2,vals:[5,10],fmt:'ダメージを受けずに、3秒以内に続けて攻撃を当てるとダメージ +{v}%',apply:(s,v)=>{s.renkiri+=v;}},
+    status_up:{name:'状態異常強化',cat:'攻撃',max:2,vals:[20,40],fmt:'武器の状態異常（毒・麻痺・睡眠など）の蓄積 +{v}%',apply:(s,v)=>{s.statusPct+=v;}},
     rare_up:{name:'レア素材率',cat:'採取・報酬',max:2,vals:[20,40],fmt:'確定でない素材・装飾品の出る確率 ×{v}%増し',apply:(s,v)=>{s.rareBonus+=v;}},
   },
   // w: レアリティ別の出現重み [コモン,アンコモン,レア,エピック,レジェンダリー]
@@ -709,28 +711,28 @@ const DATA={
     hydra_sword:{name:'多頭竜の剣',slot:'weapon',el:{k:'water',v:9},wtype:'sword',atk:27,crit:11,slots:2,boss:'hydra'},
     hydra_lance:{name:'多頭竜の槍',slot:'weapon',el:{k:'water',v:9},wtype:'lance',atk:27,crit:11,slots:2,boss:'hydra'},
     hydra_bow:{name:'多頭竜の弓',slot:'weapon',el:{k:'water',v:9},wtype:'bow',atk:27,crit:11,slots:2,boss:'hydra'},
-    hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,skills:{status_res:4,regen:3},slots:2},
-    hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:13,skills:{status_res:5,hp_up:2},slots:2},
-    hydra_vambrace:{name:'多頭竜の蛇肩',slot:'arms',def:13,skills:{status_res:4,regen:2,hp_up:1},slots:2},
-    hydra_faulds:{name:'多頭竜の尾',slot:'waist',def:13,skills:{status_res:3,regen:3,hp_up:1},slots:2},
-    hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,skills:{status_res:4,regen:2,hp_up:1},slots:2},
+    hydra_helm:{name:'多頭竜の三頭兜',slot:'head',def:13,skills:{renkiri:4,regen:3},slots:2},
+    hydra_mail:{name:'多頭竜の鱗鎧',slot:'body',def:13,skills:{renkiri:5,hp_up:2},slots:2},
+    hydra_vambrace:{name:'多頭竜の蛇肩',slot:'arms',def:13,skills:{renkiri:4,regen:2,hp_up:1},slots:2},
+    hydra_faulds:{name:'多頭竜の尾',slot:'waist',def:13,skills:{renkiri:3,regen:3,hp_up:1},slots:2},
+    hydra_greaves:{name:'多頭竜の脚甲',slot:'legs',def:13,skills:{renkiri:4,regen:2,hp_up:1},slots:2},
     // ---- 毒蟲シリーズ（毒蟲王・沼地）：会心と状態異常耐性 ----
     venom_db:{name:'毒蟲の双剣',slot:'weapon',el:{k:'water',v:7},wtype:'dual',atk:24,crit:14,slots:2,boss:'venomKing'},
     venom_tachi:{name:'毒蟲の太刀',slot:'weapon',st:{k:'poison',buildup:20},wtype:'tachi',atk:24,crit:12,slots:2,boss:'venomKing'},
     venom_bow:{name:'毒蟲の弓',slot:'weapon',st:{k:'poison',buildup:20},wtype:'bow',atk:24,crit:10,slots:2,boss:'venomKing'},
-    venom_helm:{name:'毒蟲の触角兜',slot:'head',def:12,skills:{crit_up:4,status_res:3},slots:2},
-    venom_mail:{name:'毒蟲の甲殻',slot:'body',def:12,skills:{crit_up:5,status_res:2},slots:2},
-    venom_vambrace:{name:'毒蟲の脚肩',slot:'arms',def:12,skills:{crit_up:4,status_res:3},slots:2},
-    venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:12,skills:{crit_up:3,status_res:4},slots:2},
-    venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,skills:{crit_up:4,status_res:3},slots:2},
+    venom_helm:{name:'毒蟲の触角兜',slot:'head',def:12,skills:{crit_up:4,status_up:3},slots:2},
+    venom_mail:{name:'毒蟲の甲殻',slot:'body',def:12,skills:{crit_up:5,status_up:2},slots:2},
+    venom_vambrace:{name:'毒蟲の脚肩',slot:'arms',def:12,skills:{crit_up:4,status_up:3},slots:2},
+    venom_faulds:{name:'毒蟲の毒針',slot:'waist',def:12,skills:{crit_up:3,status_up:4},slots:2},
+    venom_greaves:{name:'毒蟲の脚甲',slot:'legs',def:12,skills:{crit_up:4,status_up:3},slots:2},
     // ---- 沼巨人シリーズ（腐敗の沼巨人・沼地）：体力と防御 ----
     mire_hammer:{name:'沼巨人の槌',slot:'weapon',st:{k:'poison',buildup:15},wtype:'hammer',atk:27,crit:0,slots:2,boss:'mireGiant'},
     mire_gs:{name:'沼巨人の大剣',slot:'weapon',st:{k:'poison',buildup:15},wtype:'greatsword',atk:27,crit:4,slots:2,boss:'mireGiant'},
-    mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,skills:{heal_up:4,def_up:3},slots:2},
-    mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:15,skills:{heal_up:5,regen:2},slots:2},
-    mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:15,skills:{heal_up:4,def_up:2,regen:1},slots:2},
-    mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:15,skills:{heal_up:3,def_up:3,regen:1},slots:2},
-    mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{heal_up:4,def_up:2,regen:1},slots:2},
+    mire_helm:{name:'沼巨人の泥兜',slot:'head',def:15,skills:{charge_up:4,def_up:3},slots:2},
+    mire_mail:{name:'沼巨人の泥鎧',slot:'body',def:15,skills:{charge_up:5,regen:2},slots:2},
+    mire_vambrace:{name:'沼巨人の岩肩',slot:'arms',def:15,skills:{charge_up:4,def_up:2,regen:1},slots:2},
+    mire_faulds:{name:'沼巨人の泥垂れ',slot:'waist',def:15,skills:{charge_up:3,def_up:3,regen:1},slots:2},
+    mire_greaves:{name:'沼巨人の泥足',slot:'legs',def:15,skills:{charge_up:4,def_up:2,regen:1},slots:2},
     rhino_helm:{name:'鎧犀の角兜',slot:'head',def:8,skills:{flinch_free:4,def_up:3},slots:1},
     rhino_mail:{name:'鎧犀の甲板鎧',slot:'body',def:8,skills:{flinch_free:5,dmg_cut:2},slots:1},
     rhino_vambrace:{name:'鎧犀の甲手',slot:'arms',def:8,skills:{flinch_free:4,def_up:2,dmg_cut:1},slots:1},
@@ -3732,7 +3734,7 @@ function computeStats(profile,override,who){
   const s={maxHp:P.baseHp,atk:P.baseAtk,def:P.baseDef,
     crit:P.baseCrit,critDmg:P.baseCritDmg,moveSpd:0,atkSpd:0,dodgeIframe:P.baseDodgeIframe,drainChance:0,
     effects:{},weaponType:'sword',weaponName:'素手',weaponRarity:0,decoCapped:[],
-    atkPct:0,dodgeCdMult:1,itemDelayAdj:0,statusPct:0,sets:[],
+    atkPct:0,dodgeCdMult:1,itemDelayAdj:0,statusPct:0,renkiri:0,sets:[],
     // 防具スキルで変わる値（スキルが無ければ効果なし）
     weakCrit:0,bossDmgPct:0,minionDmgPct:0,dmgCut:0,knockRes:0,poisonRes:0,statusRes:0,healPct:0,regen:0,elem:null,elemPct:0,elemAtk:{fire:0,water:0,thunder:0,ice:0,mei:0},reviveCut:0,elemRes:{fire:0,water:0,thunder:0,ice:0,mei:0},
     dodgeDistPct:0,chargeSpdPct:0,itemPowerPct:0,gatherBonus:0,rareBonus:0,skillPts:{},skillList:[]};
@@ -5830,7 +5832,7 @@ function hitPlayer(w,p,raw,sx,sy,src,el,st){
   let hitEl=null; // 属性攻撃が当たったときの属性（エフェクトの色・形に使う）
   {const atkEl=el==='none'?null:(el||(noFx?null:((DATA.enemyElem[srcT]||{}).atk)));if(atkEl){hitEl=atkEl;const res=clamp(p.stats.elemRes[atkEl]||0,-50,80),sh=DATA.elemShare;dmg=dmg*(1-sh)+dmg*sh*(1-res/100);}} // 属性攻撃：属性耐性で減る
   dmg=Math.max(1,Math.round(dmg*rand(0.94,1.06)));
-  p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;
+  p.hp-=dmg;p.hitInv=CONFIG.player.hitInvuln;p.hurt=0.25;p.chainLast=null;
   if(p.sleepT>0){p.sleepT=0;p.sleepImmune=DATA.playerStatus.sleep.immune;} // 睡眠は攻撃を受けると目が覚める
   const a=Math.atan2(p.y-sy,p.x-sx),kb=220*(1-clamp(p.stats.knockRes||0,0,100)/100);p.kx=Math.cos(a)*kb;p.ky=Math.sin(a)*kb;
   emit(w,{type:'damage',target:'player',pid:p.id,x:p.x,y:p.y-p.r,amount:dmg,crit:false,hitEl});
@@ -5945,6 +5947,8 @@ function damageEnemy(w,p,e,mult,src){
   if(wsActive(p,'kyodo'))atk*=1.1;
   if(p.buffs.atk&&p.buffs.atk.t>0)atk*=1+p.buffs.atk.pct/100;
   {const fw=DATA.weaponTypes[s.weaponType];if(fw&&fw.flow&&p.flow>0)atk*=1+p.flow*fw.flow.pct/100;}
+  // 連切：ダメージを受けずに、前に当ててから3秒以内に続けて当てるとダメージアップ（相棒の攻撃は数えない）
+  if(s.renkiri>0&&!src.pet){if(p.chainLast!=null&&w.time-p.chainLast<=3)atk*=1+s.renkiri/100;p.chainLast=w.time;}
   let dmg=atk*mult*rand(0.92,1.08);
   const frontal=Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<=DATA.weaponTypes.hammer.stun.headArc/2;
   const weakPart=!!(part&&part.weak);
