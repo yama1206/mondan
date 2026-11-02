@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.88.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.89.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -2478,7 +2478,7 @@ const DATA={
         {id:'hollow2',name:'沈んだ窪地',spawn:[['leech',0,1]],gather:[3,4]},
         {id:'lair2',name:'毒蟲の寝床',spawn:[['parasite',1,1],['swamp_croc',0,1]],elite:1,chest:1},
       ]},
-    river:{theme:'river',open:true,obstacle:'rocks',puddle:[1,2],wander:['water_lizard','piranha'],
+    river:{theme:'river',open:true,fixed:'river',obstacle:'rocks',puddle:[1,2],wander:['water_lizard','piranha'],
       start:{id:'bank',name:'川岸'},
       boss:{id:'arena',name:'滝つぼ',spawn:[['piranha',2,3],['water_spirit',1,1]]},
       main:[
@@ -4480,7 +4480,9 @@ function randomFloor(map,room,margin){
    ボス部屋への入口は1か所だけ（全員が入ると閉じる扉）。 */
 const MAPGEN={cellW:22,cellH:14,cols:6,rows:4,bossW:22,bossH:34}; // bossW・bossH：ボス部屋の広さ（マス）
 // 障害物のタイル番号（どれも壁と同じく通れない・視線や矢を遮る）
-const TILE_OBS={tree:4,rock:5,pillar:6,tomb:7};
+const TILE_OBS={tree:4,rock:5,pillar:6,tomb:7,bigrock:9};
+// 深い水（湖・川・滝つぼ。通れない）と滝（崖を流れ落ちる水。通れない）
+const TILE_DEEP=10,TILE_FALL=11;
 // 水溜まり（通れるが、踏むと移動が遅くなる）。layouts の puddle:[最少,最多] で部屋ごとに置く
 const TILE_PUDDLE=8,PUDDLE_SLOW=0.7;
 /** 水溜まりの中にいるか：まるい形があればその形で、無ければタイルで判定 */
@@ -4655,6 +4657,11 @@ function decorateStageMap(map,L,sr){
       const cx1=R[0]+5,cx2=R[2]-5,cy1=R[1]+5,cy2=R[3]-5;
       for(const [x,y] of [[cx1,cy1],[cx2,cy1],[cx1,cy2],[cx2,cy2]])tryPlace([[x,y]],v);
     }else for(let t=0,n=0;t<40&&n<want;t++)if(tryPlace([[rx(),ry()]],v))n++;
+    if(style==='rocks'){ // 大岩（2×2、ときどき3×3）。ボス部屋は2×2を少しだけ
+      const nb=boss?randInt(0,2):randInt(1,2);
+      for(let t=0,n=0;t<30&&n<nb;t++){const k=!boss&&RNG.next()<0.35?3:2,x=rx(),y=ry();if(x+k-1>R[2]-2||y+k-1>R[3]-2)continue;
+        const cells=[];for(let yy=0;yy<k;yy++)for(let xx=0;xx<k;xx++)cells.push([x+xx,y+yy]);if(tryPlace(cells,TILE_OBS.bigrock))n++;}
+    }
   }
   // 7b) 水溜まり（道はふさがない。スタートとボス部屋以外の部屋に、小さな池をいくつか置く）
   if(L.puddle){
@@ -4687,7 +4694,7 @@ function decorateStageMap(map,L,sr){
     }
   }
   // 9) 地図をランダムに左右・上下反転する（スタートが左上・右上・左下・右下のどれかになる）
-  flipStageMap(map,RNG.next()<0.5,RNG.next()<0.5);
+  flipStageMap(map,RNG.next()<0.5,!map.noFlipY&&RNG.next()<0.5); // 作り込んだマップは上下だけは反転しない（滝が上にあるため）
   // 10) ステージ4以降で、ときどき使う四隅のスタート地点：それぞれの角にいちばん近い部屋（ボス部屋以外・重複なし）
   {const used=new Set(),pts=[];
     for(const [cx,cy] of [[0,0],[W,0],[0,H],[W,H]]){let best=null,bd=1e9;
@@ -4767,6 +4774,96 @@ function areaAt(map,x,y){
     if((inside&&!inB)||(inside===inB&&dd<bd)){best=a;bd=dd;inB=inside;}}
   return best;
 }
+/* 作り込んだ広いマップ（形は固定。左右の反転と、障害物・水溜まり・採取の場所は毎回変わる）。layouts の fixed:'名前' で使う
+   エリアは {x,y,rx,ry}（マス）、links はつながるエリアの番号の組。深い水（湖・川・滝つぼ）は通れず、浅瀬（ford）だけ歩いて渡れる */
+const FIXED_MAPS={
+  river:{W:138,H:74,
+    areas:[ // 0:スタート（行き止まり）、kind:'boss' がボスの巣
+      {x:10,y:38,rx:7,ry:6,kind:'start'},
+      {x:28,y:38,rx:10,ry:8,def:'shallows',name:'浅瀬の原'},
+      {x:30,y:15,rx:10,ry:7,def:'rocks2',name:'岩場の渡り'},
+      {x:30,y:60,rx:10,ry:8,def:'pool2',side:true,name:'澄んだ淵'},
+      {x:47,y:25,rx:9,ry:7,def:'whirl',name:'渦の淵'},
+      {x:57,y:10,rx:8,ry:5,def:'falls',name:'滝の裏'},
+      {x:76,y:41,rx:10,ry:8,def:'shrine',name:'水没した祠'},
+      {x:67,y:63,rx:10,ry:7,def:'nest2',side:true,name:'雷魚の巣'},
+      {x:91,y:58,rx:10,ry:8,def:'shallows',name:'湖畔の浅瀬'},
+      {x:92,y:31,rx:9,ry:7,def:'rocks2',name:'湖畔の岩場'},
+      {x:93,y:10,rx:9,ry:6,kind:'boss',name:'滝つぼ'},
+    ],
+    links:[[0,1],[1,2],[1,3],[2,4],[4,5],[4,6],[3,7],[7,8],[6,8],[6,9],[9,10]],
+    paint(map,{floorEll,water,fall,line}){
+      const W=map.W,H=map.H;
+      // 滝つぼのまわりの岸（北の崖から滝が落ちる）
+      floorEll(75,10,11,6);
+      // 東の端：大きな湖（行けない）。手前に砂浜
+      const shore=y=>110+5*Math.sin(y/9)+3*Math.sin(y/4.3+1);
+      for(let y=5;y<H-4;y++)for(let x=Math.floor(shore(y))-6;x<shore(y);x++)map.tiles[y*W+x]=0;
+      for(let y=0;y<H;y++)for(let x=Math.floor(shore(y));x<W;x++)water(x,y);
+      // 滝（北の崖）と滝つぼ
+      for(let y=0;y<=5;y++)for(let x=70;x<=80;x++)if(y<5||(x>70&&x<80))fall(x,y);
+      for(let y=4;y<=14;y++)for(let x=66;x<=84;x++){const u=(x-75)/8,v=(y-9.5)/4.2;if(u*u+v*v<=1)water(x,y);}
+      // 滝つぼから南西へ流れる川
+      line([[75,12],[68,22],[61,32],[57,44],[50,56],[46,74]],2.6,water);
+    },
+    fords:[[4,6],[3,7]], // 川を渡る浅瀬（このエリアどうしの道が川と交わる所）
+  },
+};
+function buildFixedMap(L,opt){
+  const F=FIXED_MAPS[L.fixed],W=F.W,H=F.H;
+  const map={W,H,tiles:new Uint8Array(W*H).fill(1),version:1,rooms:{},roomList:[],theme:L.theme,doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[],open:true,areas:[],puddles:[],noFlipY:true};
+  const inb=(x,y)=>x>1&&y>1&&x<W-2&&y<H-2;
+  const set=(x,y)=>{if(inb(x,y))map.tiles[y*W+x]=0;};
+  const ell=(cx,cy,rx,ry,f)=>{for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){const u=(x-cx)/rx,v=(y-cy)/ry;if(u*u+v*v<=1)f(x,y);}};
+  const disc=(cx,cy,r,f)=>ell(cx,cy,r,r,f);
+  const water=(x,y)=>{if(x>=0&&y>=0&&x<W&&y<H)map.tiles[y*W+x]=TILE_DEEP;};
+  const fall=(x,y)=>{if(x>=0&&y>=0&&x<W&&y<H)map.tiles[y*W+x]=TILE_FALL;};
+  const line=(pts,r,f)=>{for(let i=0;i+1<pts.length;i++){const [ax,ay]=pts[i],[bx,by]=pts[i+1],len=Math.hypot(bx-ax,by-ay)||1;for(let t=0;t<=1;t+=0.4/len)disc(ax+(bx-ax)*t,ay+(by-ay)*t,r,f);}};
+  // 1) エリア（楕円を少し重ねた形。毎回すこしだけ形を変える）
+  const A=F.areas.map(a=>Object.assign({},a));
+  for(const a of A){
+    ell(a.x,a.y,a.rx,a.ry,set);
+    if(a.kind!=='start')for(let i=0;i<2;i++)ell(a.x+rand(-a.rx*0.5,a.rx*0.5),a.y+rand(-a.ry*0.5,a.ry*0.5),a.rx*0.6,a.ry*0.6,set);
+    a.rect=[Math.max(2,Math.floor(a.x-a.rx)),Math.max(2,Math.floor(a.y-a.ry)),Math.min(W-3,Math.ceil(a.x+a.rx)),Math.min(H-3,Math.ceil(a.y+a.ry))];
+  }
+  // 2) エリアどうしをつなぐ広い道（少し曲げる）
+  const paths=[];
+  for(const [i,j] of F.links){
+    const a=A[i],b=A[j],len=Math.hypot(b.x-a.x,b.y-a.y)||1,nx=-(b.y-a.y)/len,ny=(b.x-a.x)/len,bend=rand(-3,3),wid=a.kind==='start'?3.6:rand(4.2,5);
+    const pts=[];for(let t=0;t<=1;t+=0.5/len){const o=Math.sin(t*Math.PI)*bend;pts.push([a.x+(b.x-a.x)*t+nx*o,a.y+(b.y-a.y)*t+ny*o]);}
+    for(const [x,y] of pts)disc(x,y,wid,set);
+    paths.push({i,j,pts});map.corridors.push({x:Math.round((a.x+b.x)/2+nx*bend),y:Math.round((a.y+b.y)/2+ny*bend)});
+  }
+  // 3) 水・滝などの作り込み
+  F.paint(map,{floorEll:(cx,cy,rx,ry)=>ell(cx,cy,rx,ry,set),water,fall,line});
+  // 4) 浅瀬：道が川と交わる所の深い水を浅くする（遅くなるが通れる）
+  for(const [i,j] of F.fords||[]){
+    const P=paths.find(q=>(q.i===i&&q.j===j)||(q.i===j&&q.j===i));if(!P)continue;
+    const wet=P.pts.filter(([x,y])=>map.tiles[Math.round(y)*W+Math.round(x)]===TILE_DEEP);if(!wet.length)continue;
+    const cx=wet.reduce((s,q)=>s+q[0],0)/wet.length,cy=wet.reduce((s,q)=>s+q[1],0)/wet.length;
+    const bl=[];for(const [x,y] of wet)disc(x,y,4.6,(xx,yy)=>{if(inb(xx,yy)&&map.tiles[yy*W+xx]===TILE_DEEP)map.tiles[yy*W+xx]=TILE_PUDDLE;});
+    for(let k=0;k<wet.length;k+=2)bl.push([Math.round((wet[k][0]-cx)*TILE),Math.round((wet[k][1]-cy)*TILE),Math.round(4.6*TILE+6)]);
+    const ext=Math.max(...bl.map(b=>Math.hypot(b[0],b[1])+b[2]));
+    map.puddles.push({x:Math.round((cx+0.5)*TILE),y:Math.round((cy+0.5)*TILE),r:Math.round(ext),bl});
+  }
+  // 5) エリアの種類と番号（スタートから近い順）
+  const adj=A.map(()=>[]);for(const [i,j] of F.links){adj[i].push(j);adj[j].push(i);}
+  const s0=A.findIndex(a=>a.kind==='start'),d=A.map(()=>-1),order=[s0];d[s0]=0;
+  for(let k=0;k<order.length;k++)for(const b of adj[order[k]])if(d[b]<0){d[b]=d[order[k]]+1;order.push(b);}
+  const defOf=id=>L.main.find(m=>m.id===id)||L.side.find(m=>m.id===id)||L.main[0];
+  order.forEach((ai,k)=>{
+    const a=A[ai],kind=a.kind==='start'?'start':a.kind==='boss'?'boss':a.side?'side':'main';
+    const def=kind==='start'?L.start:kind==='boss'?L.boss:defOf(a.def),name=a.name||def.name;
+    a.n=k+1;
+    map.roomList.push({kind,def,rect:a.rect,area:a.n});
+    map.rooms[kind==='start'?'start':kind==='boss'?'boss':'a'+a.n]=a.rect;
+    map.areas.push({n:a.n,x:(a.x+0.5)*TILE,y:(a.y+0.5)*TILE,rect:a.rect,name,kind});
+  });
+  const st=A[s0],lair=A.find(a=>a.kind==='boss');
+  map.start={x:(st.x+0.5)*TILE,y:(st.y+0.5)*TILE};
+  map.bossRect=lair.rect;map.bossX1=lair.rect[0];map.bossSpot={x:(lair.x+0.5)*TILE,y:(lair.y+0.5)*TILE};
+  return decorateStageMap(map,L,st.rect);
+}
 /* 広いマップのボス：エリアを歩き回り、見つかると戦う。弱ると別のエリアへ逃げ、最後は巣（ボスのエリア）で眠る
    flee：逃げる体力の割合／napAt：巣へ帰って眠る体力の割合／napRegen：眠っている間に毎秒回復する割合（最大 napHealMax まで）
    眠っているボスへの最初の一撃は2倍（寝込みを襲う） */
@@ -4813,7 +4910,7 @@ function startFlee(w,e,area,nap){
 /** 歩き回っている（眠っている）ボスが、プレイヤーに気づいて戦い始める */
 function wakeFieldBoss(w,e){
   const f=e.fld;f.mode=null;f.dist=null;e.aggro=true;e.state='roar';
-  if(!f.met){f.met=true;e.timer=1.5;w.quest.boss='fighting';emit(w,{type:'bossStart',x:e.x,y:e.y,name:DATA.enemies[e.type].name,cry:e.type});}
+  if(!f.met){f.met=true;e.timer=1.5;w.quest.boss='fighting';emit(w,{type:'bossStart',x:e.x,y:e.y,name:DATA.enemies[e.type].name,cry:e.type,found:true});}
   else{e.timer=1.0;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'こちらに気づいた！',color:'#ff9a6a'});}
 }
 /** 毎フレームのボスの動き（広いマップ）。戦闘中でなければ true を返して、いつもの動きを止める */
@@ -4993,7 +5090,7 @@ function createWorld(opts){
   const L=stage.layout&&DATA.layouts[stage.layout];
   // 訓練場は、ボスの部屋だけの広場（ほかの部屋・雑魚・宝箱はなし）
   const TR=!!quest.training;
-  const map=TR?buildArenaMap():L?(L.open?buildOpenMap:buildStageMap)(L,{bossOnly:goal.type==='boss'}):buildDungeon();
+  const map=TR?buildArenaMap():L?(L.fixed?buildFixedMap:L.open?buildOpenMap:buildStageMap)(L,{bossOnly:goal.type==='boss'}):buildDungeon();
   if(!L&&!TR)Object.assign(map,{theme:'cave',start:{x:6.5*TILE,y:18.5*TILE},bossX1:61,bossSpot:{x:74*TILE,y:19.5*TILE}});
   const w={time:0,map,nextId:1,hazards:[],gathers:[],corpses:[],players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],
     playerCount:np,leash:opts.leash||0,stageId:stage.id,questId:quest.id,placed:[],
@@ -6260,7 +6357,7 @@ function placeMimic(map,e){
     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
       const nx=x+dx,ny=y+dy;if(!isWall(map,nx,ny))continue;
       const v=(nx<0||ny<0||nx>=map.W||ny>=map.H)?1:map.tiles[ny*map.W+nx];
-      c.push([x,y,dx,dy,(v===TILE_OBS.rock||v===TILE_OBS.pillar)?'rock':'wall']);
+      c.push([x,y,dx,dy,(v===TILE_OBS.rock||v===TILE_OBS.bigrock||v===TILE_OBS.pillar)?'rock':'wall']);
     }
   }
   e.mimic='wall';e.mimicLook='wall';
@@ -10403,7 +10500,7 @@ const Renderer={
       const g=mc.getContext('2d'),img=g.createImageData(W,H),d=img.data,ex=this.explored;
       for(let i=0;i<W*H;i++){
         if(!ex[i])continue; // 未探索は透明（真っ黒のまま）
-        const tx=i%W,ty=(i/W)|0,c=isWall(map,tx,ty)?[62,54,86]:[118,138,108];
+        const tx=i%W,ty=(i/W)|0,tv=map.tiles[i],c=tv===TILE_DEEP||tv===TILE_FALL?[56,110,168]:isWall(map,tx,ty)?[62,54,86]:[118,138,108];
         d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=235;
       }
       g.putImageData(img,0,0);
@@ -10561,7 +10658,7 @@ const Renderer={
       case 'chest':this.burst(ev.x,ev.y,'#ffd23a',24,180);this.ring(ev.x,ev.y,6,50,'#ffd23a',0.5);break;
       case 'projEnd':this.burst(ev.x,ev.y,ev.kind==='wave'?'#7fe0ff':'#cfc8b0',ev.kind==='wave'?10:4,100);break;
       case 'loot':this.burst(ev.x,ev.y,'#fff4c0',6,80,2);break;
-      case 'bossStart':this.showBanner((ev.name||'ボス')+'が目を覚ました！','#ff9a6a');this.addShake(12);this.ring(ev.x,ev.y,20,300,'#ff7050',1.0,6);break;
+      case 'bossStart':this.showBanner((ev.name||'ボス')+(ev.found?'に見つかった！':'が目を覚ました！'),'#ff9a6a');this.addShake(12);this.ring(ev.x,ev.y,20,300,'#ff7050',1.0,6);break;
       case 'enrage':this.showBanner((ev.name||'ボス')+(ev.awaken?'が覚醒した！':'が怒り狂っている！'),'#ff5050');this.addShake(14);this.ring(ev.x,ev.y,20,340,'#ff3030',1.0,8);break;
       case 'doorClose':this.addShake(6);break;
       case 'playerDead':this.burst(ev.x,ev.y,'#5a8cff',30,200);break;
@@ -10609,6 +10706,8 @@ const Renderer={
           g.fillStyle='#7a5530';g.fillRect(px+3,py+3,TILE-6,TILE-6);
           g.strokeStyle='#3e2a17';g.lineWidth=2;g.strokeRect(px+4,py+4,TILE-8,TILE-8);
           g.beginPath();g.moveTo(px+5,py+5);g.lineTo(px+TILE-5,py+TILE-5);g.moveTo(px+TILE-5,py+5);g.lineTo(px+5,py+TILE-5);g.stroke();
+        }else if(t===TILE_DEEP||t===TILE_FALL){
+          this.drawDeep(g,px,py,h,x,y,map,t===TILE_FALL);
         }else if(t===TILE_PUDDLE&&!map.puddles){
           this.drawPuddle(g,px,py,h,x,y,map);
         }else if(t===3){
@@ -10628,6 +10727,10 @@ const Renderer={
         const left=x>0&&map.tiles[y*map.W+x-1]===6,up=y>0&&map.tiles[(y-1)*map.W+x]===6;
         if(!left&&!up)this.drawPillar(g,px+TILE,py+TILE,theme);
       }else if(t===7)this.drawTomb(g,px+TILE/2,py+TILE/2,h);
+      else if(t===9){ // 大岩：左上のマスで、まとめて1つ描く
+        const left=x>0&&map.tiles[y*map.W+x-1]===9,up=y>0&&map.tiles[(y-1)*map.W+x]===9;
+        if(!left&&!up){let k=1;while(map.tiles[y*map.W+x+k]===9)k++;this.drawBigRock(g,px+k*TILE/2,py+k*TILE/2,k,h);}
+      }
     }
     if(map.puddles&&map.puddles.length)this.drawRoundPuddles(g,map);
     return c;
@@ -10754,6 +10857,50 @@ const Renderer={
     g.fillStyle='#2e6a32';g.beginPath();g.arc(x-5,y-10,r*0.62,0,TAU);g.fill();
     g.fillStyle='#3e8a40';g.beginPath();g.arc(x-8,y-13,r*0.3,0,TAU);g.fill();
   },
+  /** 大岩（k×kマス） */
+  drawBigRock(g,x,y,k,h){
+    const s=k*1.12;
+    g.save();g.translate(x,y);g.scale(s,s);this.drawRock(g,0,0,h);
+    g.strokeStyle='rgba(40,40,36,.55)';g.lineWidth=1.2/s*1.5;g.beginPath();g.moveTo(-6,-4);g.lineTo(-1,1);g.lineTo(3,-2);g.lineTo(7,4);g.stroke();
+    g.fillStyle='rgba(110,150,90,.55)';g.beginPath();g.ellipse(-6,-9,4,1.8,-0.3,0,TAU);g.fill();g.beginPath();g.ellipse(5,7,3,1.4,0.2,0,TAU);g.fill();
+    g.restore();
+  },
+  /** 深い水（湖・川・滝つぼ）と滝。岸に面した側は白い波打ち際 */
+  drawDeep(g,px,py,h,x,y,map,isFall){
+    const W=map.W,H=map.H,tt=(xx,yy)=>(xx<0||yy<0||xx>=W||yy>=H)?TILE_DEEP:map.tiles[yy*W+xx];
+    const wet=v=>v===TILE_DEEP||v===TILE_FALL;
+    if(isFall){
+      g.fillStyle='#2c4a66';g.fillRect(px,py,TILE,TILE);
+      g.fillStyle='#4f8fc0';g.fillRect(px+1,py,TILE-2,TILE);
+      for(let k=0;k<5;k++){const sx=px+((h>>(k*3))%TILE);g.fillStyle=k%2?'rgba(230,248,255,.75)':'rgba(170,215,240,.6)';g.fillRect(sx,py,2,TILE);}
+      if(!wet(tt(x-1,y))){g.fillStyle='#3a3a40';g.fillRect(px,py,4,TILE);}
+      if(!wet(tt(x+1,y))){g.fillStyle='#3a3a40';g.fillRect(px+TILE-4,py,4,TILE);}
+      return;
+    }
+    let near=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)if(!wet(tt(x+dx,y+dy)))near++;
+    g.fillStyle=near>6?'#3f86b4':near>0?'#2f6f9e':'#245a86';g.fillRect(px,py,TILE,TILE);
+    if(h%4===0){g.strokeStyle='rgba(190,230,250,.35)';g.lineWidth=1.2;const wy=py+((h>>3)%24)+4,wx=px+(h%16);g.beginPath();g.moveTo(wx,wy);g.quadraticCurveTo(wx+5,wy-3,wx+10,wy);g.quadraticCurveTo(wx+15,wy+3,wx+20,wy);g.stroke();}
+    g.fillStyle='rgba(235,250,255,.7)';
+    if(!wet(tt(x,y-1)))g.fillRect(px,py,TILE,3);
+    if(!wet(tt(x,y+1)))g.fillRect(px,py+TILE-3,TILE,3);
+    if(!wet(tt(x-1,y)))g.fillRect(px,py,3,TILE);
+    if(!wet(tt(x+1,y)))g.fillRect(px+TILE-3,py,3,TILE);
+  },
+  /** 滝の流れ・しぶき（毎フレーム、見えている所だけ） */
+  drawFallAnim(ctx,map,x0,y0,x1,y1){
+    const t=this.time||0;
+    for(let y=Math.max(0,y0);y<=Math.min(map.H-1,y1);y++)for(let x=Math.max(0,x0);x<=Math.min(map.W-1,x1);x++){
+      const v=map.tiles[y*map.W+x];if(v!==TILE_FALL)continue;
+      const px=x*TILE,py=y*TILE;
+      ctx.fillStyle='rgba(255,255,255,.8)';
+      for(let k=0;k<3;k++){const sx=px+((x*7+k*11)%28)+2,o=((t*260+k*13+x*31)%TILE);ctx.fillRect(sx,py+o,2,8);}
+      const bv=y+1<map.H?map.tiles[(y+1)*map.W+x]:0;
+      if(bv===TILE_DEEP){ // 落ちた所のしぶき
+        for(let k=0;k<3;k++){const ph=(t*1.7+k*0.33+x*0.21)%1,r=3+ph*7;ctx.globalAlpha=(1-ph)*0.8;ctx.fillStyle='#eaf8ff';ctx.beginPath();ctx.arc(px+TILE/2+Math.sin(x*3+k*2)*9,py+TILE+4+ph*6,r,0,TAU);ctx.fill();}
+        ctx.globalAlpha=1;
+      }
+    }
+  },
   drawRock(g,x,y,h){
     g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x+2,y+9,15,6,0,0,TAU);g.fill();
     g.fillStyle='#6a6a62';g.beginPath();g.moveTo(x-14,y+6);g.lineTo(x-11,y-8);g.lineTo(x-2,y-13);g.lineTo(x+10,y-9);g.lineTo(x+14,y+4);g.lineTo(x+6,y+10);g.lineTo(x-8,y+10);g.closePath();g.fill();
@@ -10804,6 +10951,7 @@ const Renderer={
     const sx=clamp(Math.floor(this.cam.x),0,mw-1),sy=clamp(Math.floor(this.cam.y),0,mh-1);
     const sw=Math.min(Math.ceil(vw)+2,mw-sx),shh=Math.min(Math.ceil(vh)+2,mh-sy);
     if(sw>0&&shh>0)ctx.drawImage(this.mapCanvas,sx,sy,sw,shh,sx,sy,sw,shh);
+    if(w.map.open)this.drawFallAnim(ctx,w.map,Math.floor(sx/TILE)-1,Math.floor(sy/TILE)-1,Math.ceil((sx+sw)/TILE)+1,Math.ceil((sy+shh)/TILE)+1);
     const fog=!!app.settings().vision;
     this.updateVision(w);if(!fog)this.vis=null; // 探索の記録はミニマップのため常に取る
     const seen=(x,y,r)=>!fog||this.isVisible(w,x,y,r);
@@ -15362,7 +15510,7 @@ const App={
       case 'ultWarn':Renderer.showBanner(ev.text,'#ff6040');UI.notify('<b>'+esc(ev.text)+'</b>','#ff6040',5);break;
       case 'ghostGuard':UI.notify(`${this.label(ev.pid)} の身代わりの護符が砕けて、起き上がった！`,'#ffd23a',3.5);break;
       case 'revive':UI.notify(`${this.label(ev.by)} が ${this.label(ev.pid)} を助け起こした！`,'#5fe08a',3);Renderer.ring(ev.x,ev.y,10,70,'#5fe08a',0.6,4);break;
-      case 'bossStart':Input.rumble(350,0.8,Net.role?'p1':undefined);if(!Net.role&&this.playerIds().length>1)Input.rumble(350,0.8,'p2');UI.notify((ev.name||'ボス')+'が目を覚ました！ 赤い範囲は攻撃の予兆です','#ff9a6a',4);break;
+      case 'bossStart':Input.rumble(350,0.8,Net.role?'p1':undefined);if(!Net.role&&this.playerIds().length>1)Input.rumble(350,0.8,'p2');UI.notify((ev.name||'ボス')+(ev.found?'に見つかった！':'が目を覚ました！')+' 赤い範囲は攻撃の予兆です','#ff9a6a',4);break;
       case 'doorClose':UI.notify('退路が閉ざされた……','#ff6060',3);break;
       case 'enrage':Input.rumble(400,0.9,Net.role?'p1':undefined);UI.notify((ev.name||'ボス')+(ev.awaken?'が覚醒した！ 攻撃が激しくなる':'が怒り状態になった！ 攻撃が激しくなる'),'#ff5050',4);break;
       case 'revived':UI.notify(esc(ev.name||'魔物')+'がよみがえった！ 呪術師を先に倒そう','#c070ff',3);break;
