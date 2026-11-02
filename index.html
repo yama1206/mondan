@@ -170,6 +170,8 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 #touchEditBar.te-on #teHint{display:none}
 #touchEditBar.te-on .te-hide{display:inline-block}
 #touchEditBar button{padding:4px 10px}
+#touchEditBar{flex-wrap:wrap;justify-content:center;max-width:94vw;width:max-content;text-align:center}
+#touchEditBar #teDone{background:#3a6a3a;color:#fff;font-weight:bold;padding:6px 14px}
 /* 縦向き（スマホ・タブレット）は横向きをお願いする。操作ボタンは横向きの画面に合わせて配置 */
 #rotate{display:none;position:fixed;inset:0;z-index:50;background:#0b0a10;color:#f3e6c0;align-items:center;justify-content:center;text-align:center;padding:24px}
 #rotate .rot-icon{font-size:52px;display:inline-block;transform:rotate(-90deg);margin-bottom:18px}
@@ -216,7 +218,7 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 <div class="tb menu" data-tk="menu">メニュー</div><div class="tb aim" data-tk="aim">◎近く</div></div>
 <div id="itemWheel"></div>
 <div id="rotate"><div><div class="rot-icon">📱</div><p>横向きにしてプレイしてください</p><p class="small">スマホを横にすると、ゲームが始まります</p></div></div>
-<div id="touchEditBar"><span id="teHint">ボタンをドラッグして好きな位置に置いてください（タップで選ぶと大きさを変えられます）</span><span id="teSel" class="te-hide"></span><button id="teMinus" class="te-hide">－</button><span id="teVal" class="te-hide"></span><button id="tePlus" class="te-hide">＋</button><button data-act="touchEditDone">完了</button></div>
+<div id="touchEditBar"><span id="teHint">ボタンをドラッグして好きな位置に置いてください（タップで選ぶと大きさを変えられます）</span><span id="teSel" class="te-hide"></span><button id="teMinus" class="te-hide">－</button><span id="teVal" class="te-hide"></span><button id="tePlus" class="te-hide">＋</button><button id="teDone">完了（保存）</button></div>
 <div id="notify"></div>
 <div id="overlay" class="hidden"></div>
 <div id="modal" class="hidden"></div>
@@ -265,7 +267,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.5.1',date:'2026/11/02'};
+const GAME_VERSION={no:'2.5.2',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -14606,6 +14608,8 @@ const Input={
     const bindBar=(id,fn)=>{const b=document.getElementById(id);if(b)b.addEventListener('click',fn);};
     bindBar('teMinus',()=>this.setTouchScale(this.editSel,-0.1));
     bindBar('tePlus',()=>this.setTouchScale(this.editSel,0.1));
+    bindBar('teDone',()=>{this.editSel=null;document.body.classList.remove('touch-edit');App.goto('settings');}); // 完了：位置は動かすたびに保存済み。設定画面に戻る
+    window.addEventListener('resize',()=>this.applyTouchLayout()); // 縦横を変えたら、その向きの配置に切り替える
     root0.addEventListener('pointerdown',e=>{
       if(!document.body.classList.contains('touch-edit'))return;
       const el=e.target.closest('.tb,.stick');if(!el)return;
@@ -14745,8 +14749,10 @@ const Input={
   wheelClose(){if(this.wheel)clearTimeout(this.wheel.lt);this.wheel=null;const el=document.getElementById('itemWheel');if(el){el.classList.remove('on');el.innerHTML='';}},
   dropTouch(){this.isTouch=false;document.body.classList.remove('touch');this.syncTouchUi(false);},
   /** ボタンの位置（端末ごとに保存）。ボタン名 → {r,b}（スティックは {l,b}） */
-  touchPos(){try{return JSON.parse(localStorage.getItem('kourou_touch_pos')||'{}')||{};}catch(e){return {};}},
-  saveTouchPos(pos){try{localStorage.setItem('kourou_touch_pos',JSON.stringify(pos));}catch(e){}},
+  /** ボタンの位置は縦向き・横向きで別々に保存する（同じ位置だと、向きを変えたときに画面の外に出てしまう） */
+  touchPosKey(){return innerHeight>innerWidth?'kourou_touch_pos_v':'kourou_touch_pos';},
+  touchPos(){try{return JSON.parse(localStorage.getItem(this.touchPosKey())||'{}')||{};}catch(e){return {};}},
+  saveTouchPos(pos){try{localStorage.setItem(this.touchPosKey(),JSON.stringify(pos));}catch(e){}},
   /** 編集中に選んだボタン（キー）。選んでいないときは null */
   editSel:null,
   selectTouchEdit(key){
@@ -14779,10 +14785,11 @@ const Input={
     root.style.setProperty('--ts',String(s.touchSize||1));
     root.style.setProperty('--to',String(s.touchAlpha!=null?s.touchAlpha:0.85));
     const pos=this.touchPos();
-    root.querySelectorAll('.tb').forEach(el=>{const q=pos[el.dataset.tk];el.style.right=q?q.r+'px':'';el.style.bottom=q?q.b+'px':'';
+    const cx=(v,m)=>clamp(v,0,Math.max(0,m-48)); // 画面の外に出ないように
+    root.querySelectorAll('.tb').forEach(el=>{const q=pos[el.dataset.tk];el.style.right=q?cx(q.r,innerWidth)+'px':'';el.style.bottom=q?cx(q.b,innerHeight)+'px':'';
       el.style.transformOrigin='100% 100%';el.style.transform=q&&q.s&&q.s!==1?`scale(${q.s})`:'';});
     const st=root.querySelector('.stick');
-    if(st){if(pos.stick){st.style.left=pos.stick.l+'px';st.style.bottom=pos.stick.b+'px';}else{st.style.left='';st.style.bottom='';}
+    if(st){if(pos.stick){st.style.left=cx(pos.stick.l,innerWidth)+'px';st.style.bottom=cx(pos.stick.b,innerHeight)+'px';}else{st.style.left='';st.style.bottom='';}
       st.style.transformOrigin='0 100%';st.style.transform=pos.stick&&pos.stick.s&&pos.stick.s!==1?`scale(${pos.stick.s})`:'';}
     this.updateEditBar();
   },
@@ -17088,7 +17095,7 @@ const App={
       case 'touchAlpha':this.settings().touchAlpha=clamp(Number(ds.id)||0.85,0.2,1);this.save();Input.applyTouchLayout();this.goto('settings');UI.restoreFocus();break;
       case 'touchEdit':document.body.classList.add('touch-edit');Input.editSel=null;Input.applyTouchLayout();break;
       case 'touchEditDone':document.body.classList.remove('touch-edit');this.goto('settings');break;
-      case 'touchReset':try{localStorage.removeItem('kourou_touch_pos');}catch(e){}Input.applyTouchLayout();this.goto('settings');break;
+      case 'touchReset':try{localStorage.removeItem(Input.touchPosKey());}catch(e){}Input.applyTouchLayout();this.goto('settings');break;
       case 'mapZoom':
         this.settings().mapZoom=clamp(Number(ds.id)||1,0.7,1.6);this.save();Renderer.zoomMul=this.settings().mapZoom;
         this.goto('settings');UI.restoreFocus();break;
