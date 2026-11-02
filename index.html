@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.95.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.95.1',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4384,6 +4384,12 @@ function cannotEnter(map,e,x,y){
   // 最初の部屋から出たあとは、プレイヤーも外から部屋へは戻れない（中で動くのは自由）
   return !!map.startLocked&&inStartRoom(map,x,y,e.r)&&!inStartRoom(map,e.x,e.y,e.r);
 }
+/** 壁・障害物にめり込んでいるとき、まわりを少しずつ広く探して、いちばん近い通れる場所へ出す */
+function unstickEntity(map,e){
+  for(let d=4;d<=TILE*8;d+=4){const n=Math.max(8,Math.round(d/3));
+    for(let i=0;i<n;i++){const a=i*TAU/n,x=e.x+Math.cos(a)*d,y=e.y+Math.sin(a)*d;if(!circleHitsWall(map,x,y,e.r)){e.x=x;e.y=y;return true;}}}
+  return false;
+}
 function moveEntity(map,e,dx,dy){
   let blocked=false;
   const maxStep=Math.max(2,e.r*0.5);
@@ -6239,6 +6245,7 @@ function updatePlayer(w,p,inp,dt){
   const s=p.stats,P=CONFIG.player,wt=DATA.weaponTypes[s.weaponType];
   if(TEST_MODE.invincible)p.heldT=0;
   if(p.heldT>0){p.heldT-=dt;p.moving=false;p.charging=false;p.charge=0;p.using=null;p.kx*=0.5;p.ky*=0.5;return;} // ボスに掴まれている・ひるんでいる間は動けない
+  if(circleHitsWall(w.map,p.x,p.y,p.r))unstickEntity(w.map,p); // 障害物・壁にめり込んだら、いちばん近い空いている所へはじき出す
   p.atkTimer-=dt;p.swing-=dt;p.dodgeCd-=dt;p.dodgeInv-=dt;if(p.stam<CONFIG.stamina.max)p.stam=Math.min(CONFIG.stamina.max,p.stam+dt/CONFIG.stamina.regenSec*(s.stamRegen||1)*(wsActive(p,'kyodo')?1.5:1));p.hitInv-=dt;p.skillCd-=dt;p.potionCd-=dt;p.hurt-=dt;p.buffT-=dt;if(p.ws){p.ws.t-=dt;if(p.ws.t<=0)p.ws=null;} // 疾風・狂人化でスタミナの回復が速くなる
   // 回復薬・良い回復薬の後半分：使ってから1秒後に発動
   // 回復薬・良い回復薬：飲み始めてから3秒かけてジワジワ回復する
