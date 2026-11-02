@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.2',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.3',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1479,8 +1479,7 @@ const DATA={
   // プレゼント：ここに追加すると、キャンプ画面の「プレゼント」から受け取れる（1人1回）。
   // items の type：coin（コイン）／gold（G）／item（消耗品・id）／mat（素材・id）／equip（装備・id、n本）／deco（装飾品・id、rarity）
   gifts:[
-    {id:'apology_coin_200',reason:'運営からのお詫びの品です',items:[{type:'coin',n:200}]},
-    {id:'collar_update_30',reason:'首輪アップデート記念',items:[{type:'coin',n:30}]},
+    {id:'v2_coin_100',reason:'ver 2.0 リリース記念',items:[{type:'coin',n:100}]},
   ],
   elemShare:0.5,
   seriesRes:{
@@ -4066,7 +4065,7 @@ const Profile={
 };
 
 const Save={
-  KEY:'kourou_dungeon_save',VERSION:18,
+  KEY:'kourou_dungeon_save',VERSION:19,
   available:true,
   save(p){
     if(!this.available)return false;
@@ -4099,6 +4098,7 @@ const Save={
   /** バージョン間の移行処理。仕様変更時は migrations[旧バージョン] を追加する */
   migrate(data,v){
     const migrations={
+      18:d=>{d.looks={};d.pets={};d.coins=0;d.collarPity=0;d.gachaN=0;d.giftsGot={};if(d.equipped&&typeof d.equipped==='object'){d.equipped.look=null;d.equipped.lookV=0;d.equipped.pet=null;}return d;}, // 18 → 19：ver 2.0 で相棒・首輪・コイン・受け取ったプレゼントをすべて回収（プレゼントで100コイン配布）
       17:d=>{d.pets={};d.collarPity=0;if(d.equipped&&typeof d.equipped==='object')d.equipped.pet=null;return d;}, // 17 → 18：首輪を作り直したので、持っている首輪をすべて消す（コインは返さない）
       16:d=>{d.looks={};d.pets={};if(d.equipped&&typeof d.equipped==='object'){d.equipped.look=null;d.equipped.lookV=0;d.equipped.pet=null;}return d;}, // 16 → 17：持っている相棒と首輪をすべて消す（コインは返さない）
       15:d=>d, // 15 → 16：相棒の見た目（最高レア）を9種に作り直し（旧い見た目は外れる）
