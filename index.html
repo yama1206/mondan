@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.94.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.95.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4923,6 +4923,7 @@ const FIXED_MAPS={
       for(let i=0;i<50;i++){const a=A[1+(i%9)],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1.5+srnd()*2.5,1.2+srnd()*2,deco(i%3?2:3));} // 葦の茂み・藻
     },
     scatter:[{kind:'t',n:24,areas:[1,2,3,4,5,6,7,8]},{kind:'t',n:4,areas:[9]}],
+    pools:[[1,'blob',1.6],[1,'long',1],[2,'blob',2.6],[2,'crescent',1.2],[3,'blob',1.4],[4,'branch',1.8],[4,'long',1.2],[5,'blob',3],[5,'twin',1.4],[6,'long',1.6],[6,'blob',1],[7,'crescent',1.8],[7,'blob',1.2],[8,'blob',1.6],[9,'blob',2.2],[9,'long',1.4],[9,'crescent',1.4]],
     props(A,r){const out=[[79,16,'log'],[75,13,'log'],[84,18,'log'],[90,68,'bones'],[87,70,'bones'],[12,63,'shroom'],[54,34,'shroom']];for(let i=0;i<90;i++)out.push([3+r()*134,3+r()*72,'lily']);return out;},
   },
   /* 5 晶石の大洞窟：細長くうねる一本道に近い洞窟。奥（東）へ進むほど結晶の光が強くなる。南東には地底湖、回廊には結晶の柱 */
@@ -4972,6 +4973,7 @@ const FIXED_MAPS={
     fords:[[1,2,'bridge'],[6,8,'bridge'],[6,9,'bridge'],[1,4,'bridge'],[7,8,'bridge'],[7,9,'bridge']],
     obs:[[62,7,2,'p'],[77,7,2,'p'],[62,17,2,'p'],[77,17,2,'p']],
     scatter:[{kind:'p',k:2,n:6,areas:[2,6,7,4]},{kind:'r',n:14},{kind:'r',k:2,n:4,areas:[2,6,7,8]}],
+    pools:[[1,'long',1.4],[2,'blob',2.4],[2,'crescent',1.2],[3,'blob',1.4],[4,'branch',1.6],[5,'blob',1.6],[6,'blob',2],[6,'long',1.2],[7,'blob',2.8],[7,'twin',1.2],[8,'crescent',1.6],[9,'long',1.6],[9,'blob',1.4]],
     props:[[98,55,'vent'],[104,58,'vent'],[101,61,'vent'],[33,27,'vent'],[110,27,'vent'],[124,65,'bones'],[127,67,'bones'],[14,65,'vent'],[38,55,'bones']],
   },
   /* 7 氷雪地帯：南のふもとから、つづら折りの道で山頂（北東の氷嶺）へ登っていく。中腹には凍った湖、ふもとには雪をかぶった針葉樹 */
@@ -5132,7 +5134,61 @@ function buildFixedMap(L,opt){
   const st=A[s0],lair=A.find(a=>a.kind==='boss');
   map.start={x:(st.x+0.5)*TILE,y:(st.y+0.5)*TILE};
   map.bossRect=lair.rect;map.bossX1=lair.rect[0];map.bossSpot={x:(lair.x+0.5)*TILE,y:(lair.y+0.5)*TILE};
-  return decorateStageMap(map,L,st.rect);
+  const out=decorateStageMap(map,L,st.rect);
+  if(F.pools)placeFixedPools(out,F,A,st);
+  return out;
+}
+function rr2(f,a,b){return a+(b-a)*f();}
+/** 固定マップの毒沼・溶岩溜まり（決まった乱数で毎回同じ形・同じ場所）。床の上だけに置き、道・橋・壁・深い所にはかからない
+    pools：[エリア番号, 形 blob/long/crescent/branch/twin, 大きさ] */
+function placeFixedPools(map,F,A,st){
+  let sd=(F.seed||1)*7+991;const r=()=>{sd=(sd*1103515245+12345)&0x7fffffff;return sd/0x7fffffff;},rr=(a,b)=>a+(b-a)*r();
+  const W=map.W,kind=F.theme==='volcano'||map.theme==='volcano'?'magma':'toxpool';
+  map.pools=[];
+  const okTile=(px,py)=>{const tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);if(tx<1||ty<1||tx>=W-1||ty>=map.H-1)return false;const j=ty*W+tx;return map.tiles[j]===0&&map.deco[j]!==1&&map.deco[j]!==4;};
+  const sx=(st.x+0.5)*TILE,sy=(st.y+0.5)*TILE,sR=(Math.max(st.rx,st.ry)+3)*TILE;
+  const gat=map.gatherSpots||[];
+  const okCircle=(x,y,R)=>{if(Math.hypot(x-sx,y-sy)<sR+R)return false;
+    for(const g of gat)if(Math.hypot(x-g.x,y-g.y)<R+28)return false;
+    for(const q of map.pools)for(const b of q.bl)if(Math.hypot(x-q.x-b[0],y-q.y-b[1])<R+b[2]+TILE*1.5)return false;
+    if(!okTile(x,y))return false;
+    for(let i=0;i<8;i++){const a=i*TAU/8;if(!okTile(x+Math.cos(a)*R*0.9,y+Math.sin(a)*R*0.9))return false;}return true;};
+  for(const [ai,type,sc] of F.pools){
+    const a=A[ai];if(!a)continue;
+    const bl=poolShapeBig(type,sc,r,rr),area0=bl.reduce((t,b)=>t+b[2]*b[2],0);
+    let best=null,bestA=0;
+    for(let t=0;t<40&&bestA<area0*0.85;t++){
+      const an=r()*TAU,d=Math.sqrt(r())*0.7,cx=(a.x+0.5+Math.cos(an)*a.rx*d)*TILE,cy=(a.y+0.5+Math.sin(an)*a.ry*d)*TILE;
+      let keep=bl.filter(b=>okCircle(cx+b[0],cy+b[1],b[2]));if(!keep.length)continue;
+      // つながっている一番大きなかたまりだけ残す
+      const grp=keep.map((_,i)=>i),f=i=>grp[i]===i?i:(grp[i]=f(grp[i]));
+      for(let i=0;i<keep.length;i++)for(let j=i+1;j<keep.length;j++){const p=keep[i],q=keep[j];if(Math.hypot(p[0]-q[0],p[1]-q[1])<p[2]+q[2]-4)grp[f(i)]=f(j);}
+      const sum={};keep.forEach((b,i)=>{const k=f(i);sum[k]=(sum[k]||0)+b[2]*b[2];});
+      const top=+Object.keys(sum).sort((x,y)=>sum[y]-sum[x])[0];keep=keep.filter((_,i)=>f(i)===top);
+      const ar=sum[top];if(ar>bestA){bestA=ar;best={cx,cy,keep};}
+    }
+    if(!best||bestA<area0*0.3)continue;
+    const mx=best.keep.reduce((t,b)=>t+b[0],0)/best.keep.length,my=best.keep.reduce((t,b)=>t+b[1],0)/best.keep.length;
+    const q={kind,x:Math.round(best.cx+mx),y:Math.round(best.cy+my),bl:best.keep.map(b=>[Math.round(b[0]-mx),Math.round(b[1]-my),Math.round(b[2])])};
+    q.r=Math.round(Math.max(...q.bl.map(b=>Math.hypot(b[0],b[1])+b[2])));
+    q.h=Math.floor(r()*1e6);
+    map.pools.push(q);
+  }
+  // 池の中に入ってしまった小物（骨・キノコ・噴気など）は取り除く
+  if(map.props)map.props=map.props.filter(p=>!map.pools.some(q=>q.bl.some(b=>Math.hypot(p.x-q.x-b[0],p.y-q.y-b[1])<b[2]+10)));
+}
+/** 大きな池の形（円を重ねる）。sc＝大きさ。blob＝丸くでこぼこ、long＝曲がりくねった細長い形、crescent＝三日月、branch＝枝分かれ、twin＝2つの池が細い流れでつながる */
+function poolShapeBig(type,sc,r,rr){
+  const R=TILE*(0.9+0.8*sc),out=[];
+  const grow=(x,y,R0,n)=>{const loc=[[x,y,R0]];for(let i=0;i<n;i++){const b=loc[Math.floor(r()*loc.length)],nr=R0*rr(0.45,0.8),an=r()*TAU,d=(b[2]+nr)*rr(0.45,0.65);loc.push([b[0]+Math.cos(an)*d,b[1]+Math.sin(an)*d,nr]);}out.push(...loc);};
+  const walk=(x,y,a,n,r0,taper)=>{for(let i=0;i<n;i++){const k=taper?Math.sin(Math.PI*(i+0.5)/n)*0.6+0.4:1,rad=r0*k*rr(0.85,1.1);out.push([x,y,rad]);a+=rr(-0.45,0.45);x+=Math.cos(a)*rad*1.1;y+=Math.sin(a)*rad*1.1;}return [x,y,a];};
+  const a0=r()*TAU;
+  if(type==='long')walk(0,0,a0,Math.round(5+sc*3),R*0.62,true);
+  else if(type==='crescent'){const C=R*2.1,n=Math.round(6+sc*3),span=rr(2.2,2.8);for(let i=0;i<n;i++){const t=i/(n-1),an=a0+span*(t-0.5),k=Math.sin(Math.PI*t)*0.65+0.35;out.push([Math.cos(an)*C,Math.sin(an)*C,R*0.7*k]);}}
+  else if(type==='branch'){grow(0,0,R*0.9,Math.round(2+sc*2));const m=3;for(let i=0;i<m;i++){const an=a0+i*TAU/m+rr(-0.4,0.4);walk(Math.cos(an)*R*0.8,Math.sin(an)*R*0.8,an,Math.round(3+sc*1.5),R*0.45,true);}}
+  else if(type==='twin'){const D=R*2.6;grow(-Math.cos(a0)*D/2,-Math.sin(a0)*D/2,R*0.85,Math.round(3+sc*2));grow(Math.cos(a0)*D/2,Math.sin(a0)*D/2,R*0.7,Math.round(2+sc*2));for(let i=1;i<6;i++){const t=i/6-0.5;out.push([Math.cos(a0)*D*t+Math.sin(a0)*Math.sin(t*6)*R*0.25,Math.sin(a0)*D*t-Math.cos(a0)*Math.sin(t*6)*R*0.25,R*0.3]);}}
+  else grow(0,0,R,Math.round(5+sc*4));
+  return out;
 }
 /* 広いマップのボス：エリアを歩き回り、見つかると戦う。弱ると別のエリアへ逃げ、最後は巣（ボスのエリア）で眠る
    flee：逃げる体力の割合／napAt：巣へ帰って眠る体力の割合／napRegen：眠っている間に毎秒回復する割合（最大 napHealMax まで）
@@ -5397,8 +5453,9 @@ function createWorld(opts){
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
   if(TR){const b=spawnEnemy(w,w.quest.bossType,map.bossSpot.x,map.bossSpot.y);w.bossId=b.id;}
   else if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
-  if(stage.layout==='volcano')placeMagma(w);
-  if(stage.layout==='swamp')placeToxPools(w);
+  if(map.pools&&map.pools.length)for(const q of map.pools)w.hazards.push({id:w.nextId++,kind:q.kind,x:q.x,y:q.y,r:q.r,bl:q.bl,t:0,life:1e9,tick:q.kind==='magma'?0.6:0.5,acc:0,dmg:q.kind==='magma'?9:6,delay:0,fixed:true});
+  else if(stage.layout==='volcano')placeMagma(w);
+  else if(stage.layout==='swamp')placeToxPools(w);
   w.narrowVision=stage.layout==='crystal'; // 洞窟は常に視界が少し狭い
   if(stage.layout==='snow')w.blizzard={on:false,t:rand(20,30)};
   return w;
@@ -6127,7 +6184,7 @@ const Companion={
       const l=Math.hypot(m.mx,m.my);if(l<0.15)return {mx:0,my:0};
       m={mx:m.mx/l,my:m.my/l};
       const nx=p.x+m.mx*28,ny=p.y+m.my*28;
-      const bad=(x,y)=>(w.telegraphs||[]).some(tg=>tg.dmg>0&&tg.t<tg.total&&inTelegraph(tg,x,y,p.r))||(w.hazards||[]).some(z=>z.dmg>0&&!(z.delay>0)&&!z.visual&&Math.hypot(z.x-x,z.y-y)<z.r+p.r);
+      const bad=(x,y)=>(w.telegraphs||[]).some(tg=>tg.dmg>0&&tg.t<tg.total&&inTelegraph(tg,x,y,p.r))||(w.hazards||[]).some(z=>z.dmg>0&&!(z.delay>0)&&!z.visual&&(z.bl?inHazard(z,x,y,p.r):Math.hypot(z.x-x,z.y-y)<z.r+p.r));
       if(bad(nx,ny)){const side=idx%2?1:-1;const alt={mx:-m.my*side,my:m.mx*side};m=bad(p.x+alt.mx*28,p.y+alt.my*28)?{mx:-alt.mx,my:-alt.my}:alt;} // 予告や毒沼などには踏み込まない
       return m;
     };
@@ -11043,6 +11100,7 @@ const Renderer={
       }
     }
     if(map.deco)this.drawDecoLayer(g,map,theme);
+    if(map.pools&&map.pools.length)this.drawPools(g,map);
     if(map.props&&map.props.length)this.drawProps(g,map,theme);
     // 障害物は床の上に重ねて描く（木の葉は隣のマスにはみ出す）
     for(let y=0;y<map.H;y++)for(let x=0;x<map.W;x++){
@@ -11142,6 +11200,60 @@ const Renderer={
         if(h%11===0){g.strokeStyle='rgba(150,180,200,.35)';g.lineWidth=1;g.beginPath();g.moveTo(px+4,py+((h>>4)%20)+8);g.quadraticCurveTo(px+16,py+((h>>4)%20)+4,px+28,py+((h>>4)%20)+8);g.stroke();}
         break;
     }
+  },
+  /** 固定マップの毒沼・溶岩溜まり（動かない部分はマップの絵に描き込む）。縁から奥へ色を重ねて、深さが形に沿って見えるようにする */
+  drawPools(g,map){
+    for(const q of map.pools){
+      const path=(pad)=>{g.beginPath();for(const b of q.bl){const r=b[2]+pad;if(r<=1)continue;g.moveTo(q.x+b[0]+r,q.y+b[1]);g.arc(q.x+b[0],q.y+b[1],r,0,TAU);}};
+      // 色の層はぼかして重ねる（円の継ぎ目を見せず、深さがなめらかに変わる）。影のぼかしを使うのでどのブラウザでも同じ
+      const lay=(pad,c,bl)=>{if(!bl){g.fillStyle=c;path(pad);g.fill();return;}
+        g.save();g.shadowColor=c;g.shadowBlur=bl;g.shadowOffsetX=100000;g.translate(-100000,0);g.fillStyle='#000';path(pad);g.fill();g.restore();};
+      let h=q.h||1;const hr=()=>{h=(h*1103515245+12345)&0x7fffffff;return h/0x7fffffff;};
+      // 縁のまわりの点（ほかの円の内側に入っている点は除く）
+      const rim=(pad,step)=>{const pts=[];for(const b of q.bl){const R=b[2]+pad,n=Math.max(3,Math.round(TAU*R/step));for(let i=0;i<n;i++){const a=i*TAU/n+hr()*0.3,x=b[0]+Math.cos(a)*R,y=b[1]+Math.sin(a)*R;if(q.bl.some(o=>o!==b&&Math.hypot(x-o[0],y-o[1])<o[2]+pad-1))continue;pts.push([q.x+x,q.y+y,a]);}}return pts;};
+      g.save();
+      if(q.kind==='magma'){
+        lay(12,'rgba(8,4,2,.55)',14);lay(5,'#1e0f09',4);lay(1,'#5a1c0a');lay(-1,'#9a2c0c');lay(-6,'#c43e14',8);lay(-13,'#e2581a',12);lay(-22,'#f5822a',16);lay(-34,'#ffa640',20);
+        // 固まりかけた岩の板（黒い殻）とその割れ目の光
+        for(const b of q.bl){if(b[2]<30||hr()<0.45)continue;const n=1;for(let k=0;k<n;k++){const a=hr()*TAU,d=hr()*b[2]*0.55,cx=q.x+b[0]+Math.cos(a)*d,cy=q.y+b[1]+Math.sin(a)*d,s=b[2]*rr2(hr,0.18,0.32);
+          g.fillStyle='#2e140b';g.strokeStyle='rgba(255,170,70,.75)';g.lineWidth=1.5;g.beginPath();for(let i=0;i<6;i++){const t=i*TAU/6+hr()*0.5,ra=s*(0.7+hr()*0.5);i?g.lineTo(cx+Math.cos(t)*ra,cy+Math.sin(t)*ra*0.8):g.moveTo(cx+Math.cos(t)*ra,cy+Math.sin(t)*ra*0.8);}g.closePath();g.fill();g.stroke();
+          g.strokeStyle='rgba(255,120,40,.55)';g.lineWidth=1;g.beginPath();g.moveTo(cx-s*0.5,cy);g.lineTo(cx+s*0.1,cy-s*0.2);g.lineTo(cx+s*0.5,cy+s*0.15);g.stroke();}}
+        // 縁の黒い岩くず
+        g.fillStyle='#1a0d08';for(const [x,y] of rim(4,22)){const s=2+hr()*3.5;g.beginPath();g.ellipse(x,y,s*1.3,s,hr()*3,0,TAU);g.fill();}
+        g.fillStyle='rgba(255,140,50,.5)';for(const [x,y] of rim(-1,30)){g.fillRect(x-1,y-1,2,2);}
+      }else{
+        lay(10,'rgba(24,28,10,.55)',14);lay(4,'#2c3318',4);lay(1,'#50682c');lay(-2,'#36442a');lay(-7,'#3c3a40',8);lay(-14,'#463856',12);lay(-24,'#4f3c66',16);lay(-36,'#563f70',20);
+        // 水面に浮く藻と泡の跡
+        for(const b of q.bl){const n=1+Math.floor(hr()*3);for(let k=0;k<n;k++){const a=hr()*TAU,d=hr()*b[2]*0.7,cx=q.x+b[0]+Math.cos(a)*d,cy=q.y+b[1]+Math.sin(a)*d;
+          g.fillStyle=hr()<0.5?'rgba(120,150,60,.35)':'rgba(170,120,210,.22)';g.beginPath();g.ellipse(cx,cy,4+hr()*9,2+hr()*4,hr()*3,0,TAU);g.fill();}}
+        // 縁の葦と泥
+        g.fillStyle='rgba(30,26,12,.6)';for(const [x,y] of rim(5,26)){g.beginPath();g.ellipse(x,y,3+hr()*3,2+hr()*2,hr()*3,0,TAU);g.fill();}
+        g.lineCap='round';
+        for(const [x,y] of rim(3,34)){if(hr()<0.35)continue;const n=2+Math.floor(hr()*3);for(let i=0;i<n;i++){const bx=x+(hr()-0.5)*8,hh=7+hr()*9,lean=(hr()-0.5)*6;
+          g.strokeStyle=hr()<0.5?'#5a6a2a':'#6f7f34';g.lineWidth=1.6;g.beginPath();g.moveTo(bx,y+2);g.quadraticCurveTo(bx+lean*0.3,y-hh*0.5,bx+lean,y-hh);g.stroke();}}
+      }
+      g.restore();
+    }
+  },
+  /** 毒沼・溶岩溜まりの動く部分（泡・光のゆらぎ）。毎フレーム、見えているものだけ */
+  drawPoolFx(ctx,q){
+    const T=this.time,n=Math.min(10,q.bl.length+2);
+    ctx.save();
+    if(q.kind==='magma'){
+      const pulse=0.5+0.5*Math.sin(T*2.2+q.h);
+      ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,150,50,${0.06+0.08*pulse})`;
+      ctx.beginPath();for(const b of q.bl){const r=b[2]-6;if(r<=1)continue;ctx.moveTo(q.x+b[0]+r,q.y+b[1]);ctx.arc(q.x+b[0],q.y+b[1],r,0,TAU);}ctx.fill();
+      for(let i=0;i<n;i++){const b=q.bl[(i*7+q.h)%q.bl.length],ph=(T*0.6+i*0.37+q.h*0.001)%1,a=i*2.4+q.h,d=b[2]*0.5;
+        const x=q.x+b[0]+Math.cos(a)*d,y=q.y+b[1]+Math.sin(a)*d*0.7;
+        ctx.fillStyle=`rgba(255,230,140,${0.6*(1-ph)})`;ctx.beginPath();ctx.arc(x,y,1.5+ph*4,0,TAU);ctx.fill();
+        if(ph>0.7){ctx.fillStyle=`rgba(255,200,90,${(1-ph)*2})`;ctx.fillRect(x-1,y-ph*14,2,2);}}
+    }else{
+      for(let i=0;i<n;i++){const b=q.bl[(i*7+q.h)%q.bl.length],ph=(T*0.45+i*0.29+q.h*0.001)%1,a=i*2.4+q.h,d=b[2]*0.55;
+        const x=q.x+b[0]+Math.cos(a)*d,y=q.y+b[1]+Math.sin(a)*d*0.7,rad=1.5+ph*3.5;
+        ctx.strokeStyle=`rgba(200,160,240,${0.7*(1-ph)})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,rad,0,TAU);ctx.stroke();
+        if(ph<0.5){ctx.fillStyle=`rgba(150,220,90,${0.3*(1-ph*2)})`;ctx.beginPath();ctx.arc(x+3,y-6-ph*10,2,0,TAU);ctx.fill();}}
+    }
+    ctx.restore();
   },
   /** まるい水溜まり：円を重ねた形で、床の上だけに描く（壁・障害物には重ねない） */
   drawRoundPuddles(g,map){
@@ -11396,7 +11508,8 @@ const Renderer={
     const fog=!!app.settings().vision;
     this.updateVision(w);if(!fog)this.vis=null; // 探索の記録はミニマップのため常に取る
     const seen=(x,y,r)=>!fog||this.isVisible(w,x,y,r);
-    for(const z of (w.hazards||[]))if(!(z.delay>0)&&seen(z.x,z.y,z.r))this.drawHazard(ctx,z);
+    for(const q of (w.map.pools||[]))if(seen(q.x,q.y,q.r))this.drawPoolFx(ctx,q);
+    for(const z of (w.hazards||[]))if(!z.fixed&&!(z.delay>0)&&seen(z.x,z.y,z.r))this.drawHazard(ctx,z);
     for(const t of w.telegraphs)this.drawTelegraph(ctx,t);
     for(const o of (w.placed||[]))if(seen(o.x,o.y,20))this.drawPlaced(ctx,o);
     for(const gt of (w.gathers||[]))if(!fog||this.isExplored(w,gt.x,gt.y))this.drawGather(ctx,gt);
@@ -15312,7 +15425,7 @@ const Net={
         elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,ult:!!e.ult,camo:!!e.camo,mimic:e.mimic||0,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
-      hazards:(w.hazards||[]).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
+      hazards:(w.hazards||[]).filter(z=>!z.fixed).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
       blizzard:w.blizzard?{on:!!w.blizzard.on}:null,narrowVision:!!w.narrowVision,
       gathers:(w.gathers||[]).map(g=>({id:g.id,x:g.x,y:g.y,kind:g.kind,used:g.used})),
       drops:w.drops.map(d=>({id:d.id,x:r1(d.x),y:r1(d.y),loot:this.liteLoot(d.loot)})),
@@ -15322,7 +15435,7 @@ const Net={
     return s;
   },
   startMessage(w,pid){
-    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),deco:w.map.deco?Array.from(w.map.deco):null,props:w.map.props||null,puddles:w.map.puddles,open:!!w.map.open,areas:w.map.areas||null,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
+    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),deco:w.map.deco?Array.from(w.map.deco):null,props:w.map.props||null,puddles:w.map.puddles,pools:w.map.pools||null,open:!!w.map.open,areas:w.map.areas||null,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
       quest:w.quest,questId:w.questId,diff:w.diff,bossId:w.bossId,pc:w.playerCount};
   },
   broadcastStart(w){
@@ -15386,7 +15499,7 @@ const Net={
   },
   buildMirror(d){
     const m=d.map;
-    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),deco:m.deco?Uint8Array.from(m.deco):null,props:m.props||null,puddles:m.puddles||null,open:!!m.open,areas:m.areas||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
+    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),deco:m.deco?Uint8Array.from(m.deco):null,props:m.props||null,puddles:m.puddles||null,pools:m.pools||null,open:!!m.open,areas:m.areas||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
     const w={mirror:true,time:0,map,players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],hazards:[],gathers:[],
       quest:d.quest,questId:d.questId,diff:d.diff,bossId:d.bossId,playerCount:d.pc,status:'playing'};
     if(m.doorClosed)this.closeDoor(w);
