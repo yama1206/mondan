@@ -204,6 +204,11 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 <div id="overlay" class="hidden"></div>
 <div id="modal" class="hidden"></div>
 <script>
+// メンテナンス中：true の間はゲームを始めない（解除するときは false にする）
+const MAINTENANCE=true;
+</script>
+<script>
+if(MAINTENANCE){document.body.innerHTML='<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#14121a;color:#ffe9a8;font:bold 22px sans-serif;text-align:center;gap:12px"><div>モンスターダンジョンズ</div><div style="font-size:18px;color:#ddd">ただいまメンテナンス中です</div><div style="font-size:14px;color:#aaa">しばらくお待ちください</div></div>';throw new Error('maintenance');}
 'use strict';
 /* =====================================================================
    モンスターダンジョンズ（モンダン） — 見下ろし型ハック＆スラッシュ
@@ -243,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.89.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.89.1',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
