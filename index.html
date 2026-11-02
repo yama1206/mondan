@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.0',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.1',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -8468,7 +8468,8 @@ const PET_ACTS={
   amesho:{name:'猫パンチ',desc:'近くの敵を素早い猫パンチで何度もたたく（飼い主の攻撃力の18%）',cd:2,attack:{mult:0.18,range:240}},
   cheetah:{name:'全速力の追撃',desc:'遠くの敵にも一瞬で駆け寄って飛びかかる（飼い主の攻撃力の50%）',cd:6,attack:{mult:0.5,range:520,dashSp:640}},
   momonga:{name:'滑空アタック',desc:'離れた敵へ皮膜を広げて滑空し、体当たりする（飼い主の攻撃力の35%）',cd:5,attack:{mult:0.35,range:420,dashSp:420}},
-  squirrel:{name:'どんぐり投げ',desc:'離れた所から近くの敵にどんぐりを投げつける（飼い主の攻撃力の22%）',cd:3,attack:{mult:0.22,range:380,ranged:true}},
+  squirrel:{name:'どんぐりの差し入れ',desc:'飼い主のHPが6割を切ると、ためておいたどんぐりを渡して回復させる（最大HPの12%）',cd:18,
+    ready:(w,o)=>o.hp<o.stats.maxHp*0.6,do:(w,pt,o)=>petHeal(w,o,0.12)},
   elephant:{name:'踏み鳴らし',desc:'敵に駆け寄って地面を踏み鳴らし、まわりの敵にまとめてダメージ（飼い主の攻撃力の35%）',cd:8,attack:{mult:0.35,range:300,aoe:110}},
   owlsleep:{name:'眠りの羽ばたき',desc:'離れた所から音もなく羽ばたいて、敵を眠りに誘う（飼い主の攻撃力の15%・睡眠が溜まる）',cd:6,attack:{mult:0.15,range:420,ranged:true,inflict:{k:'sleep',buildup:25}}},
   parrot:{name:'おしゃべり応援',desc:'近くに敵がいると、飼い主の口まねで声援を送り、攻撃力を上げる（+15%・8秒）',cd:20,
