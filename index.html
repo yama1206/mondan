@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.3.0',date:'2026/11/02'};
+const GAME_VERSION={no:'2.3.1',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1869,7 +1869,7 @@ const DATA={
       pal:{body:'#8a5aa0',dark:'#3a2050',spore:'#d0a0ff',eye:'#ffffff'}},
     /* ボス：pattern に技を順に並べる（技：sweep=扇形 / slam=円 / charge=突進 / shot=飛び道具 / pool=毒の沼 / swarm=子蟲召喚）
        wind：予備動作の秒数／cd：次に使えるまでの秒数／dmg：攻撃力への倍率／r・arc：範囲 */
-    hydra:{name:'腐沼の多頭竜ヒュドラ',ai:'pattern',look:'hydra',hp:3000,atk:26,def:6,r:34,speed:110,stunMax:120,stunTime:4,color:'#4a6a3a',drops:'hydra',boss:true,specials:[{k:'tripleBreath',cd:11,wind:1.0,dmg:1.1,len:320,width:50,el:'water',st:'poison',range:[0,360],los:true},{k:'dive',cd:14,dmg:1.4,r:100,range:[0,700]},{k:'tripleBite',cd:9,wind:0.6,dmg:1.0,r:110,range:[0,200]}],
+    hydra:{name:'腐沼の多頭竜ヒュドラ',ai:'pattern',look:'hydra',hp:3500,atk:28,def:6,r:34,speed:110,stunMax:120,stunTime:4,color:'#4a6a3a',drops:'hydra',boss:true,specials:[{k:'tripleBreath',cd:11,wind:1.0,dmg:1.1,len:320,width:50,el:'water',st:'poison',range:[0,360],los:true},{k:'dive',cd:14,dmg:1.4,r:100,range:[0,700]},{k:'tripleBite',cd:9,wind:0.6,dmg:1.0,r:110,range:[0,200]}],
       pattern:[
         {k:'combo',wind:0.7,cd:4.5,dmg:1.0,r:130,arc:1.4,hits:3,step:0.35}, // 三つ首が順に噛みつく
         {k:'shot',wind:0.6,cd:3.6,dmg:0.9,n:3,spread:0.5,speed:300,kind:'soul',el:'water'}, // 三つ首から水弾
@@ -5933,7 +5933,7 @@ function damageEnemy(w,p,e,mult,src){
   if(e.slimeT>0)mult*=0.6; // オオサンショウウオの粘液：攻撃が滑る
   {const ed=DATA.enemies[e.type];if(ed&&ed.frontArmor&&Math.abs(angDiff(Math.atan2(p.y-e.y,p.x-e.x),e.facing))<Math.PI/3)mult*=ed.frontArmor;} // クワガタ：正面の硬い殻
   if(e.type==='hydra'&&src.hit&&src.hit.part&&src.hit.part.head&&!(e.headsCut>=2)){e.headHits=(e.headHits||0)+1; // ヒュドラ：首を何度も攻撃すると1本落ちる
-    if(e.headHits>=12){e.headHits=0;e.headsCut=(e.headsCut||0)+1;e.regrowT=15;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'首が落ちた！',color:'#ffd23a'});}}
+    if(e.headHits>=30){e.headHits=0;e.headsCut=(e.headsCut||0)+1;e.regrowT=10;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'首が落ちた！',color:'#ffd23a'});}}
   if(e.type==='mireGiant'&&RNG.next()<0.5)emit(w,{type:'mudSplash',x:e.x,y:e.y}); // 沼巨人：攻撃を受けると泥が飛び散る
   if(e.fin||e.mound)mult*=0.3; // 泥鯨・ミミズ：潜っている間は攻撃が届きにくい
   if(e.basking)mult*=1.3; // マンボウ：日向ぼっこ中は隙だらけ
@@ -6957,7 +6957,7 @@ function updateBossPattern(w,e,p,dt){
   if(e.state==='stunned'){e.z=0;e.leapTo=null;e.hidden=false;e.sp=null;e.shell=false;e.curl=false;e.timer-=dt;if(e.timer<=0){e.state='recover';e.timer=0.3;}return;}
   if(e.hasteT>0)e.hasteT-=dt;
   if(e.slimeT>0)e.slimeT-=dt;
-  if(e.regrowT>0){e.regrowT-=dt;if(e.regrowT<=0&&e.headsCut>0){e.headsCut--;const h=Math.round(e.maxHp*0.04);e.hp=Math.min(e.maxHp,e.hp+h);emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'首が生え直した',color:'#9ae070'});if(e.headsCut>0)e.regrowT=15;}}
+  if(e.regrowT>0){e.regrowT-=dt;if(e.regrowT<=0&&e.headsCut>0){e.headsCut--;const h=Math.round(e.maxHp*0.06);e.hp=Math.min(e.maxHp,e.hp+h);emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'首が生え直した',color:'#9ae070'});if(e.headsCut>0)e.regrowT=10;}}
   // 最後の大技：体力が5%を切ったら、一度だけ（何をしていても切り替える）
   if(def.ultimate&&!e.ultDone&&!e.ult&&e.hp<=e.maxHp*0.05){cancelEnemyAction(w,e);e.z=0;startSpecial(w,e,p,{k:'ultimate'});return;}
   // 足取りの揺れ：大きな体で歩くと、足元に小さな衝撃が出る
@@ -6990,7 +6990,7 @@ function updateBossPattern(w,e,p,dt){
       if(pick>=0){
         e.noAtkT=0;e.camo=false;e.stillT=0;
         const mv=pat[pick],wind=mv.wind*(ph2?0.8:1);
-        e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc*(e.headsCut&&(mv.k==='combo'||mv.k==='beam')?1+0.6*e.headsCut:1);e.fin=false;e.curMv=mv;e.atkAngle=ang; // ヒュドラ：首が落ちると噛みつき・ブレスの間隔が延びる
+        e.patIdx=(pick+1)%pat.length;e.cds['p'+pick]=mv.cd*rc*(e.headsCut&&(mv.k==='combo'||mv.k==='beam')?1+0.3*e.headsCut:1);e.fin=false;e.curMv=mv;e.atkAngle=ang; // ヒュドラ：首が落ちると噛みつき・ブレスの間隔が延びる
         e.chargeTimes=mv.k==='charge'?(mv.times||1)-1:0;
         if(mv.k==='charge')startCharge(w,e,ang,wind,false);
         else if(mv.k==='leap'){ // 飛びかかり：着地点を予告し、溜めのあと弧を描いて跳ぶ
