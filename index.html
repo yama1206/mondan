@@ -205,7 +205,7 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 <div id="modal" class="hidden"></div>
 <script>
 // メンテナンス中：true の間はゲームを始めない（解除するときは false にする）
-const MAINTENANCE=true;
+const MAINTENANCE=false;
 </script>
 <script>
 'use strict';
@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.3',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
