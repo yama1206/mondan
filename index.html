@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.86.3',date:'2026/11/02'};
+const GAME_VERSION={no:'1.86.4',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3799,8 +3799,8 @@ function armorSkillPoints(items){
 }
 /** n段階目に必要なポイント */
 function skillStepAt(n){const st=CONFIG.skillPoints.steps;return n<=st.length?st[n-1]:st[st.length-1]+5*(n-st.length);}
-/** 段階一覧の説明（例：10・15・20・25ポイントで段階発動） */
-function skillStepsText(max){const a=[];for(let n=1;n<=(max||4);n++)a.push(skillStepAt(n));return a.join('・');}
+/** 段階一覧の説明（例：10・15ポイントで段階発動） */
+function skillStepsText(max){const a=[];for(let n=1;n<=(max||CONFIG.skillPoints.steps.length);n++)a.push(skillStepAt(n));return a.join('・');}
 function armorSkillLevels(pts){
   const out=[];
   for(const k in pts){
@@ -16091,7 +16091,7 @@ const App={
   /** 防具スキル：合計ポイント・発動中の段階・次の段階までの残り */
   skillBlockHTML(st){
     const list=st.skillList||[];
-    let h=`<div class="col-t">防具スキル（${skillStepsText(4)}ポイントで段階発動）</div>`;
+    let h=`<div class="col-t">防具スキル（${skillStepsText()}ポイントで段階発動）</div>`;
     if(!list.length)return h+'<div class="muted small">スキルポイントのある防具を装備していません</div>';
     return h+list.map(x=>{
       const d=DATA.armorSkills[x.id],on=x.level>0,goal=on?(x.level<x.max?skillStepAt(x.level+1):skillStepAt(x.max)):skillStepAt(1);
@@ -16447,7 +16447,7 @@ const App={
     const skillRow=cat==='armor'&&skillKeys.length?`<div class="filters" style="margin-bottom:8px"><button class="${skillF?'on':''}" data-act="smithSkillOpen">スキルで絞込：${skLabel} ${skOpen?'▲':'▼'}</button>${skOpen?`<div class="filters" style="margin-top:6px;width:100%">${skillKeys.map(k=>`<button class="${skillF===k?'on':''}" data-act="smithSkill" data-s="${k}">${DATA.armorSkills[k]?DATA.armorSkills[k].name:k}</button>`).join('')}</div>`:''}</div>`:'';
     const wt=DATA.weaponTypes[sub];
     const wtInfo=cat==='weapon'&&wt?`<div class="small" style="margin-bottom:8px;color:#ffd23a">${wt.name}：移動${wt.marks.move} 振り${wt.marks.speed} 威力${wt.marks.power} リーチ${wt.marks.reach}　納刀${wt.sheathe}秒　${wt.feature}</div>`:'';
-    const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${skillStepsText(4)}そろえると段階発動（別のシリーズと組み合わせてもOK）</div>`:'';
+    const setInfo=cat==='armor'?`<div class="small" style="margin-bottom:8px;color:#9ad8ff">防具スキル：同じスキルのポイントを合計${skillStepsText()}そろえると段階発動（別のシリーズと組み合わせてもOK）</div>`:'';
     // シリーズのタブを開いた時だけ、そのシリーズのシリーズスキルを出す
     const setDetail=cat==='armor'&&sub.startsWith('set:')&&DATA.armorSets[sub.slice(4)]?(()=>{const S=DATA.armorSets[sub.slice(4)];return `<div class="small" style="margin-bottom:8px;color:#7fe09a">シリーズスキル（頭・胴・腕・腰・脚のうち2部位・5部位で発動）：${S.name}「${S.bonus}」<br>${seriesTextHTML(S)}</div>`;})():'';
     const reinf=cat==='reinforce'?this.reinforceHTML()+this.enchantHTML():'';
