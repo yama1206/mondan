@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.1.5',date:'2026/11/02'};
+const GAME_VERSION={no:'2.2.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3662,6 +3662,22 @@ function seriesEffText(eff,ratio){
 }
 /** 防具が属するシリーズのキー（属さなければ undefined） */
 function armorSeriesOf(id){return Object.keys(DATA.armorSets).find(k=>Object.values(DATA.armorSets[k].pieces).includes(id));}
+/** シリーズ防具のステージ：胴のレシピの stage → 素材を落とすボスの依頼のステージ（一番早いもの） → 素材の説明にあるステージ名 → 1 */
+let _armorSeriesStage=null;
+function armorSeriesStage(k){
+  if(!_armorSeriesStage){
+    _armorSeriesStage={};const bossSt={};
+    for(const q of DATA.quests){if(!q.boss)continue;const e=DATA.enemies[q.boss],t=e&&DATA.dropTables[e.drops];if(!t)continue;
+      for(const r of t.rolls||[])if(r.type==='mat'&&(bossSt[r.id]==null||q.stage<bossSt[r.id]))bossSt[r.id]=q.stage;}
+    for(const [sk,S] of Object.entries(DATA.armorSets)){
+      const r=DATA.recipes.find(r=>r.out.type==='equip'&&r.out.id===S.pieces.body);const mats=r?Object.keys(r.cost||{}):[];
+      let st=r&&r.stage;
+      if(!st){const l=mats.map(m=>bossSt[m]).filter(x=>x!=null);if(l.length)st=Math.min(...l);}
+      if(!st){for(const m of mats){const d=(DATA.materials[m]||{}).desc||'';const g=DATA.stages.find(x=>d.includes('（'+x.name+'）'));if(g){st=g.id;break;}}}
+      _armorSeriesStage[sk]=st||1;}
+  }
+  return _armorSeriesStage[k]||1;
+}
 function isBossWeapon(baseId){
   const b=DATA.equipment[baseId];if(!b||b.slot==='charm')return false;
   const r=DATA.recipes.find(x=>x.out.type==='equip'&&x.out.id===baseId);if(!r)return false;
@@ -16775,7 +16791,7 @@ const App={
       case 'bestStage':this.bestStage=Number(ds.s)||1;this.bestSel=null;this.goto('bestiary');break;
       case 'bestiaryBack':this.goto(this.bestiaryFrom||'camp');break;
       case 'smithCat':this.smithCat=ds.c;this.smithSub='all';this.goto('smith');break;
-      case 'smithSub':{const inS=this.smithSub==='series'||String(this.smithSub||'').startsWith('set:');
+      case 'smithSub':{const inS=this.smithSub==='series'||/^(set|sst):/.test(String(this.smithSub||''));
         // シリーズのタブは、開いているときにもう一度押すと閉じる（部位の先頭に戻る）
         this.smithSub=(ds.s==='series'&&inS)?'slot:head':ds.s;this.goto('smith');break;}
       case 'smithSkill':this.smithSkillF=(this.smithSkillF===ds.s)?null:ds.s;this.goto('smith');break;
@@ -17710,9 +17726,9 @@ const App={
     const subs=cat==='weapon'?[['all','すべて'],...Object.keys(DATA.weaponTypes).map(k=>[k,DATA.weaponTypes[k].name])]
       :cat==='armor'?[['all','すべて'],...partTabs,['series','シリーズ'],...(hasMisc?[['misc','その他']]:[])]:[];
     let sub=this.smithSub||'all';
-    const armorSubOk=k=>subs.some(([x])=>x===k)||k==='series'||(k.startsWith('set:')&&setKeys.includes(k.slice(4)));
+    const armorSubOk=k=>subs.some(([x])=>x===k)||k==='series'||(k.startsWith('set:')&&setKeys.includes(k.slice(4)))||(k.startsWith('sst:')&&setKeys.some(x=>armorSeriesStage(x)===+k.slice(4)));
     if(cat==='armor'&&!armorSubOk(sub))sub=subs[0][0];
-    const inSeries=cat==='armor'&&(sub==='series'||sub.startsWith('set:'));
+    const inSeries=cat==='armor'&&(sub==='series'||sub.startsWith('set:')||sub.startsWith('sst:'));
     // 防具のスキルで絞り込み（作れる防具が持つスキルだけ出す）
     const skillKeys=[...new Set(availEq.filter(id=>DATA.equipment[id].slot!=='weapon'&&DATA.equipment[id].slot!=='charm').flatMap(id=>Object.keys(DATA.equipment[id].skills||{})))];
     let skillF=cat==='armor'&&skillKeys.includes(this.smithSkillF)?this.smithSkillF:null;
@@ -17730,12 +17746,18 @@ const App={
       const se=seriesOf(r.out.id);
       if(sub==='series')return !!se;
       if(sub==='misc')return !se;
+      if(sub.startsWith('sst:'))return !!se&&armorSeriesStage(se)===+sub.slice(4);
       return se===sub.slice(4);
     };
     const catTabs=`<div class="tabs" style="margin-bottom:6px">${cats.map(([k,n])=>`<button class="tab ${cat===k?'on':''}" data-act="smithCat" data-c="${k}">${n}</button>`).join('')}</div>`;
     const subTabs=subs.length?`<div class="filters" style="margin-bottom:8px">${subs.map(([k,n])=>`<button class="${(sub===k||(k==='series'&&inSeries))?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
     // シリーズを開いたとき：すべてのシリーズ防具、または選んだシリーズの防具だけを見る
-    const seriesRow=inSeries?`<div class="filters" style="margin-bottom:8px">${[['series','すべてのシリーズ'],...setKeys.map(k=>['set:'+k,DATA.armorSets[k].name])].map(([k,n])=>`<button class="${sub===k?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
+    // シリーズ → ステージ → ボス（シリーズ）の順に絞り込む
+    const selSt=sub.startsWith('sst:')?+sub.slice(4):sub.startsWith('set:')?armorSeriesStage(sub.slice(4)):null;
+    const stList=[...new Set(setKeys.map(k=>armorSeriesStage(k)))].sort((a,b)=>a-b);
+    const stRow=inSeries?`<div class="filters" style="margin-bottom:8px">${[['series','すべてのシリーズ'],...stList.map(n=>['sst:'+n,'ステージ'+n])].map(([k,n])=>`<button class="${(sub===k||(k==='sst:'+selSt))?'on':''}" data-act="smithSub" data-s="${k}">${n}</button>`).join('')}</div>`:'';
+    const bossRow=inSeries&&selSt?`<div class="filters" style="margin-bottom:8px">${setKeys.filter(k=>armorSeriesStage(k)===selSt).map(k=>`<button class="${sub==='set:'+k?'on':''}" data-act="smithSub" data-s="set:${k}">${DATA.armorSets[k].name}</button>`).join('')}</div>`:'';
+    const seriesRow=stRow+bossRow;
     // 防具のスキルで絞り込み：押したスキルで絞り、もう一度押すと解除
     const skOpen=!!this.smithSkillOpen,skLabel=skillF&&DATA.armorSkills[skillF]?DATA.armorSkills[skillF].name:'すべて';
     const skillRow=cat==='armor'&&skillKeys.length?`<div class="filters" style="margin-bottom:8px"><button class="${skillF?'on':''}" data-act="smithSkillOpen">スキルで絞込：${skLabel} ${skOpen?'▲':'▼'}</button>${skOpen?`<div class="filters" style="margin-top:6px;width:100%">${skillKeys.map(k=>`<button class="${skillF===k?'on':''}" data-act="smithSkill" data-s="${k}">${DATA.armorSkills[k]?DATA.armorSkills[k].name:k}</button>`).join('')}</div>`:''}</div>`:'';
