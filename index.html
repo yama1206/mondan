@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.93.2',date:'2026/11/02'};
+const GAME_VERSION={no:'1.94.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -2601,7 +2601,7 @@ const DATA={
     {id:'s6_centi',stage:5,after:'s6_mole',boss:'centipede',name:'【強敵】晶殻の大百足',desc:'細長い体の大百足が、炎の弾を吐き出す。尾の薙ぎ払いと炎の弾に注意。',goal:{type:'boss'},reward:{gold:1800,mats:{centi_ember:1,reinforce_orb:2},decos:1}},
     {id:'cr_bat',stage:5,after:'s6_centi',boss:'giant_bat',name:'【強敵】洞窟の大蝙蝠',desc:'洞窟の天井から、巨大な蝙蝠が急降下してくる。直線の音波は睡眠を誘う。',goal:{type:'boss'},reward:{gold:1700,mats:{cave_wing:3,cave_fang:2}}},
     {id:'cr_scorp',stage:5,after:'cr_bat',boss:'crystal_scorpion',name:'【強敵】晶毒の大蠍',desc:'晶石をまとった大蠍が尾の毒針を構えている。毒針の直線に注意。',goal:{type:'boss'},reward:{gold:1800,mats:{hard_shell__crystal_scorpion:3,poison_spore:2}}},
-    {id:'free_6',stage:5,explore:true,name:'【探索】晶石の大洞窟',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_6',stage:5,explore:true,name:'【探索】晶石の大洞窟',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
     {id:'ex_scarab',stage:6,after:'v_griffon',boss:'scarab',name:'【強敵】灼熱の大甲虫',desc:'火山の岩場で、大きな糞転がしが灼けた岩玉を転がしている。角と岩玉に注意せよ。',goal:{type:'boss'},reward:{gold:1980,mats:{centi_shell__scarab:2,poison_spore:2}}},
     {id:'ex_fire_phoenix',stage:6,after:'ex_scarab',boss:'fire_phoenix',name:'【強敵】焦土の不死鳥',desc:'焦土の空を不死鳥が舞う。急降下の爪と、灰からのよみがえりに注意せよ。',goal:{type:'boss'},reward:{gold:1980,mats:{spider_silk__fire_phoenix:2,centi_ember__fire_phoenix:2}}},
     {id:'v_ash',stage:6,key:true,name:'爆炎の甲虫の掃討',desc:'赤く光って爆発する甲虫を10体倒せ。爆発の前に離れること。',goal:{type:'kill',target:'magma_beetle',count:10},reward:{gold:840,mats:{blast_sac:3}}},
@@ -2663,11 +2663,11 @@ const DATA={
     {id:'min_8_shaman',stage:8,name:'墓地の呪術師の討伐',desc:'墓地の呪術師を10体倒せ。',goal:{type:'kill',target:'shaman',count:10},reward:{gold:600,mats:{curse_powder:2}}},
     {id:'min_8_cursed_knight',stage:8,name:'呪われた騎士の討伐',desc:'呪われた騎士を10体倒せ。',goal:{type:'kill',target:'cursed_knight',count:10},reward:{gold:600,mats:{cursed_iron:2}}},
     // 自由探索（目標なし・報酬なし。好きなときに帰れる）
-    {id:'free_1',stage:1,explore:true,name:'【探索】風渡る草原',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'free_2',stage:2,explore:true,name:'【探索】緑風の森林',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'free_3',stage:3,explore:true,name:'【探索】腐毒の沼地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'free_4',stage:4,explore:true,name:'【探索】蒼流の水辺',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'free_5',stage:8,explore:true,name:'【探索】忘却の地下墓地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_1',stage:1,explore:true,name:'【探索】風渡る草原',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_2',stage:2,explore:true,name:'【探索】緑風の森林',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_3',stage:3,explore:true,name:'【探索】腐毒の沼地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_4',stage:4,explore:true,name:'【探索】蒼流の水辺',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
+    {id:'free_5',stage:8,explore:true,name:'【探索】忘却の地下墓地',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
   ],
   /* モンスター図鑑の説明。stage：主に出現するステージ */
   bestiary:{
@@ -5393,7 +5393,7 @@ function createWorld(opts){
     diff:{hp:stage.hp*(1+CONFIG.coop.hpPerExtraPlayer*(np-1)),atk:stage.atk,level:stage.id},
     flow:null,flowTimer:0,
     quest:{title:quest.name,goal,progress:0,need:goal.type==='boss'?1:goal.type==='explore'?0:questNeed(goal,np),done:false,
-      killed:0,total:0,chests:0,chestsTotal:0,boss:(goal.type==='boss'||goal.type==='explore')?'unseen':'none',bossType:(goal.type==='boss'||goal.type==='explore')?(quest.boss||stage.enemySet.boss):null},
+      killed:0,total:0,chests:0,chestsTotal:0,boss:(goal.type==='boss'||TR)?'unseen':'none',bossType:(goal.type==='boss'||TR)?(quest.boss||stage.enemySet.boss):null},
     status:'playing',clearTimer:-1,deadTimer:-1,bossId:null,playerStart:{x:map.start.x,y:map.start.y}};
   if(TR){const b=spawnEnemy(w,w.quest.bossType,map.bossSpot.x,map.bossSpot.y);w.bossId=b.id;}
   else if(L)populateLayout(w,stage,quest,L);else populate(w,stage,quest);
@@ -5427,7 +5427,7 @@ function spawnHerd(w,m,x,y,types,main,n){
 }
 function populateLayout(w,stage,quest,L){
   const m=w.map,goal=quest.goal,S=stage.enemySet,dens=stage.density??1;
-  const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&(goal.type==='boss'||goal.type==='explore')));
+  const rooms=m.roomList.filter(rm=>rm.kind!=='start'&&!(rm.kind==='boss'&&goal.type==='boss'));
   // 枠雑魚（部屋の配置枠から出る雑魚）は、1つのフロアで合計3体まで。中ボスとその取り巻きは別扱いで数えない
   let slotBudget=CONFIG.slotRegularCap;
   for(const rm of rooms){
@@ -5478,13 +5478,13 @@ function populateLayout(w,stage,quest,L){
     const p=randomFloor(m,rm.rect,1);if(p)w.chests.push({id:w.nextId++,x:p.x,y:p.y,opened:false,table:stage.chest});
   }
   for(const g of m.gatherSpots)w.gathers.push({id:w.nextId++,x:g.x,y:g.y,kind:g.kind,used:false,table:'gather_'+g.kind});
-  if(goal.type==='boss'||goal.type==='explore'){
+  if(goal.type==='boss'){
     // 広いマップ：ボスはスタートから離れたエリアのどこかにいて、歩き回っている
     let bp=m.bossSpot,area=null;
     if(m.open){const c=m.areas.filter(a=>a.kind!=='start'&&a.n>2);area=pick(c.length?c:m.areas.filter(a=>a.kind!=='start'));bp=randomFloor(m,area.rect,3)||{x:area.x,y:area.y};}
     const boss=spawnEnemy(w,w.quest.bossType,bp.x,bp.y,quest.urgent?{urgentStage:quest.stage}:{});w.bossId=boss.id;
     if(area){boss.state='field';boss.fld={mode:'roam',area,t:rand(FIELD_BOSS.roamStay[0],FIELD_BOSS.roamStay[1]),fi:0};}
-  } // 自由探索にも主がいる（倒しても探索は続く）
+  } // 自由探索にはボスを出さない
   w.quest.total=w.enemies.filter(e=>!e.boss).length;
   w.quest.chestsTotal=w.chests.length;
 }
@@ -16679,7 +16679,7 @@ const App={
         ${sec('目標',`<div class="eff"><b>${questGoalText(sel.goal)}</b></div>`)}
         ${sec('報酬',`<div class="eff">${QuestRules.rewardText(sel)}</div><div class="small muted">ほかに、倒した魔物や開けた宝箱からも素材・ゴールドが手に入ります</div>`)}
         ${sel.unlocks?sec('クリアすると',`<div class="eff" style="color:#7fe09a">ステージ${sel.unlocks}「${esc(stageById(sel.unlocks).name)}」が解放</div>`):''}
-        ${sec('出現する魔物（図鑑で討伐したものだけ表示）',stageRoster(stage).concat((sel.goal.type==='boss'||sel.explore)?[sel.boss||stage.enemySet.boss]:[]).map(t=>(this.profile.bestiary||{})[t]>0?DATA.enemies[t].name:'？？？').join('、'))}
+        ${sec('出現する魔物（図鑑で討伐したものだけ表示）',stageRoster(stage).concat((sel.goal.type==='boss')?[sel.boss||stage.enemySet.boss]:[]).map(t=>(this.profile.bestiary||{})[t]>0?DATA.enemies[t].name:'？？？').join('、'))}
         <div class="small muted">持ち物：${bagText(p)}（出発前にショップで用意できます）</div>
         </div></div></div>`;
   },
