@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.5',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.6',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -15074,7 +15074,7 @@ function matSellPrice(id){
   return 5;
 }
 /** 手紙ガチャの区切り（3ステージごと）。end：その区切りの最後のステージ（レア度の上限）。price：1回のゴールド。10連は1回の9倍 */
-const LETTER_BANDS=[{start:1,end:3,price:200},{start:4,end:6,price:400,min:2},{start:7,end:8,price:600}];
+const LETTER_BANDS=[{start:1,end:3,price:200},{start:4,end:6,price:400,min:2},{start:7,end:8,price:600,min:2,boost:1.6}];
 const LETTER_TEN_MUL=9;
 /** 装飾品ガチャ：持っている装飾品を3個使って1個もらう。出るレア度の最低保証は、使った3個のうち一番低いレア度 */
 const DECO_GACHA={need:3};
@@ -15216,8 +15216,8 @@ const Ops={
       fx:{rar:best.rar,rname:best.rname,rcol:best.rcol,tier:best.tier,text:`首輪10連結果（${rs.length}回）：${names}`}};
   },
   /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出は相棒と同じ3段階の表示） */
-  letterPull(p,cap,min){
-    const tier=Items.rollLetterTier(1,cap,min);
+  letterPull(p,cap,min,boost){
+    const tier=Items.rollLetterTier(boost||1,cap,min);
     Profile.addItem(p,Items.createLetter(tier));
     const r=DATA.rarities[tier],name=DATA.letters[tier].name;
     const rar=['N','R','SR','SR','SR'][tier];
@@ -15244,7 +15244,7 @@ const Ops={
     const band=letterBandOf(p,a);if(!band)return {msg:'まだ解放されていません',color:'#888'};
     if((p.gold||0)<band.price)return {msg:`ゴールドが足りません（${band.price}G必要）`,color:'#ff8060'};
     p.gold-=band.price;
-    const f=Ops.letterPull(p,DATA.letterCap(band.end),band.min);
+    const f=Ops.letterPull(p,DATA.letterCap(band.end),band.min,band.boost);
     return {changed:true,msg:`${f.label}を手に入れた！`,color:f.color,fx:{rar:f.rar,text:f.label}};
   },
   letterGacha10(p,who,a){
@@ -15252,7 +15252,7 @@ const Ops={
     const cost=band.price*LETTER_TEN_MUL;
     if((p.gold||0)<cost)return {msg:`ゴールドが足りません（10連は${cost}G必要）`,color:'#ff8060'};
     p.gold-=cost;
-    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p,DATA.letterCap(band.end),band.min));
+    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p,DATA.letterCap(band.end),band.min,band.boost));
     const rank={N:0,R:1,SR:2};
     const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
     const names=rs.map(f=>f.name).join(' ／ ');
@@ -15284,8 +15284,8 @@ const Ops={
       fx:{rar:best.rar,rname:best.rname,rcol:best.rcol,tier:best.tier,text:`首輪10連結果（${rs.length}回）：${names}`}};
   },
   /** 手紙を1通抽選して手に入れる（レア度はいまのステージの上限まで。演出は相棒と同じ3段階の表示） */
-  letterPull(p,cap,min){
-    const tier=Items.rollLetterTier(1,cap,min);
+  letterPull(p,cap,min,boost){
+    const tier=Items.rollLetterTier(boost||1,cap,min);
     Profile.addItem(p,Items.createLetter(tier));
     const r=DATA.rarities[tier],name=DATA.letters[tier].name;
     const rar=['N','R','SR','SR','SR'][tier];
@@ -15312,7 +15312,7 @@ const Ops={
     const band=letterBandOf(p,a);if(!band)return {msg:'まだ解放されていません',color:'#888'};
     if((p.gold||0)<band.price)return {msg:`ゴールドが足りません（${band.price}G必要）`,color:'#ff8060'};
     p.gold-=band.price;
-    const f=Ops.letterPull(p,DATA.letterCap(band.end),band.min);
+    const f=Ops.letterPull(p,DATA.letterCap(band.end),band.min,band.boost);
     return {changed:true,msg:`${f.label}を手に入れた！`,color:f.color,fx:{rar:f.rar,text:f.label}};
   },
   letterGacha10(p,who,a){
@@ -15320,7 +15320,7 @@ const Ops={
     const cost=band.price*LETTER_TEN_MUL;
     if((p.gold||0)<cost)return {msg:`ゴールドが足りません（10連は${cost}G必要）`,color:'#ff8060'};
     p.gold-=cost;
-    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p,DATA.letterCap(band.end),band.min));
+    const rs=[];for(let i=0;i<10;i++)rs.push(Ops.letterPull(p,DATA.letterCap(band.end),band.min,band.boost));
     const rank={N:0,R:1,SR:2};
     const best=rs.reduce((b,f)=>rank[f.rar]>rank[b.rar]?f:b,rs[0]);
     const names=rs.map(f=>f.name).join(' ／ ');
