@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.1',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.2',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3841,7 +3841,6 @@ const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,goo
 /* 首輪：首輪ガチャだけで出る。プレイヤーだけが1つはめられる（ソロでもマルチでも効果あり）。
    rar：0コモン 1アンコモン 2レア 3エピック 4レジェンダリー（装飾品と同じ5段階）
    pet：相棒の強化（全レア度）、me：プレイヤーの強化（レア以上）、wt／wtv：その武器種を装備しているときの攻撃力+％（レジェンダリー） */
-const L_PET=[['petAtk',30],['petCd',20],['petSup',35],['petRange',35]],L_ME=[['atkPct',5]]; // レジェンダリー首輪の共通の効果（武器種の縛りは無し）
 const PETS=[
   {id:'c_fang',name:'小牙',rar:0,pet:[['petAtk',8]]},
   {id:'c_bell',name:'鈴',rar:0,pet:[['petCd',6]]},
@@ -3860,14 +3859,14 @@ const PETS=[
   {id:'e_guard',name:'守護',rar:3,pet:[['petSup',30]],me:[['maxHpPct',6]]},
   {id:'e_shadow',name:'影縫い',rar:3,pet:[['petCd',16]],me:[['dodgeIframe',0.05]]},
   {id:'e_star',name:'星屑',rar:3,pet:[['petAtk',22]],me:[['critDmg',10]]},
-  {id:'l_sword',name:'剣聖',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_gs',name:'巨人',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_tachi',name:'月光',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_dual',name:'双星',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_hammer',name:'雷鎚',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_lance',name:'城壁',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_bow',name:'天弓',rar:4,pet:L_PET,me:L_ME},
-  {id:'l_shuriken',name:'影刃',rar:4,pet:L_PET,me:L_ME},
+  {id:'l_sword',name:'剣聖',rar:4,pet:[['petAtk',32]],me:[['crit',5]]},
+  {id:'l_gs',name:'巨人',rar:4,pet:[['petSup',35]],me:[['def',4]]},
+  {id:'l_tachi',name:'月光',rar:4,pet:[['petCd',20]],me:[['critDmg',15]]},
+  {id:'l_dual',name:'双星',rar:4,pet:[['petCd',18]],me:[['crit',5]]},
+  {id:'l_hammer',name:'雷鎚',rar:4,pet:[['petAtk',30]],me:[['maxHpPct',8]]},
+  {id:'l_lance',name:'城壁',rar:4,pet:[['petSup',35]],me:[['def',5]]},
+  {id:'l_bow',name:'天弓',rar:4,pet:[['petRange',35]],me:[['critDmg',12]]},
+  {id:'l_shuriken',name:'影刃',rar:4,pet:[['petCd',20]],me:[['dodgeDistPct',8]]},
 ];
 /* 首輪のレア度：w は首輪ガチャで出る確率（％）、fx はガチャ演出の強さ */
 const COLLAR_RAR=[
