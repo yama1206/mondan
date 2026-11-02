@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.1.4',date:'2026/11/02'};
+const GAME_VERSION={no:'2.1.5',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -17745,7 +17745,7 @@ const App={
     // シリーズのタブを開いた時だけ、そのシリーズのシリーズスキルを出す
     const setDetail=cat==='armor'&&sub.startsWith('set:')&&DATA.armorSets[sub.slice(4)]?(()=>{const S=DATA.armorSets[sub.slice(4)];return `<div class="small" style="margin-bottom:8px;color:#7fe09a">シリーズスキル（頭・胴・腕・腰・脚のうち2部位・5部位で発動）：${S.name}「${S.bonus}」<br>${seriesTextHTML(S)}</div>`;})():'';
     const reinf=cat==='reinforce'?this.reinforceHTML()+this.enchantHTML():'';
-    return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。性能は装備ごとに決まっていて、何度打っても同じものができる。',
+    return this.facilityHTML('⚒ 鍛冶屋','素材を持ってくれば装備を打つぜ。',
       `<div class="col full" data-scroll="smith">${catTabs}${subTabs}${seriesRow}${skillRow}${wtInfo}${setInfo}${setDetail}${reinf}${this.recipeListHTML(match,cat==='weapon'||cat==='armor').replace('class="col full" data-scroll="craft"','')}</div>`);
   },
   /** 防具の強化：持っている防具ごとに、強化段階と必要な強化玉・お金、強化ボタン */
