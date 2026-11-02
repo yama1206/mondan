@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.86.4',date:'2026/11/02'};
+const GAME_VERSION={no:'1.87.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1637,15 +1637,14 @@ const DATA={
         {k:'charge',wind:0.8,cd:5,dmg:1.2}, // 重い突進
         {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90}, // 尾の岩塊を振り飛ばす
       ]},
-    scarab:{name:'灼熱の大甲虫',ai:'pattern',look:'gen',hp:3400,atk:29,def:9,r:40,speed:100,color:'#a0402a',drops:'scarab',boss:true,specials:[{k:'snowball',cd:10,wind:0.9,dmg:1.3,len:680,speed:250,grow:20,maxR:70,hz:'mudball',el:'fire',range:[120,650],los:true},{k:'hornToss',cd:8,wind:0.6,dmg:1.3,range:[0,180]},{k:'sandAmbush',cd:12,dmg:1.2,r:85,range:[100,600]}],stunMax:140,stunTime:4,gen:{body:'shell',legs:6,head:'horn',arm:'pincer'},pal:{body:'#a0402a',dark:'#4a1a0e',spot:'#ffb070',eye:'#ff6a2a'},
+    scarab:{name:'灼熱の大甲虫',ai:'pattern',look:'gen',hp:3400,atk:29,def:9,r:40,speed:100,color:'#a0402a',drops:'scarab',boss:true,specials:[{k:'snowball',cd:10,wind:0.9,dmg:1.3,len:680,speed:250,grow:20,maxR:70,hz:'mudball',el:'fire',range:[120,650],los:true},{k:'hornToss',cd:8,wind:0.6,dmg:1.3,range:[0,180]},{k:'sandAmbush',cd:12,dmg:1.2,r:85,range:[100,600]},{k:'liftThrow',cd:9,wind:0.5,dmg:0.9,r:85,range:[0,150]},{k:'hopBehind',cd:11,wind:1.0,dmg:1.1,r:90,range:[60,380]}],stunMax:140,stunTime:4,gen:{body:'shell',legs:6,head:'horn',arm:'pincer'},pal:{body:'#a0402a',dark:'#4a1a0e',spot:'#ffb070',eye:'#ff6a2a'},
       pattern:[
         {k:'charge',wind:0.8,cd:5,dmg:1.2,times:2}, // 角を構えて二連突進
-        {k:'toss',wind:1.0,cd:5,dmg:1.2,r:90,el:'fire'}, // 灼けた岩玉を転がし投げる
         {k:'sweep',wind:0.7,cd:3.6,dmg:1.2,r:120,arc:1.6}, // 角ですくい上げる
         {k:'erupt',wind:1.0,cd:6,dmg:1.0,n:3,spread:300,r:90,el:'fire'}, // 熱砂が噴き上がる
-        {k:'shot',wind:0.6,cd:5,dmg:0.8,n:3,spread:0.5,speed:300,st:'poison'}, // 毒の体液を飛ばす
+        {k:'shot',wind:0.6,cd:5,dmg:0.8,n:3,spread:0.5,speed:300,st:'poison'}, // 熱い毒の体液を噴きかける
       ]},
-    fire_phoenix:{name:'焦土の不死鳥',ai:'pattern',look:'gen',hp:3300,atk:28,def:9,r:40,speed:115,color:'#c05020',drops:'fire_phoenix',boss:true,moveStyle:'flutter',specials:[{k:'flameRun',cd:11,wind:0.9,dmg:1.2,len:600,range:[150,600],los:true},{k:'diveLine',cd:8,wind:0.7,dmg:1.2,len:520,el:'fire',range:[120,500],los:true},{k:'stompWaves',cd:12,wind:0.8,dmg:0.9,el:'fire',range:[0,320]}],rebirth:{time:3,hp:0.3,dmg:1.2},stunMax:130,stunTime:4,gen:{body:'oval',legs:0,head:'flame',wings:true,tail:true},pal:{body:'#c05020',dark:'#5a1a08',spot:'#ffd080',eye:'#ff70ff'},
+    fire_phoenix:{name:'焦土の不死鳥',ai:'pattern',look:'gen',hp:3300,atk:28,def:9,r:40,speed:115,color:'#c05020',drops:'fire_phoenix',boss:true,moveStyle:'flutter',specials:[{k:'flameRun',cd:11,wind:0.9,dmg:1.2,len:600,range:[150,600],los:true},{k:'diveLine',cd:8,wind:0.7,dmg:1.2,len:520,el:'fire',range:[120,500],los:true},{k:'grabDrop',cd:11,wind:0.9,dmg:1.1,r:85,el:'fire',range:[0,450]},{k:'hopBehind',cd:10,wind:0.8,dmg:1.0,r:90,el:'fire',range:[60,380]}],rebirth:{time:3,hp:0.3,dmg:1.2},stunMax:130,stunTime:4,gen:{body:'oval',legs:0,head:'flame',wings:true,tail:true},pal:{body:'#c05020',dark:'#5a1a08',spot:'#ffd080',eye:'#ff70ff'},
       pattern:[
         {k:'shot',wind:0.6,cd:4.5,dmg:0.8,n:12,ring:true,speed:280,kind:'fire',el:'fire'}, // 炎の羽根を全方位へ
         {k:'leap',wind:0.9,cd:6,dmg:1.2,r:100,range:450,el:'fire'}, // 炎をまとって急降下
@@ -1729,16 +1728,16 @@ const DATA={
         {k:'slam',wind:0.9,cd:6,dmg:1.1,r:95}, // 尾を叩きつける
       ],
       pal:{body:'#6a4a8a',dark:'#2a1a3a',spot:'#c8a0ff',eye:'#ffe0ff'}},
-    crimson_serpent:{name:'紅蓮の大蛇',ai:'pattern',look:'centipede',hp:3000,atk:27,def:8,r:34,speed:105,color:'#a03a1a',drops:'crimson_serpent',boss:true,moveStyle:'serpent',specials:[{k:'coil',cd:10,wind:0.5,dmg:0.7,r:55,hold:1.8,tick:0.4,el:'fire',range:[0,140]},{k:'venomBite',cd:7,wind:0.45,dmg:1.1,r:95,range:[0,160]},{k:'diveLine',cd:9,wind:0.6,dmg:1.2,len:420,range:[120,420],los:true}],stunMax:130,stunTime:4,
+    crimson_serpent:{name:'紅蓮の大蛇',ai:'pattern',look:'centipede',hp:3000,atk:27,def:8,r:34,speed:105,color:'#a03a1a',drops:'crimson_serpent',boss:true,moveStyle:'serpent',specials:[{k:'coil',cd:10,wind:0.5,dmg:0.7,r:55,hold:1.8,tick:0.4,el:'fire',range:[0,140]},{k:'venomBite',cd:7,wind:0.45,dmg:1.1,r:95,range:[0,160]},{k:'diveLine',cd:9,wind:0.6,dmg:1.2,len:420,range:[120,420],los:true},{k:'threat',cd:14,wind:0.6,r:200,range:[0,200],txt:'シャーッ！',txtColor:'#ff9a7a'},{k:'shakeBite',cd:9,wind:0.4,dmg:1.0,r:100,range:[0,160]}],stunMax:130,stunTime:4,
       pattern:[
-        {k:'beam',wind:0.9,cd:5,dmg:1.2,len:340,width:50,el:'fire'}, // 紅蓮の炎を吐く
+        {k:'charge',wind:0.6,cd:5,dmg:1.1}, // 地を這って一気に詰め寄る
         {k:'sweep',wind:0.7,cd:3.4,dmg:1.1,r:120,arc:3.4}, // とぐろを解いて薙ぎ払う
         {k:'combo',wind:0.6,cd:5,dmg:1.0,r:110,arc:1.0,hits:2,step:0.35,st:'poison'}, // 鎌首の素早い噛みつき
         {k:'crack',wind:0.9,cd:6,dmg:1.0,len:300,width:34,el:'fire'}, // 炎が地を這う
-        {k:'shot',wind:0.7,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.9,kind:'fire',el:'fire'}, // 火の玉
+        {k:'shot',wind:0.7,cd:4.5,n:3,spread:0.5,speed:280,dmg:0.9,kind:'fire',el:'fire'}, // 燃える毒液を吐き飛ばす
       ],
       pal:{body:'#a03a1a',dark:'#4a1608',spot:'#ff9040',eye:'#ffe060'}},
-    fire_griffon:{name:'火口の翼獅子',ai:'pattern',look:'fireWyvern',hp:3200,atk:28,def:9,r:38,speed:115,color:'#c05a20',drops:'fire_griffon',boss:true,moveStyle:'circle',specials:[{k:'grabDrop',cd:10,wind:1.0,dmg:1.0,r:85,range:[0,450]},{k:'diveLine',cd:8,wind:0.8,dmg:1.2,len:520,range:[120,480],los:true},{k:'howlBolt',cd:13,wind:0.8,dmg:1.1,r:60,el:'fire',range:[0,700]}],stunMax:140,stunTime:4,
+    fire_griffon:{name:'火口の翼獅子',ai:'pattern',look:'fireWyvern',hp:3200,atk:28,def:9,r:38,speed:115,color:'#c05a20',drops:'fire_griffon',boss:true,moveStyle:'circle',specials:[{k:'grabDrop',cd:10,wind:1.0,dmg:1.0,r:85,range:[0,450]},{k:'diveLine',cd:8,wind:0.8,dmg:1.2,len:520,range:[120,480],los:true},{k:'flankPounce',cd:9,dmg:1.2,r:90,el:'fire',range:[120,420]},{k:'shakeBite',cd:8,wind:0.45,dmg:1.0,r:90,range:[0,150]},{k:'threat',cd:15,wind:0.7,r:260,range:[0,260],txt:'咆哮！',txtColor:'#ffb070'}],stunMax:140,stunTime:4,
       pattern:[
         {k:'leap',wind:0.8,cd:5,dmg:1.2,r:95,range:450}, // 翼で舞い上がり飛びかかる
         {k:'combo',wind:0.5,cd:4,dmg:0.9,r:95,arc:1.4,hits:3,step:0.35}, // 前足の爪で連続で引っかく
@@ -2047,7 +2046,7 @@ const DATA={
       attacks:[{arc:0.7,r:72,wind:0.5,dirs:1,dmg:1.0},{arc:Math.PI*1.33,r:46,wind:0.6,dirs:1,dmg:0.9}],
       pal:{body:'#9a4a22',dark:'#3a1a0a',shell:'#c8703a',tail:'#ff7040',sting:'#ffd080',eye:'#ffe060'}},
     // ===== 灼熱の火山 ボス =====
-    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:88,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]},{k:'hammerQuake',cd:8,wind:1.1,dmg:1.7,rings:3,el:'fire',range:[0,260]},{k:'pillarLine',cd:9,wind:0.9,dmg:1.1,r:52,el:'fire',range:[150,800]},{k:'quakeStomp',cd:15,wind:1.0,dmg:0.15,el:'fire',txt:'熱波！',txtColor:'#ffb070',range:[0,900]},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:64,el:'fire',txt:'火山弾！',txtColor:'#ffb070',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:440,width:44,el:'fire',txt:'炎獄の旋回ブレス！',below:0.5,range:[0,600]}],
+    volcano_dragon:{name:'炎獄竜ヴォルカノス',ai:'pattern',look:'volcanoDragon',hp:3400,atk:34,def:10,r:42,speed:88,stunMax:150,stunTime:4,color:'#8a2a14',drops:'volcano_dragon',boss:true,specials:[{k:'flameRun',cd:12,wind:0.9,dmg:1.3,len:620,range:[150,600],los:true},{k:'tailSpin',cd:10,wind:0.9,dmg:1.3,r:200,el:'fire',range:[0,220]},{k:'shakeBite',cd:8,wind:0.5,dmg:1.2,r:95,range:[0,160]},{k:'grabDrop',cd:13,wind:1.0,dmg:1.2,r:90,range:[0,500]},{k:'threat',cd:16,wind:0.8,r:300,range:[0,300],txt:'咆哮！',txtColor:'#ffb070'},{k:'collapse',cd:15,wind:1.0,dmg:1.0,n:18,r:64,el:'fire',txt:'火山弾！',txtColor:'#ffb070',range:[0,900]},{k:'coreSpin',cd:12,wind:1.2,dmg:1.1,len:440,width:44,el:'fire',txt:'炎獄の旋回ブレス！',below:0.5,range:[0,600]}],
       pattern:[
         {k:'beam',wind:1.0,cd:5,dmg:1.3,len:400,width:70,el:'fire'}, // 炎獄のブレス
         {k:'shot',wind:0.9,cd:4.5,n:7,spread:1.1,speed:280,dmg:0.8,kind:'fire',el:'fire'}, // 火炎弾を扇に
@@ -2057,7 +2056,7 @@ const DATA={
         {k:'erupt',wind:1.2,cd:7,dmg:1.0,r:60,n:5,spread:240,below:0.5,el:'fire'}, // 火山弾の雨（怒り時）
       ],
       pal:{body:'#8a2a14',dark:'#2a0a04',scale:'#c04a20',lava:'#ff7a30',wing:'#5a1808',rage:'#b03010',rageDark:'#3a0800',eye:'#ffe060',rageEye:'#ffffff'}},
-    felgnas:{name:'熔鉄の魔獣フェルグナス',ai:'pattern',look:'felgnas',hp:3000,atk:30,def:9,r:36,speed:130,stunMax:140,stunTime:4,color:'#c05a1a',drops:'felgnas',boss:true,specials:[{k:'ramWall',cd:11,wind:1.1,dmg:1.5,el:'fire',range:[150,600],los:true},{k:'hornToss',cd:8,wind:0.55,dmg:1.3,el:'fire',range:[0,180]},{k:'flankPounce',cd:9,dmg:1.3,r:85,el:'fire',range:[120,420]}],rageChain:2,
+    felgnas:{name:'熔鉄の魔獣フェルグナス',ai:'pattern',look:'felgnas',hp:3000,atk:30,def:9,r:36,speed:130,stunMax:140,stunTime:4,color:'#c05a1a',drops:'felgnas',boss:true,specials:[{k:'ramWall',cd:11,wind:1.1,dmg:1.5,el:'fire',range:[150,600],los:true},{k:'hornToss',cd:8,wind:0.55,dmg:1.3,el:'fire',range:[0,180]},{k:'flankPounce',cd:9,dmg:1.3,r:85,el:'fire',range:[120,420]},{k:'dirtKick',cd:9,wind:0.6,dmg:0.9,r:180,el:'fire',range:[0,220]},{k:'threat',cd:15,wind:0.7,r:240,range:[0,240],txt:'咆哮！',txtColor:'#ffb070'}],rageChain:2,
       pattern:[
         {k:'charge',wind:0.7,cd:4.5,dmg:1.3,times:2}, // 熔鉄の角で二連突進
         {k:'leap',wind:0.8,cd:5.5,dmg:1.2,r:95,range:420,el:'fire'}, // 獣の跳躍
@@ -2598,18 +2597,18 @@ const DATA={
     {id:'cr_bat',stage:5,after:'s6_centi',boss:'giant_bat',name:'【強敵】洞窟の大蝙蝠',desc:'洞窟の天井から、巨大な蝙蝠が急降下してくる。直線の音波は睡眠を誘う。',goal:{type:'boss'},reward:{gold:1700,mats:{cave_wing:3,cave_fang:2}}},
     {id:'cr_scorp',stage:5,after:'cr_bat',boss:'crystal_scorpion',name:'【強敵】晶毒の大蠍',desc:'晶石をまとった大蠍が尾の毒針を構えている。毒針の直線に注意。',goal:{type:'boss'},reward:{gold:1800,mats:{hard_shell__crystal_scorpion:3,poison_spore:2}}},
     {id:'free_6',stage:5,explore:true,name:'【探索】晶石の大洞窟',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。最奥にはこの地の主も棲んでいる。',goal:{type:'explore'},reward:{letters:0}},
-    {id:'ex_scarab',stage:6,after:'v_griffon',boss:'scarab',name:'【強敵】灼熱の大甲虫',desc:'火山の岩場で暮らす大きな甲虫。甲殻を溶岩のように赤く光らせ、毒の吐息を放つ。',goal:{type:'boss'},reward:{gold:1980,mats:{centi_shell__scarab:2,poison_spore:2}}},
-    {id:'ex_fire_phoenix',stage:6,after:'ex_scarab',boss:'fire_phoenix',name:'【強敵】焦土の不死鳥',desc:'焦土の空を舞う不死鳥。冥火の翼で薙ぎ払い、急降下し、冥火の球を放つ。',goal:{type:'boss'},reward:{gold:1980,mats:{spider_silk__fire_phoenix:2,centi_ember__fire_phoenix:2}}},
+    {id:'ex_scarab',stage:6,after:'v_griffon',boss:'scarab',name:'【強敵】灼熱の大甲虫',desc:'火山の岩場で、大きな糞転がしが灼けた岩玉を転がしている。角と岩玉に注意せよ。',goal:{type:'boss'},reward:{gold:1980,mats:{centi_shell__scarab:2,poison_spore:2}}},
+    {id:'ex_fire_phoenix',stage:6,after:'ex_scarab',boss:'fire_phoenix',name:'【強敵】焦土の不死鳥',desc:'焦土の空を不死鳥が舞う。急降下の爪と、灰からのよみがえりに注意せよ。',goal:{type:'boss'},reward:{gold:1980,mats:{spider_silk__fire_phoenix:2,centi_ember__fire_phoenix:2}}},
     {id:'v_ash',stage:6,key:true,name:'爆炎の甲虫の掃討',desc:'赤く光って爆発する甲虫を10体倒せ。爆発の前に離れること。',goal:{type:'kill',target:'magma_beetle',count:10},reward:{gold:840,mats:{blast_sac:3}}},
     {id:'v_wing',stage:6,key:true,name:'炎翼竜の狩り',desc:'熱風のブレスを吐く炎翼竜を8体倒せ。',goal:{type:'kill',target:'fire_wyvern',count:8},reward:{gold:860,mats:{flame_fang:3}}},
     {id:'v_beast',stage:6,key:true,name:'溶鉄の魔獣の討伐',desc:'溶けた鉄の体を持つ魔獣を8体倒せ。',goal:{type:'kill',target:'molten_beast',count:8},reward:{gold:880,mats:{molten_horn:2}}},
-    {id:'v_boss',stage:6,urgent:true,unlocks:7,boss:'volcano_dragon',name:'【緊急】炎獄竜ヴォルカノス',desc:'火口の底で、炎獄竜ヴォルカノスが目を覚ました。炎をまとって地を這い、羽ばたいて襲いかかる。',goal:{type:'boss'},reward:{gold:2600,mats:{hell_fang:1,reinforce_orb:2},decos:2}},
+    {id:'v_boss',stage:6,urgent:true,unlocks:7,boss:'volcano_dragon',name:'【緊急】炎獄竜ヴォルカノス',desc:'火口の底で、炎獄竜ヴォルカノスが目を覚ました。空から炎を吐き、咆哮して襲いかかる。',goal:{type:'boss'},reward:{gold:2600,mats:{hell_fang:1,reinforce_orb:2},decos:2}},
     {id:'v_dragon',stage:6,after:'v_boss',boss:'volcano_dragon',name:'【強敵】炎獄竜ヴォルカノス',desc:'火口の奥で、炎の竜が翼を広げた。炎のブレスと溶岩弾に注意せよ。',goal:{type:'boss'},reward:{gold:1900,mats:{hell_fang:1,reinforce_orb:2},decos:1}},
-    {id:'v_felg',stage:6,after:'v_dragon',boss:'felgnas',name:'【強敵】熔鉄の魔獣フェルグナス',desc:'熔鉄をまとった魔獣が突進を繰り返す。残った熔鉄の地面に気をつけろ。',goal:{type:'boss'},reward:{gold:2000,mats:{felg_horn:1,reinforce_orb:2},decos:1}},
-    {id:'v_serpent',stage:6,after:'v_felg',boss:'crimson_serpent',name:'【強敵】紅蓮の大蛇',desc:'火山の岩場で、炎をまとった大蛇が身をくねらせている。地を這う炎に注意。',goal:{type:'boss'},reward:{gold:2100,mats:{centi_ember__crimson_serpent:3,centi_shell__crimson_serpent:2}}},
+    {id:'v_felg',stage:6,after:'v_dragon',boss:'felgnas',name:'【強敵】熔鉄の魔獣フェルグナス',desc:'熔鉄をまとった魔獣が地面をかいて猛突進してくる。角のすくい上げに気をつけろ。',goal:{type:'boss'},reward:{gold:2000,mats:{felg_horn:1,reinforce_orb:2},decos:1}},
+    {id:'v_serpent',stage:6,after:'v_felg',boss:'crimson_serpent',name:'【強敵】紅蓮の大蛇',desc:'火山の岩場で、炎をまとった大蛇が鎌首をもたげている。噛みつきと締め付けに注意。',goal:{type:'boss'},reward:{gold:2100,mats:{centi_ember__crimson_serpent:3,centi_shell__crimson_serpent:2}}},
     {id:'ex_ice_bear',stage:7,after:'n_cat',boss:'ice_bear',name:'【強敵】氷河の大白熊',desc:'氷河の上に棲む大きな白熊。爪で薙ぎ払い、叩きつけ、火を吹いて突進する。',goal:{type:'boss'},reward:{gold:2160,mats:{beast_hide__ice_bear:2,beast_fang__ice_bear:2}}},
     {id:'ex_ice_unicorn',stage:7,after:'ex_ice_bear',boss:'ice_unicorn',name:'【強敵】雪原の氷角獣',desc:'雪原を駆ける氷の角を持つ獣。角の突進と薙ぎ払いで痺れを残し、電撃の直線を放つ。',goal:{type:'boss'},reward:{gold:2160,mats:{beast_fang__ice_unicorn:2,crystal_shard__ice_unicorn:2}}},
-    {id:'v_griffon',stage:6,after:'v_serpent',boss:'fire_griffon',name:'【強敵】火口の翼獅子',desc:'火口の上空から、翼の獅子が滑空してくる。着地の衝撃と炎に注意せよ。',goal:{type:'boss'},reward:{gold:2200,mats:{centi_ember__fire_griffon:3,rock_scale__fire_griffon:2}}},
+    {id:'v_griffon',stage:6,after:'v_serpent',boss:'fire_griffon',name:'【強敵】火口の翼獅子',desc:'火口の上空から、翼の獅子が狙っている。咆哮と、上空からの掴みかかりに注意せよ。',goal:{type:'boss'},reward:{gold:2200,mats:{centi_ember__fire_griffon:3,rock_scale__fire_griffon:2}}},
     {id:'free_v',stage:6,explore:true,name:'【探索】灼熱の火山',desc:'目標のない自由な探索。メニューの「探索を終えて帰る」でいつでも帰れて、手に入れた素材はそのまま持ち帰れる（倒れてしまうと失う）。',goal:{type:'explore'},reward:{letters:0}},
     {id:'n_fox',stage:7,key:true,name:'雪影ギツネの掃討',desc:'素早く動き回る雪影ギツネを10体倒せ。',goal:{type:'kill',target:'snow_fox',count:10},reward:{gold:960,mats:{fox_pelt:3}}},
     {id:'n_owl',stage:7,key:true,name:'吹雪フクロウの撃墜',desc:'氷の弾を放つフクロウを9体倒せ。',goal:{type:'kill',target:'snow_owl',count:9},reward:{gold:960,mats:{owl_feather:3}}},
@@ -2676,8 +2675,8 @@ const DATA={
     twin_shark:{stage:[4],role:'ボス',desc:'深い淵を泳ぐ二つの頭を持つ鮫。止まらずに泳ぎ回り、血のにおいを嗅ぎつけて弱った相手を狙う。',tip:'噛みつきは扇形。体力が減ると狙われやすい。突進の直線から外れよう。'},
     mola_fish:{stage:[4],role:'ボス',desc:'大きな体で海をのんびり漂うマンボウ。体当たりやのしかかりで押しつぶし、ときどき横倒しになって日向ぼっこをする。',tip:'日向ぼっこ中は隙だらけ。体当たりは大きな円で予告される。'},
     quake_dragon:{stage:[5],role:'ボス',desc:'地底に棲む轟音の竜。咆哮で地鳴りを起こして足を鈍らせ、地面を割り、土砂を投げつける。',tip:'地鳴りは鈍足になる。亀裂の帯の外へ逃げよう。'},
-    scarab:{stage:[6],role:'ボス',desc:'火山の岩場で暮らす大きな甲虫。甲殻を溶岩のように赤く光らせ、毒の吐息を放つ。',tip:'突進の前に甲殻が赤く光る。毒の吐息は扇形。'},
-    fire_phoenix:{stage:[6],role:'ボス',desc:'焦土の空を舞う不死鳥。冥火の翼で薙ぎ払い、急降下し、冥火の球を放つ。',tip:'急降下の直線から外れよう。冥火の球は追いかけてくる。'},
+    scarab:{stage:[6],role:'ボス',desc:'火山の岩場で暮らす大きな糞転がし。灼けた岩玉を転がし、角ですくい上げて投げ、短く飛んで背後に回る。',tip:'岩玉は転がるほど大きくなる。角の正面に立たないこと。'},
+    fire_phoenix:{stage:[6],role:'ボス',desc:'焦土の空を舞う不死鳥。炎の羽根をまき散らし、急降下して爪で掴み、倒れても一度だけ灰からよみがえる。',tip:'急降下の直線から外れよう。掴まれたら落とされる前に備えて。'},
     ice_bear:{stage:[7],role:'ボス',desc:'氷河の上に棲む大きな白熊。爪で薙ぎ払い、叩きつけ、火を吹いて突進する。',tip:'火を吹く突進は直線。叩きつけの円の外へ。'},
     ice_unicorn:{stage:[7],role:'ボス',desc:'雪原を駆ける氷の角を持つ獣。角の突進と薙ぎ払いで痺れを残し、電撃の直線を放つ。',tip:'痺れは行動を封じる。突進の直線から必ず外れよう。'},
     headless_knight:{stage:[8],role:'ボス',desc:'首のない騎士が大鎌を振るう。薙ぎ払いと突きで眠らせ、首を狙う斬撃を飛ばし、骸骨兵を呼ぶ。',tip:'大鎌の薙ぎ払いは眠りを誘う。振り終わりの隙を狙おう。'},
@@ -2687,8 +2686,8 @@ const DATA={
     deep_octopus:{stage:[4],role:'ボス',desc:'深い淵に棲む大蛸。触腕を振るい、地面を突き刺し、水流を四方へ噴き出す。',tip:'触腕の攻撃は間合いが広い。水流は全方向に飛ぶので、移動し続けよう。'},
     giant_bat:{stage:[5],role:'ボス',desc:'洞窟の天井に棲む大きな蝙蝠。急降下し、音波を直線や円形に放つ。',tip:'上空から襲いかかるので、降下の前兆を見て避けよう。'},
     crystal_scorpion:{stage:[5],role:'ボス',desc:'晶石の洞窟に棲む大蠍。鋏で薙ぎ、尾を振り下ろし、毒針を飛ばす。',tip:'毒針は直線に飛ぶ。尾の動きを見て、横へ避けよう。'},
-    crimson_serpent:{stage:[6],role:'ボス',desc:'火山の岩場に棲む大蛇。炎を吐き、身をくねらせて薙ぎ払い、地を這う炎を走らせる。',tip:'地を這う炎は一直線。並ばないように避けよう。'},
-    fire_griffon:{stage:[6],role:'ボス',desc:'火口に棲む翼の獅子。跳躍の着地で衝撃を生み、滑空突進し、炎を吐く。',tip:'滑空の直線から外れて、着地の衝撃は少し離れて受けよう。'},
+    crimson_serpent:{stage:[6],role:'ボス',desc:'火山の岩場に棲む大蛇。鎌首をもたげて威嚇し、素早く噛みつき、長い体で巻きついて締め上げる。',tip:'威嚇のあとは噛みつきが来る。近くで足を止めないこと。'},
+    fire_griffon:{stage:[6],role:'ボス',desc:'火口に棲む翼の獅子。咆哮でひるませ、回り込んで飛びかかり、上空から急降下して掴みかかる。',tip:'咆哮の円から離れよう。回り込みは横から来る。'},
     eternal_beast:{stage:[7],role:'ボス',desc:'永久凍土の巨大な象。牙で突進し、踏みつけ、冷気の扇を吐く。',tip:'突進の直線から外れ、冷気の扇は角度の外へ逃げよう。'},
     frost_cat:{stage:[7],role:'ボス',desc:'白霜をまとった大きな山猫。素早く飛びかかり、引っかき、氷の破片を飛ばす。',tip:'動きが速いので、飛びかかりの後の隙を狙おう。'},
     abyss_spider:{stage:[8],role:'ボス',desc:'冥府の闇に棲む大蜘蛛。糸で動きを鈍らせ、冥の糸を地面から噴き出させる。',tip:'糸に当たると鈍る。複数の糸は広がるので、大きく避けよう。'},
@@ -2731,8 +2730,8 @@ const DATA={
     magma_beetle:{stage:[6],role:'雑魚',desc:'体内に爆熱を溜めた甲虫。近づくと赤く光り、しばらくして爆発する。',tip:'赤く光ったら円の外へ。爆発後は消える。'},
     molten_beast:{stage:[6],role:'雑魚',desc:'溶けた鉄の体を持つ魔獣。直線に突進し、通った跡に熔鉄の炎を残す。',tip:'突進の前に向きが見える。跡の炎には触れないこと。'},
     scorpion:{stage:[6],role:'雑魚',desc:'火口に住む大きな蠍。尾の突き刺しと、前方の薙ぎ払いを使う。',tip:'突き刺しは細い扇。薙ぎ払いの後は少し隙がある。'},
-    volcano_dragon:{stage:[6],role:'ボス',desc:'炎獄竜ヴォルカノス。扇状の火炎ブレスと溶岩弾を使い、弱ると溶岩の噴出を起こす。',tip:'噴出の地点は事前に円で示される。ブレスの扇の外へ。'},
-    felgnas:{stage:[6],role:'ボス',desc:'熔鉄をまとった魔獣フェルグナス。直線の突進を最大3回続け、熱波と熔鉄の地面を生む。',tip:'突進中は方向を変えない。次の突進の予告を見て横へ。'},
+    volcano_dragon:{stage:[6],role:'ボス',desc:'炎獄竜ヴォルカノス。炎のブレスを吐き、飛び上がって火の帯を引き、咆哮して噛みつき、尾で薙ぎ払う。',tip:'咆哮でひるむと噛みつきが来る。弱ると旋回ブレスと火山弾。'},
+    felgnas:{stage:[6],role:'ボス',desc:'熔鉄をまとった魔獣フェルグナス。前足で地面をかいて猛突進し、角ですくい上げ、灼けた土を蹴り飛ばす。',tip:'突進中は方向を変えない。後ろに回ると土を蹴られる。'},
     ice_beetle:{stage:[7],role:'雑魚',desc:'氷晶の外殻を持つ甲虫。周囲に氷の破片を飛ばす。',tip:'破片は円の外へ広がる。外殻が硬いので、横から攻めよう。'},
     snow_owl:{stage:[7],role:'遠距離攻撃型',desc:'吹雪の中を飛ぶフクロウ。氷の弾を放ち、弱ると複数方向へ撃つ。',tip:'狙いの線が見えたら横へ。弱ったら扇状の弾に注意。'},
     ice_seal:{stage:[7],role:'直線突進型',desc:'身体を丸めて滑る、凍てついたアザラシ。突進の方向を先に示す。',tip:'突進は直線。壁に当たると少し隙ができる。'},
@@ -6595,7 +6594,7 @@ function startSpecial(w,e,p,mv){
       e.camo=false;e.sp.tg=T({shape:'sector',x:e.x,y:e.y,angle:ang,r:e.r+mv.r,arc:1.0,total:wind,dmg:e.atk*mv.dmg});break;
     case 'threat': // カマキリ：羽を広げて威嚇。近くにいるとひるむ
       e.camo=false;e.sp.tg=T({shape:'circle',x:e.x,y:e.y,r:mv.r,total:wind,dmg:0});
-      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'威嚇！',color:'#c8ff8a'});break;
+      emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:mv.txt||'威嚇！',color:mv.txtColor||'#c8ff8a'});break;
     case 'curlUp': // アルマジロ：丸まって守りを固める（背中側からは特に固い）
       e.curl=true;e.timer=mv.hold;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-20,text:'丸まった！',color:'#d8c8a0'});break;
     case 'bounceRoll': // アルマジロ：丸まって壁に跳ね返りながら転がり続ける
@@ -8896,7 +8895,8 @@ const BossArt=(()=>{
     if(sp&&a==='sp_ramWall'){c.fillStyle='rgba(160,140,110,.55)';for(let i=0;i<5;i++){const q=(t*2+i/5)%1;c.beginPath();c.arc(-0.6-q*0.8,(i%2?1:-1)*0.4*(0.5+q),0.12*(1-q)+0.04,0,TAU);c.fill();}} // 前足で地面をかく土ぼこり
     if(sp&&(a==='sp_rootDig'||a==='sp_dirtKick')){const back=a==='sp_dirtKick';c.fillStyle='rgba(110,80,44,.8)';for(let i=0;i<6;i++){const q=(t*3+i/6)%1;c.beginPath();c.arc((back?-1:1)*(0.9+q*0.8),Math.sin(i*2.1)*0.5*q,0.07,0,TAU);c.fill();}} // 掘り返した土・蹴った土
     if(sp&&a==='sp_mudBath'){c.fillStyle='rgba(100,72,40,.65)';for(const [x,y,r2] of [[-0.3,0.2,0.2],[0.2,-0.25,0.16],[-0.1,-0.1,0.18],[0.35,0.2,0.12]]){c.beginPath();c.ellipse(x,y,r2,r2*0.7,0.3,0,TAU);c.fill();}} // 泥浴び：体に泥
-    if(sp&&a==='sp_threat'){for(const s of [-1,1]){c.save();c.rotate(s*1.2);E(k,0.1,0,0.9,0.4,0,'rgba(170,220,120,.45)','rgba(60,90,30,.8)');c.restore();}} // 威嚇：羽を大きく広げる
+    if(sp&&a==='sp_threat'&&k.e.type!=='kama_mantis'){c.strokeStyle='rgba(255,200,120,.6)';c.lineWidth=0.06;for(let i=0;i<3;i++){const q=(t*1.8+i/3)%1;c.beginPath();c.arc(0.9,0,0.25+q*1.1,-0.8,0.8);c.stroke();}} // 咆哮・威嚇の声
+    if(sp&&a==='sp_threat'&&k.e.type==='kama_mantis'){for(const s of [-1,1]){c.save();c.rotate(s*1.2);E(k,0.1,0,0.9,0.4,0,'rgba(170,220,120,.45)','rgba(60,90,30,.8)');c.restore();}} // 威嚇：羽を大きく広げる
     if(sp&&a==='sp_packHowl'){c.strokeStyle='rgba(220,230,255,.6)';c.lineWidth=0.05;for(let i=0;i<3;i++){const q=(t*1.5+i/3)%1;c.beginPath();c.arc(0.9,0,0.2+q*0.9,-0.6,0.6);c.stroke();}} // 遠吠え
     if(sp&&(a==='sp_diveLine'||a==='sp_flameRun'||a==='sp_hopBehind')){c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=0.04;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(-0.8,i*0.2);c.lineTo(-1.6-Math.abs(i)*0.2,i*0.22);c.stroke();}} // 風を切る線
     if(sp&&a==='sp_kickBarrage'){c.strokeStyle='rgba(140,200,255,.6)';c.lineWidth=0.06;for(let i=0;i<2;i++){c.beginPath();c.arc(-0.6,0,0.5+i*0.25,Math.PI-0.8+Math.sin(t*20)*0.3,Math.PI+0.8+Math.sin(t*20)*0.3);c.stroke();}} // 後ろ足キック
@@ -8951,18 +8951,22 @@ BossArt.A.stag_beetle=(k,H)=>{ // 大顎クワガタ（上から）：左右に�
   for(const s of [-1,1])S(k,[0.7,s*0.22,0.85,s*0.45,1.05,s*0.42],d,0.025);
 };
 BossArt.top.scarab=1;
-BossArt.A.scarab=(k,H)=>{ // 灼熱の大甲虫（上から）：赤金の丸い背、熊手のような頭、前へ伸びる角
-  const {E,P,L,S}=H,sh='#b8401e',hl='#f0a040',d='#3e0e04',gold='#e8c040',c=k.ctx;
-  topLegs(k,H,[-0.4,-0.05,0.3],0.78,d,0.07);
-  for(let i=0;i<3;i++)for(const s of [-1,1])L(k,[-0.4+i*0.35,s*0.5,-0.36+i*0.35,s*0.58],d,0.04);
-  const g=c.createRadialGradient(-0.35,-0.15,0.05,-0.25,0,0.7);g.addColorStop(0,k.c(hl));g.addColorStop(0.5,k.c(sh));g.addColorStop(1,k.c('#6a1a08'));
-  E(k,-0.25,0,0.62,0.55,0,g,d);L(k,[0.3,0,-0.85,0],d,0.03);
-  E(k,0.42,0,0.28,0.45,0,sh,d);E(k,0.38,-0.12,0.1,0.15,0,'rgba(255,220,150,.3)');
-  const rake=[];for(let i=0;i<7;i++){const a=-0.9+i*0.3,rr=i%2?0.38:0.3;rake.push(0.62+Math.cos(a)*rr,Math.sin(a)*rr);}
-  P(k,[0.62,-0.3,...rake,0.62,0.3],sh,d);
-  S(k,[0.62,0,0.9,0,1.12,0],d,0.15);S(k,[0.62,0,0.9,0,1.12,0],'#7a2a10',0.1);E(k,1.14,0,0.07,0.06,0,'#7a2a10',d);
-  for(const s of [-1,1])E(k,0.66,s*0.24,0.04,0.04,0,k.ph2?'#ff3a2a':gold);
-  c.lineWidth=0.025;for(let i=0;i<3;i++){const o=(k.t*0.8+i*0.33)%1;c.strokeStyle=`rgba(255,180,90,${0.3*(1-o)})`;c.beginPath();c.arc(-0.25,0,0.7+o*0.35,0,TAU);c.stroke();}
+BossArt.A.scarab=(k,H)=>{ // 灼熱の大甲虫（上から）：糞転がし。赤金の丸い背と溶岩のすじ、熊手のような頭、トゲの並ぶ前脚、前へ反った角
+  const {E,P,L,S}=H,sh='#b8401e',hl='#f0a040',d='#3e0e04',gold='#e8c040',c=k.ctx,gl=0.45+0.35*Math.sin(k.t*4);
+  topLegs(k,H,[-0.4,-0.05],0.8,d,0.075);
+  for(const s of [-1,1]){const sw=Math.sin(k.p+(s>0?Math.PI:0))*0.1,a=[0.45,s*0.3,0.75+sw,s*0.62,1.05+sw,s*0.7];S(k,a,d,0.11);S(k,a,'#7a2a10',0.07);
+    for(let j=0;j<3;j++){const [x,y]=H.along(a,0.45+j*0.2);P(k,[x,y,x+0.03,y+s*0.12,x+0.08,y],'#7a2a10',d,0.015);}}
+  const g=c.createRadialGradient(-0.35,-0.15,0.05,-0.25,0,0.72);g.addColorStop(0,k.c(hl));g.addColorStop(0.5,k.c(sh));g.addColorStop(1,k.c('#5a1406'));
+  E(k,-0.25,0,0.64,0.57,0,g,d);L(k,[0.32,0,-0.86,0],d,0.035);
+  for(const s of [-1,1])for(let i=0;i<3;i++){const a=[-0.7+i*0.12,s*(0.12+i*0.13),-0.3+i*0.05,s*(0.16+i*0.13),0.1,s*(0.12+i*0.1)];S(k,a,`rgba(255,150,50,${gl})`,0.025);}
+  c.fillStyle='rgba(255,240,200,.25)';c.beginPath();c.ellipse(-0.4,-0.25,0.25,0.08,-0.3,0,TAU);c.fill();
+  E(k,0.42,0,0.28,0.46,0,sh,d);E(k,0.38,-0.14,0.1,0.15,0,'rgba(255,220,150,.3)');
+  const rake=[];for(let i=0;i<9;i++){const a=-1.0+i*0.25,rr=i%2?0.4:0.31;rake.push(0.62+Math.cos(a)*rr,Math.sin(a)*rr);}
+  P(k,[0.62,-0.33,...rake,0.62,0.33],sh,d);
+  const up=k.act==='sp_liftThrow'||k.act==='sp_hornToss'?0.12:0;
+  S(k,[0.62,0,0.92,0,1.12+up,-0.06,1.2+up,-0.16],d,0.16);S(k,[0.62,0,0.92,0,1.12+up,-0.06,1.2+up,-0.16],'#7a2a10',0.1);
+  for(const s of [-1,1])E(k,0.66,s*0.25,0.045,0.045,0,k.ph2?'#ff3a2a':gold);
+  c.lineWidth=0.025;for(let i=0;i<3;i++){const o=(k.t*0.8+i*0.33)%1;c.strokeStyle=`rgba(255,180,90,${0.3*(1-o)})`;c.beginPath();c.arc(-0.25,0,0.72+o*0.35,0,TAU);c.stroke();}
 };
 BossArt.top.crystal_scorpion=1;
 BossArt.A.crystal_scorpion=(k,H)=>{ // 晶毒の大蠍（上から）：前へ伸びる二つのハサミ、8本の脚、背に結晶、振り上げる尾と毒針
@@ -9426,47 +9430,81 @@ BossArt.A.quake_dragon=(k,H)=>{ // 地底の轟音竜：翼のない重い竜、
   if(k.wind){const c=k.ctx;c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=0.03;for(let i=1;i<4;i++){c.beginPath();c.arc(1.4,0,0.15*i+((k.t*3)%1)*0.15,-0.7,0.7);c.stroke();}}
 };
 // --- 火山 ---
-BossArt.A.fire_phoenix=(k,H)=>{ // 焦土の不死鳥：炎の翼、後ろへたなびく長い尾羽、炎の冠羽
-  const {E,P,L,S,flame}=H,b='#e85a1e',lt='#ffd040',d='#6a1a04',c=k.ctx;
-  for(let i=0;i<3;i++){const tw=Math.sin(k.t*3+i)*0.15,a=[-0.35,0,-0.8,(i-1)*0.2+tw,-1.2,(i-1)*0.35-tw,-1.5,(i-1)*0.4+tw];S(k,a,i===1?lt:b,0.07);flame(k,-1.5,(i-1)*0.4+tw+0.1,0.22,0.08,b,lt);}
-  TD.fwing(k,H,0,1.3,b,d,lt,TD.flap(k,7));
-  E(k,0,0,0.42,0.27,0,b,d);E(k,0.1,0,0.25,0.15,0,'#ffb040');
-  E(k,0.45,0,0.2,0.18,0,b,d);P(k,[0.6,-0.07,0.82,0,0.6,0.07],'#f0c030',d,0.02);TD.eyes(k,H,0.5,0.11,0.035,'#3a0a00');
-  for(let i=0;i<3;i++)flame(k,0.35-i*0.08,(i-1)*0.08,0.3,0.06,b,lt);
-  c.fillStyle='rgba(255,180,60,.8)';for(let i=0;i<8;i++){const o=(k.t*0.6+i/8)%1;c.beginPath();c.arc(-0.4-o*0.9,Math.sin(i*2.3)*0.8*(1-o*0.3),0.03*(1-o),0,TAU);c.fill();}
+BossArt.A.fire_phoenix=(k,H)=>{ // 焦土の不死鳥：炎の縁取りの大翼、目玉模様のある長い尾羽、炎の冠羽、胸の光る核
+  const {E,P,L,S,flame}=H,b='#e8541a',lt='#ffd040',wh='#fff4c0',d='#5a1404',c=k.ctx,fl=TD.flap(k,6);
+  for(let i=0;i<5;i++){const o=i-2,tw=Math.sin(k.t*3+i*0.9)*0.14,a=[-0.35,o*0.05,-0.85,o*0.16+tw,-1.35,o*0.3-tw,-1.8,o*0.36+tw];
+    S(k,a,d,0.09);S(k,a,i%2?b:lt,0.06);E(k,-1.82,o*0.36+tw,0.13,0.09,0,b,d);E(k,-1.83,o*0.36+tw,0.07,0.05,0,lt);E(k,-1.84,o*0.36+tw,0.03,0.03,0,'#3a0a40');}
+  for(const g of [-1,1]){c.save();c.scale(1,g*fl);
+    for(let i=7;i>=0;i--){const a=1.15+i*0.13,l=1.45*(1-i*0.05);c.save();c.rotate(a);E(k,l*0.5,0,l*0.5,0.1,0,i<3?lt:(i<5?'#ff8a20':b),d);c.restore();}
+    for(let i=0;i<6;i++){const a=1.2+i*0.15,l=1.45*(1-i*0.05);flame(k,Math.cos(a)*l*0.98,Math.sin(a)*l*0.98,0.22,0.06,'#ff7020',lt);}
+    E(k,-0.05,0.38,0.24,0.42,0.2,b,d);c.restore();}
+  E(k,0,0,0.44,0.29,0,b,d);
+  const g=c.createRadialGradient(0.08,0,0.02,0.08,0,0.26);g.addColorStop(0,k.c(wh));g.addColorStop(1,k.c('rgba(255,160,40,0)'));c.fillStyle=g;c.beginPath();c.arc(0.08,0,0.26,0,TAU);c.fill();
+  E(k,0.42,0,0.17,0.16,0,b,d);
+  for(let i=0;i<5;i++){const o=(i-2)*0.06;flame(k,0.3-Math.abs(i-2)*0.04,o,0.34-Math.abs(i-2)*0.05,0.05,'#ff7020',lt);}
+  P(k,[0.55,-0.06,0.78,0,0.55,0.06],'#f0c030',d,0.02);L(k,[0.56,0,0.7,0],d,0.012);
+  TD.eyes(k,H,0.47,0.09,0.035,'#3a0a40');
+  c.fillStyle='rgba(255,190,70,.85)';for(let i=0;i<10;i++){const o=(k.t*0.6+i/10)%1;c.beginPath();c.arc(-0.4-o*1.1,Math.sin(i*2.3)*0.9*(1-o*0.3),0.035*(1-o),0,TAU);c.fill();}
 };
-BossArt.A.fire_griffon=(k,H)=>{ // 火口の翼獅子：獅子の体、背から広げた翼、燃えるたてがみ、炎の尾先
-  const {E,P,L,S,flame}=H,b='#c88a3a',d='#4a2808',mn='#e8501e',ml='#ffb040',c=k.ctx;
-  TD.fwing(k,H,-0.1,1.15,'#a8401a',d,ml,TD.flap(k,6));
-  TD.quad(k,H,{fx:0.4,bx:-0.45,wid:0.35,pw:0.14,len:0.7,b,d,paw:'#a8702a',
-    tail:w=>{S(k,[-0.7,0,-1.0,w*1.5,-1.2,w*2.5],d,0.07);S(k,[-0.7,0,-1.0,w*1.5,-1.2,w*2.5],b,0.045);flame(k,-1.25,w*2.5+0.1,0.25,0.08,mn,ml);},
-    head:()=>{for(let i=0;i<12;i++){const a=i/12*TAU;flame(k,0.6+Math.cos(a)*0.3,Math.sin(a)*0.3+0.1,0.25,0.1,mn,ml);}
-      E(k,0.6,0,0.32,0.32,0,mn);E(k,0.68,0,0.24,0.22,0,b,d);TD.snout(k,H,0.82,0.12,0.2,'#ecc890',d);E(k,1.03,0,0.04,0.05,0,'#3a1a0a');
-      TD.eyes(k,H,0.78,0.13,0.04,'#f0c020');}});
+BossArt.A.fire_griffon=(k,H)=>{ // 火口の翼獅子：獅子の体、羽根を重ねた大きな翼、燃えるたてがみ、炎の尾先、鋭い爪
+  const {E,P,L,S,flame}=H,b='#c88a3a',hl='#e6b46a',d='#4a2808',mn='#e8501e',ml='#ffb040',c=k.ctx,fl=TD.flap(k,5);
+  for(const g of [-1,1]){c.save();c.translate(-0.05,g*0.2);c.scale(1,g*fl);
+    for(let i=7;i>=0;i--){const a=1.0+i*0.15,l=1.25*(1-i*0.045);c.save();c.rotate(a);E(k,l*0.5,0,l*0.5,0.09,0,i<2?ml:(i%2?'#b8501e':'#a8401a'),d);c.restore();}
+    E(k,0.0,0.32,0.26,0.36,0.25,'#a8401a',d);for(let j=0;j<3;j++)E(k,0.02+j*0.04,0.18+j*0.12,0.14,0.06,0.3,'#c86a2a');c.restore();}
+  TD.quad(k,H,{fx:0.42,bx:-0.45,wid:0.34,pw:0.15,len:0.72,b,d,paw:'#a8702a',
+    tail:w=>{S(k,[-0.7,0,-1.0,w*1.5,-1.25,w*2.6],d,0.08);S(k,[-0.7,0,-1.0,w*1.5,-1.25,w*2.6],b,0.05);flame(k,-1.3,w*2.6+0.1,0.3,0.1,mn,ml);},
+    back:()=>{E(k,-0.05,0,0.5,0.18,0,hl);L(k,[-0.6,0,0.3,0],'rgba(74,40,8,.35)',0.03);},
+    head:()=>{for(let i=0;i<14;i++){const a=i/14*TAU;flame(k,0.6+Math.cos(a)*0.32,Math.sin(a)*0.32+0.1,0.26,0.1,mn,ml);}
+      E(k,0.6,0,0.34,0.34,0,mn);E(k,0.62,0,0.27,0.27,0,'#ff8a2a');
+      E(k,0.7,0,0.24,0.22,0,b,d);TD.ears(k,H,0.6,0.19,0.07,0.05,0.4,b,'#7a4a1a',d);
+      TD.snout(k,H,0.82,0.12,0.2,'#ecc890',d);E(k,1.03,0,0.045,0.055,0,'#3a1a0a');
+      if(k.wind)P(k,[0.92,-0.06,1.08,0,0.92,0.06],'#5a0a0a');
+      TD.eyes(k,H,0.8,0.12,0.042,'#f0c020');}});
+  for(const s of [-1,1])for(let j=0;j<3;j++)L(k,[0.55,s*0.48,0.62+j*0.02,s*(0.44+(j-1)*0.05)],'#f0e8d0',0.025);
 };
-BossArt.A.volcano_dragon=(k,H)=>{ // 炎獄竜ヴォルカノス：大きく広げた翼、反った角、溶岩の斑、炎を溜める顎
-  dragonTop(k,H,{b:'#a82a1a',d:'#300804',spike:'#2a1a14',horn:'#2a1a14',eye:'#ffd040',wing:1.35,mem:'#6a1408',bone:'#3a0a04',spots:'rgba(255,160,40,.7)',breath:['#fff0a0','rgba(255,120,20,0)']});
-};
-BossArt.A.felgnas=(k,H)=>{ // 熔鉄の魔獣フェルグナス：鉄の装甲板をまとう獣、継ぎ目から光る溶けた鉄、反った金属の角
-  const {E,P,L,S,T}=H,ir='#4a4a54',d='#121216',mt='#ff8a2a',c=k.ctx;
-  const seam=a=>{S(k,a,'rgba(255,138,42,.45)',0.08);S(k,a,mt,0.035);};
-  TD.quad(k,H,{fx:0.42,bx:-0.48,wid:0.36,pw:0.14,len:0.78,b:ir,d,paw:d,
-    tail:w=>{T(k,[-0.75,0,-1.1,w*1.5,-1.35,w*2],ir,d,0.12);P(k,[-1.35,w*2-0.1,-1.6,w*2,-1.35,w*2+0.1],mt,d);},
-    back:()=>{for(const x of [-0.5,-0.15,0.2])P(k,[x-0.15,-0.32,x+0.12,-0.28,x+0.12,0.28,x-0.15,0.32],'#5a5a66',d);seam([-0.75,0,0.6,0]);for(const x of [-0.32,0.03])seam([x,-0.32,x,0.32]);},
-    head:()=>{P(k,[0.6,-0.22,1.05,-0.16,1.25,0,1.05,0.16,0.6,0.22],ir,d);seam([0.7,0,1.1,0]);
-      for(const s of [-1,1]){S(k,[0.68,s*0.18,0.5,s*0.42,0.3,s*0.48],'#8a8a96',0.07);E(k,0.9,s*0.12,0.045,0.03,0,k.ph2?'#ff3a2a':'#ffe080');}
-      if(k.wind||k.ph2){c.fillStyle=mt;c.beginPath();c.arc(1.3,0,0.05,0,TAU);c.fill();}}});
-};
-BossArt.A.crimson_serpent=(k,H)=>{ // 紅蓮の大蛇：渦を巻くとぐろ、持ち上げた鎌首、炎のような襟、裂けた舌
-  const {E,P,L,S,T}=H,b='#c8281e',d='#3a0604',sc='#8a1410',c=k.ctx;
-  c.beginPath();for(let a=0;a<4.2*Math.PI;a+=0.12){const rr=0.75*Math.exp(-0.09*a),x=-0.2+Math.cos(-a)*rr,y=Math.sin(-a)*rr;a===0?c.moveTo(x,y):c.lineTo(x,y);}
-  c.strokeStyle=d;c.lineWidth=0.34;c.stroke();c.strokeStyle=k.c(b);c.lineWidth=0.26;c.stroke();c.strokeStyle=k.c(sc);c.lineWidth=0.03;c.setLineDash([0.06,0.08]);c.stroke();c.setLineDash([]);
-  const sw=Math.sin(k.t*2)*0.12;T(k,[0.5,0,0.7,sw,0.85,0],b,d,0.24);
+BossArt.A.volcano_dragon=(k,H)=>{ // 炎獄竜ヴォルカノス：大きく広げた翼、反った角の冠、背の溶岩の裂け目、燃える尾先、炎を溜める顎
+  const {E,P,L,S,flame}=H,c=k.ctx,gl=0.55+0.35*Math.sin(k.t*4),lava=`rgba(255,${k.ph2?110:150},40,${gl})`;
+  dragonTop(k,H,{b:'#a82a1a',d:'#300804',spike:'#2a1a14',horn:'#2a1a14',eye:'#ffd040',wing:1.45,mem:'#6a1408',bone:'#3a0a04',breath:['#fff0a0','rgba(255,120,20,0)'],claw:'#e8d8b0'});
+  const w=Math.sin(k.t*3)*0.12;flame(k,-1.7,w,0.32,0.1,'#ff5a1a','#ffd040');
+  for(const a of [[-0.55,-0.15,-0.2,-0.05,0.15,-0.2],[-0.45,0.18,-0.1,0.08,0.25,0.2],[-0.2,0.02,0.1,0.0,0.35,0.05]]){S(k,a,'rgba(40,6,2,.9)',0.07);S(k,a,lava,0.035);}
+  for(const [x,y] of [[-0.6,0.28],[0.0,-0.3],[0.3,0.25],[-0.3,-0.32]]){c.fillStyle=lava;c.beginPath();c.arc(x,y,0.05,0,TAU);c.fill();}
   c.save();c.translate(0.95,0);
-  for(let i=0;i<9;i++){const a=Math.PI*0.45+i/8*Math.PI*1.1;P(k,[Math.cos(a)*0.12,Math.sin(a)*0.12,Math.cos(a+0.09)*0.42,Math.sin(a+0.09)*0.42+Math.sin(k.t*8+i)*0.03,Math.cos(a+0.18)*0.12,Math.sin(a+0.18)*0.12],i%2?'#ff8a20':'#e8401a',d,0.02);}
-  E(k,0.1,0,0.24,0.2,0,b,d);TD.snout(k,H,0.2,0.13,0.25,b,d);
-  for(const s of [-1,1]){E(k,0.18,s*0.13,0.05,0.04,0,k.ph2?'#ff3a2a':'#f0d020',d,0.015);E(k,0.18,s*0.13,0.012,0.035,0,'#111');}
-  if(Math.sin(k.t*5)>0.3)S(k,[0.48,0,0.68,0.02,0.75,-0.05],'#ff3a5a',0.02),L(k,[0.68,0.02,0.76,0.07],'#ff3a5a',0.02);
+  for(const s of [-1,1]){S(k,[0.05,s*0.2,-0.15,s*0.42,-0.35,s*0.5,-0.42,s*0.42],'#1a0c08',0.07);S(k,[0.0,s*0.1,-0.2,s*0.22,-0.32,s*0.2],'#1a0c08',0.05);}
+  if(Math.sin(k.t*2)>0){c.fillStyle='rgba(90,80,80,.45)';for(let i=0;i<3;i++){const o=(k.t+i/3)%1;c.beginPath();c.arc(0.55+o*0.3,(i-1)*0.08,0.05+o*0.08,0,TAU);c.fill();}}
+  c.restore();
+};
+BossArt.A.felgnas=(k,H)=>{ // 熔鉄の魔獣フェルグナス：鉄の装甲板をまとう獣、継ぎ目から光る溶けた鉄、背の鉄のトゲ、前へ反った金属の角
+  const {E,P,L,S,T}=H,ir='#4a4a54',pl='#62626e',d='#121216',mt=k.ph2?'#ffb04a':'#ff8a2a',c=k.ctx,gl=0.5+0.4*Math.sin(k.t*5);
+  const seam=a=>{S(k,a,`rgba(255,138,42,${0.35+gl*0.3})`,0.09);S(k,a,mt,0.035);};
+  TD.quad(k,H,{fx:0.45,bx:-0.5,wid:0.38,pw:0.16,len:0.8,b:ir,d,paw:'#26262c',
+    tail:w=>{T(k,[-0.75,0,-1.05,w*1.5,-1.3,w*2.2],ir,d,0.13);for(let i=0;i<3;i++)P(k,[-0.85-i*0.16,w*(0.6+i*0.6)-0.1,-0.95-i*0.16,w*(0.8+i*0.6),-0.85-i*0.16,w*(0.6+i*0.6)+0.1],pl,d,0.02);
+      P(k,[-1.3,w*2.2-0.12,-1.62,w*2.2,-1.3,w*2.2+0.12],mt,d);},
+    back:()=>{for(const x of [-0.52,-0.18,0.16])P(k,[x-0.15,-0.34,x+0.13,-0.3,x+0.13,0.3,x-0.15,0.34],pl,d);
+      seam([-0.78,0,0.6,0]);for(const x of [-0.35,0.0])seam([x,-0.34,x,0.34]);
+      for(let i=0;i<5;i++){const x=-0.6+i*0.27;P(k,[x-0.08,-0.05,x+0.14,0,x-0.08,0.05],'#8a8a96',d,0.02);}},
+    head:()=>{P(k,[0.6,-0.24,1.0,-0.2,1.25,-0.08,1.28,0,1.25,0.08,1.0,0.2,0.6,0.24],ir,d);P(k,[0.66,-0.16,0.95,-0.12,0.95,0.12,0.66,0.16],pl,d,0.02);seam([0.7,0,1.15,0]);
+      for(const s of [-1,1]){S(k,[0.68,s*0.2,0.55,s*0.42,0.62,s*0.58,0.85,s*0.62],d,0.11);S(k,[0.68,s*0.2,0.55,s*0.42,0.62,s*0.58,0.85,s*0.62],'#9a9aa8',0.07);
+        E(k,0.92,s*0.13,0.05,0.032,0,k.ph2?'#ff3a2a':'#ffe080');}
+      if(k.wind||k.ph2){c.fillStyle=mt;c.beginPath();c.arc(1.32,0,0.06,0,TAU);c.fill();}}});
+  c.fillStyle='rgba(200,200,210,.35)';for(let i=0;i<4;i++){const o=(k.t*0.7+i/4)%1;c.beginPath();c.arc(-0.3+i*0.2,-0.4-o*0.4,0.05+o*0.08,0,TAU);c.fill();}
+};
+BossArt.A.crimson_serpent=(k,H)=>{ // 紅蓮の大蛇：くねる長い胴（巻きつく時はとぐろ）、目玉模様の広がるフード、背の炎の鱗、裂けた舌
+  const {E,P,L,S,T}=H,b='#c8281e',d='#3a0604',sc='#8a1410',bel='#f0a050',c=k.ctx,coil=k.act==='sp_coil'&&k.st==='special';
+  const body=[];
+  if(coil){for(let a=0;a<4.2*Math.PI;a+=0.25){const rr=0.75*Math.exp(-0.09*a);body.unshift(-0.2+Math.cos(-a)*rr,Math.sin(-a)*rr);}}
+  else for(let i=0;i<=12;i++){const x=0.5-i*0.2,y=Math.sin(k.t*4-i*0.7)*0.32*(i/12+0.3);body.push(x,y);}
+  const n=body.length/2;
+  for(const pass of [0,1,2])for(let i=0;i<n-1;i++){const f=i/(n-1),w=coil?0.26:0.1+0.18*f,seg=[body[i*2],body[i*2+1],body[i*2+2],body[i*2+3]];
+    L(k,seg,pass===0?d:pass===1?b:sc,pass===0?w+0.07:pass===1?w:w*0.3);}
+  for(let i=1;i<n-1;i+=2){const x=body[i*2],y=body[i*2+1],f=i/(n-1);H.flame(k,x,y,0.12+0.1*f,0.04,'#ff6a1a','#ffc040');}
+  const hx=coil?0.75:0.5,hy=coil?0:body[1];
+  c.save();c.translate(hx+0.12,hy);
+  const flare=k.act==='sp_threat'&&k.st==='special'?1.35:1;
+  c.save();c.scale(1,flare);P(k,[-0.15,-0.1,0.05,-0.36,0.25,-0.3,0.3,0,0.25,0.3,0.05,0.36,-0.15,0.1],b,d);
+  for(const s of [-1,1]){E(k,0.08,s*0.2,0.07,0.06,0,bel,d,0.015);E(k,0.08,s*0.2,0.03,0.03,0,'#2a0402');}c.restore();
+  E(k,0.3,0,0.2,0.17,0,b,d);TD.snout(k,H,0.38,0.12,0.18,b,d);P(k,[0.25,-0.06,0.45,0,0.25,0.06],sc);
+  for(const s of [-1,1]){E(k,0.36,s*0.11,0.045,0.035,0,k.ph2?'#ff3a2a':'#f0d020',d,0.015);E(k,0.36,s*0.11,0.01,0.03,0,'#111');}
+  if(Math.sin(k.t*5)>0.3||k.wind){S(k,[0.56,0,0.72,0.02,0.78,-0.05],'#ff3a5a',0.022);L(k,[0.72,0.02,0.8,0.07],'#ff3a5a',0.022);}
   c.restore();
 };
 // --- 氷の地 ---
@@ -9809,6 +9847,61 @@ const MobArt=(()=>{
       H.E(0.42,0,0.26,0.24,0,pal.body,d);
       H.E(0.62,0,0.08,0.1,0,'#c06a8a');
       for(const s of [-1,1]){H.E(0.5,s*0.13,0.07,0.07,0,pal.eye);H.P([0.62,s*0.06,0.78,s*0.1,0.64,s*0.15],pal.fang);}
+    },
+    magma_beetle(c,e,H,pal,t){ // 爆炎の甲虫：溶岩のすじが走る丸い甲殻、6本の脚、短い触角。爆発前は甲殻が開いて赤く膨らむ
+      const d=pal.dark,bomb=e.state==='bomb',w=bomb?0.5+0.5*Math.sin(t*30):0,sw=bomb?1+w*0.08:1;
+      if(bomb){c.fillStyle=`rgba(255,80,40,${0.25+0.2*w})`;c.beginPath();c.arc(0,0,1.6,0,TAU);c.fill();}
+      for(let i=0;i<3;i++){const x=-0.35+i*0.35,ph=Math.sin(t*14+i*2)*0.12;for(const s of [-1,1])H.L([x,s*0.45,x+0.12+ph*s,s*0.85,x+0.25+ph*s,s*0.95],d,0.1);}
+      for(const s of [-1,1])H.L([0.75,s*0.15,1.0,s*0.35,1.15,s*0.3],d,0.06);
+      H.E(0.68,0,0.25,0.3,0,d,d);
+      c.save();c.scale(sw,sw);const op=bomb?0.12+w*0.08:0;
+      for(const s of [-1,1]){c.save();c.rotate(s*op);H.P([0.45,0,0.4,s*0.55,0.0,s*0.8,-0.55,s*0.7,-0.9,s*0.35,-0.95,0],pal.body,d);
+        H.L([0.2,s*0.2,-0.2,s*0.45,-0.6,s*0.35],pal.glow,0.07);H.L([-0.2,s*0.45,-0.25,s*0.7],pal.glow,0.05);c.restore();}
+      if(bomb){c.fillStyle=`rgba(255,${180+w*60|0},80,${0.5+0.5*w})`;c.beginPath();c.ellipse(-0.25,0,0.6,0.12+op*1.5,0,0,TAU);c.fill();}
+      else H.L([0.45,0,-0.95,0],d,0.05);
+      c.restore();
+      for(const s of [-1,1])H.E(0.82,s*0.15,0.07,0.07,0,pal.eye);
+    },
+    fire_wyvern(c,e,H,pal,t){ // 炎翼竜：大きな皮膜の翼、長い首と角のある頭、先に炎がともる尾（滑空中は翼をたたむ）
+      const d=pal.dark,gl=e.state==='glide',fl=Math.sin(t*(gl?0:11)),sp=gl?0.45:0.8+fl*0.3;
+      c.translate(0,-(e.z||0)/e.r);
+      const tw=Math.sin(t*5)*0.25;
+      H.L([-0.4,0,-0.9,tw*0.5,-1.4,tw],d,0.2);H.L([-0.4,0,-0.9,tw*0.5,-1.4,tw],pal.body,0.13);
+      c.save();c.globalAlpha*=0.6+0.4*Math.sin(t*12);H.P([-1.4,tw-0.15,-1.9,tw+Math.sin(t*15)*0.08,-1.4,tw+0.15],pal.flame);c.restore();
+      for(const s of [-1,1]){c.save();c.scale(1,s*sp);
+        H.P([0.1,0.15,0.15,0.7,-0.05,1.45,-0.35,1.15,-0.55,1.25,-0.75,0.8,-0.95,0.7,-0.5,0.2],pal.wing,d);
+        H.L([0.1,0.15,0.15,0.7,-0.05,1.45],d,0.07);H.L([0.15,0.7,-0.55,1.25],d,0.04);H.L([0.15,0.7,-0.95,0.7],d,0.04);c.restore();}
+      H.E(-0.1,0,0.55,0.32,0,pal.body,d);
+      for(let i=0;i<3;i++)H.P([-0.45+i*0.25,-0.05,-0.3+i*0.25,0,-0.45+i*0.25,0.05],pal.flame);
+      H.L([0.35,0,0.7,0],d,0.24);H.L([0.35,0,0.7,0],pal.body,0.17);
+      H.E(0.85,0,0.24,0.2,0,pal.body,d);H.P([0.95,-0.1,1.2,-0.04,1.22,0,1.2,0.04,0.95,0.1],pal.body,d);
+      for(const s of [-1,1]){H.L([0.78,s*0.12,0.6,s*0.3],d,0.08);H.E(0.92,s*0.11,0.05,0.05,0,pal.eye);}
+      if(e.state==='windup'){c.save();c.globalAlpha*=0.7;H.E(1.32,0,0.16,0.16,0,pal.flame);c.restore();}
+    },
+    molten_beast(c,e,H,pal,t){ // 溶鉄の魔獣：冷えて固まった鉄の殻、割れ目からのぞく溶けた鉄、前へ突き出た2本の角、垂れる熔鉄
+      const d=pal.dark,ch=e.state==='charge',sp=ch?2.2:1,gl=0.5+0.4*Math.sin(t*6);
+      for(const [x,i] of [[0.45,0],[-0.5,1]])for(const s of [-1,1]){const o=Math.sin(t*10*sp+i*Math.PI+(s>0?Math.PI:0))*0.18;H.E(x+o,s*0.62,0.2,0.14,0,'#2a1a14',d);}
+      const tw=Math.sin(t*5)*0.15;H.L([-0.8,0,-1.15,tw,-1.35,tw*1.5],d,0.16);H.L([-0.8,0,-1.15,tw,-1.35,tw*1.5],pal.metal,0.09);
+      H.E(0,0,0.95,0.58,0,'#4a2a1e',d);
+      for(const [x,y,rx,ry] of [[-0.5,-0.2,0.28,0.22],[-0.45,0.25,0.25,0.2],[0.05,-0.25,0.3,0.22],[0.1,0.22,0.28,0.2],[0.5,0,0.25,0.3]])H.E(x,y,rx,ry,0,'#5e3a2a',d);
+      c.save();c.globalAlpha*=gl;for(const a of [[-0.75,0,-0.2,0.02,0.3,-0.02,0.7,0],[-0.5,-0.42,-0.45,0.42],[0.05,-0.45,0.08,0.42]])H.L(a,pal.glow,0.07);c.restore();
+      H.E(0.95,0,0.3,0.28,0,'#4a2a1e',d);H.P([1.1,-0.16,1.38,-0.08,1.4,0.08,1.1,0.16],'#4a2a1e',d);
+      for(const s of [-1,1]){H.L([1.0,s*0.2,1.3,s*0.4,1.62,s*0.3],d,0.13);H.L([1.0,s*0.2,1.3,s*0.4,1.62,s*0.3],pal.metal,0.08);H.E(1.12,s*0.12,0.06,0.04,0,pal.eye);}
+      c.fillStyle=pal.glow;for(let i=0;i<3;i++){const o=(t*1.2+i/3)%1;c.globalAlpha=1-o;c.beginPath();c.arc(-0.3+i*0.3,(i%2?1:-1)*(0.55+o*0.25),0.06*(1-o)+0.02,0,TAU);c.fill();}c.globalAlpha=1;
+    },
+    scorpion(c,e,H,pal,t){ // 火口の大蠍：節のある甲殻の体、8本の脚、大きなハサミ、背中に巻き上げた尾と光る毒針
+      const d=pal.dark,wd=e.state==='windup',op=wd?0.5:0.12+Math.sin(t*4)*0.06;
+      for(let i=0;i<4;i++){const x=0.3-i*0.28,ph=Math.sin(t*12+i*1.6)*0.1;for(const s of [-1,1])H.L([x,s*0.35,x+0.1+ph*s,s*0.78,x-0.05+ph*s,s*1.0],d,0.07);}
+      for(const s of [-1,1]){H.L([0.45,s*0.3,0.8,s*0.65,1.15,s*0.55],d,0.15);H.L([0.45,s*0.3,0.8,s*0.65,1.15,s*0.55],pal.body,0.1);
+        c.save();c.translate(1.2,s*0.52);H.E(0,0,0.25,0.18,0,pal.shell,d);
+        c.rotate(-s*op);H.P([0.1,-s*0.12,0.5,-s*0.1,0.55,-s*0.0,0.15,0],pal.shell,d);c.rotate(2*s*op);H.P([0.1,s*0.12,0.45,s*0.08,0.5,0,0.15,0],pal.shell,d);c.restore();}
+      H.E(0,0,0.65,0.45,0,pal.body,d);
+      for(let i=0;i<4;i++)H.L([0.35-i*0.25,-0.4,0.35-i*0.25,0.4],d,0.04);
+      H.E(0.45,0,0.25,0.3,0,pal.shell,d);for(const s of [-1,1])H.E(0.55,s*0.1,0.05,0.05,0,pal.eye);
+      const raise=wd?0.25:Math.sin(t*3)*0.06,tail=[-0.6,0,-1.0,0.05,-1.2,-0.25-raise,-1.0,-0.55-raise,-0.6,-0.6-raise*0.5];
+      for(let i=0;i<5;i++){const x=tail[i*2],y=tail[i*2+1];H.E(x,y,0.17-i*0.015,0.15-i*0.015,0,i%2?pal.body:pal.shell,d);}
+      c.save();c.globalAlpha*=wd?0.7+0.3*Math.sin(t*25):1;H.P([-0.6,-0.72-raise*0.5,-0.25,-0.62-raise*0.5,-0.55,-0.5-raise*0.5],pal.sting,d);c.restore();
+      H.E(-0.45,-0.68-raise*0.5,0.08,0.08,0,pal.tail);
     },
     crystal_slime(c,e,H,pal,t){ // 輝晶スライム：半透明の体から結晶が何本も生え、中の核が光る
       c.rotate(-e.facing);c.translate(0,-(e.z||0)/e.r);
