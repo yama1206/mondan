@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.5.3',date:'2026/11/02'};
+const GAME_VERSION={no:'2.5.4',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -17367,7 +17367,7 @@ const App={
   settingsHTML(){
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
-    return `<div class="panel camp" style="text-align:left"><h2>設定</h2>
+    return `<div class="panel camp" style="text-align:left"><h2>設定</h2><div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div>
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
@@ -17386,8 +17386,7 @@ const App={
       ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量'],['allyAtkVol','味方（ほかのプレイヤー・仲間）の攻撃の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
         <div class="filters" style="margin-top:6px">${[0,1,2,3,4,5,6,7,8,9,10].map(i=>i/10).map(v=>`<button class="${Math.abs(s[key]-v)<0.001?'on':''}" data-act="vol" data-key="${key}" data-id="${v}">${v===0?'なし':Math.round(v*100)+'%'}</button>`).join('')}</div></div>`).join('')}
       ${Cloud.html()}
-      <div class="row" style="margin-top:14px"><button class="danger" data-act="reset">セーブデータをリセット</button></div>
-      <div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div></div>`;
+      <div class="row" style="margin-top:14px"><button class="danger" data-act="reset">セーブデータをリセット</button></div></div>`;
   },
   gameoverHTML(){
     if(this.lastFail==='time'){
