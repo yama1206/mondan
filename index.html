@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.95.1',date:'2026/11/02'};
+const GAME_VERSION={no:'1.95.2',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -13578,7 +13578,7 @@ const Renderer={
   },
 };
 
-/** モンスター図鑑の絵。ゲームと同じ描画処理で描き、シルエット（未登録）にもできる */
+/** モンスター図鑑の絵。ゲームと同じ描画処理で描く（未登録は「？」） */
 const Portraits={
   cache:{},
   get(id,silhouette,size){
@@ -13587,6 +13587,7 @@ const Portraits={
     let url='';
     try{
       const d=DATA.enemies[id],c=document.createElement('canvas');c.width=c.height=size;
+      if(silhouette){const g=c.getContext('2d');g.fillStyle='#8a84a0';g.font=`bold ${Math.round(size*0.62)}px sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText('？',size/2,size/2+size*0.03);url=c.toDataURL();this.cache[k]=url;return url;} // まだ見ていないモンスターは「？」
       const ctx=c.getContext('2d'),look=d.look||d.ai;
       const span=look==='dragon'?d.r*5.6:((look==='wolf'||look==='bull'||look==='hydra'||look==='venomKing'||look==='mireGiant'||look==='aquarios'||look==='turtle'||look==='thunderEel'||look==='giantWorm'||look==='rockLizard'||look==='stagBeetle'||look==='rhino'||look==='boar'||look==='salamander'||look==='rabbit'||look==='centipede'||look==='golem'||look==='mole')?d.r*4.2:look==='galeBird'?d.r*4.6:look==='knight'?d.r*5:d.r*3.2);
       const sc=size/span;
