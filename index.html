@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.92.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.93.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -2441,7 +2441,7 @@ const DATA={
      obstacle：障害物の種類（trees=木、rocks=岩、pillars=柱、tombs=墓石）／wander：通路をうろつく魔物
      puddle：水溜まりの数 [最少,最多]（部屋ごと。踏むと移動が遅くなる） */
   layouts:{
-    meadow:{theme:'meadow',obstacle:'rocks',wander:['goblin','wild_boar','slime','field_rat'],
+    meadow:{theme:'meadow',open:true,fixed:'meadow',obstacle:'rocks',wander:['goblin','wild_boar','slime','field_rat'],
       start:{id:'entrance',name:'草原の入口'},
       boss:{id:'arena',name:'暴角の広場',spawn:[['goblin',2,3],['goblin_archer',1,2],['wild_boar',1,1]]},
       main:[
@@ -2455,7 +2455,7 @@ const DATA={
         {id:'hollow',name:'草むらの窪地',spawn:[['slime',0,1]],gather:[3,4]},
         {id:'lair',name:'猪の寝床',spawn:[['wild_boar',1,1],['goblin',0,1]],elite:1,chest:1},
       ]},
-    forest:{theme:'forest',obstacle:'trees',wander:['forest_wolf','beetle','mushroom'],
+    forest:{theme:'forest',open:true,fixed:'forest',obstacle:'trees',wander:['forest_wolf','beetle','mushroom'],
       start:{id:'entrance',name:'森林の入口'},
       boss:{id:'arena',name:'古森の広場',spawn:[['forest_wolf',2,3],['beetle',1,2],['mushroom',1,1]]},
       main:[
@@ -2469,7 +2469,7 @@ const DATA={
         {id:'grove',name:'古木の採取場',spawn:[['mushroom',0,1]],gather:[3,4]},
         {id:'nest',name:'強敵の巣',spawn:[['forest_wolf',1,1],['beetle',1,1],['mushroom',0,1]],elite:2,chest:1},
       ]},
-    swamp:{theme:'swamp',obstacle:'pillars',wander:['poison_frog','leech'],
+    swamp:{theme:'swamp',open:true,fixed:'swamp',obstacle:'pillars',wander:['poison_frog','leech'],
       start:{id:'shore',name:'沼のほとり'},
       boss:{id:'arena',name:'沼の中心',spawn:[['leech',1,2],['carnivore_plant',1,1]]},
       main:[
@@ -2497,7 +2497,7 @@ const DATA={
         {id:'pool2',name:'澄んだ淵',spawn:[['piranha',0,1]],gather:[3,4],ore:[2,3]},
         {id:'nest2',name:'雷魚の巣',spawn:[['eel',1,1],['jellyfish',0,1]],elite:1,chest:1},
       ]},
-    crystal:{theme:'crystal',obstacle:'rocks',wander:['cave_bat','crystal_slime'],
+    crystal:{theme:'crystal',open:true,fixed:'crystal',obstacle:'rocks',wander:['cave_bat','crystal_slime'],
       start:{id:'entrance',name:'洞窟の入口'},
       boss:{id:'arena',name:'晶洞の底',spawn:[['rock_shell',1,2],['cave_bat',1,2]],obstacle:'pillars'},
       main:[
@@ -2511,7 +2511,7 @@ const DATA={
         {id:'pocket',name:'結晶の袋小路',spawn:[['crystal_slime',0,1]],gather:[3,4]},
         {id:'lair3',name:'蜘蛛の巣',spawn:[['cave_spider',1,1],['rock_shell',0,1]],elite:1,chest:1},
       ]},
-    volcano:{theme:'volcano',obstacle:'rocks',wander:['fire_wyvern','magma_beetle'],
+    volcano:{theme:'volcano',open:true,fixed:'volcano',obstacle:'rocks',wander:['fire_wyvern','magma_beetle'],
       start:{id:'entrance',name:'火山入口'},
       boss:{id:'arena',name:'火口の底',spawn:[['molten_beast',1,2],['fire_wyvern',1,2]],obstacle:'pillars'},
       main:[
@@ -2525,7 +2525,7 @@ const DATA={
         {id:'pocket',name:'熱気の袋小路',spawn:[['magma_beetle',0,1]],gather:[3,4]},
         {id:'lair4',name:'溶岩の巣',spawn:[['scorpion',1,1],['fire_wyvern',0,1]],elite:1,chest:1},
       ]},
-    snow:{theme:'snow',obstacle:'rocks',wander:['snow_fox','snow_monkey'],
+    snow:{theme:'snow',open:true,fixed:'snow',obstacle:'rocks',wander:['snow_fox','snow_monkey'],
       start:{id:'entrance',name:'氷雪入口'},
       boss:{id:'arena',name:'氷嶺',spawn:[['ice_deer',1,1],['snow_monkey',1,2]],obstacle:'pillars'},
       main:[
@@ -2539,7 +2539,7 @@ const DATA={
         {id:'hollow',name:'雪の窪地',spawn:[['snow_monkey',0,1]],gather:[3,4]},
         {id:'cave2',name:'氷の洞穴',spawn:[['ice_beetle',1,1],['snow_fox',0,1]],elite:1,chest:1},
       ]},
-    crypt:{theme:'crypt',obstacle:'tombs',wander:['skeleton','wisp','archer'],
+    crypt:{theme:'crypt',open:true,fixed:'crypt',obstacle:'tombs',wander:['skeleton','wisp','archer'],
       start:{id:'entrance',name:'墓所の入口'},
       boss:{id:'arena',name:'冥府の祭壇',spawn:[['skeleton',2,3],['archer',1,2],['zombie',1,1]],obstacle:'pillars'},
       main:[
@@ -4504,6 +4504,29 @@ const THEME_PAL={
   volcano:{wall:'basalt',base:'#1c1614',blobs:['#2b211d','#32261f'],glow:'#ff6a2a',lip:'#3a1a10',lipDark:'#160a06',floor:['#3a2a26','#41302a'],speck:'lava'},
   snow:{wall:'ice',base:'#9cc4da',blobs:['#b6daee','#8fb8d0'],lip:'#7fa6bd',lipDark:'#4f7790',floor:['#e6f0f7','#dce8f1'],speck:'frost'},
 };
+// 深い所（通れない）の見た目：水・沼・地底湖・溶岩・凍える湖・底の見えない谷。mm はミニマップの色
+const DEEP_PAL={
+  river:{kind:'water',c:['#3f86b4','#2f6f9e','#245a86'],edge:'rgba(235,250,255,.7)',wave:'rgba(190,230,250,.35)',fall:['#2c4a66','#4f8fc0','rgba(230,248,255,.75)','rgba(170,215,240,.6)'],mm:[56,110,168]},
+  meadow:{kind:'water',c:['#4a94bc','#3a7eaa','#2e6a94'],edge:'rgba(200,230,170,.75)',wave:'rgba(200,235,250,.4)',fall:['#2c4a66','#4f8fc0','#e6f8ff','#aad7f0'],mm:[70,130,180]},
+  forest:{kind:'water',c:['#3a7a80','#2e6670','#24525c'],edge:'rgba(120,90,50,.8)',wave:'rgba(180,230,220,.3)',fall:['#24525c','#3a7a80','#e0f4f0','#a0d0c8'],mm:[46,102,112]},
+  swamp:{kind:'bog',c:['#3e5a46','#304a3a','#243a2e'],edge:'rgba(70,58,30,.9)',edgeW:4,fall:['#2e3a1a','#4a5a2a','#8a9a5a','#6a7a3a'],mm:[60,74,34]},
+  crystal:{kind:'glow',c:['#24407a','#1c3060','#141e46'],edge:'rgba(138,230,255,.55)',wave:'rgba(138,230,255,.3)',fall:['#141e46','#24407a','#8ae6ff','#5ab0e0'],mm:[36,60,120]},
+  volcano:{kind:'lava',c:['#ff8a24','#f0601a','#d0400e'],edge:'#2a120a',edgeW:4,fall:['#c0300c','#ff7a1a','#ffe070','#ffb040'],mm:[240,100,30]},
+  snow:{kind:'ice',c:['#3d6e94','#2f5a80','#22466a'],edge:'rgba(250,253,255,.95)',edgeW:4,wave:'rgba(220,240,255,.35)',fall:['#22466a','#3d6e94','#f0faff','#c0e0f0'],mm:[52,96,138]},
+  crypt:{kind:'abyss',c:['#14121c','#0c0a12','#050408'],edge:'#4a4b56',edgeW:5,fall:['#050408','#14121c','#3a3a50','#2a2a3a'],mm:[12,10,18]},
+};
+// 水溜まり・浅瀬の色 [縁, 水面]
+const PUDDLE_PAL={river:['rgba(20,50,70,.45)','rgba(58,128,176,.88)'],swamp:['rgba(40,34,14,.55)','rgba(84,92,46,.9)'],snow:['rgba(110,140,165,.45)','rgba(160,200,225,.9)'],volcano:['rgba(40,20,10,.5)','rgba(90,70,50,.85)']};
+// 地面の模様：1=道、2・3=草むらなど、bridge=橋の色 [板, 板の継ぎ目, 手すり・縁]
+const DECO_PAL={
+  meadow:{1:{c:'#a48a5a',a:.55,s:'pebble',k:'rgba(80,60,30,.4)'},2:{c:'#4e8a36',a:.55,s:'blades',k:'rgba(40,90,30,.8)'},3:{c:'#7ab356',a:.3,s:'flowers',k:['#fff4a0','#ffffff','#f2a0c8','#a0c0ff']},bridge:['#8a6a3a','#5a4024','#4a3420']},
+  forest:{1:{c:'#6a5232',a:.55,s:'pebble',k:'rgba(40,30,16,.45)'},2:{c:'#3e7a2c',a:.5,s:'blades',k:'rgba(110,180,70,.6)'},3:{c:'#5a4a2a',a:.35,s:'leaves',k:['#c8782a','#a8501e','#d8a040','#7a5a2a']},bridge:['#5a3e22','#3a2410','#3a2614']},
+  swamp:{1:{c:'#3a3220',a:.6,s:'pebble',k:'rgba(20,20,10,.45)'},2:{c:'#5a6a2a',a:.4,s:'reeds',k:'#7a8a3a'},3:{c:'#4a6a28',a:.45,s:'dust',k:'rgba(150,180,80,.5)'},bridge:['#5a4a30','#3a2e1c','#2e2414']},
+  crystal:{1:{c:'#3a3060',a:.45,s:'pebble',k:'rgba(160,140,220,.35)'},2:{c:'#2a4a7a',a:.3,s:'glow',k:'rgba(138,230,255,.55)'},3:{c:'#4a2a7a',a:.35,s:'cracks',k:'rgba(200,150,255,.7)'},bridge:['#3a3060','#2a2048','#8ae6ff']},
+  volcano:{1:{c:'#241a16',a:.6,s:'pebble',k:'rgba(90,70,60,.5)'},2:{c:'#6a625c',a:.4,s:'dust',k:'rgba(170,165,160,.5)'},3:{c:'#3a1a10',a:.45,s:'cracks',k:'rgba(255,120,40,.85)'},bridge:['#3a2c28','#22180e','#14100c']},
+  snow:{1:{c:'#b8cad8',a:.55,s:'pebble',k:'rgba(120,150,175,.4)'},2:{c:'#ffffff',a:.5,s:'drift',k:'rgba(255,255,255,.85)'},3:{c:'#a8d4ec',a:.55,s:'ice',k:''},bridge:['#9ab8cc','#6a8aa0','#ffffff']},
+  crypt:{1:{c:'#3c3d48',a:.7,s:'flag',k:'rgba(0,0,0,.4)'},2:{c:'#5e1a24',a:.9,s:'carpet',k:'#b08a3a'},3:{c:'#4a5a3a',a:.3,s:'dust',k:'rgba(200,190,170,.3)'},bridge:['#5a5b66','#3a3b44','#26272f']},
+};
 function buildStageMap(L,opt){
   // ボス討伐の依頼（bossOnly）：スタートの部屋とボス部屋だけの短いマップにする
   const only=!!(opt&&opt.bossOnly),G=only?Object.assign({},MAPGEN,{cols:1,rows:3}):MAPGEN;
@@ -4814,7 +4837,7 @@ const FIXED_MAPS={
     },
     fords:[[4,6],[3,7]], // 川を渡る浅瀬（このエリアどうしの道が川と交わる所）
     // 障害物は固定（[左上x,左上y,大きさ]。1=岩、2・3=大岩）。まわり3マスに壁・水・ほかの岩がない所にだけ置く（大きなボスも間を通れる）
-    rocks:[
+    obs:[
       [23,33,3],[34,43,1],               // 浅瀬の原
       [25,11,2],[36,18,1],[22,18,1],     // 岩場の渡り
       [34,56,2],[24,64,1],               // 澄んだ淵
@@ -4828,10 +4851,185 @@ const FIXED_MAPS={
       [104,22,1],[103,44,2],[104,64,1],  // 湖の砂浜
     ],
   },
+  /* 1 風渡る草原：なだらかに開けた草原。広いエリアが輪のようにつながり、北から南へ浅い小川が横切る。ぽつんと立つ木と岩、丘の上の大岩 */
+  meadow:{W:140,H:78,seed:101,trail:1.3,pathW:[4.8,5.6],bend:5,
+    areas:[
+      {x:10,y:40,rx:7,ry:6,kind:'start'},
+      {x:30,y:30,rx:12,ry:9,def:'grass',name:'丈の長い草原'},
+      {x:34,y:60,rx:11,ry:8,def:'stream',name:'浅瀬の川辺'},
+      {x:56,y:15,rx:11,ry:8,def:'hill',name:'小高い丘'},
+      {x:62,y:42,rx:13,ry:9,def:'herd',name:'獣の縄張り'},
+      {x:62,y:68,rx:9,ry:6,def:'hollow',side:true,name:'草むらの窪地'},
+      {x:86,y:22,rx:11,ry:8,def:'outpost',name:'はぐれ者の野営地'},
+      {x:88,y:54,rx:12,ry:9,def:'grass',name:'風の通り道'},
+      {x:112,y:68,rx:9,ry:6,def:'lair',side:true,name:'猪の寝床'},
+      {x:117,y:32,rx:13,ry:11,kind:'boss',name:'暴角の広場'},
+    ],
+    links:[[0,1],[1,2],[1,3],[1,4],[2,4],[2,5],[3,6],[4,6],[4,7],[5,7],[7,8],[6,9],[7,9]],
+    paint(map,{water,shallow,ell,deco,srnd,A}){
+      shallow([[50,2],[49,12],[45,24],[50,36],[47,50],[40,62],[33,76]],2.0); // 小川（歩いて渡れる）
+      ell(66,71,3.6,2.2,water); // 窪地の小さな池
+      for(let i=0;i<46;i++){const a=A[[1,1,4,7,7,2,9][i%7]],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,2+srnd()*3,1.5+srnd()*2,deco(2));} // 丈の長い草むら
+      for(let i=0;i<16;i++){const a=A[[3,5,3,8][i%4]],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r*0.8,a.y+Math.sin(an)*a.ry*r*0.8,2+srnd()*2,1.5+srnd()*1.5,deco(3));} // 花畑
+    },
+    obs:[[51,11,2,'r'],[59,17,3,'r'],[110,26,2,'r'],[124,38,2,'r']],
+    scatter:[{kind:'t',n:16,areas:[1,2,3,4,5,7,8]},{kind:'r',n:12},{kind:'t',n:3,areas:[6]}],
+    props:[[86,23,'fire'],[81,19,'tent'],[91,19,'tent'],[83,27,'bones'],[112,67,'bones'],[108,70,'bones'],[65,71,'lily'],[67,70,'lily']],
+  },
+  /* 2 緑風の森林：うっそうとした森。木々の間の空き地を、細く曲がりくねった獣道がつなぐ。森の中央を南北に小川が流れ、丸太の橋で渡る */
+  forest:{W:136,H:80,seed:202,trail:1.2,pathW:[3.4,4.2],bend:6,bridgeW:2.6,
+    areas:[
+      {x:9,y:62,rx:7,ry:6,kind:'start'},
+      {x:27,y:56,rx:10,ry:8,def:'path',name:'森の小道'},
+      {x:30,y:30,rx:9,ry:7,def:'trail',name:'獣道'},
+      {x:16,y:12,rx:9,ry:6,def:'grove',side:true,name:'古木の採取場'},
+      {x:51,y:46,rx:10,ry:8,def:'watch',name:'見張り台'},
+      {x:55,y:17,rx:11,ry:8,def:'ruins',name:'苔むした遺跡'},
+      {x:58,y:68,rx:10,ry:7,def:'camp',name:'獣の野営地'},
+      {x:84,y:40,rx:10,ry:8,def:'path',name:'木漏れ日の小道'},
+      {x:95,y:68,rx:9,ry:6,def:'nest',side:true,name:'強敵の巣'},
+      {x:88,y:14,rx:10,ry:6,def:'trail',name:'倒木の獣道'},
+      {x:116,y:40,rx:13,ry:12,kind:'boss',name:'古森の広場'},
+    ],
+    links:[[0,1],[1,2],[2,3],[1,4],[2,5],[4,5],[4,6],[4,7],[6,8],[5,9],[7,9],[7,10],[9,10]],
+    paint(map,{water,line,ell,deco,srnd,A}){
+      line([[71,0],[72,20],[69,36],[71,52],[75,64],[77,80]],2.2,water); // 森の小川
+      for(let i=0;i<60;i++){const a=A[1+(i%10)],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1.5+srnd()*2.5,1.2+srnd()*2,deco(i%3?2:3));} // 苔と落ち葉
+    },
+    fords:[[4,7,'bridge'],[5,9,'bridge'],[6,8,'bridge']],
+    obs:[[49,12,2,'p'],[60,12,2,'p'],[49,21,2,'p'],[60,21,2,'p'],[47,42,2,'r'],[56,49,1,'r']],
+    scatter:[{kind:'t',n:52,areas:[1,2,3,4,6,7,8,9]},{kind:'t',n:5,areas:[5]},{kind:'t',n:6,areas:[10]}],
+    props:[[14,10,'shroom'],[19,14,'shroom'],[12,14,'shroom'],[58,69,'fire'],[54,66,'bones'],[96,67,'bones'],[92,70,'bones'],[30,31,'log'],[86,13,'log'],[91,16,'log'],[33,56,'shroom']],
+  },
+  /* 3 腐毒の沼地：どこまでも続く濁った沼に、島のような陸地が点在する。陸地どうしは泥の土手道でつながる。枯れ木が立ち並び、水面には浮き草 */
+  swamp:{W:140,H:78,seed:303,trail:1.4,pathW:[3.6,4.4],bend:4,
+    areas:[
+      {x:10,y:20,rx:7,ry:6,kind:'start'},
+      {x:28,y:22,rx:10,ry:8,def:'reeds',name:'葦原'},
+      {x:30,y:52,rx:10,ry:8,def:'pond',name:'濁った池'},
+      {x:12,y:64,rx:7,ry:6,def:'hollow2',side:true,name:'沈んだ窪地'},
+      {x:54,y:34,rx:11,ry:8,def:'nest',name:'花食いの群生地'},
+      {x:58,y:63,rx:11,ry:7,def:'bog',name:'底なしの泥地'},
+      {x:79,y:15,rx:10,ry:7,def:'rot',name:'腐った倒木'},
+      {x:84,y:46,rx:10,ry:8,def:'reeds',name:'霧の葦原'},
+      {x:90,y:69,rx:8,ry:5,def:'lair2',side:true,name:'毒蟲の寝床'},
+      {x:117,y:40,rx:13,ry:12,kind:'boss',name:'沼の中心'},
+    ],
+    links:[[0,1],[1,2],[2,3],[1,4],[2,4],[2,5],[4,6],[4,7],[5,7],[5,8],[6,9],[7,9]],
+    paint(map,{water,shallow,ell,deco,srnd,A,edgeDeep}){
+      edgeDeep(6); // 陸地のまわりはすべて沼
+      ell(35,56,3.5,2.4,water);ell(125,47,3,2,water); // 池の真ん中・沼の中心の深み
+      shallow([[50,62],[58,66],[66,61]],1.8);shallow([[80,44],[88,48]],1.6); // ぬかるみ
+      for(let i=0;i<50;i++){const a=A[1+(i%9)],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1.5+srnd()*2.5,1.2+srnd()*2,deco(i%3?2:3));} // 葦の茂み・藻
+    },
+    scatter:[{kind:'t',n:24,areas:[1,2,3,4,5,6,7,8]},{kind:'t',n:4,areas:[9]}],
+    props(A,r){const out=[[79,16,'log'],[75,13,'log'],[84,18,'log'],[90,68,'bones'],[87,70,'bones'],[12,63,'shroom'],[54,34,'shroom']];for(let i=0;i<90;i++)out.push([3+r()*134,3+r()*72,'lily']);return out;},
+  },
+  /* 5 晶石の大洞窟：細長くうねる一本道に近い洞窟。奥（東）へ進むほど結晶の光が強くなる。南東には地底湖、回廊には結晶の柱 */
+  crystal:{W:154,H:64,seed:505,trail:1.1,pathW:[3.6,4.4],bend:5,
+    areas:[
+      {x:8,y:14,rx:6,ry:5,kind:'start'},
+      {x:22,y:31,rx:7,ry:10,def:'shaft',name:'狭い縦穴'},
+      {x:9,y:51,rx:6,ry:6,def:'pocket',side:true,name:'結晶の袋小路'},
+      {x:43,y:47,rx:12,ry:6,def:'gallery',name:'結晶の回廊'},
+      {x:52,y:18,rx:10,ry:8,def:'grove',name:'鍾乳石の林'},
+      {x:75,y:34,rx:10,ry:8,def:'vein',name:'輝晶の鉱脈'},
+      {x:93,y:51,rx:11,ry:7,def:'lakeside',name:'地底の湖畔'},
+      {x:83,y:10,rx:8,ry:5,def:'lair3',side:true,name:'蜘蛛の巣'},
+      {x:112,y:22,rx:10,ry:6,def:'gallery',name:'光る回廊'},
+      {x:136,y:38,rx:12,ry:13,kind:'boss',name:'晶洞の底'},
+    ],
+    links:[[0,1],[1,2],[1,3],[3,4],[3,5],[4,5],[5,7],[5,6],[5,8],[6,9],[8,9]],
+    paint(map,{water,ell,deco,srnd,A}){
+      ell(102,57,12,4,water);ell(50,52,4,1.8,water); // 地底湖
+      for(let i=0;i<90;i++){const a=A[1+(i%9)];if(srnd()>0.25+a.x/170)continue;const an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1.2+srnd()*2,1+srnd()*1.6,deco(srnd()<0.6?2:3));} // 東ほど光る
+    },
+    obs:[[34,45,2,'p'],[50,45,2,'p'],[128,29,2,'p'],[142,29,2,'p'],[128,46,2,'p'],[142,46,2,'p'],[106,20,2,'p'],[117,20,2,'p']],
+    scatter:[{kind:'r',n:9,areas:[4]},{kind:'r',n:10,areas:[1,3,5,6,7,8]},{kind:'r',k:2,n:3,areas:[5,6]}],
+    props(A,r){const out=[[80,9,'bones'],[86,11,'bones'],[83,12,'bones']];for(let i=0;i<36;i++){const a=A[1+(i%9)];out.push([a.x+(r()-0.5)*a.rx*1.4,a.y+(r()-0.5)*a.ry*1.4,'crystal']);}return out;},
+  },
+  /* 6 灼熱の火山：北の火口から、左右2本の溶岩の川が南へ流れ落ちる。川は冷えて固まった岩の橋で渡る。黒曜石の尖塔と、灰の積もった地面 */
+  volcano:{W:140,H:78,seed:606,trail:1.2,pathW:[4,4.8],bend:4,bridgeW:2.8,
+    areas:[
+      {x:70,y:69,rx:7,ry:5,kind:'start'},
+      {x:70,y:52,rx:11,ry:7,def:'lava_road',name:'溶岩の坂道'},
+      {x:38,y:57,rx:12,ry:8,def:'cinder',name:'灰の広間'},
+      {x:14,y:66,rx:7,ry:6,def:'pocket',side:true,name:'熱気の袋小路'},
+      {x:101,y:57,rx:11,ry:7,def:'vent',name:'噴気の通路'},
+      {x:125,y:66,rx:8,ry:6,def:'lair4',side:true,name:'溶岩の巣'},
+      {x:33,y:28,rx:11,ry:8,def:'crater',name:'火口の縁'},
+      {x:109,y:28,rx:11,ry:8,def:'core',name:'灼熱の核室'},
+      {x:70,y:34,rx:10,ry:6,def:'crater',name:'黒曜の台地'},
+      {x:70,y:13,rx:13,ry:9,kind:'boss',name:'火口の底'},
+    ],
+    links:[[0,1],[1,2],[2,3],[1,4],[4,5],[2,6],[4,7],[1,8],[6,8],[7,8],[6,9],[7,9]],
+    paint(map,{water,fall,line,ell,deco,srnd,A}){
+      line([[52,0],[51,14],[48,30],[54,46],[56,62],[58,78]],2.4,water); // 西の溶岩の川
+      line([[88,0],[89,14],[92,30],[86,46],[84,62],[82,78]],2.4,water); // 東の溶岩の川
+      for(let y=0;y<=2;y++)for(let x=-3;x<=3;x++){fall(52+x,y);fall(88+x,y);} // 崖を流れ落ちる溶岩
+      for(let i=0;i<55;i++){const a=A[1+(i%9)],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1.5+srnd()*2.5,1.2+srnd()*2,deco(i%3?2:3));} // 灰と赤く光るひび
+    },
+    fords:[[1,2,'bridge'],[6,8,'bridge'],[6,9,'bridge'],[1,4,'bridge'],[7,8,'bridge'],[7,9,'bridge']],
+    obs:[[62,7,2,'p'],[77,7,2,'p'],[62,17,2,'p'],[77,17,2,'p']],
+    scatter:[{kind:'p',k:2,n:6,areas:[2,6,7,4]},{kind:'r',n:14},{kind:'r',k:2,n:4,areas:[2,6,7,8]}],
+    props:[[98,55,'vent'],[104,58,'vent'],[101,61,'vent'],[33,27,'vent'],[110,27,'vent'],[124,65,'bones'],[127,67,'bones'],[14,65,'vent'],[38,55,'bones']],
+  },
+  /* 7 氷雪地帯：南のふもとから、つづら折りの道で山頂（北東の氷嶺）へ登っていく。中腹には凍った湖、ふもとには雪をかぶった針葉樹 */
+  snow:{W:132,H:80,seed:707,trail:1.2,pathW:[4,4.8],bend:5,
+    areas:[
+      {x:16,y:70,rx:7,ry:5,kind:'start'},
+      {x:38,y:66,rx:11,ry:7,def:'drift',name:'吹きだまりの道'},
+      {x:14,y:46,rx:8,ry:6,def:'hollow',side:true,name:'雪の窪地'},
+      {x:67,y:63,rx:11,ry:7,def:'icicle',name:'氷柱の回廊'},
+      {x:101,y:70,rx:9,ry:5,def:'cave2',side:true,name:'氷の洞穴'},
+      {x:40,y:40,rx:10,ry:6,def:'cliff',name:'崖道'},
+      {x:97,y:43,rx:11,ry:7,def:'ridge',name:'雪稜'},
+      {x:65,y:22,rx:11,ry:7,def:'summit',name:'山頂の平地'},
+      {x:24,y:18,rx:9,ry:7,def:'drift',name:'凍てつく林'},
+      {x:106,y:15,rx:13,ry:10,kind:'boss',name:'氷嶺'},
+    ],
+    links:[[0,1],[1,2],[1,3],[1,5],[3,4],[3,6],[5,7],[5,8],[8,7],[6,7],[6,9],[7,9]],
+    paint(map,{water,ell,deco,srnd,A}){
+      ell(68,43,9,5,water);ell(9,49,2.6,1.8,water); // 凍った湖（深くて入れない）
+      for(let i=0;i<60;i++){const a=A[1+(i%9)],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1.5+srnd()*3,1.2+srnd()*2,deco(a.y<35?(i%2?3:2):(i%4?2:3)));} // 雪だまり・氷の張った地面（上ほど氷が多い）
+    },
+    obs:[[57,58,2,'p'],[64,58,2,'p'],[71,58,2,'p'],[60,65,2,'p'],[68,65,2,'p'],[75,65,2,'p']],
+    scatter:[{kind:'t',n:28,areas:[1,2,3,5,8]},{kind:'r',n:12,areas:[6,7,9,4]},{kind:'r',k:2,n:4,areas:[6,7,9]}],
+    props:[[100,69,'bones'],[104,71,'bones'],[22,17,'log'],[40,39,'bones']],
+  },
+  /* 8 忘却の地下墓地：石造りの四角い広間を、まっすぐな回廊がつなぐ。中央を底の見えない裂け目が走り、石橋で渡る。墓石の列・柱・ろうそく */
+  crypt:{W:136,H:74,seed:808,rect:true,ortho:true,trail:1.6,pathW:[3.2,3.6],bend:0,bridgeW:2.6,
+    areas:[
+      {x:10,y:36,rx:6,ry:5,kind:'start'},
+      {x:30,y:36,rx:11,ry:6,def:'corridor',name:'墓所の回廊'},
+      {x:30,y:14,rx:9,ry:6,def:'guard',name:'墓守の詰所'},
+      {x:30,y:58,rx:9,ry:6,def:'ghosts',name:'亡霊の間'},
+      {x:57,y:14,rx:10,ry:5,def:'archers',name:'弓兵の回廊'},
+      {x:56,y:58,rx:10,ry:6,def:'knight',name:'騎士の墓室'},
+      {x:87,y:36,rx:10,ry:8,def:'altar',name:'封印の祭壇'},
+      {x:85,y:62,rx:8,ry:5,def:'ossuary',side:true,name:'隠し納骨堂'},
+      {x:88,y:12,rx:9,ry:5,def:'corridor',name:'慰霊の回廊'},
+      {x:118,y:36,rx:12,ry:12,kind:'boss',name:'冥府の祭壇'},
+    ],
+    links:[[0,1],[1,2],[1,3],[2,4],[3,5],[6,4],[6,5],[4,8],[5,7],[6,9],[8,9]],
+    paint(map,{water,line,ell,deco,srnd,A,paths}){
+      line([[71,0],[70,18],[72,36],[70,54],[71,74]],2.5,water); // 底の見えない裂け目
+      const P=paths.find(p=>p.i===6&&p.j===9);if(P)for(const [x,y] of P.pts)ell(x,y,1.2,1.2,deco(2)); // 祭壇へ続く赤い絨毯
+      for(let y=28;y<=44;y++)for(let x=113;x<=123;x++)if(Math.abs(x-118)<=1||y>=33&&y<=39&&Math.abs(x-118)<=4)deco(2)(x,y);
+      for(let i=0;i<40;i++){const a=A[1+(i%9)],an=srnd()*TAU,r=Math.sqrt(srnd());ell(a.x+Math.cos(an)*a.rx*r,a.y+Math.sin(an)*a.ry*r,1+srnd()*2,1+srnd()*1.5,deco(3));} // ほこり・苔
+    },
+    fords:[[6,4,'bridge'],[6,5,'bridge'],[4,8,'bridge'],[5,7,'bridge']],
+    obs(){const o=[[22,33,2,'p'],[37,33,2,'p'],[22,38,2,'p'],[37,38,2,'p'],[80,31,2,'p'],[93,31,2,'p'],[80,40,2,'p'],[93,40,2,'p'],[109,27,2,'p'],[125,27,2,'p'],[109,43,2,'p'],[125,43,2,'p']];
+      for(const y of [56,61])for(const x of [24,27,33,36])o.push([x,y,1,'g']);
+      for(const y of [55,61])for(let x=49;x<=63;x+=4)o.push([x,y,1,'g']);
+      for(const y of [60,64])for(const x of [80,90])o.push([x,y,1,'g']);
+      return o;},
+    props:[[84,32,'candle'],[90,32,'candle'],[84,40,'candle'],[90,40,'candle'],[113,31,'candle'],[123,31,'candle'],[113,41,'candle'],[123,41,'candle'],[87,36,'bones'],[83,60,'bones'],[88,64,'bones'],[86,61,'bones'],[26,12,'bones'],[33,16,'candle'],[27,16,'candle'],[52,14,'bones'],[30,60,'bones']],
+  },
 };
 function buildFixedMap(L,opt){
   const F=FIXED_MAPS[L.fixed],W=F.W,H=F.H;
-  const map={W,H,tiles:new Uint8Array(W*H).fill(1),version:1,rooms:{},roomList:[],theme:L.theme,doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[],open:true,areas:[],puddles:[],noFlipY:true};
+  const map={W,H,tiles:new Uint8Array(W*H).fill(1),deco:new Uint8Array(W*H),props:[],version:1,rooms:{},roomList:[],theme:L.theme,doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[],open:true,areas:[],puddles:[],noFlipY:true};
   const inb=(x,y)=>x>1&&y>1&&x<W-2&&y<H-2;
   const set=(x,y)=>{if(inb(x,y))map.tiles[y*W+x]=0;};
   const ell=(cx,cy,rx,ry,f)=>{for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){const u=(x-cx)/rx,v=(y-cy)/ry;if(u*u+v*v<=1)f(x,y);}};
@@ -4839,46 +5037,85 @@ function buildFixedMap(L,opt){
   const water=(x,y)=>{if(x>=0&&y>=0&&x<W&&y<H)map.tiles[y*W+x]=TILE_DEEP;};
   const fall=(x,y)=>{if(x>=0&&y>=0&&x<W&&y<H)map.tiles[y*W+x]=TILE_FALL;};
   const line=(pts,r,f)=>{for(let i=0;i+1<pts.length;i++){const [ax,ay]=pts[i],[bx,by]=pts[i+1],len=Math.hypot(bx-ax,by-ay)||1;for(let t=0;t<=1;t+=0.4/len)disc(ax+(bx-ax)*t,ay+(by-ay)*t,r,f);}};
-  // 1) エリア（楕円を少し重ねた形。毎回すこしだけ形を変える）
+  // 地面の模様（通れるかどうかは変えない）：1=道、2・3=草むら・苔・雪だまりなど、4=橋
+  const deco=(code)=>(x,y)=>{if(x>=0&&y>=0&&x<W&&y<H&&(map.tiles[y*W+x]===0||code===4))map.deco[y*W+x]=code;};
+  // 決まった並びの乱数（マップの飾り・障害物を毎回同じ場所にする）
+  let seed=F.seed||12345;const srnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+  // 浅い流れ（歩けるが遅くなる）：床のマスだけを水溜まりにする
+  const shallow=(pts,r)=>{ // 1本の流れは1つの水溜まりとしてまとめる（継ぎ目の輪が見えないように）
+    const all=[];for(let i=0;i+1<pts.length;i++){const [ax,ay]=pts[i],[bx,by]=pts[i+1],len=Math.hypot(bx-ax,by-ay)||1;for(let t=0;t<1;t+=1.4/len)all.push([ax+(bx-ax)*t,ay+(by-ay)*t]);}
+    const cx=all.reduce((a,q)=>a+q[0],0)/all.length,cy=all.reduce((a,q)=>a+q[1],0)/all.length;
+    for(const [x,y] of all)disc(x,y,r,(xx,yy)=>{if(inb(xx,yy)&&map.tiles[yy*W+xx]===0)map.tiles[yy*W+xx]=TILE_PUDDLE;});
+    const bl=all.map(([x,y])=>[Math.round((x-cx)*TILE),Math.round((y-cy)*TILE),Math.round(r*TILE+6)]),ext=Math.max(...bl.map(b=>Math.hypot(b[0],b[1])+b[2]));
+    map.puddles.push({x:Math.round((cx+0.5)*TILE),y:Math.round((cy+0.5)*TILE),r:Math.round(ext),bl,flow:1});
+  };
+  // 1) エリア（楕円を少し重ねた形。rect:true は四角い部屋）
   const A=F.areas.map(a=>Object.assign({},a));
   for(const a of A){
-    ell(a.x,a.y,a.rx,a.ry,set);
-    if(a.kind!=='start')for(let i=0;i<2;i++)ell(a.x+rand(-a.rx*0.5,a.rx*0.5),a.y+rand(-a.ry*0.5,a.ry*0.5),a.rx*0.6,a.ry*0.6,set);
+    if(F.rect){for(let y=Math.round(a.y-a.ry);y<=Math.round(a.y+a.ry);y++)for(let x=Math.round(a.x-a.rx);x<=Math.round(a.x+a.rx);x++)set(x,y);}
+    else{
+      ell(a.x,a.y,a.rx,a.ry,set);
+      if(a.kind!=='start')for(let i=0;i<2;i++)ell(a.x+rand(-a.rx*0.5,a.rx*0.5),a.y+rand(-a.ry*0.5,a.ry*0.5),a.rx*0.6,a.ry*0.6,set);
+    }
     a.rect=[Math.max(2,Math.floor(a.x-a.rx)),Math.max(2,Math.floor(a.y-a.ry)),Math.min(W-3,Math.ceil(a.x+a.rx)),Math.min(H-3,Math.ceil(a.y+a.ry))];
   }
-  // 2) エリアどうしをつなぐ広い道（少し曲げる）
-  const paths=[];
+  // 2) エリアどうしをつなぐ道（ortho：縦横にまっすぐ折れる回廊。それ以外は少し曲げる）
+  const paths=[],bendMax=F.bend!=null?F.bend:3,pw=F.pathW||[4.2,5];
   for(const [i,j] of F.links){
-    const a=A[i],b=A[j],len=Math.hypot(b.x-a.x,b.y-a.y)||1,nx=-(b.y-a.y)/len,ny=(b.x-a.x)/len,bend=rand(-3,3),wid=a.kind==='start'?3.6:rand(4.2,5);
-    const pts=[];for(let t=0;t<=1;t+=0.5/len){const o=Math.sin(t*Math.PI)*bend;pts.push([a.x+(b.x-a.x)*t+nx*o,a.y+(b.y-a.y)*t+ny*o]);}
+    const a=A[i],b=A[j],len=Math.hypot(b.x-a.x,b.y-a.y)||1,nx=-(b.y-a.y)/len,ny=(b.x-a.x)/len,bend=rand(-bendMax,bendMax),wid=a.kind==='start'||b.kind==='start'?Math.min(3.6,pw[0]):rand(pw[0],pw[1]);
+    const pts=[];
+    if(F.ortho){const seg=[[a.x,a.y],[b.x,a.y],[b.x,b.y]];for(let s=0;s<2;s++){const [x1,y1]=seg[s],[x2,y2]=seg[s+1],l=Math.hypot(x2-x1,y2-y1)||1;for(let t=0;t<=1;t+=0.5/l)pts.push([x1+(x2-x1)*t,y1+(y2-y1)*t]);}}
+    else for(let t=0;t<=1;t+=0.5/len){const o=Math.sin(t*Math.PI)*bend;pts.push([a.x+(b.x-a.x)*t+nx*o,a.y+(b.y-a.y)*t+ny*o]);}
     for(const [x,y] of pts)disc(x,y,wid,set);
-    paths.push({i,j,pts});map.corridors.push({x:Math.round((a.x+b.x)/2+nx*bend),y:Math.round((a.y+b.y)/2+ny*bend)});
+    paths.push({i,j,pts});const mp=pts[pts.length>>1];map.corridors.push({x:Math.round(mp[0]),y:Math.round(mp[1])});
   }
-  // 3) 水・滝などの作り込み
-  F.paint(map,{floorEll:(cx,cy,rx,ry)=>ell(cx,cy,rx,ry,set),water,fall,line});
-  // 4) 浅瀬：道が川と交わる所の深い水を浅くする（遅くなるが通れる）
-  for(const [i,j] of F.fords||[]){
+  // 3) 水・溶岩・谷などの作り込みと、地面の模様
+  const H_={floorEll:(cx,cy,rx,ry)=>ell(cx,cy,rx,ry,set),water,fall,line,ell,disc,deco,shallow,srnd,A,paths,
+    edgeDeep:(d)=>{ // 床のまわり d マス以内の壁を、深い水（沼・谷など）にする
+      const near=new Uint8Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(map.tiles[y*W+x]===0)for(let yy=y-d;yy<=y+d;yy++)for(let xx=x-d;xx<=x+d;xx++)if(xx>=0&&yy>=0&&xx<W&&yy<H&&(xx-x)**2+(yy-y)**2<=d*d)near[yy*W+xx]=1;
+      for(let i=0;i<W*H;i++)if(near[i]&&map.tiles[i]===1)map.tiles[i]=TILE_DEEP;}};
+  if(F.trail)for(const P of paths)for(const [x,y] of P.pts)disc(x,y,F.trail,deco(1));
+  F.paint(map,H_);
+  // 4) 道が水・溶岩・谷と交わる所：浅瀬（遅くなるが通れる）か、橋（普通に通れる）にする。[エリア, エリア, 'bridge'] で橋
+  for(const [i,j,kind] of F.fords||[]){
     const P=paths.find(q=>(q.i===i&&q.j===j)||(q.i===j&&q.j===i));if(!P)continue;
     const wet=P.pts.filter(([x,y])=>map.tiles[Math.round(y)*W+Math.round(x)]===TILE_DEEP);if(!wet.length)continue;
+    if(kind==='bridge'){const r=F.bridgeW||3;for(const [x,y] of wet)disc(x,y,r,(xx,yy)=>{if(inb(xx,yy)&&map.tiles[yy*W+xx]===TILE_DEEP){map.tiles[yy*W+xx]=0;map.deco[yy*W+xx]=4;}});continue;}
     const cx=wet.reduce((s,q)=>s+q[0],0)/wet.length,cy=wet.reduce((s,q)=>s+q[1],0)/wet.length;
     const bl=[];for(const [x,y] of wet)disc(x,y,4.6,(xx,yy)=>{if(inb(xx,yy)&&map.tiles[yy*W+xx]===TILE_DEEP)map.tiles[yy*W+xx]=TILE_PUDDLE;});
     for(let k=0;k<wet.length;k+=2)bl.push([Math.round((wet[k][0]-cx)*TILE),Math.round((wet[k][1]-cy)*TILE),Math.round(4.6*TILE+6)]);
     const ext=Math.max(...bl.map(b=>Math.hypot(b[0],b[1])+b[2]));
     map.puddles.push({x:Math.round((cx+0.5)*TILE),y:Math.round((cy+0.5)*TILE),r:Math.round(ext),bl});
   }
-  // 4b) 固定の障害物
-  if(F.rocks){
-    map.fixedObs=true;
-    const fits=(x0,y0,k)=>{
-      for(let y=y0-3;y<y0+k+3;y++)for(let x=x0-3;x<x0+k+3;x++){const own=x>=x0&&x<x0+k&&y>=y0&&y<y0+k;if(own?map.tiles[y*W+x]!==0:isWall(map,x,y))return false;}
-      return true;};
-    for(const [x0,y0,k] of F.rocks){ // 決めた場所がだめなら、すぐ近く（4マス以内）の置ける所へずらす
-      let at=null;
-      for(let r=0;r<=4&&!at;r++)for(let dy=-r;dy<=r&&!at;dy++)for(let dx=-r;dx<=r;dx++)if(Math.max(Math.abs(dx),Math.abs(dy))===r&&fits(x0+dx,y0+dy,k)){at=[x0+dx,y0+dy];break;}
-      if(!at)continue;
-      for(let y=at[1];y<at[1]+k;y++)for(let x=at[0];x<at[0]+k;x++)map.tiles[y*W+x]=k>1?TILE_OBS.bigrock:TILE_OBS.rock;
+  // 4b) 固定の障害物。[左上x,左上y,大きさ,種類]（種類：r=岩（2以上は大岩）、t=木、p=柱（2×2）、g=墓石）
+  //     壁・水から3マス、ほかの障害物から種類ごとの間隔（岩3・木2・柱2・墓石1）をあける。だめなら近く（4マス以内）へずらす
+  const OBS={r:3,t:2,p:2,g:1};
+  const fits=(x0,y0,k,c)=>{
+    for(let y=y0-3;y<y0+k+3;y++)for(let x=x0-3;x<x0+k+3;x++){
+      const own=x>=x0&&x<x0+k&&y>=y0&&y<y0+k;
+      if(own){if(map.tiles[y*W+x]!==0||map.deco[y*W+x]===4)return false;continue;}
+      const v=(x<0||y<0||x>=W||y>=H)?1:map.tiles[y*W+x];
+      if(v===1||v===TILE_DEEP||v===TILE_FALL)return false;
+      if(v>=4&&v!==TILE_PUDDLE){const dx=Math.max(x0-x,x-(x0+k-1)),dy=Math.max(y0-y,y-(y0+k-1));if(Math.max(dx,dy)<=c)return false;}
     }
+    return true;};
+  const placeObs=(x0,y0,k,kind,shift)=>{
+    const c=OBS[kind]||3;let at=null;
+    for(let r=0;r<=shift&&!at;r++)for(let dy=-r;dy<=r&&!at;dy++)for(let dx=-r;dx<=r;dx++)if(Math.max(Math.abs(dx),Math.abs(dy))===r&&fits(x0+dx,y0+dy,k,c)){at=[x0+dx,y0+dy];break;}
+    if(!at)return false;
+    const v=kind==='t'?TILE_OBS.tree:kind==='p'?TILE_OBS.pillar:kind==='g'?TILE_OBS.tomb:k>1?TILE_OBS.bigrock:TILE_OBS.rock;
+    for(let y=at[1];y<at[1]+k;y++)for(let x=at[0];x<at[0]+k;x++)map.tiles[y*W+x]=v;
+    return true;};
+  map.fixedObs=true;
+  for(const o of (typeof F.obs==='function'?F.obs(A):F.obs||[]))placeObs(o[0],o[1],o[2],o[3]||'r',4);
+  for(const s of F.scatter||[]){ // 決まった並びの乱数で、エリアの中にばらまく（毎回同じ場所）
+    const pool=s.areas?s.areas.map(i=>A[i]):A.filter(a=>a.kind!=='start');
+    for(let n=0,t=0;n<s.n&&t<s.n*40;t++){const a=pool[Math.floor(srnd()*pool.length)],an=srnd()*TAU,rr=Math.sqrt(srnd());
+      const ox=Math.round(a.x+Math.cos(an)*a.rx*rr),oy=Math.round(a.y+Math.sin(an)*a.ry*rr);if(Math.abs(ox-a.x)<4&&Math.abs(oy-a.y)<4)continue; // エリアの真ん中は空けておく
+      if(placeObs(ox,oy,s.k||1,s.kind,0))n++;}
   }
+  // 4c) 小物（通れる飾り）：たき火・骨・キノコ・ろうそくなど
+  for(const p of (typeof F.props==='function'?F.props(A,srnd):F.props||[])){const tx=Math.floor(p[0]),ty=Math.floor(p[1]),v=map.tiles[ty*W+tx];if(p[2]==='lily'?v===TILE_DEEP:(v===0||v===TILE_PUDDLE))map.props.push({x:Math.round(p[0]*TILE),y:Math.round(p[1]*TILE),k:p[2]});}
   // 5) エリアの種類と番号（スタートから近い順）
   const adj=A.map(()=>[]);for(const [i,j] of F.links){adj[i].push(j);adj[j].push(i);}
   const s0=A.findIndex(a=>a.kind==='start'),d=A.map(()=>-1),order=[s0];d[s0]=0;
@@ -10587,7 +10824,7 @@ const Renderer={
       const g=mc.getContext('2d'),img=g.createImageData(W,H),d=img.data,ex=this.explored;
       for(let i=0;i<W*H;i++){
         if(!ex[i])continue; // 未探索は透明（真っ黒のまま）
-        const tx=i%W,ty=(i/W)|0,tv=map.tiles[i],c=tv===TILE_DEEP||tv===TILE_FALL?[56,110,168]:isWall(map,tx,ty)?[62,54,86]:[118,138,108];
+        const tx=i%W,ty=(i/W)|0,tv=map.tiles[i],c=tv===TILE_DEEP||tv===TILE_FALL?(DEEP_PAL[map.theme]||DEEP_PAL.river).mm:isWall(map,tx,ty)?[62,54,86]:[118,138,108];
         d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=235;
       }
       g.putImageData(img,0,0);
@@ -10766,6 +11003,7 @@ const Renderer={
   buildMapCanvas(map){
     const c=document.createElement('canvas');c.width=map.W*TILE;c.height=map.H*TILE;
     const g=c.getContext('2d'),theme=map.theme||'cave';
+    this.curTheme=theme;
     for(let y=0;y<map.H;y++)for(let x=0;x<map.W;x++){
       const t=map.tiles[y*map.W+x],px=x*TILE,py=y*TILE,h=((x*73856093)^(y*19349663))>>>0;
       if(t===1){
@@ -10804,6 +11042,8 @@ const Renderer={
         }
       }
     }
+    if(map.deco)this.drawDecoLayer(g,map,theme);
+    if(map.props&&map.props.length)this.drawProps(g,map,theme);
     // 障害物は床の上に重ねて描く（木の葉は隣のマスにはみ出す）
     for(let y=0;y<map.H;y++)for(let x=0;x<map.W;x++){
       const t=map.tiles[y*map.W+x];if(t<4)continue;
@@ -10911,13 +11151,14 @@ const Renderer={
       for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const t=map.tiles[y*map.W+x];if(t===0||t===TILE_PUDDLE)g.rect(x*TILE,y*TILE,TILE,TILE);}
       g.clip();
       const path=(pad)=>{g.beginPath();for(const b of q.bl){const r=b[2]+pad;g.moveTo(q.x+b[0]+r,q.y+b[1]);g.arc(q.x+b[0],q.y+b[1],r,0,TAU);}};
-      g.fillStyle='rgba(20,50,70,.45)';path(0);g.fill();            // 縁の泥
-      g.fillStyle='rgba(58,128,176,.88)';path(-3);g.fill();         // 水面
+      const PC=PUDDLE_PAL[map.theme]||PUDDLE_PAL.river;
+      g.fillStyle=PC[0];path(0);g.fill();            // 縁の泥
+      g.fillStyle=PC[1];path(-3);g.fill();         // 水面
       const h=(q.x*73856093^q.y*19349663)>>>0;
       g.fillStyle='rgba(150,215,240,.35)';
       for(const b of q.bl){g.fillRect(q.x+b[0]-b[2]*0.4+(h%7),q.y+b[1]-b[2]*0.3,Math.max(6,b[2]*0.5),2);}
       g.strokeStyle='rgba(210,240,255,.45)';g.lineWidth=1;
-      for(const b of q.bl)if(b[2]>18){g.beginPath();g.arc(q.x+b[0]+b[2]*0.25,q.y+b[1]+b[2]*0.2,3.5,0,TAU);g.stroke();}
+      if(!q.flow)for(const b of q.bl)if(b[2]>18){g.beginPath();g.arc(q.x+b[0]+b[2]*0.25,q.y+b[1]+b[2]*0.2,3.5,0,TAU);g.stroke();}
       g.restore();
     }
   },
@@ -10937,12 +11178,26 @@ const Renderer={
     if(h%41===0){g.fillStyle='rgba(220,210,190,.35)';g.fillRect(px+(h%20)+4,py+((h>>3)%20)+6,8,2);g.fillRect(px+(h%20)+7,py+((h>>3)%20)+4,2,6);}
   },
   drawTree(g,x,y,h){
+    const th=this.curTheme;
     g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x+3,y+10,17,7,0,0,TAU);g.fill();
+    if(th==='snow'){ // 雪をかぶった針葉樹
+      g.fillStyle='#4a3420';g.fillRect(x-3,y+2,6,9);
+      for(let k=0;k<3;k++){const w=16-k*4,yy=y+4-k*9;g.fillStyle='#1e4a3a';g.beginPath();g.moveTo(x-w,yy);g.lineTo(x,yy-14);g.lineTo(x+w,yy);g.closePath();g.fill();
+        g.fillStyle='#f4faff';g.beginPath();g.moveTo(x-w*0.7,yy-4);g.lineTo(x,yy-14);g.lineTo(x+w*0.5,yy-6);g.closePath();g.fill();}
+      return;
+    }
+    if(th==='swamp'){ // 枯れ木：ねじれた灰色の幹と、垂れ下がるコケ
+      g.strokeStyle='#4a4436';g.lineWidth=6;g.lineCap='round';g.beginPath();g.moveTo(x,y+9);g.quadraticCurveTo(x-4,y-6,x+2,y-16);g.stroke();
+      g.lineWidth=3;g.beginPath();g.moveTo(x,y-4);g.lineTo(x-12,y-14);g.moveTo(x+1,y-10);g.lineTo(x+13,y-20);g.moveTo(x+2,y-16);g.lineTo(x-4,y-26);g.stroke();g.lineCap='butt';
+      g.strokeStyle='rgba(120,140,70,.75)';g.lineWidth=1.5;for(const [ax,ay] of [[-10,-13],[11,-18],[-3,-24]]){g.beginPath();g.moveTo(x+ax,y+ay);g.lineTo(x+ax+1,y+ay+9);g.stroke();}
+      return;
+    }
     g.fillStyle='#4a3420';g.fillRect(x-4,y-2,8,12);
-    const r=17+(h%5);
-    g.fillStyle='#1f4a24';g.beginPath();g.arc(x,y-6,r,0,TAU);g.fill();
-    g.fillStyle='#2e6a32';g.beginPath();g.arc(x-5,y-10,r*0.62,0,TAU);g.fill();
-    g.fillStyle='#3e8a40';g.beginPath();g.arc(x-8,y-13,r*0.3,0,TAU);g.fill();
+    const r=17+(h%5),M=th==='meadow';
+    g.fillStyle=M?'#2e6a28':'#1f4a24';g.beginPath();g.arc(x,y-6,r,0,TAU);g.fill();
+    g.fillStyle=M?'#4a9a3a':'#2e6a32';g.beginPath();g.arc(x-5,y-10,r*0.62,0,TAU);g.fill();
+    g.fillStyle=M?'#6ab84e':'#3e8a40';g.beginPath();g.arc(x-8,y-13,r*0.3,0,TAU);g.fill();
+    if(M&&h%3===0){g.fillStyle='#e85a4a';for(let k=0;k<3;k++){g.beginPath();g.arc(x+((h>>(k*3))%20)-10,y-6-((h>>(k*2))%12),2,0,TAU);g.fill();}}
   },
   /** 大岩（k×kマス） */
   drawBigRock(g,x,y,k,h){
@@ -10952,26 +11207,106 @@ const Renderer={
     g.fillStyle='rgba(110,150,90,.55)';g.beginPath();g.ellipse(-6,-9,4,1.8,-0.3,0,TAU);g.fill();g.beginPath();g.ellipse(5,7,3,1.4,0.2,0,TAU);g.fill();
     g.restore();
   },
+  /** 地面の模様（道・草むら・苔・雪だまり・絨毯・橋など）。ステージごとに描き分ける */
+  drawDecoLayer(g,map,theme){
+    const W=map.W,D=map.deco,P=DECO_PAL[theme]||DECO_PAL.meadow,TT=map.tiles;
+    const deep=(x,y)=>{const v=TT[y*W+x];return v===TILE_DEEP||v===TILE_FALL;};
+    for(let y=1;y<map.H-1;y++)for(let x=1;x<W-1;x++){
+      const c=D[y*W+x];if(!c)continue;
+      const px=x*TILE,py=y*TILE,h=((x*73856093)^(y*19349663))>>>0,same=(xx,yy)=>D[yy*W+xx]===c;
+      if(c===4){ // 橋
+        const horiz=deep(x,y-1)||deep(x,y+1)||same(x-1,y)&&same(x+1,y);
+        g.fillStyle=P.bridge[0];g.fillRect(px,py,TILE,TILE);
+        g.strokeStyle=P.bridge[1];g.lineWidth=2;
+        for(let k=4;k<TILE;k+=8){g.beginPath();if(horiz){g.moveTo(px+k,py);g.lineTo(px+k,py+TILE);}else{g.moveTo(px,py+k);g.lineTo(px+TILE,py+k);}g.stroke();}
+        g.fillStyle=P.bridge[2];
+        if(deep(x,y-1))g.fillRect(px,py,TILE,5);if(deep(x,y+1))g.fillRect(px,py+TILE-5,TILE,5);
+        if(deep(x-1,y))g.fillRect(px,py,5,TILE);if(deep(x+1,y))g.fillRect(px+TILE-5,py,5,TILE);
+        continue;
+      }
+      const L=same(x-1,y)?0:4,R=same(x+1,y)?TILE:TILE-4,U=same(x,y-1)?0:4,Dn=same(x,y+1)?TILE:TILE-4;
+      const st=P[c];if(!st)continue;
+      g.fillStyle=st.c;g.globalAlpha=st.a;g.fillRect(px+L,py+U,R-L,Dn-U);g.globalAlpha=1;
+      switch(st.s){
+        case 'blades':g.strokeStyle=st.k;g.lineWidth=1.3;for(let k=0;k<4;k++){const gx=px+((h>>(k*4))%26)+3,gy=py+((h>>(k*4+2))%22)+9;g.beginPath();g.moveTo(gx,gy);g.lineTo(gx-3,gy-9);g.moveTo(gx,gy);g.lineTo(gx+1,gy-10);g.moveTo(gx,gy);g.lineTo(gx+4,gy-8);g.stroke();}break;
+        case 'flowers':for(let k=0;k<4;k++){g.fillStyle=st.k[(h>>k)%st.k.length];g.beginPath();g.arc(px+((h>>(k*5))%26)+3,py+((h>>(k*5+2))%26)+3,2.2,0,TAU);g.fill();}break;
+        case 'leaves':for(let k=0;k<4;k++){g.fillStyle=st.k[(h>>k)%st.k.length];g.beginPath();g.ellipse(px+((h>>(k*5))%26)+3,py+((h>>(k*5+2))%26)+3,3,1.6,(h>>k)%3,0,TAU);g.fill();}break;
+        case 'reeds':g.strokeStyle=st.k;g.lineWidth=1.5;for(let k=0;k<3;k++){const gx=px+((h>>(k*4))%24)+4,gy=py+TILE-3;g.beginPath();g.moveTo(gx,gy);g.lineTo(gx+((h>>k)%5)-2,gy-18-((h>>(k+2))%8));g.stroke();}
+          g.fillStyle='#5a3a20';if(h%3===0)g.fillRect(px+(h%20)+5,py+6,3,7);break;
+        case 'glow':{const gx=px+(h%16)+8,gy=py+((h>>4)%16)+8,gr=g.createRadialGradient(gx,gy,1,gx,gy,16);gr.addColorStop(0,st.k);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(px,py,TILE,TILE);
+          g.fillStyle='rgba(220,250,255,.9)';g.fillRect(gx-0.5,gy-3,1.5,7);g.fillRect(gx-3,gy-0.5,7,1.5);break;}
+        case 'cracks':g.strokeStyle=st.k;g.lineWidth=1.6;g.beginPath();g.moveTo(px+(h%10)+2,py+((h>>3)%10)+2);g.lineTo(px+16,py+15);g.lineTo(px+((h>>5)%10)+20,py+((h>>6)%8)+22);g.moveTo(px+16,py+15);g.lineTo(px+((h>>7)%10)+18,py+3);g.stroke();break;
+        case 'drift':g.fillStyle=st.k;g.beginPath();g.ellipse(px+16,py+18,13,7,0,0,TAU);g.fill();g.fillStyle='rgba(150,180,205,.35)';g.fillRect(px+5,py+24,22,2);break;
+        case 'ice':g.fillStyle='rgba(255,255,255,.6)';g.fillRect(px+((h%14)+3),py+((h>>4)%18)+5,10,2);g.fillRect(px+((h>>6)%14)+8,py+((h>>8)%14)+12,6,1.5);break;
+        case 'carpet':g.fillStyle=st.k;if(!same(x,y-1))g.fillRect(px,py+4,TILE,2);if(!same(x,y+1))g.fillRect(px,py+TILE-6,TILE,2);if(!same(x-1,y))g.fillRect(px+4,py,2,TILE);if(!same(x+1,y))g.fillRect(px+TILE-6,py,2,TILE);
+          if(h%4===0){g.fillStyle='rgba(255,210,120,.18)';g.fillRect(px+12,py+12,8,8);}break;
+        case 'flag':g.strokeStyle=st.k;g.lineWidth=1;g.strokeRect(px+0.5,py+0.5,16,16);g.strokeRect(px+16.5,py+16.5,15,15);g.strokeRect(px+16.5,py+0.5,15,16);g.strokeRect(px+0.5,py+16.5,16,15);break;
+        case 'pebble':if(h%2){g.fillStyle=st.k;g.beginPath();g.ellipse(px+(h%22)+5,py+((h>>4)%22)+5,2.5,2,0,0,TAU);g.fill();}break;
+        case 'dust':g.fillStyle=st.k;for(let k=0;k<3;k++){g.beginPath();g.arc(px+((h>>(k*5))%26)+3,py+((h>>(k*5+2))%26)+3,1.6+(k&1),0,TAU);g.fill();}break;
+      }
+    }
+  },
+  /** 通れる小物（たき火・テント・骨・キノコ・浮き草・結晶・噴気・ろうそく・倒木） */
+  drawProps(g,map,theme){
+    for(const p of map.props){
+      const x=p.x,y=p.y,h=((x*7919)^(y*104729))>>>0;
+      switch(p.k){
+        case 'fire':g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x,y+6,15,6,0,0,TAU);g.fill();
+          g.fillStyle='#6a6a62';for(let k=0;k<8;k++){const a=k*TAU/8;g.beginPath();g.arc(x+Math.cos(a)*11,y+Math.sin(a)*7,3.5,0,TAU);g.fill();}
+          g.strokeStyle='#4a3420';g.lineWidth=4;g.beginPath();g.moveTo(x-8,y+3);g.lineTo(x+8,y-3);g.moveTo(x-8,y-3);g.lineTo(x+8,y+3);g.stroke();
+          g.fillStyle='#ff9a2a';g.beginPath();g.moveTo(x-6,y+2);g.quadraticCurveTo(x,y-18,x+6,y+2);g.fill();g.fillStyle='#ffe070';g.beginPath();g.moveTo(x-3,y+2);g.quadraticCurveTo(x,y-9,x+3,y+2);g.fill();break;
+        case 'tent':g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x+3,y+14,26,8,0,0,TAU);g.fill();
+          g.fillStyle='#8a6a3a';g.beginPath();g.moveTo(x-24,y+14);g.lineTo(x,y-18);g.lineTo(x+24,y+14);g.closePath();g.fill();
+          g.fillStyle='#a8844a';g.beginPath();g.moveTo(x-24,y+14);g.lineTo(x,y-18);g.lineTo(x-2,y+14);g.closePath();g.fill();
+          g.fillStyle='#3a2a16';g.beginPath();g.moveTo(x-6,y+14);g.lineTo(x,y-2);g.lineTo(x+6,y+14);g.closePath();g.fill();break;
+        case 'bones':g.strokeStyle='#e4dcc4';g.lineWidth=3;g.lineCap='round';
+          for(let k=0;k<2;k++){const a=((h>>(k*3))%6)*0.5,ox=x+(k?8:-6),oy=y+(k?4:-2);g.beginPath();g.moveTo(ox-Math.cos(a)*8,oy-Math.sin(a)*8);g.lineTo(ox+Math.cos(a)*8,oy+Math.sin(a)*8);g.stroke();}
+          g.lineCap='butt';g.fillStyle='#ece4cc';g.beginPath();g.arc(x+2,y-8,5,0,TAU);g.fill();g.fillStyle='#2a2420';g.fillRect(x-1,y-9,2,2);g.fillRect(x+3,y-9,2,2);break;
+        case 'shroom':for(let k=0;k<3;k++){const ox=x+(k-1)*9,oy=y+((h>>k)%5);g.fillStyle='#e8dcc0';g.fillRect(ox-1.5,oy-4,3,7);g.fillStyle=k%2?'#c84a3a':'#d8a040';g.beginPath();g.arc(ox,oy-4,5,Math.PI,0);g.fill();g.fillStyle='#fff';g.fillRect(ox-2,oy-7,2,2);}break;
+        case 'lily':g.fillStyle='#4a7a34';g.beginPath();g.arc(x,y,7+(h%4),0.4,TAU-0.1);g.lineTo(x,y);g.fill();if(h%4===0){g.fillStyle='#f0c8e0';g.beginPath();g.arc(x+2,y-1,3,0,TAU);g.fill();}break;
+        case 'crystal':{const c=['#8ae6ff','#c09aff','#9affd8'][h%3];g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x,y+4,9,3,0,0,TAU);g.fill();
+          g.fillStyle=c;g.globalAlpha=0.85;for(let k=-1;k<=1;k++){const hh=8+((h>>(k+3))%8);g.beginPath();g.moveTo(x+k*5-3,y+4);g.lineTo(x+k*5+k*2,y+4-hh);g.lineTo(x+k*5+3,y+4);g.closePath();g.fill();}g.globalAlpha=1;break;}
+        case 'vent':g.fillStyle='#1a1210';g.beginPath();g.ellipse(x,y,9,5,0,0,TAU);g.fill();g.strokeStyle='#ff6a2a';g.lineWidth=1.5;g.stroke();
+          g.fillStyle='rgba(220,220,220,.25)';g.beginPath();g.arc(x-2,y-10,6,0,TAU);g.arc(x+3,y-18,8,0,TAU);g.fill();break;
+        case 'candle':for(let k=0;k<3;k++){const ox=x+(k-1)*6,oy=y+(k===1?-3:0),hh=8+(k*3+h)%6;g.fillStyle='#e8e0c8';g.fillRect(ox-2,oy-hh,4,hh);g.fillStyle='#ffd070';g.beginPath();g.ellipse(ox,oy-hh-3,2,3.5,0,0,TAU);g.fill();}
+          g.fillStyle='rgba(255,200,100,.12)';g.beginPath();g.arc(x,y-8,22,0,TAU);g.fill();break;
+        case 'log':g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x+2,y+7,24,5,0,0,TAU);g.fill();g.fillStyle=theme==='swamp'?'#4a4030':'#6a4a2a';g.fillRect(x-22,y-5,44,10);
+          g.fillStyle=theme==='snow'?'#f0f6fb':'#8a6a3a';g.fillRect(x-22,y-5,44,3);g.fillStyle='#a07a48';g.beginPath();g.ellipse(x+22,y,3,5,0,0,TAU);g.fill();break;
+      }
+    }
+  },
   /** 深い水（湖・川・滝つぼ）と滝。岸に面した側は白い波打ち際 */
   drawDeep(g,px,py,h,x,y,map,isFall){
     const W=map.W,H=map.H,tt=(xx,yy)=>(xx<0||yy<0||xx>=W||yy>=H)?TILE_DEEP:map.tiles[yy*W+xx];
-    const wet=v=>v===TILE_DEEP||v===TILE_FALL;
+    const wet=v=>v===TILE_DEEP||v===TILE_FALL,P=DEEP_PAL[map.theme]||DEEP_PAL.river;
     if(isFall){
-      g.fillStyle='#2c4a66';g.fillRect(px,py,TILE,TILE);
-      g.fillStyle='#4f8fc0';g.fillRect(px+1,py,TILE-2,TILE);
-      for(let k=0;k<5;k++){const sx=px+((h>>(k*3))%TILE);g.fillStyle=k%2?'rgba(230,248,255,.75)':'rgba(170,215,240,.6)';g.fillRect(sx,py,2,TILE);}
+      g.fillStyle=P.fall[0];g.fillRect(px,py,TILE,TILE);
+      g.fillStyle=P.fall[1];g.fillRect(px+1,py,TILE-2,TILE);
+      for(let k=0;k<5;k++){const sx=px+((h>>(k*3))%TILE);g.fillStyle=k%2?P.fall[2]:P.fall[3];g.fillRect(sx,py,2,TILE);}
       if(!wet(tt(x-1,y))){g.fillStyle='#3a3a40';g.fillRect(px,py,4,TILE);}
       if(!wet(tt(x+1,y))){g.fillStyle='#3a3a40';g.fillRect(px+TILE-4,py,4,TILE);}
       return;
     }
     let near=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)if(!wet(tt(x+dx,y+dy)))near++;
-    g.fillStyle=near>6?'#3f86b4':near>0?'#2f6f9e':'#245a86';g.fillRect(px,py,TILE,TILE);
-    if(h%4===0){g.strokeStyle='rgba(190,230,250,.35)';g.lineWidth=1.2;const wy=py+((h>>3)%24)+4,wx=px+(h%16);g.beginPath();g.moveTo(wx,wy);g.quadraticCurveTo(wx+5,wy-3,wx+10,wy);g.quadraticCurveTo(wx+15,wy+3,wx+20,wy);g.stroke();}
-    g.fillStyle='rgba(235,250,255,.7)';
-    if(!wet(tt(x,y-1)))g.fillRect(px,py,TILE,3);
-    if(!wet(tt(x,y+1)))g.fillRect(px,py+TILE-3,TILE,3);
-    if(!wet(tt(x-1,y)))g.fillRect(px,py,3,TILE);
-    if(!wet(tt(x+1,y)))g.fillRect(px+TILE-3,py,3,TILE);
+    g.fillStyle=near>6?P.c[0]:near>0?P.c[1]:P.c[2];g.fillRect(px,py,TILE,TILE);
+    if(P.kind==='lava'){ // 溶岩：光る筋と、冷えかけた黒い皮
+      if(h%3===0){g.strokeStyle='#ffd040';g.lineWidth=2;const wy=py+((h>>3)%24)+4,wx=px+(h%12);g.beginPath();g.moveTo(wx,wy);g.quadraticCurveTo(wx+6,wy-4,wx+14,wy);g.stroke();}
+      if(h%5===1){g.fillStyle='rgba(40,16,8,.55)';g.beginPath();g.ellipse(px+(h%20)+6,py+((h>>4)%20)+6,6,4,0,0,TAU);g.fill();}
+    }else if(P.kind==='abyss'){ // 底の見えない谷：奥ほど暗く、ときどき青白い光
+      if(h%11===0){g.fillStyle='rgba(140,160,255,.35)';g.fillRect(px+(h%26)+2,py+((h>>4)%26)+2,2,2);}
+    }else if(P.kind==='bog'){ // 沼：泡と油の膜
+      if(h%5===0){g.strokeStyle='rgba(170,190,110,.45)';g.lineWidth=1;g.beginPath();g.arc(px+(h%22)+5,py+((h>>4)%22)+5,2.5,0,TAU);g.stroke();}
+      if(h%7===0){g.fillStyle='rgba(120,140,60,.25)';g.beginPath();g.ellipse(px+((h>>2)%20)+6,py+((h>>5)%20)+6,7,3,0,0,TAU);g.fill();}
+    }else{
+      if(h%4===0){g.strokeStyle=P.wave;g.lineWidth=1.2;const wy=py+((h>>3)%24)+4,wx=px+(h%16);g.beginPath();g.moveTo(wx,wy);g.quadraticCurveTo(wx+5,wy-3,wx+10,wy);g.quadraticCurveTo(wx+15,wy+3,wx+20,wy);g.stroke();}
+      if(P.kind==='ice'&&h%9===0){g.fillStyle='rgba(235,248,255,.85)';g.beginPath();g.moveTo(px+6,py+10);g.lineTo(px+18,py+6);g.lineTo(px+24,py+16);g.lineTo(px+12,py+22);g.closePath();g.fill();}
+      if(P.kind==='glow'&&h%6===0){g.fillStyle='rgba(138,230,255,.45)';g.beginPath();g.arc(px+(h%24)+4,py+((h>>3)%24)+4,2,0,TAU);g.fill();}
+    }
+    g.fillStyle=P.edge;const e=P.edgeW||3;
+    if(!wet(tt(x,y-1)))g.fillRect(px,py,TILE,e);
+    if(!wet(tt(x,y+1)))g.fillRect(px,py+TILE-e,TILE,e);
+    if(!wet(tt(x-1,y)))g.fillRect(px,py,e,TILE);
+    if(!wet(tt(x+1,y)))g.fillRect(px+TILE-e,py,e,TILE);
   },
   /** 滝の流れ・しぶき（毎フレーム、見えている所だけ） */
   drawFallAnim(ctx,map,x0,y0,x1,y1){
@@ -10979,28 +11314,47 @@ const Renderer={
     for(let y=Math.max(0,y0);y<=Math.min(map.H-1,y1);y++)for(let x=Math.max(0,x0);x<=Math.min(map.W-1,x1);x++){
       const v=map.tiles[y*map.W+x];if(v!==TILE_FALL)continue;
       const px=x*TILE,py=y*TILE;
-      ctx.fillStyle='rgba(255,255,255,.8)';
+      ctx.fillStyle=map.theme==='volcano'?'rgba(255,230,120,.85)':'rgba(255,255,255,.8)';
       for(let k=0;k<3;k++){const sx=px+((x*7+k*11)%28)+2,o=((t*260+k*13+x*31)%TILE);ctx.fillRect(sx,py+o,2,8);}
       const bv=y+1<map.H?map.tiles[(y+1)*map.W+x]:0;
       if(bv===TILE_DEEP){ // 落ちた所のしぶき
-        for(let k=0;k<3;k++){const ph=(t*1.7+k*0.33+x*0.21)%1,r=3+ph*7;ctx.globalAlpha=(1-ph)*0.8;ctx.fillStyle='#eaf8ff';ctx.beginPath();ctx.arc(px+TILE/2+Math.sin(x*3+k*2)*9,py+TILE+4+ph*6,r,0,TAU);ctx.fill();}
+        for(let k=0;k<3;k++){const ph=(t*1.7+k*0.33+x*0.21)%1,r=3+ph*7;ctx.globalAlpha=(1-ph)*0.8;ctx.fillStyle=map.theme==='volcano'?'#ffb040':'#eaf8ff';ctx.beginPath();ctx.arc(px+TILE/2+Math.sin(x*3+k*2)*9,py+TILE+4+ph*6,r,0,TAU);ctx.fill();}
         ctx.globalAlpha=1;
       }
     }
   },
   drawRock(g,x,y,h){
+    const th=this.curTheme;
     g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x+2,y+9,15,6,0,0,TAU);g.fill();
-    g.fillStyle='#6a6a62';g.beginPath();g.moveTo(x-14,y+6);g.lineTo(x-11,y-8);g.lineTo(x-2,y-13);g.lineTo(x+10,y-9);g.lineTo(x+14,y+4);g.lineTo(x+6,y+10);g.lineTo(x-8,y+10);g.closePath();g.fill();
-    g.fillStyle='#86867c';g.beginPath();g.moveTo(x-9,y-6);g.lineTo(x-2,y-11);g.lineTo(x+7,y-7);g.lineTo(x,y-3);g.closePath();g.fill();
-    if(h%2){g.fillStyle='rgba(110,160,70,.5)';g.beginPath();g.arc(x-6,y+4,4,0,TAU);g.fill();}
+    if(th==='crystal'){ // 結晶の塊
+      const cs=['#7ad0f0','#a080f0','#6af0c8'],c=cs[h%3];
+      g.fillStyle='#2a2246';g.beginPath();g.ellipse(x,y+6,13,5,0,0,TAU);g.fill();
+      for(const [ox,hh,w] of [[-7,16,5],[0,24,6],[7,14,5],[-2,10,4]]){g.fillStyle=c;g.beginPath();g.moveTo(x+ox-w,y+6);g.lineTo(x+ox,y+6-hh);g.lineTo(x+ox+w,y+6);g.closePath();g.fill();
+        g.fillStyle='rgba(255,255,255,.45)';g.beginPath();g.moveTo(x+ox-w*0.5,y+5);g.lineTo(x+ox,y+6-hh);g.lineTo(x+ox,y+5);g.closePath();g.fill();}
+      return;
+    }
+    const pal=th==='volcano'?['#2a2220','#3e3430']:th==='snow'?['#6a7480','#8894a0']:th==='crypt'?['#4a4b56','#62636e']:th==='swamp'?['#4a4a3a','#5e5e4a']:['#6a6a62','#86867c'];
+    g.fillStyle=pal[0];g.beginPath();g.moveTo(x-14,y+6);g.lineTo(x-11,y-8);g.lineTo(x-2,y-13);g.lineTo(x+10,y-9);g.lineTo(x+14,y+4);g.lineTo(x+6,y+10);g.lineTo(x-8,y+10);g.closePath();g.fill();
+    g.fillStyle=pal[1];g.beginPath();g.moveTo(x-9,y-6);g.lineTo(x-2,y-11);g.lineTo(x+7,y-7);g.lineTo(x,y-3);g.closePath();g.fill();
+    if(th==='volcano'){g.strokeStyle='#ff6a2a';g.lineWidth=1.4;g.beginPath();g.moveTo(x-8,y+6);g.lineTo(x-2,y-2);g.lineTo(x+5,y+3);g.lineTo(x+9,y-4);g.stroke();}
+    else if(th==='snow'){g.fillStyle='#f4faff';g.beginPath();g.moveTo(x-12,y-6);g.lineTo(x-2,y-13);g.lineTo(x+10,y-9);g.lineTo(x+8,y-4);g.lineTo(x-2,y-6);g.lineTo(x-10,y-2);g.closePath();g.fill();}
+    else if(h%2){g.fillStyle=th==='crypt'?'rgba(120,140,110,.35)':'rgba(110,160,70,.5)';g.beginPath();g.arc(x-6,y+4,4,0,TAU);g.fill();}
   },
   drawPillar(g,cx,cy,theme){
     g.fillStyle='rgba(0,0,0,.35)';g.fillRect(cx-28,cy-24,60,58);
+    if(theme==='crystal'||theme==='snow'||theme==='volcano'){ // 結晶の柱・氷柱・黒曜石の尖塔
+      const C=theme==='crystal'?['#3a2e66','#7ad0f0','#c8f4ff']:theme==='snow'?['#7fa6bd','#c8e6f6','#ffffff']:['#14100e','#3a2a30','#ff7a3a'];
+      g.fillStyle=C[0];g.beginPath();g.ellipse(cx,cy+18,26,10,0,0,TAU);g.fill();
+      for(const [ox,hh,w] of [[-12,40,10],[0,58,13],[13,36,10]]){g.fillStyle=C[1];g.beginPath();g.moveTo(cx+ox-w,cy+20);g.lineTo(cx+ox,cy+20-hh);g.lineTo(cx+ox+w,cy+20);g.closePath();g.fill();
+        g.fillStyle=C[2];g.globalAlpha=0.55;g.beginPath();g.moveTo(cx+ox-w*0.4,cy+18);g.lineTo(cx+ox,cy+20-hh);g.lineTo(cx+ox+1,cy+18);g.closePath();g.fill();g.globalAlpha=1;}
+      return;
+    }
     g.fillStyle='#4a4b56';g.fillRect(cx-30,cy-30,60,60);
     g.fillStyle='#5c5d6a';g.fillRect(cx-26,cy-26,52,48);
     g.fillStyle='#6e6f7c';g.beginPath();g.arc(cx,cy-4,20,0,TAU);g.fill();
     g.strokeStyle='#3a3b44';g.lineWidth=2;g.beginPath();g.arc(cx,cy-4,20,0,TAU);g.stroke();g.beginPath();g.arc(cx,cy-4,13,0,TAU);g.stroke();
     if(theme==='forest'){g.fillStyle='rgba(100,160,70,.45)';g.beginPath();g.arc(cx-14,cy+12,9,0,TAU);g.arc(cx+16,cy-18,7,0,TAU);g.fill();}
+    if(theme==='crypt'){g.strokeStyle='#26272f';g.lineWidth=1.5;g.beginPath();g.moveTo(cx-8,cy-24);g.lineTo(cx-2,cy-10);g.lineTo(cx-10,cy+4);g.stroke();}
   },
   drawTomb(g,x,y,h){
     g.fillStyle='rgba(0,0,0,.35)';g.fillRect(x-9,y+4,22,8);
@@ -14968,7 +15322,7 @@ const Net={
     return s;
   },
   startMessage(w,pid){
-    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),puddles:w.map.puddles,open:!!w.map.open,areas:w.map.areas||null,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
+    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),deco:w.map.deco?Array.from(w.map.deco):null,props:w.map.props||null,puddles:w.map.puddles,open:!!w.map.open,areas:w.map.areas||null,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
       quest:w.quest,questId:w.questId,diff:w.diff,bossId:w.bossId,pc:w.playerCount};
   },
   broadcastStart(w){
@@ -15032,7 +15386,7 @@ const Net={
   },
   buildMirror(d){
     const m=d.map;
-    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),puddles:m.puddles||null,open:!!m.open,areas:m.areas||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
+    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),deco:m.deco?Uint8Array.from(m.deco):null,props:m.props||null,puddles:m.puddles||null,open:!!m.open,areas:m.areas||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
     const w={mirror:true,time:0,map,players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],hazards:[],gathers:[],
       quest:d.quest,questId:d.questId,diff:d.diff,bossId:d.bossId,playerCount:d.pc,status:'playing'};
     if(m.doorClosed)this.closeDoor(w);
