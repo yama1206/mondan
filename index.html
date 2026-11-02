@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.89.1',date:'2026/11/02'};
+const GAME_VERSION={no:'1.90.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4640,6 +4640,7 @@ function decorateStageMap(map,L,sr){
     return false;
   };
   for(const rm of map.roomList){
+    if(map.fixedObs)break; // 作り込んだマップは障害物が固定（ランダムには置かない）
     if(rm.kind==='start')continue; // スタート地点には置かない（全員が出現する場所）
     const R=rm.rect,style=rm.def.obstacle||L.obstacle,boss=rm.kind==='boss',few=false;
     const rx=()=>randInt(R[0]+2,R[2]-2),ry=()=>randInt(R[1]+2,R[3]-2);
@@ -4812,6 +4813,20 @@ const FIXED_MAPS={
       line([[75,12],[68,22],[61,32],[57,44],[50,56],[46,74]],2.6,water);
     },
     fords:[[4,6],[3,7]], // 川を渡る浅瀬（このエリアどうしの道が川と交わる所）
+    // 障害物は固定（[左上x,左上y,大きさ]。1=岩、2・3=大岩）。まわり3マスに壁・水・ほかの岩がない所にだけ置く（大きなボスも間を通れる）
+    rocks:[
+      [23,33,3],[34,43,1],               // 浅瀬の原
+      [25,11,2],[36,18,1],[22,18,1],     // 岩場の渡り
+      [34,56,2],[24,64,1],               // 澄んだ淵
+      [42,21,1],[50,28,2],               // 渦の淵
+      [53,8,1],                          // 滝の裏
+      [80,36,3],[70,45,1],[83,46,1],     // 水没した祠
+      [70,59,2],[62,66,1],               // 雷魚の巣
+      [86,54,3],[95,62,1],[92,53,1],     // 湖畔の浅瀬
+      [88,27,2],[97,34,1],               // 湖畔の岩場
+      [86,13,2],[99,6,2],                // 滝つぼ（ボスの巣）
+      [104,22,1],[103,44,2],[104,64,1],  // 湖の砂浜
+    ],
   },
 };
 function buildFixedMap(L,opt){
@@ -4851,6 +4866,19 @@ function buildFixedMap(L,opt){
     const ext=Math.max(...bl.map(b=>Math.hypot(b[0],b[1])+b[2]));
     map.puddles.push({x:Math.round((cx+0.5)*TILE),y:Math.round((cy+0.5)*TILE),r:Math.round(ext),bl});
   }
+  // 4b) 固定の障害物
+  if(F.rocks){
+    map.fixedObs=true;
+    const fits=(x0,y0,k)=>{
+      for(let y=y0-3;y<y0+k+3;y++)for(let x=x0-3;x<x0+k+3;x++){const own=x>=x0&&x<x0+k&&y>=y0&&y<y0+k;if(own?map.tiles[y*W+x]!==0:isWall(map,x,y))return false;}
+      return true;};
+    for(const [x0,y0,k] of F.rocks){ // 決めた場所がだめなら、すぐ近く（4マス以内）の置ける所へずらす
+      let at=null;
+      for(let r=0;r<=4&&!at;r++)for(let dy=-r;dy<=r&&!at;dy++)for(let dx=-r;dx<=r;dx++)if(Math.max(Math.abs(dx),Math.abs(dy))===r&&fits(x0+dx,y0+dy,k)){at=[x0+dx,y0+dy];break;}
+      if(!at)continue;
+      for(let y=at[1];y<at[1]+k;y++)for(let x=at[0];x<at[0]+k;x++)map.tiles[y*W+x]=k>1?TILE_OBS.bigrock:TILE_OBS.rock;
+    }
+  }
   // 5) エリアの種類と番号（スタートから近い順）
   const adj=A.map(()=>[]);for(const [i,j] of F.links){adj[i].push(j);adj[j].push(i);}
   const s0=A.findIndex(a=>a.kind==='start'),d=A.map(()=>-1),order=[s0];d[s0]=0;
@@ -4875,7 +4903,7 @@ function buildFixedMap(L,opt){
 const FIELD_BOSS={sight:380,near:170,flee:[0.7,0.45],napAt:0.22,napTime:40,napRegen:0.004,napHealMax:0.1,roamStay:[18,30]};
 /** 目的地（マス）までの歩数の表。壁・障害物・スタートのエリア、体が壁にぶつかるマスは通れない */
 function fieldDist(w,tx,ty,r){
-  const m=w.map,W=m.W,H=m.H,d=new Int32Array(W*H).fill(-1),S=m.rooms.start,q=new Int32Array(W*H);
+  const m=w.map,W=m.W,H=m.H,d=new Int32Array(W*H).fill(-1),S=m.rooms&&m.rooms.start,q=new Int32Array(W*H);
   const rr=Math.max(8,(r||16)*0.85),ok=(x,y)=>!isWall(m,x,y)&&!(S&&x>=S[0]-1&&x<=S[2]+1&&y>=S[1]-1&&y<=S[3]+1)&&!circleHitsWall(m,(x+0.5)*TILE,(y+0.5)*TILE,rr);
   let h=0,t=0;d[ty*W+tx]=0;q[t++]=ty*W+tx;
   for(let y=ty-5;y<=ty+5;y++)for(let x=tx-5;x<=tx+5;x++){const j=y*W+x;if(x>0&&y>0&&x<W&&y<H&&d[j]<0&&ok(x,y)){d[j]=0;q[t++]=j;}} // 目的地のまわりも出発点にする（中心が岩でも届く）
@@ -6239,18 +6267,46 @@ function updateAttacks(w,dt){
 function alertNearby(w,e){for(const o of w.enemies)if(!o.boss&&!o.aggro&&Math.hypot(o.x-e.x,o.y-e.y)<220)o.aggro=true;}
 /** 障害物にハマって動けなくなった敵を、近くの通れる場所へずらす。
     追いかけるべき相手が近くにいるのに、1.2秒ほとんど動けないときだけ働く（壁抜けしないよう、見通せる場所を優先） */
+/** 回り込み中の1フレーム：体の大きさで通れる道（歩数の表）をたどって、相手に近づく。続けるなら true */
+function detourStep(w,e,dt){
+  const D=e.detour,m=w.map,W=m.W,tg=D.tgt;
+  D.t-=dt;
+  if(D.t<=0||!tg||tg.dead||Math.hypot(tg.x-e.x,tg.y-e.y)<e.r+tg.r+24){e.detour=null;return false;}
+  D.re-=dt;
+  if(D.re<=0&&Math.hypot(tg.x-D.gx,tg.y-D.gy)>4*TILE){D.re=0.5;D.gx=tg.x;D.gy=tg.y;D.d=fieldDist(w,Math.floor(tg.x/TILE),Math.floor(tg.y/TILE),e.r);}
+  const d=D.d,tx=Math.floor(e.x/TILE),ty=Math.floor(e.y/TILE),cur=d[ty*W+tx];
+  if(cur>=0&&cur<=1){e.detour=null;return false;}
+  const R=cur<0?3:1;let bx=-1,by=-1,bv=cur<0?1e9:cur,bd=1e9;
+  for(let yy=ty-R;yy<=ty+R;yy++)for(let xx=tx-R;xx<=tx+R;xx++){
+    if(xx<0||yy<0||xx>=W||yy>=m.H)continue;const v=d[yy*W+xx];if(v<0)continue;
+    const dd=Math.abs(xx-tx)+Math.abs(yy-ty);if(v<bv||(v===bv&&dd<bd)){bv=v;bx=xx;by=yy;bd=dd;}}
+  if(bx<0){e.detour=null;return false;}
+  const gx=(bx+0.5)*TILE-e.x,gy=(by+0.5)*TILE-e.y,gl=Math.hypot(gx,gy)||1,sp=Math.min(gl,(e.speed||80)*dt);
+  e.facing=Math.atan2(gy,gx);moveEntity(m,e,gx/gl*sp,gy/gl*sp);
+  // 回り込みでも進めないときはやめる（このあと少しだけ待って、近くの通れる場所へ移す）
+  if(Math.hypot(e.x-D.lx,e.y-D.ly)>3){D.lx=e.x;D.ly=e.y;D.lt=0;}else if((D.lt+=dt)>0.8){e.detour=null;e._ut=0.9;return false;}
+  return true;
+}
+/** 追いかけている魔物が、岩や壁に押しつけられて動けなくなったとき：
+    0.5秒動けなければ、体の大きさで通れる道をたどって回り込む。それでもだめなら、近くの通れる場所へ移す */
 function unstickEnemy(w,e,dt){
+  if(e.detour)return detourStep(w,e,dt);
   const MOVING={chase:1,move:1,orbit:1,retreat:1,pounce:1,dash:1};
   const moving=!e.state||!!MOVING[e.state];
   if(e._ux===undefined){e._ux=e.x;e._uy=e.y;e._ut=0;}
   const moved=Math.hypot(e.x-e._ux,e.y-e._uy);
-  if(!moving||moved>4){e._ux=e.x;e._uy=e.y;e._ut=0;return;}
+  if(!moving||moved>4){e._ux=e.x;e._uy=e.y;e._ut=0;e._dtry=false;return false;}
   let tgt=null,best=1e9;
   for(const p of Object.values(w.players)){if(p.dead)continue;const d=Math.hypot(p.x-e.x,p.y-e.y);if(d<best){best=d;tgt=p;}}
-  if(!tgt||best>700||best<e.r+tgt.r+8){e._ut=0;e._ux=e.x;e._uy=e.y;return;}
+  if(!tgt||best>700||best<e.r+tgt.r+8){e._ut=0;e._ux=e.x;e._uy=e.y;return false;}
   e._ut+=dt;
-  if(e._ut<1.2)return;
-  e._ut=0;e._ux=e.x;e._uy=e.y;
+  if(e._ut>=0.5&&!e._dtry&&e.state==='chase'){
+    e._dtry=true;
+    e.detour={tgt,t:2.5,re:0.5,gx:tgt.x,gy:tgt.y,lx:e.x,ly:e.y,lt:0,d:fieldDist(w,Math.floor(tgt.x/TILE),Math.floor(tgt.y/TILE),e.r)};
+    return detourStep(w,e,dt);
+  }
+  if(e._ut<1.2)return false;
+  e._ut=0;e._ux=e.x;e._uy=e.y;e._dtry=false;
   let pick=null,pickScore=1e9,anyPick=null,anyScore=1e9;
   for(let R=28;R<=180&&!pick&&!anyPick;R+=38){
     for(let i=0;i<16;i++){
@@ -6263,6 +6319,7 @@ function unstickEnemy(w,e,dt){
   }
   const to=pick||anyPick;
   if(to&&!cannotEnter(w.map,e,to.x,to.y)){e.x=to.x;e.y=to.y;}
+  return false;
 }
 /** 最初の部屋（スタート部屋）にいるあいだは、敵に見つからない。誰かが部屋から出たら以後ずっと解除 */
 /** 敵から見つからないか（最初の部屋の隠密、または武器スキル「隠密」） */
@@ -6287,7 +6344,7 @@ function updateEnemy(w,e,dt){
   }
   if(e.sleepT>0){e.sleepT-=dt;return;} // 睡眠：攻撃されるまで動かない
   if(e.trapT>0){e.trapT-=dt;if(e.trapT<=0){e.trapKind=null;emit(w,{type:'trapEnd',x:e.x,y:e.y});}return;}
-  unstickEnemy(w,e,dt);
+  if(unstickEnemy(w,e,dt))return; // 引っかかって回り込んでいる間は、いつもの動きを止める
   // 目がくらんでいる間は、うろうろするだけ
   if(e.blindT>0){
     e.blindT-=dt;
