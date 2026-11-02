@@ -36,6 +36,7 @@ button.danger:hover{background:#6e2a3a}
 .gver button{pointer-events:auto;font-size:12px;padding:3px 8px}
 .gver>button,.gver .updbar button{width:112px;font-size:12px;text-align:center}
 .gver .updbar{margin-top:4px;text-align:right}
+@media (orientation:portrait){.gver>button[data-act="gifts"]{position:fixed;top:max(8px,env(safe-area-inset-top,0px));left:12px}} /* 縦画面：プレゼントは左上（タイトルに重ならないように） */
 .gver #updateMsg{display:block}
 .gver button.gift-new{border-color:#ffd23a;color:#ffe9a0;font-weight:bold;animation:giftGlow 1.2s ease-in-out infinite}
 @keyframes giftGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,210,58,0)}50%{box-shadow:0 0 12px 3px rgba(255,210,58,.85)}}
@@ -267,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.5.2',date:'2026/11/02'};
+const GAME_VERSION={no:'2.5.3',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
