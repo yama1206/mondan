@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.4',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.5',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -15074,7 +15074,7 @@ function matSellPrice(id){
   return 5;
 }
 /** 手紙ガチャの区切り（3ステージごと）。end：その区切りの最後のステージ（レア度の上限）。price：1回のゴールド。10連は1回の9倍 */
-const LETTER_BANDS=[{start:1,end:3,price:200},{start:4,end:6,price:400,min:2},{start:7,end:8,price:400}];
+const LETTER_BANDS=[{start:1,end:3,price:200},{start:4,end:6,price:400,min:2},{start:7,end:8,price:600}];
 const LETTER_TEN_MUL=9;
 /** 装飾品ガチャ：持っている装飾品を3個使って1個もらう。出るレア度の最低保証は、使った3個のうち一番低いレア度 */
 const DECO_GACHA={need:3};
