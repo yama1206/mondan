@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.1',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.2',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3842,6 +3842,7 @@ const COMP_KIT={healer:{potion:10,good_potion:10,heal_all:3},tank:{potion:10,goo
 /* 首輪：首輪ガチャだけで出る。プレイヤーだけが1つはめられる（ソロでもマルチでも効果あり）。
    rar：0コモン 1アンコモン 2レア 3エピック 4レジェンダリー（装飾品と同じ5段階）
    pet：相棒の強化（全レア度）、me：プレイヤーの強化（レア以上）、wt／wtv：その武器種を装備しているときの攻撃力+％（レジェンダリー） */
+const L_PET=[['petAtk',30],['petCd',20],['petSup',35],['petRange',35]],L_ME=[['atkPct',5]]; // レジェンダリー首輪の共通の効果（違いは武器種の効果だけ）
 const PETS=[
   {id:'c_fang',name:'小牙',rar:0,pet:[['petAtk',8]]},
   {id:'c_bell',name:'鈴',rar:0,pet:[['petCd',6]]},
@@ -3860,25 +3861,25 @@ const PETS=[
   {id:'e_guard',name:'守護',rar:3,pet:[['petSup',30]],me:[['maxHpPct',6]]},
   {id:'e_shadow',name:'影縫い',rar:3,pet:[['petCd',16]],me:[['dodgeIframe',0.05]]},
   {id:'e_star',name:'星屑',rar:3,pet:[['petAtk',22]],me:[['critDmg',10]]},
-  {id:'l_sword',name:'剣聖',rar:4,pet:[['petAtk',32]],me:[['crit',5]],wt:'sword',wtv:10},
-  {id:'l_gs',name:'巨人',rar:4,pet:[['petSup',35]],me:[['def',4]],wt:'greatsword',wtv:10},
-  {id:'l_tachi',name:'月光',rar:4,pet:[['petCd',20]],me:[['critDmg',15]],wt:'tachi',wtv:10},
-  {id:'l_dual',name:'双星',rar:4,pet:[['petCd',18]],me:[['crit',5]],wt:'dual',wtv:10},
-  {id:'l_hammer',name:'雷鎚',rar:4,pet:[['petAtk',30]],me:[['maxHpPct',8]],wt:'hammer',wtv:10},
-  {id:'l_lance',name:'城壁',rar:4,pet:[['petSup',35]],me:[['def',5]],wt:'lance',wtv:10},
-  {id:'l_bow',name:'天弓',rar:4,pet:[['petRange',35]],me:[['critDmg',12]],wt:'bow',wtv:10},
-  {id:'l_shuriken',name:'影刃',rar:4,pet:[['petCd',20]],me:[['dodgeDistPct',8]],wt:'shuriken',wtv:10},
+  {id:'l_sword',name:'剣聖',rar:4,pet:L_PET,me:L_ME,wt:'sword',wtv:10},
+  {id:'l_gs',name:'巨人',rar:4,pet:L_PET,me:L_ME,wt:'greatsword',wtv:10},
+  {id:'l_tachi',name:'月光',rar:4,pet:L_PET,me:L_ME,wt:'tachi',wtv:10},
+  {id:'l_dual',name:'双星',rar:4,pet:L_PET,me:L_ME,wt:'dual',wtv:10},
+  {id:'l_hammer',name:'雷鎚',rar:4,pet:L_PET,me:L_ME,wt:'hammer',wtv:10},
+  {id:'l_lance',name:'城壁',rar:4,pet:L_PET,me:L_ME,wt:'lance',wtv:10},
+  {id:'l_bow',name:'天弓',rar:4,pet:L_PET,me:L_ME,wt:'bow',wtv:10},
+  {id:'l_shuriken',name:'影刃',rar:4,pet:L_PET,me:L_ME,wt:'shuriken',wtv:10},
 ];
 /* 首輪のレア度：w は首輪ガチャで出る確率（％）、fx はガチャ演出の強さ */
 const COLLAR_RAR=[
-  {name:'コモン',color:DECO_RAR_COLORS[0],w:52,fx:'N'},
+  {name:'コモン',color:DECO_RAR_COLORS[0],w:54,fx:'N'},
   {name:'アンコモン',color:DECO_RAR_COLORS[1],w:27,fx:'N'},
   {name:'レア',color:DECO_RAR_COLORS[2],w:13,fx:'R'},
   {name:'エピック',color:DECO_RAR_COLORS[3],w:5,fx:'SR'},
-  {name:'レジェンダリー',color:DECO_RAR_COLORS[4],w:3,fx:'SSR'},
+  {name:'レジェンダリー',color:DECO_RAR_COLORS[4],w:1,fx:'SSR'},
 ];
 const COLLAR_PRICE=2;   // 首輪ガチャ1回のコイン
-const COLLAR_PITY=50;   // この回数までにレジェンダリーが出なければ確定（出たら数え直し）
+const COLLAR_PITY=100;   // この回数までにレジェンダリーが出なければ確定（出たら数え直し）
 const COLLAR_FMT={petAtk:'相棒の攻撃力 +{v}%',petCd:'相棒の行動の間隔 -{v}%',petSup:'相棒の回復・守り +{v}%',petRange:'相棒の届く距離 +{v}%',
   atkPct:'攻撃力 +{v}%',def:'防御力 +{v}',crit:'会心率 +{v}%',critDmg:'会心ダメージ +{v}%',maxHpPct:'最大HP +{v}%',dodgeDistPct:'回避距離 +{v}%',dodgeIframe:'回避後無敵 +{v}秒',potionHealPct:'回復薬の回復量 +{v}%'};
 /** 首輪の効果を文の配列にする（相棒・プレイヤー・武器種） */
@@ -15353,7 +15354,7 @@ const Ops={
     p.coins=(p.coins||0)+1;
     return {changed:true,msg:`${lk.name}（${vn}）がかぶった → コイン +1`,color:'#ffd23a',fx:{rar:'N',text:`${lk.name}（${vn}）がかぶった → コイン +1`}};
   },
-  /** 首輪ガチャ（COLLAR_PRICE コイン）：レア度で抽選してから種類を選ぶ。かぶったらコイン1枚戻る。
+  /** 首輪ガチャ（COLLAR_PRICE コイン）：レア度で抽選してから種類を選ぶ。かぶってもコインは戻らない。
       COLLAR_PITY 回目までにレジェンダリーが出なければ確定（出たら天井の回数は0に戻る） */
   collarGacha(p,who,a){
     if((p.coins||0)<COLLAR_PRICE)return {msg:`コインが足りません（${COLLAR_PRICE}コイン必要）`,color:'#ff8060'};
@@ -15365,7 +15366,7 @@ const Ops={
     if(tier===4)p.collarPity=0;
     const R=COLLAR_RAR[tier],pt=pick(PETS.filter(x=>x.rar===tier));
     const fx=t=>({rar:R.fx,rname:R.name,rcol:R.color,tier,text:t});
-    if(p.pets[pt.id]){p.coins=(p.coins||0)+1;return {changed:true,msg:`${R.name}：${pt.name}の首輪がダブり → コイン +1`,color:'#ffd23a',fx:fx(`${pt.name}の首輪（ダブり）→ コイン +1`)};}
+    if(p.pets[pt.id])return {changed:true,msg:`${R.name}：${pt.name}の首輪がダブり`,color:'#ffd23a',fx:fx(`${pt.name}の首輪（ダブり）`)};
     p.pets[pt.id]={level:1};
     return {changed:true,msg:`${R.name}：${pt.name}の首輪を手に入れた！`,color:R.color,fx:fx(`${pt.name}の首輪`)};
   },
@@ -17348,7 +17349,7 @@ const App={
     const petCard=`<div class="recipe"><div class="rn">相棒ガチャ</div><div class="muted">ボスを倒すとコインが1つ貰えます。相棒（全${LOOKS.length}種類・どれも同じ確率）がかぶるとコイン1枚。<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=3?'primary':''}" data-act="gacha" ${coins>=3?'':'disabled'}>1回回す（3コイン）</button><button class="${coins>=30?'primary':''}" data-act="gacha10" ${coins>=30?'':'disabled'}>10連（30コイン）</button></div></div>`;
     const pity=Math.max(1,COLLAR_PITY-(p.collarPity||0));
-    const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます（同じ首輪は1つまで。かぶるとコイン1枚戻ります）。<br>${COLLAR_RAR.map(r=>`<span style="color:${r.color}">${r.name} ${r.w}%</span>`).join('　')}<br>あと${pity}回以内にレジェンダリー確定（出たら数え直し）<br>所持 ${coins}枚</div>
+    const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます（同じ首輪は1つまで。かぶってもコインは戻りません）。<br>${COLLAR_RAR.map(r=>`<span style="color:${r.color}">${r.name} ${r.w}%</span>`).join('　')}<br>あと${pity}回以内にレジェンダリー確定（出たら数え直し）<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=COLLAR_PRICE?'primary':''}" data-act="collarGacha" ${coins>=COLLAR_PRICE?'':'disabled'}>1回回す（${COLLAR_PRICE}コイン）</button><button class="${coins>=COLLAR_PRICE*10?'primary':''}" data-act="collarGacha10" ${coins>=COLLAR_PRICE*10?'':'disabled'}>10連（${COLLAR_PRICE*10}コイン）</button></div></div>`;
     const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:sub==='collar'?`<div class="recipes">${collarCard}</div>${this.collarBookHTML(p)}`:`<div class="recipes">${petCard}</div>${this.lookBookHTML(p)}`;
     return `${tabBar}${body}`;
