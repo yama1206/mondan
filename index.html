@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.86.1',date:'2026/11/02'};
+const GAME_VERSION={no:'1.86.2',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -16173,9 +16173,9 @@ const App={
       const A=PET_ACTS[LOOK_ACT[x.id]];
       const cols=LOOK_VARIANTS.map((V,v)=>own.includes(v)
         ?`<div style="text-align:center"><canvas class="pet-prev" width="240" height="160" data-look="${x.id}" data-v="${v}" style="display:block;width:96px;height:64px;background:rgba(255,255,255,.05);border-radius:6px"></canvas><div class="small">${lookVarLabel(v)}</div></div>`
-        :`<div style="text-align:center;opacity:.5"><div style="width:96px;height:64px;line-height:64px;background:rgba(255,255,255,.04);border-radius:6px;font-size:20px">？</div><div class="small muted">${V.name}</div></div>`).join('');
+        :`<div style="text-align:center;opacity:.5"><div style="width:96px;height:64px;line-height:64px;background:rgba(255,255,255,.04);border-radius:6px;font-size:20px">？</div><div class="small muted">？</div></div>`).join('');
       const head=own.length?`<div class="rn">${x.name}　<span class="small muted">${own.length}/${LOOK_VARIANTS.length}色</span></div>${A?`<div class="small">サポート行動「${A.name}」：${A.desc}（間隔 ${A.cd}秒）</div>`:''}`
-        :`<div class="rn muted">？？？</div><div class="small muted">まだ仲間になっていません</div>`;
+        :`<div class="rn muted">？</div>`;
       return `<div class="recipe">${head}<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${cols}</div></div>`;
     }).join('');
     return `<h2 style="margin:16px 0 4px">相棒図鑑　<span class="small muted">${have}/${total}（${LOOKS.filter(x=>(p.looks[x.id]||[]).length).length}/${LOOKS.length}種類）</span></h2><div class="recipes">${cards}</div>`;
@@ -16188,7 +16188,7 @@ const App={
       const got=list.filter(x=>p.pets[x.id]).length;
       const cards=list.map(x=>p.pets[x.id]
         ?`<div class="recipe" style="border-color:${R.color}"><div class="rn" style="color:${R.color}">${x.name}の首輪${p.equipped.pet===x.id?' <span class="tag">装備中</span>':''}</div>${collarLines(x).map(t=>`<div class="small">${t}</div>`).join('')}</div>`
-        :`<div class="recipe" style="opacity:.55"><div class="rn muted">？？？の首輪</div><div class="small muted">まだ持っていません</div></div>`).join('');
+        :`<div class="recipe" style="opacity:.55"><div class="rn muted">？</div></div>`).join('');
       return `<h3 style="margin:12px 0 6px;color:${R.color}">${R.name}（${got}/${list.length}）</h3><div class="recipes">${cards}</div>`;
     }).join('');
     return `<h2 style="margin:16px 0 4px">首輪図鑑　<span class="small muted">${have}/${PETS.length}種類</span></h2>${sec}`;
