@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.86.2',date:'2026/11/02'};
+const GAME_VERSION={no:'1.86.3',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3907,6 +3907,24 @@ const LOOK_VARIANTS=[{name:'基本色',hue:0,rar:'R',w:55},{name:'色違い1',hu
 const LOOK_RAR_NAME={R:'レア',SR:'エピック',SSR:'レジェンド'};
 /* 相棒ごとの専用の色（色相をずらす代わりにこの色で描く）。相棒ID → 色の番号 → {col:体, W:明るい毛, DK:濃い毛} */
 const LOOK_COLOR_OVERRIDE={l_dog:{3:{col:'#2c2c34',W:'#5a5a66',DK:'#141418'}}}; // オオカミのレジェンドは黒い狼
+/** キャンバスの色相フィルター（ctx.filter）が本当に効くか：赤を90度ずらして色が変わるかで調べる（1回だけ） */
+let _canvasFilterOK=null;
+function canvasFilterOK(){
+  if(_canvasFilterOK!==null)return _canvasFilterOK;
+  try{const c=document.createElement('canvas');c.width=c.height=2;const g=c.getContext('2d');g.filter='hue-rotate(90deg)';g.fillStyle='#ff0000';g.fillRect(0,0,2,2);const d=g.getImageData(0,0,1,1).data;_canvasFilterOK=!(d[0]>200&&d[1]<40);}catch(e){_canvasFilterOK=false;}
+  return _canvasFilterOK;
+}
+/** 絵の色相を deg 度ずらす（CSS の hue-rotate と同じ計算） */
+function hueRotatePixels(g,px,deg){
+  const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+  const m=[0.213+c*0.787-s*0.213,0.715-c*0.715-s*0.715,0.072-c*0.072+s*0.928,
+           0.213-c*0.213+s*0.143,0.715+c*0.285+s*0.140,0.072-c*0.072-s*0.283,
+           0.213-c*0.213-s*0.787,0.715-c*0.715+s*0.715,0.072+c*0.928+s*0.072];
+  const im=g.getImageData(0,0,px,px),d=im.data;
+  for(let i=0;i<d.length;i+=4){if(!d[i+3])continue;const r=d[i],gg=d[i+1],b=d[i+2];
+    d[i]=m[0]*r+m[1]*gg+m[2]*b;d[i+1]=m[3]*r+m[4]*gg+m[5]*b;d[i+2]=m[6]*r+m[7]*gg+m[8]*b;}
+  g.setTransform(1,0,0,1,0,0);g.putImageData(im,0,0);
+}
 const LOOK_RAR_COLOR={R:'#4aa3ff',SR:'#c06bff',SSR:'#ffb030'};
 /** 色の表示名：「色違い2（スーパーレア）」のように、レア度の色つきで出す */
 const lookVarLabel=v=>{const V=LOOK_VARIANTS[v]||LOOK_VARIANTS[0];return `<span style="color:${LOOK_RAR_COLOR[V.rar]}">${V.name}（${LOOK_RAR_NAME[V.rar]}）</span>`;};
@@ -12101,7 +12119,7 @@ const Renderer={
     if(ov)k.pal=ov; // 専用の色（色相をずらさず、決めた色で描く）
     const draw=PET_ART[lk.id]||PET_ART.l_dog;
     let neck;
-    if(!ov&&hv.hue&&'filter' in ctx){
+    if(!ov&&hv.hue){
       // 色違い：線や塗りの1つずつに hue-rotate をかけるととても重い（マルチで人数分）ので、
       // いったん小さな裏画面に普通の色で描き、その絵1枚にだけ色相フィルターをかけて貼る
       const m=ctx.getTransform(),z=Math.max(0.5,Math.hypot(m.a,m.b)),half=r*2.2,px=Math.ceil(half*2*z);
@@ -12110,7 +12128,8 @@ const Renderer={
       const g=oc.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,px,px);
       g.setTransform(z,0,0,z,half*z,half*z);g.scale(dir*r,r);g.lineJoin='round';g.lineCap='round';g.translate(0,0.18);
       k.ctx=g;neck=draw(k,H,lk.col,moving)||[0.5,-0.2,0.32];k.ctx=ctx;
-      ctx.filter=`hue-rotate(${hv.hue}deg)`;ctx.drawImage(oc,0,0,px,px,-half,-half,half*2,half*2);ctx.filter='none';
+      if(canvasFilterOK()){ctx.filter=`hue-rotate(${hv.hue}deg)`;ctx.drawImage(oc,0,0,px,px,-half,-half,half*2,half*2);ctx.filter='none';}
+      else{hueRotatePixels(g,px,hv.hue);ctx.drawImage(oc,0,0,px,px,-half,-half,half*2,half*2);} // 色相フィルターが効かないブラウザ（古いSafariなど）は、絵の色を1点ずつずらす
       ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';ctx.translate(0,0.18);
     }else{
       ctx.scale(dir*r,r);ctx.lineJoin='round';ctx.lineCap='round';
