@@ -174,8 +174,8 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 #rotate{display:none;position:fixed;inset:0;z-index:50;background:#0b0a10;color:#f3e6c0;align-items:center;justify-content:center;text-align:center;padding:24px}
 #rotate .rot-icon{font-size:52px;display:inline-block;transform:rotate(-90deg);margin-bottom:18px}
 #rotate p{font-size:17px;line-height:1.7}
-@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}#touch{display:none!important}}
-@media (orientation:landscape) and (pointer:coarse){
+/* 縦向きでも遊べる（ver 2.4）。ボタンの大きさだけ縦向き用に下で上書きする */
+@media (pointer:coarse){
   #touch{--u:calc(clamp(50px,15vh,78px) * var(--ts,1));--r:max(12px,env(safe-area-inset-right,0px));--b:max(12px,env(safe-area-inset-bottom,0px));--l:max(12px,env(safe-area-inset-left,0px))}
   #touch .stick{left:var(--l);bottom:var(--b);width:calc(var(--u)*2.2);height:calc(var(--u)*2.2)}
   #touch .knob{width:calc(var(--u)*0.9);height:calc(var(--u)*0.9);margin:calc(var(--u)*-0.45) 0 0 calc(var(--u)*-0.45)}
@@ -187,8 +187,20 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
   #touch .cycle{right:calc(var(--r) + var(--u)*1.7);bottom:calc(var(--b) + var(--u)*2.2);width:calc(var(--u)*0.85);height:calc(var(--u)*0.85)}
   #touch .sheathe{right:var(--r);bottom:calc(var(--b) + var(--u)*2.9);width:calc(var(--u)*0.85);height:calc(var(--u)*0.85)}
   #touch .guard{right:calc(var(--r) + var(--u)*2.8);bottom:var(--b)}
-  #touch .menu{right:max(8px,env(safe-area-inset-right,0px));top:8px;width:64px;height:32px;border-radius:10px;font-size:12px}
+  #touch .menu{right:max(8px,env(safe-area-inset-right,0px));top:max(8px,env(safe-area-inset-top,0px));width:64px;height:32px;border-radius:10px;font-size:12px}
+  #touch .aim{right:calc(var(--r) + var(--u)*2.8);bottom:calc(var(--b) + var(--u)*1.15);width:calc(var(--u)*0.8);height:calc(var(--u)*0.8)}
 }
+@media (orientation:portrait) and (pointer:coarse){
+  #touch{--u:calc(clamp(44px,12.5vw,70px) * var(--ts,1))}
+}
+#touch .aim{right:206px;bottom:110px;width:54px;height:54px;font-size:11px}
+#touch .aim.boss{background:rgba(190,40,40,.6);border-color:#ff9a9a}
+#touch.noaim .aim{display:none}
+#itemWheel{position:fixed;z-index:9;pointer-events:none;display:none}
+#itemWheel.on{display:block}
+#itemWheel .iw{position:absolute;width:64px;height:44px;margin:-22px 0 0 -32px;border-radius:10px;background:rgba(20,16,30,.88);border:2px solid rgba(255,230,160,.45);color:#f3e6c0;font:bold 11px/1.15 sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#itemWheel .iw.sel{background:rgba(255,190,80,.75);color:#201508;border-color:#fff0b0}
+#itemWheel .iw.cur{border-color:#7fe0ff}
 </style>
 </head>
 <body>
@@ -197,7 +209,8 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 <div class="tb atk" data-tk="attack">攻撃</div><div class="tb dodge" data-tk="dodge">回避</div>
 <div class="tb skill" data-tk="skill">スキル</div><div class="tb heal" data-tk="heal">回復</div><div class="tb guard" data-tk="guard">ガード</div>
 <div class="tb cycle" data-tk="cycle">持ち物</div><div class="tb sheathe" data-tk="sheathe">納刀</div>
-<div class="tb menu" data-tk="menu">メニュー</div></div>
+<div class="tb menu" data-tk="menu">メニュー</div><div class="tb aim" data-tk="aim">◎近く</div></div>
+<div id="itemWheel"></div>
 <div id="rotate"><div><div class="rot-icon">📱</div><p>横向きにしてプレイしてください</p><p class="small">スマホを横にすると、ゲームが始まります</p></div></div>
 <div id="touchEditBar"><span id="teHint">ボタンをドラッグして好きな位置に置いてください（タップで選ぶと大きさを変えられます）</span><span id="teSel" class="te-hide"></span><button id="teMinus" class="te-hide">－</button><span id="teVal" class="te-hide"></span><button id="tePlus" class="te-hide">＋</button><button data-act="touchEditDone">完了</button></div>
 <div id="notify"></div>
@@ -248,7 +261,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.3.1',date:'2026/11/02'};
+const GAME_VERSION={no:'2.4.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -11077,7 +11090,7 @@ const Renderer={
   resize(){
     this.dpr=Math.min(2,window.devicePixelRatio||1);this.w=window.innerWidth;this.h=window.innerHeight;
     this.cv.width=Math.floor(this.w*this.dpr);this.cv.height=Math.floor(this.h*this.dpr);
-    this.scale=clamp(Math.min(this.w/960,this.h/600),0.55,2.2);
+    this.scale=clamp(this.h>this.w?Math.min(this.w/600,this.h/960):Math.min(this.w/960,this.h/600),0.55,2.2); // 縦向きは横600×縦960を基準にする
   },
   resetForWorld(){this.particles=[];this.floaters=[];this.rings=[];this.shake=0;this.banner=null;this.camInit=false;this.mapCanvas=null;this.mapRef=null;this.explored=null;this.bossSeen=false;this.vis=null;this.exVer=0;this.mmCanvas=null;this.mmVer=-1;this.mmRef=null;},
   /* ---------- 視野（フォグ・オブ・ウォー） ----------
@@ -11156,7 +11169,8 @@ const Renderer={
     }
     // 回避の枠（左下）の上に置く。大きさは画面に合わせる
     const sc=Math.min(300*hk/W,130*hk/H),mw=W*sc,mh=H*sc;
-    const x=12,y=this.h-14-58*hk-10-mh;
+    const port=this.h>this.w&&document.body.classList.contains('touch'); // スマホ縦向き：右上（メニューボタンの下）
+    const x=port?this.w-12-mw:12,y=port?62:this.h-14-58*hk-10-mh;
     ctx.save();
     this.panel(ctx,x-4,y-4,mw+8,mh+8);
     ctx.imageSmoothingEnabled=false;
@@ -14559,8 +14573,7 @@ const Input={
     };
     root0.addEventListener('pointerup',endDrag);root0.addEventListener('pointercancel',endDrag);
     // 実際に画面をタッチしたときだけ、スマホ向けの操作を出す（タッチ対応のPCでは、マウスで遊ぶ限り出さない）
-    const enable=()=>{if(this.isTouch)return;this.isTouch=true;document.body.classList.add('touch');this.syncTouchUi(App.state==='playing');
-      try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}};
+    const enable=()=>{if(this.isTouch)return;this.isTouch=true;document.body.classList.add('touch');this.syncTouchUi(App.state==='playing');this.applyAimBtn();};
     window.addEventListener('touchstart',enable,{passive:true,capture:true});
     const root=this.touchRoot,stick=root.querySelector('.stick'),knob=root.querySelector('.knob');
     let sid=null;
@@ -14581,19 +14594,64 @@ const Input={
       b.addEventListener('pointerdown',e=>{
         e.preventDefault();b.classList.add('on');
         if(k==='menu'){App.onKey('Escape');return;}
+        if(k==='aim'){const st=App.profile&&App.profile.settings;if(st){st.aimBoss=!st.aimBoss;App.save();}this.applyAimBtn();return;}
         this.aimMode[this.touchPid()]='pad';
+        if(k==='cycle'){this.wheel={sx:e.clientX,sy:e.clientY,open:false,sel:-1};b.setPointerCapture(e.pointerId);return;}
         if(k==='attack'){this.touch.attack=true;this.touch.sx=e.clientX;this.touch.sy=e.clientY;b.setPointerCapture(e.pointerId);}
         else if(k==='guard'){this.touch.guard=true;b.setPointerCapture(e.pointerId);}
         else this.touchEdge(k);
       });
       // 攻撃ボタンを押したまま指を動かすと、押した位置からの向きで攻撃方向を決める
       if(k==='attack')b.addEventListener('pointermove',e=>{if(!this.touch.attack)return;const dx=e.clientX-this.touch.sx,dy=e.clientY-this.touch.sy;if(Math.hypot(dx,dy)>=18)this.touch.swipeAng=Math.atan2(dy,dx);});
-      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;if(k==='guard')this.touch.guard=false;};
+      // 持ち物：タップで次の道具、押したまま指を動かすと道具ホイールが出て、離した方向の道具を選ぶ
+      if(k==='cycle')b.addEventListener('pointermove',e=>this.wheelMove(e));
+      const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;if(k==='guard')this.touch.guard=false;if(k==='cycle')this.wheelEnd();};
       b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
     });
   },
   /** プレイ中だけ画面のボタンを表示する */
-  syncTouchUi(playing){if(this.touchRoot)this.touchRoot.classList.toggle('on',!!playing&&this.isTouch);},
+  syncTouchUi(playing){if(this.touchRoot)this.touchRoot.classList.toggle('on',!!playing&&this.isTouch);if(!playing)this.wheelClose();this.applyAimBtn();},
+  /** 照準ボタンの表示（自動照準オフなら隠す。ボス優先なら赤） */
+  applyAimBtn(){
+    const r=this.touchRoot;if(!r)return;const st=(App.profile&&App.profile.settings)||{},b=r.querySelector('.aim');
+    r.classList.toggle('noaim',st.autoAim===false);
+    if(b){b.classList.toggle('boss',!!st.aimBoss);b.textContent=st.aimBoss?'◎ボス':'◎近く';}
+  },
+  /** スマホの自動照準：近くの敵（ボス優先のときは見えているボス）の方向。いなければ null */
+  autoAimAng(p,range){
+    const w=App.world;if(!w||!w.enemies||!p)return null;
+    const st=(App.profile&&App.profile.settings)||{};
+    if(st.aimBoss){const b=bossOf(w);if(b&&!b.dead&&!b.hidden&&b.hp>0&&Math.hypot(b.x-p.x,b.y-p.y)-(b.r||0)<=range*1.6)return Math.atan2(b.y-p.y,b.x-p.x);}
+    let best=null,bd=Infinity;
+    for(const e of w.enemies){if(e.dead||e.hidden||!(e.hp>0))continue;const d=Math.hypot(e.x-p.x,e.y-p.y)-(e.r||0);if(d<=range&&d<bd){bd=d;best=e;}}
+    return best?Math.atan2(best.y-p.y,best.x-p.x):null;
+  },
+  wheel:null,
+  wheelPlayer(){const w=App.world;return w&&w.players&&(w.players[Renderer.focusId]||w.players.p1)||null;},
+  wheelMove(e){
+    const W=this.wheel;if(!W)return;
+    if(!W.open){
+      if(Math.hypot(e.clientX-W.sx,e.clientY-W.sy)<22)return;
+      const p=this.wheelPlayer();if(!p||!p.bag)return;
+      const ids=ITEM_ORDER.map((id,i)=>({id,i,n:p.bag[id]||0})).filter(o=>o.n>0);if(!ids.length)return;
+      const R=ids.length<=4?78:ids.length<=7?100:120;
+      W.cx=clamp(W.sx,R+40,innerWidth-R-40);W.cy=clamp(W.sy-R*0.6,R+40,innerHeight-R-40);W.items=ids;W.R=R;W.open=true;
+      const el=document.getElementById('itemWheel');
+      el.innerHTML=ids.map((o,k)=>{const a=-Math.PI/2+k/ids.length*TAU,c=DATA.consumables[o.id]||{};
+        return `<div class="iw${o.i===p.sel?' cur':''}" style="left:${W.cx+Math.cos(a)*R}px;top:${W.cy+Math.sin(a)*R}px">${c.short||c.name||o.id}<span>×${o.n}</span></div>`;}).join('');
+      el.style.left='0';el.style.top='0';el.classList.add('on');
+    }
+    const dx=e.clientX-W.cx,dy=e.clientY-W.cy;let sel=-1;
+    if(Math.hypot(dx,dy)>=26){const N=W.items.length;let a=Math.atan2(dy,dx)+Math.PI/2;a=((a%TAU)+TAU)%TAU;sel=Math.round(a/TAU*N)%N;}
+    if(sel!==W.sel){W.sel=sel;document.querySelectorAll('#itemWheel .iw').forEach((d,k)=>d.classList.toggle('sel',k===sel));}
+  },
+  wheelEnd(){
+    const W=this.wheel;if(!W)return;
+    if(!W.open)this.touchEdge('cycle');
+    else if(W.sel>=0&&W.items[W.sel]){const pid=this.touchPid(),E=this.edges[pid]||(this.edges[pid]=newEdges());E.pick=W.items[W.sel].i;}
+    this.wheelClose();
+  },
+  wheelClose(){this.wheel=null;const el=document.getElementById('itemWheel');if(el){el.classList.remove('on');el.innerHTML='';}},
   dropTouch(){this.isTouch=false;document.body.classList.remove('touch');this.syncTouchUi(false);},
   /** ボタンの位置（端末ごとに保存）。ボタン名 → {r,b}（スティックは {l,b}） */
   touchPos(){try{return JSON.parse(localStorage.getItem('kourou_touch_pos')||'{}')||{};}catch(e){return {};}},
@@ -14841,6 +14899,12 @@ const Input={
         const followMove=holdAim?this.aimMode[pid]==='move':!attack; // 弓・手裏剣は移動では向きを変えない（移動で狙う設定の2Pを除く）
         if((mx||my)&&followMove)this.lastAim[pid]=Math.atan2(my,mx);
         inp.aim=this.lastAim[pid];
+      }
+      // スマホの自動照準（設定でオン／オフ）：攻撃・スキルの間は近くの敵の方を向く
+      const st0=(App.profile&&App.profile.settings)||{};
+      if(this.isTouch&&pid===this.touchPid()&&st0.autoAim!==false&&(attack||E.skill)){
+        const wt=DATA.weaponTypes[p.stats.weaponType]||{},rg=holdAim?(wt.range||250)+80:Math.max(180,(wt.range||60)+130);
+        const a=this.autoAimAng(p,rg);if(a!==null){inp.aim=a;this.lastAim[pid]=a;}
       }
     }
     return inp;
@@ -17208,6 +17272,7 @@ const App={
         <div class="filters" style="margin-top:6px">${[0.7,0.85,1,1.2,1.4].map(v=>`<button class="${Math.abs((s.touchSize||1)-v)<0.001?'on':''}" data-act="touchSize" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">スマホのボタンの透過度（いまは ${Math.round((s.touchAlpha??0.85)*100)}%）
         <div class="filters" style="margin-top:6px">${[0.3,0.5,0.7,0.85,1].map(v=>`<button class="${Math.abs((s.touchAlpha??0.85)-v)<0.001?'on':''}" data-act="touchAlpha" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
+      <label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="autoAim" ${s.autoAim!==false?'checked':''}>スマホで自動照準を使う（攻撃するとき近くの敵の方を向く。画面の「◎」ボタンでボス優先に切り替え）</label>
       <div class="setting" style="display:block">スマホのボタンの位置
         <div class="filters" style="margin-top:6px"><button data-act="touchEdit">位置を変える</button><button data-act="touchReset">初期の位置に戻す</button></div></div>
       <div class="setting" style="display:block">戦闘画面の大きさ（いまは ${Math.round((s.mapZoom||1)*100)}%）
