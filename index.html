@@ -194,11 +194,15 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
   #touch{--u:calc(clamp(44px,12.5vw,70px) * var(--ts,1))}
 }
 #touch .aim{right:206px;bottom:110px;width:54px;height:54px;font-size:11px}
+#touch .item{padding:0;flex-direction:column}
+#touch .item img{width:62%;height:62%;image-rendering:auto;pointer-events:none}
+#touch .item b{position:absolute;right:4px;bottom:2px;font-size:12px;text-shadow:0 1px 2px #000;pointer-events:none}
+#itemWheel .iw img{width:26px;height:26px}
 #touch .aim.boss{background:rgba(190,40,40,.6);border-color:#ff9a9a}
 #touch.noaim .aim{display:none}
 #itemWheel{position:fixed;z-index:9;pointer-events:none;display:none}
 #itemWheel.on{display:block}
-#itemWheel .iw{position:absolute;width:64px;height:44px;margin:-22px 0 0 -32px;border-radius:10px;background:rgba(20,16,30,.88);border:2px solid rgba(255,230,160,.45);color:#f3e6c0;font:bold 11px/1.15 sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#itemWheel .iw{position:absolute;width:66px;height:58px;margin:-29px 0 0 -33px;border-radius:10px;background:rgba(20,16,30,.88);border:2px solid rgba(255,230,160,.45);color:#f3e6c0;font:bold 11px/1.15 sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 #itemWheel .iw.sel{background:rgba(255,190,80,.75);color:#201508;border-color:#fff0b0}
 #itemWheel .iw.cur{border-color:#7fe0ff}
 </style>
@@ -207,8 +211,8 @@ body.touch-edit #touch .sel{outline:3px solid #7fe0ff!important}
 <canvas id="game"></canvas>
 <div id="touch"><div class="stick"><div class="knob"></div></div>
 <div class="tb atk" data-tk="attack">攻撃</div><div class="tb dodge" data-tk="dodge">回避</div>
-<div class="tb skill" data-tk="skill">スキル</div><div class="tb heal" data-tk="heal">回復</div><div class="tb guard" data-tk="guard">ガード</div>
-<div class="tb cycle" data-tk="cycle">持ち物</div><div class="tb sheathe" data-tk="sheathe">納刀</div>
+<div class="tb skill" data-tk="skill">スキル</div><div class="tb guard" data-tk="guard">ガード</div>
+<div class="tb heal item" data-tk="cycle"><img alt=""><b></b></div>
 <div class="tb menu" data-tk="menu">メニュー</div><div class="tb aim" data-tk="aim">◎近く</div></div>
 <div id="itemWheel"></div>
 <div id="rotate"><div><div class="rot-icon">📱</div><p>横向きにしてプレイしてください</p><p class="small">スマホを横にすると、ゲームが始まります</p></div></div>
@@ -261,7 +265,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.4.0',date:'2026/11/02'};
+const GAME_VERSION={no:'2.5.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -6398,9 +6402,12 @@ function updatePlayer(w,p,inp,dt){
   if(p.sheathing){
     p.sheathing.t+=dt;
     if(p.sheathing.t>=p.sheathing.total){p.sheathing=null;p.drawn=false;emit(w,{type:'sheathe',pid:p.id,x:p.x,y:p.y});}
-  }else if(inp.sheathe&&p.drawn&&!p.charging&&p.swing<=0){
-    p.sheathing={t:0,total:s.sheatheTime};
+  }else if((inp.sheathe||p.walkIdle>=2)&&p.drawn&&!p.charging&&p.swing<=0){
+    p.sheathing={t:0,total:s.sheatheTime};p.walkIdle=0;
   }
+  // 自動納刀：攻撃せずに2秒歩くと、勝手に納刀し始める（止まっている間は数えない）
+  if(!p.drawn||p.sheathing||inp.attack||inp.skill||p.charging||p.guarding||p.swing>0)p.walkIdle=0;
+  else if(p.moving)p.walkIdle=(p.walkIdle||0)+dt;
   // 納刀中に攻撃ボタン：抜刀してそのまま攻撃（チャージ武器はチャージ開始）
   if(!p.drawn&&!p.sheathing&&inp.attack&&p.atkTimer<=0){p.drawn=true;emit(w,{type:'draw',pid:p.id,x:p.x,y:p.y});}
   // 攻撃：チャージできる武器は「押している間ためて、離したら振る」
@@ -8412,6 +8419,48 @@ function applyRenderLerp(w,a){
     saved.push(o,o.x,o.y);o.x=o._px+dx*a;o.y=o._py+dy*a;
   }
   return ()=>{for(let i=0;i<saved.length;i+=3){saved[i].x=saved[i+1];saved[i].y=saved[i+2];}};
+}
+/* ---------- 道具のアイコン（スマホの持ち物ボタン・ホイール用）。一度描いたら画像を使い回す ---------- */
+const ITEM_ICON_CACHE={};
+function itemIcon(id){
+  if(ITEM_ICON_CACHE[id])return ITEM_ICON_CACHE[id];
+  const cv=document.createElement('canvas');cv.width=cv.height=64;const g=cv.getContext('2d');
+  const c=(DATA.consumables[id]||{}).color||'#ccc';
+  g.lineJoin='round';g.lineCap='round';
+  const flask=(liq,big)=>{ // 回復薬：丸いフラスコ
+    g.fillStyle='#d8e4f0';g.fillRect(26,8,12,14);g.fillStyle='#8a5a30';g.fillRect(25,5,14,6);
+    g.beginPath();g.arc(32,40,big?20:17,0,TAU);g.fillStyle='rgba(220,235,250,.5)';g.fill();
+    g.beginPath();g.arc(32,40,big?17:14,0.15*Math.PI,0.85*Math.PI+Math.PI);g.closePath();
+    g.beginPath();g.arc(32,40,big?17:14,0,TAU);g.save();g.clip();g.fillStyle=liq;g.fillRect(0,36,64,30);g.restore();
+    g.beginPath();g.arc(32,40,big?20:17,0,TAU);g.lineWidth=3;g.strokeStyle='#e8f0ff';g.stroke();
+    g.fillStyle='rgba(255,255,255,.7)';g.beginPath();g.arc(25,33,4,0,TAU);g.fill();
+  };
+  const bottle=(liq,mark)=>{ // 投げる瓶
+    g.fillStyle='#8a5a30';g.fillRect(27,6,10,6);g.fillStyle='#d8e4f0';g.fillRect(28,11,8,8);
+    g.beginPath();g.moveTo(28,19);g.lineTo(18,30);g.lineTo(18,56);g.lineTo(46,56);g.lineTo(46,30);g.lineTo(36,19);g.closePath();
+    g.fillStyle=liq;g.fill();g.lineWidth=3;g.strokeStyle='#e8f0ff';g.stroke();
+    g.fillStyle='#fff';g.font='bold 18px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(mark,32,42);
+  };
+  const horn=(col)=>{ // 角笛
+    g.beginPath();g.moveTo(10,46);g.quadraticCurveTo(20,14,52,12);g.lineTo(54,24);g.quadraticCurveTo(30,28,22,52);g.closePath();
+    g.fillStyle=col;g.fill();g.lineWidth=3;g.strokeStyle='#f3e6c0';g.stroke();
+    g.fillStyle='#f3e6c0';g.fillRect(48,10,8,16);
+  };
+  switch(id){
+    case 'potion':flask('#e84848',false);break;
+    case 'good_potion':flask('#ff5aa0',true);g.fillStyle='#fff6a0';g.beginPath();g.arc(46,18,5,0,TAU);g.fill();break;
+    case 'heal_all':flask('#5ad08a',true);g.strokeStyle='#fff';g.lineWidth=4;g.beginPath();g.moveTo(32,32);g.lineTo(32,48);g.moveTo(24,40);g.lineTo(40,40);g.stroke();break;
+    case 'atk_horn':horn('#c84030');break;
+    case 'def_horn':horn('#3a70c8');break;
+    case 'flash':{g.fillStyle='#fff6a0';g.beginPath();for(let i=0;i<16;i++){const a=i/16*TAU,r=i%2?12:28;g.lineTo(32+Math.cos(a)*r,32+Math.sin(a)*r);}g.closePath();g.fill();g.fillStyle='#fff';g.beginPath();g.arc(32,32,9,0,TAU);g.fill();break;}
+    case 'pit_trap':g.fillStyle='#8a6a40';g.beginPath();g.ellipse(32,38,26,16,0,0,TAU);g.fill();g.fillStyle='#1a1008';g.beginPath();g.ellipse(32,38,16,9,0,0,TAU);g.fill();g.strokeStyle='#c8a060';g.lineWidth=3;g.beginPath();g.ellipse(32,38,26,16,0,0,TAU);g.stroke();break;
+    case 'shock_trap':g.fillStyle='#606878';g.beginPath();g.ellipse(32,40,26,15,0,0,TAU);g.fill();g.fillStyle='#ffe040';g.beginPath();g.moveTo(36,8);g.lineTo(22,36);g.lineTo(32,36);g.lineTo(26,58);g.lineTo(44,28);g.lineTo(34,28);g.closePath();g.fill();break;
+    case 'poison_bottle':bottle('#9a40c0','毒');break;
+    case 'para_bottle':bottle('#d0a820','麻');break;
+    case 'sleep_bottle':bottle('#4aa0d8','眠');break;
+    default:g.fillStyle=c;g.beginPath();g.arc(32,32,22,0,TAU);g.fill();
+  }
+  return ITEM_ICON_CACHE[id]=cv.toDataURL();
 }
 function bossOf(w){for(const e of w.enemies)if(e.id===w.bossId)return e;return null;}
 function triggerBoss(w){
@@ -11169,7 +11218,7 @@ const Renderer={
     }
     // 回避の枠（左下）の上に置く。大きさは画面に合わせる
     const sc=Math.min(300*hk/W,130*hk/H),mw=W*sc,mh=H*sc;
-    const port=this.h>this.w&&document.body.classList.contains('touch'); // スマホ縦向き：右上（メニューボタンの下）
+    const port=document.body.classList.contains('touch'); // スマホ：右上（メニューボタンの下）。左下はスティックがあるため
     const x=port?this.w-12-mw:12,y=port?62:this.h-14-58*hk-10-mh;
     ctx.save();
     this.panel(ctx,x-4,y-4,mw+8,mh+8);
@@ -13786,7 +13835,8 @@ const Renderer={
     if(me)all.filter(p=>p!==me).forEach((p,i)=>this.drawMiniPanel(ctx,0,108+i*40,p));
     ctx.restore();
     // 下：左＝回避、中央＝武器の状態・回復、右＝スキル名（1人プレイ）。複数人は従来どおり一列
-    if(hb.length>1){
+    if(touchUi){} // スマホ：下の四角い枠（回避・武器・回復・スキル）は出さない（画面のボタンで操作するため）
+    else if(hb.length>1){
       const bw=84,bh=50,gw=bw*3+16,sp=30,total=gw*hb.length+sp*(hb.length-1);
       ctx.save();ctx.translate(W/2,H-14);ctx.scale(hk,hk);
       hb.forEach((p,i)=>this.drawSkillBoxes(ctx,p,-total/2+i*(gw+sp),-bh,bw,bh,KEY_LABELS[Input.deviceOf(p.id)],true));
@@ -14596,14 +14646,14 @@ const Input={
         if(k==='menu'){App.onKey('Escape');return;}
         if(k==='aim'){const st=App.profile&&App.profile.settings;if(st){st.aimBoss=!st.aimBoss;App.save();}this.applyAimBtn();return;}
         this.aimMode[this.touchPid()]='pad';
-        if(k==='cycle'){this.wheel={sx:e.clientX,sy:e.clientY,open:false,sel:-1};b.setPointerCapture(e.pointerId);return;}
+        if(k==='cycle'){const W=this.wheel={sx:e.clientX,sy:e.clientY,open:false,sel:-1};b.setPointerCapture(e.pointerId);W.lt=setTimeout(()=>{if(this.wheel===W&&!W.open)this.wheelOpen(W);},350);return;}
         if(k==='attack'){this.touch.attack=true;this.touch.sx=e.clientX;this.touch.sy=e.clientY;b.setPointerCapture(e.pointerId);}
         else if(k==='guard'){this.touch.guard=true;b.setPointerCapture(e.pointerId);}
         else this.touchEdge(k);
       });
       // 攻撃ボタンを押したまま指を動かすと、押した位置からの向きで攻撃方向を決める
       if(k==='attack')b.addEventListener('pointermove',e=>{if(!this.touch.attack)return;const dx=e.clientX-this.touch.sx,dy=e.clientY-this.touch.sy;if(Math.hypot(dx,dy)>=18)this.touch.swipeAng=Math.atan2(dy,dx);});
-      // 持ち物：タップで次の道具、押したまま指を動かすと道具ホイールが出て、離した方向の道具を選ぶ
+      // 持ち物：タップで選んでいる道具を使う。長押しか、押したまま指を動かすと道具ホイールが出て、離した方向の道具を選ぶ
       if(k==='cycle')b.addEventListener('pointermove',e=>this.wheelMove(e));
       const up=()=>{b.classList.remove('on');if(k==='attack')this.touch.attack=false;if(k==='guard')this.touch.guard=false;if(k==='cycle')this.wheelEnd();};
       b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
@@ -14626,32 +14676,59 @@ const Input={
     for(const e of w.enemies){if(e.dead||e.hidden||!(e.hp>0))continue;const d=Math.hypot(e.x-p.x,e.y-p.y)-(e.r||0);if(d<=range&&d<bd){bd=d;best=e;}}
     return best?Math.atan2(best.y-p.y,best.x-p.x):null;
   },
+  autoGuardHit(p,face){
+    const w=App.world;if(!w||!w.telegraphs)return false;
+    for(const t of w.telegraphs){
+      if(t.total!=null&&t.total-(t.t||0)>0.45)continue; // 当たる直前だけ構える（早くから構えると動けなくなる）
+      if(!inTelegraph(t,p.x,p.y,p.r||14))continue;
+      const o=t.owner?w.enemies.find(e=>e.id===t.owner):null,sx=o?o.x:t.x,sy=o?o.y:t.y;
+      if(Math.hypot(sx-p.x,sy-p.y)<4)return true;
+      if(Math.abs(angDiff(Math.atan2(sy-p.y,sx-p.x),face))<=Math.PI*0.42)return true;
+    }
+    return false;
+  },
   wheel:null,
   wheelPlayer(){const w=App.world;return w&&w.players&&(w.players[Renderer.focusId]||w.players.p1)||null;},
   wheelMove(e){
     const W=this.wheel;if(!W)return;
-    if(!W.open){
-      if(Math.hypot(e.clientX-W.sx,e.clientY-W.sy)<22)return;
+    if(!W.open){if(Math.hypot(e.clientX-W.sx,e.clientY-W.sy)<22)return;this.wheelOpen(W);if(!W.open)return;}
+    this.wheelPick(e.clientX,e.clientY);
+  },
+  wheelOpen(W){
+    {
       const p=this.wheelPlayer();if(!p||!p.bag)return;
       const ids=ITEM_ORDER.map((id,i)=>({id,i,n:p.bag[id]||0})).filter(o=>o.n>0);if(!ids.length)return;
       const R=ids.length<=4?78:ids.length<=7?100:120;
       W.cx=clamp(W.sx,R+40,innerWidth-R-40);W.cy=clamp(W.sy-R*0.6,R+40,innerHeight-R-40);W.items=ids;W.R=R;W.open=true;
       const el=document.getElementById('itemWheel');
       el.innerHTML=ids.map((o,k)=>{const a=-Math.PI/2+k/ids.length*TAU,c=DATA.consumables[o.id]||{};
-        return `<div class="iw${o.i===p.sel?' cur':''}" style="left:${W.cx+Math.cos(a)*R}px;top:${W.cy+Math.sin(a)*R}px">${c.short||c.name||o.id}<span>×${o.n}</span></div>`;}).join('');
+        return `<div class="iw${o.i===p.sel?' cur':''}" style="left:${W.cx+Math.cos(a)*R}px;top:${W.cy+Math.sin(a)*R}px"><img src="${itemIcon(o.id)}" alt="">${c.short||c.name||o.id} ×${o.n}</div>`;}).join('');
       el.style.left='0';el.style.top='0';el.classList.add('on');
     }
-    const dx=e.clientX-W.cx,dy=e.clientY-W.cy;let sel=-1;
+  },
+  wheelPick(x,y){
+    const W=this.wheel;if(!W||!W.open)return;
+    const dx=x-W.cx,dy=y-W.cy;let sel=-1;
     if(Math.hypot(dx,dy)>=26){const N=W.items.length;let a=Math.atan2(dy,dx)+Math.PI/2;a=((a%TAU)+TAU)%TAU;sel=Math.round(a/TAU*N)%N;}
     if(sel!==W.sel){W.sel=sel;document.querySelectorAll('#itemWheel .iw').forEach((d,k)=>d.classList.toggle('sel',k===sel));}
   },
   wheelEnd(){
     const W=this.wheel;if(!W)return;
-    if(!W.open)this.touchEdge('cycle');
+    clearTimeout(W.lt);
+    if(!W.open)this.touchEdge('heal');
     else if(W.sel>=0&&W.items[W.sel]){const pid=this.touchPid(),E=this.edges[pid]||(this.edges[pid]=newEdges());E.pick=W.items[W.sel].i;}
     this.wheelClose();
   },
-  wheelClose(){this.wheel=null;const el=document.getElementById('itemWheel');if(el){el.classList.remove('on');el.innerHTML='';}},
+  /** 持ち物ボタンの絵と数を、選んでいる道具に合わせる（変わったときだけ書き換える） */
+  updateItemBtn(){
+    if(!this.isTouch||!this.touchRoot)return;
+    const p=this.wheelPlayer(),id=p&&p.bag?ITEM_ORDER[p.sel]:null,n=id?(p.bag[id]||0):0,key=id+':'+n;
+    if(key===this.itemKey)return;this.itemKey=key;
+    const b=this.touchRoot.querySelector('.item');if(!b)return;
+    const img=b.querySelector('img'),t=b.querySelector('b');
+    if(id){img.src=itemIcon(id);img.style.opacity=n>0?'1':'0.35';t.textContent=String(n);}else{img.removeAttribute('src');t.textContent='';}
+  },
+  wheelClose(){if(this.wheel)clearTimeout(this.wheel.lt);this.wheel=null;const el=document.getElementById('itemWheel');if(el){el.classList.remove('on');el.innerHTML='';}},
   dropTouch(){this.isTouch=false;document.body.classList.remove('touch');this.syncTouchUi(false);},
   /** ボタンの位置（端末ごとに保存）。ボタン名 → {r,b}（スティックは {l,b}） */
   touchPos(){try{return JSON.parse(localStorage.getItem('kourou_touch_pos')||'{}')||{};}catch(e){return {};}},
@@ -14905,6 +14982,11 @@ const Input={
       if(this.isTouch&&pid===this.touchPid()&&st0.autoAim!==false&&(attack||E.skill)){
         const wt=DATA.weaponTypes[p.stats.weaponType]||{},rg=holdAim?(wt.range||250)+80:Math.max(180,(wt.range||60)+130);
         const a=this.autoAimAng(p,rg);if(a!==null){inp.aim=a;this.lastAim[pid]=a;}
+      }
+      // スマホの自動ガード：攻撃していないとき、敵の攻撃の範囲に入っていて、その攻撃の方を向いていたら構える（ガードできる武器だけ）
+      if(this.isTouch&&pid===this.touchPid()&&!attack&&!p.charging&&!inp.guard){
+        const wt=DATA.weaponTypes[p.stats.weaponType]||{};
+        if(wt.guard&&this.autoGuardHit(p,typeof inp.aim==='number'?inp.aim:p.facing))inp.guard=true;
       }
     }
     return inp;
@@ -16145,7 +16227,7 @@ const App={
   frame(now){
     let dt=(now-this.last)/1000;this.last=now;
     if(!(dt>0))dt=0;if(dt>0.1)dt=0.1;
-    Input.pollPads(dt);
+    Input.pollPads(dt);Input.updateItemBtn();
     if(Net.role==='guest'){
       if(this.world)Net.guestFrame(dt);
     }else if(this.world&&(this.state==='playing'||(Net.role==='host'&&this.inGame))){
