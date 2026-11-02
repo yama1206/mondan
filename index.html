@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.0.2',date:'2026/11/02'};
+const GAME_VERSION={no:'2.0.3',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3859,14 +3859,14 @@ const PETS=[
   {id:'e_guard',name:'守護',rar:3,pet:[['petSup',30]],me:[['maxHpPct',6]]},
   {id:'e_shadow',name:'影縫い',rar:3,pet:[['petCd',16]],me:[['dodgeIframe',0.05]]},
   {id:'e_star',name:'星屑',rar:3,pet:[['petAtk',22]],me:[['critDmg',10]]},
-  {id:'l_sword',name:'剣聖',rar:4,pet:[['petAtk',32]],me:[['crit',5]]},
-  {id:'l_gs',name:'巨人',rar:4,pet:[['petSup',35]],me:[['def',4]]},
-  {id:'l_tachi',name:'月光',rar:4,pet:[['petCd',20]],me:[['critDmg',15]]},
-  {id:'l_dual',name:'双星',rar:4,pet:[['petCd',18]],me:[['crit',5]]},
-  {id:'l_hammer',name:'雷鎚',rar:4,pet:[['petAtk',30]],me:[['maxHpPct',8]]},
-  {id:'l_lance',name:'城壁',rar:4,pet:[['petSup',35]],me:[['def',5]]},
-  {id:'l_bow',name:'天弓',rar:4,pet:[['petRange',35]],me:[['critDmg',12]]},
-  {id:'l_shuriken',name:'影刃',rar:4,pet:[['petCd',20]],me:[['dodgeDistPct',8]]},
+  {id:'l_sword',name:'剣聖',rar:4,pet:[['petAtk',32]],me:[['crit',5],['atkPct',5]]},
+  {id:'l_gs',name:'巨人',rar:4,pet:[['petSup',35]],me:[['def',4],['atkPct',5]]},
+  {id:'l_tachi',name:'月光',rar:4,pet:[['petCd',20]],me:[['critDmg',15],['atkPct',5]]},
+  {id:'l_dual',name:'双星',rar:4,pet:[['petCd',18]],me:[['crit',5],['atkPct',5]]},
+  {id:'l_hammer',name:'雷鎚',rar:4,pet:[['petAtk',30]],me:[['maxHpPct',8],['atkPct',5]]},
+  {id:'l_lance',name:'城壁',rar:4,pet:[['petSup',35]],me:[['def',5],['atkPct',5]]},
+  {id:'l_bow',name:'天弓',rar:4,pet:[['petRange',35]],me:[['critDmg',12],['atkPct',5]]},
+  {id:'l_shuriken',name:'影刃',rar:4,pet:[['petCd',20]],me:[['dodgeDistPct',8],['atkPct',5]]},
 ];
 /* 首輪のレア度：w は首輪ガチャで出る確率（％）、fx はガチャ演出の強さ */
 const COLLAR_RAR=[
@@ -13344,6 +13344,11 @@ const Renderer={
       for(let i=0;i<3;i++){const k=(t*0.7+i/3)%1,a=i*2.1+t*0.5;ctx.fillStyle=`hsl(${(t*80+i*120)%360},100%,80%)`;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.9,-r*0.2-k*r*0.8,Math.max(1,r*0.05)*(1-k),0,TAU);ctx.fill();}
       ctx.restore();
     }
+    // レジェンダリーの首輪をはめた相棒：やわらかく脈打つ金色の光
+    {const lc=p.petCollar&&PETS.find(x=>x.id===p.petCollar);if(lc&&lc.rar===4){
+      const gl=ctx.createRadialGradient(0,-hop-r*0.1,r*0.2,0,-hop-r*0.1,r*1.3),a=0.22+0.1*Math.sin(t*3);
+      gl.addColorStop(0,`rgba(255,225,120,${a})`);gl.addColorStop(1,'rgba(255,225,120,0)');
+      ctx.fillStyle=gl;ctx.beginPath();ctx.arc(0,-hop-r*0.1,r*1.3,0,TAU);ctx.fill();}}
     ctx.translate(0,-hop);
     const hv=LOOK_VARIANTS[p.petLookV|0]||LOOK_VARIANTS[0],ov=(LOOK_COLOR_OVERRIDE[lk.id]||{})[p.petLookV|0];
     if(ov)k.pal=ov; // 専用の色（色相をずらさず、決めた色で描く）
