@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.85.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.86.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -16016,7 +16016,7 @@ const App={
     const pity=Math.max(1,COLLAR_PITY-(p.collarPity||0));
     const collarCard=`<div class="recipe"><div class="rn">首輪ガチャ</div><div class="muted">首輪を1つもらえます（同じ首輪は1つまで。かぶるとコイン1枚戻ります）。<br>${COLLAR_RAR.map(r=>`<span style="color:${r.color}">${r.name} ${r.w}%</span>`).join('　')}<br>あと${pity}回以内にレジェンダリー確定（出たら数え直し）<br>所持 ${coins}枚</div>
       <div class="btnrow"><button class="${coins>=COLLAR_PRICE?'primary':''}" data-act="collarGacha" ${coins>=COLLAR_PRICE?'':'disabled'}>1回回す（${COLLAR_PRICE}コイン）</button><button class="${coins>=COLLAR_PRICE*10?'primary':''}" data-act="collarGacha10" ${coins>=COLLAR_PRICE*10?'':'disabled'}>10連（${COLLAR_PRICE*10}コイン）</button></div></div>`;
-    const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:sub==='collar'?`<div class="recipes">${collarCard}</div>`:`<div class="recipes">${petCard}</div>`;
+    const body=sub==='letter'?`<div class="recipes">${letters}</div>`:sub==='deco'?`<div class="recipes">${deco}</div>`:sub==='collar'?`<div class="recipes">${collarCard}</div>${this.collarBookHTML(p)}`:`<div class="recipes">${petCard}</div>`;
     return `${tabBar}${body}`;
   },
   shopBuyHTML(){
@@ -16163,6 +16163,19 @@ const App={
     return `<div class="iname">${x.name}（相棒）</div><div class="small muted" style="margin:6px 0">連れ歩く相棒です。色を選べます。性能には影響しません。</div>${A?`<div class="eff">サポート行動「${A.name}」：${A.desc}（間隔 ${A.cd}秒）</div>`:''}
       <div class="btnrow">${this.lookColorBtns(p,id)}</div>
       <canvas class="pet-prev" width="240" height="160" data-look="${id}" data-v="${pv}" style="display:block;margin:10px auto 0;max-width:100%;background:rgba(255,255,255,.05);border-radius:8px"></canvas>`;
+  },
+  /** 首輪図鑑：レア度ごとに全種類を並べる。持っている首輪は名前と効果、まだの首輪は？？？ */
+  collarBookHTML(p){
+    const have=PETS.filter(x=>p.pets[x.id]).length;
+    const sec=COLLAR_RAR.map((R,i)=>{
+      const list=PETS.filter(x=>x.rar===i);
+      const got=list.filter(x=>p.pets[x.id]).length;
+      const cards=list.map(x=>p.pets[x.id]
+        ?`<div class="recipe" style="border-color:${R.color}"><div class="rn" style="color:${R.color}">${x.name}の首輪${p.equipped.pet===x.id?' <span class="tag">装備中</span>':''}</div>${collarLines(x).map(t=>`<div class="small">${t}</div>`).join('')}</div>`
+        :`<div class="recipe" style="opacity:.55"><div class="rn muted">？？？の首輪</div><div class="small muted">まだ持っていません</div></div>`).join('');
+      return `<h3 style="margin:12px 0 6px;color:${R.color}">${R.name}（${got}/${list.length}）</h3><div class="recipes">${cards}</div>`;
+    }).join('');
+    return `<h2 style="margin:16px 0 4px">首輪図鑑　<span class="small muted">${have}/${PETS.length}種類</span></h2>${sec}`;
   },
   petListHTML(){
     const p=this.profile,own=PETS.filter(x=>p.pets[x.id]);
