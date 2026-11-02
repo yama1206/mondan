@@ -248,7 +248,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.90.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.91.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4937,7 +4937,7 @@ function pickFleeArea(w,e){
 function startFlee(w,e,area,nap){
   const f=e.fld;cancelEnemyAction(w,e);
   e.z=0;e.leapTo=null;e.hidden=false;e.sp=null;e.shell=false;e.curl=false;e.state='field';
-  f.mode='flee';f.nap=nap;fieldGo(w,e,area);
+  f.mode='flee';f.nap=nap;f.ft=0;f.pause=0;f.look=rand(2.5,4);fieldGo(w,e,area);
   emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:nap?'弱って巣へ逃げていく！':'エリア'+area.n+'へ移動していく！',color:'#ffd27a'});
 }
 /** 歩き回っている（眠っている）ボスが、プレイヤーに気づいて戦い始める */
@@ -4964,7 +4964,20 @@ function fieldBoss(w,e,dt){
     return true;
   }
   if(f.mode==='flee'){
-    if(fieldStep(w,e,dt,sp)){
+    /* 生き物らしい逃げ方：ひるんで向きを変える → 全力で駆け出す → 離れたら速度を落とし、ときどき立ち止まって振り返る。
+       追われて近づかれると慌てて加速する。巣へ帰るほど弱っているときは、よろめきながら逃げる */
+    f.ft+=dt;
+    let np=null,nd=1e9;for(const p of Object.values(w.players)){if(p.dead)continue;const d=Math.hypot(p.x-e.x,p.y-e.y);if(d<nd){nd=d;np=p;}}
+    if(f.ft<0.45){if(np)e.facing=Math.atan2(e.y-np.y,e.x-np.x);return true;} // ひるむ
+    if(f.pause>0){f.pause-=dt;if(np)e.facing=Math.atan2(np.y-e.y,np.x-e.x);if(nd<240)f.pause=0;return true;} // 立ち止まって振り返る
+    let mul=f.ft<3?1.45:1.0;
+    if(nd<240)mul*=1.3;else if(nd>520)mul*=0.8;
+    if(f.nap)mul*=0.75*(0.6+0.4*Math.abs(Math.sin(f.ft*4.5)));
+    f.look-=dt;
+    if(f.look<=0){f.look=rand(3,5);if(f.ft>3&&nd>320&&nd<900){f.pause=rand(0.6,1.1);return true;}}
+    const arrived=fieldStep(w,e,dt,sp*mul);
+    if(!arrived){const sw=Math.sin(f.ft*(f.nap?3.2:2.4))*sp*(f.nap?0.3:0.18)*dt;moveEntity(w.map,e,-Math.sin(e.facing)*sw,Math.cos(e.facing)*sw);} // 少し左右に揺れながら走る
+    if(arrived){
       f.dist=null;f.area=f.to;
       if(f.nap){f.mode='nap';e.state='sleep';f.t=FIELD_BOSS.napTime;f.healed=0;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'眠ってしまった…',color:'#c8c0ff'});}
       else{f.mode='roam';f.t=rand(FIELD_BOSS.roamStay[0],FIELD_BOSS.roamStay[1]);f.wp=null;f.calm=1.5;}
@@ -10493,7 +10506,7 @@ const Renderer={
     this.cv.width=Math.floor(this.w*this.dpr);this.cv.height=Math.floor(this.h*this.dpr);
     this.scale=clamp(Math.min(this.w/960,this.h/600),0.55,2.2);
   },
-  resetForWorld(){this.particles=[];this.floaters=[];this.rings=[];this.shake=0;this.banner=null;this.camInit=false;this.mapCanvas=null;this.mapRef=null;this.explored=null;this.vis=null;this.exVer=0;this.mmCanvas=null;this.mmVer=-1;this.mmRef=null;},
+  resetForWorld(){this.particles=[];this.floaters=[];this.rings=[];this.shake=0;this.banner=null;this.camInit=false;this.mapCanvas=null;this.mapRef=null;this.explored=null;this.bossSeen=false;this.vis=null;this.exVer=0;this.mmCanvas=null;this.mmVer=-1;this.mmRef=null;},
   /* ---------- 視野（フォグ・オブ・ウォー） ----------
      見た目だけの処理なので描画側に置いている。オンライン化時は、サーバーが
      各プレイヤーに視野内の敵だけを送ればチート対策にもなる。 */
@@ -10586,7 +10599,7 @@ const Renderer={
         ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,0.85)';ctx.strokeText(t,x,y-12);ctx.fillStyle='#ffe9a8';ctx.fillText(t,x,y-12);}
     }
     const b=bossOf(w);
-    if(b&&b.hp>0&&this.isExplored(w,b.x,b.y))dot(b.x,b.y,'#ff5a5a',3);
+    if(b&&b.hp>0&&(this.bossSeen||(w.quest&&w.quest.boss==='fighting')||this.isExplored(w,b.x,b.y)))dot(b.x,b.y,'#ff5a5a',this.bossSeen?3.5:3); // 一度見つかったボスは、どこにいてもミニマップに出し続ける
     const all=Object.values(w.players);
     for(const q of all){
       if(q.dead)continue;
@@ -10720,7 +10733,7 @@ const Renderer={
       case 'chest':this.burst(ev.x,ev.y,'#ffd23a',24,180);this.ring(ev.x,ev.y,6,50,'#ffd23a',0.5);break;
       case 'projEnd':this.burst(ev.x,ev.y,ev.kind==='wave'?'#7fe0ff':'#cfc8b0',ev.kind==='wave'?10:4,100);break;
       case 'loot':this.burst(ev.x,ev.y,'#fff4c0',6,80,2);break;
-      case 'bossStart':this.showBanner((ev.name||'ボス')+(ev.found?'に見つかった！':'が目を覚ました！'),'#ff9a6a');this.addShake(12);this.ring(ev.x,ev.y,20,300,'#ff7050',1.0,6);break;
+      case 'bossStart':this.bossSeen=true;this.showBanner((ev.name||'ボス')+(ev.found?'に見つかった！':'が目を覚ました！'),'#ff9a6a');this.addShake(12);this.ring(ev.x,ev.y,20,300,'#ff7050',1.0,6);break;
       case 'enrage':this.showBanner((ev.name||'ボス')+(ev.awaken?'が覚醒した！':'が怒り狂っている！'),'#ff5050');this.addShake(14);this.ring(ev.x,ev.y,20,340,'#ff3030',1.0,8);break;
       case 'doorClose':this.addShake(6);break;
       case 'playerDead':this.burst(ev.x,ev.y,'#5a8cff',30,200);break;
