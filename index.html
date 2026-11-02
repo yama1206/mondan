@@ -243,7 +243,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'1.87.0',date:'2026/11/02'};
+const GAME_VERSION={no:'1.88.0',date:'2026/11/02'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -2478,7 +2478,7 @@ const DATA={
         {id:'hollow2',name:'沈んだ窪地',spawn:[['leech',0,1]],gather:[3,4]},
         {id:'lair2',name:'毒蟲の寝床',spawn:[['parasite',1,1],['swamp_croc',0,1]],elite:1,chest:1},
       ]},
-    river:{theme:'river',obstacle:'rocks',puddle:[0,1],wander:['water_lizard','piranha'],
+    river:{theme:'river',open:true,obstacle:'rocks',puddle:[1,2],wander:['water_lizard','piranha'],
       start:{id:'bank',name:'川岸'},
       boss:{id:'arena',name:'滝つぼ',spawn:[['piranha',2,3],['water_spirit',1,1]]},
       main:[
@@ -4614,6 +4614,11 @@ function buildStageMap(L,opt){
   map.rooms={start:sr,boss:bossRect};
   map.start={x:((sr[0]+sr[2])/2+0.5)*TILE,y:((sr[1]+sr[3])/2+0.5)*TILE};
   map.bossX1=bx1;map.bossRect=bossRect;map.bossSide=bossSide;map.bossSpot={x:((bx1+bx2)/2+0.5)*TILE,y:((by1+by2)/2+0.5)*TILE};
+  return decorateStageMap(map,L,sr);
+}
+/** 部屋を掘ったあとの仕上げ：障害物・水溜まり・採取ポイント・反転・四隅のスタート地点（広いマップでも使う） */
+function decorateStageMap(map,L,sr){
+  const W=map.W,H=map.H;
   // 7) 障害物（木・岩・柱・墓石）。道をふさがないよう、置くたびにスタートからの到達範囲を確かめる
   const sx=Math.floor((sr[0]+sr[2])/2),sy=Math.floor((sr[1]+sr[3])/2);
   let floor=reachableCount(map,sx,sy);
@@ -4690,6 +4695,169 @@ function buildStageMap(L,opt){
       if(best){used.add(best);const R=best.rect;pts.push({x:((R[0]+R[2])/2+0.5)*TILE,y:((R[1]+R[3])/2+0.5)*TILE});}}
     map.cornerSpawns=pts;}
   return map;
+}
+/* 広いマップ（モンハン風）：番号つきのエリアが、壁のない広い道でつながる1枚のマップ。形も毎回ランダム。
+   layouts に open:true を付けたステージで使う。エリアの中身（魔物・採取・宝箱）は main / side / boss の定義をそのまま使う */
+const OPENGEN={cols:4,rows:3,cw:34,ch:24,areas:[8,10],bossOnlyAreas:[6,7]};
+function buildOpenMap(L,opt){
+  const G=OPENGEN,only=!!(opt&&opt.bossOnly),W=G.cols*G.cw+2,H=G.rows*G.ch+2;
+  const map={W,H,tiles:new Uint8Array(W*H).fill(1),version:1,rooms:{},roomList:[],theme:L.theme,doorTiles:[],doorClosed:false,corridors:[],gatherSpots:[],open:true,areas:[]};
+  const set=(x,y)=>{if(x>1&&y>1&&x<W-2&&y<H-2)map.tiles[y*W+x]=0;};
+  const ell=(cx,cy,rx,ry)=>{for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){const u=(x-cx)/rx,v=(y-cy)/ry;if(u*u+v*v<=1)set(x,y);}};
+  const disc=(cx,cy,r)=>{for(let y=Math.floor(cy-r);y<=Math.ceil(cy+r);y++)for(let x=Math.floor(cx-r);x<=Math.ceil(cx+r);x++)if((x-cx)**2+(y-cy)**2<=r*r)set(x,y);};
+  // 1) 使うマス目：スタート（左の列）から、となりのマスへ枝分かれしながら広げる。ときどき輪になる近道も足す
+  //    スタートは行き止まり（つながる道は1本）。魔物はスタートに入れないので、ここを通らないと行けない場所を作らない
+  const key=(c,r)=>r*G.cols+c,cells=new Map(),links=[];
+  const want=only?randInt(G.bossOnlyAreas[0],G.bossOnlyAreas[1]):randInt(G.areas[0],G.areas[1]);
+  const s0={c:0,r:randInt(0,G.rows-1)};cells.set(key(s0.c,s0.r),s0);
+  for(let guard=0;cells.size<want&&guard<800;guard++){
+    const a=pick([...cells.values()].filter(n=>n!==s0||cells.size===1)),dd=pick([[1,0],[1,0],[-1,0],[0,1],[0,-1]]),c=a.c+dd[0],r=a.r+dd[1];
+    if(c<0||r<0||c>=G.cols||r>=G.rows||cells.has(key(c,r)))continue;
+    const n={c,r};cells.set(key(c,r),n);links.push([a,n]);
+  }
+  const linked=(a,b)=>links.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+  for(const a of cells.values())for(const b of cells.values())
+    if(key(a.c,a.r)<key(b.c,b.r)&&Math.abs(a.c-b.c)+Math.abs(a.r-b.r)===1&&!linked(a,b)&&a!==s0&&b!==s0&&RNG.next()<0.35)links.push([a,b]);
+  // 2) エリアの形：中心のまわりに楕円をいくつか重ねた、いびつな広場
+  for(const n of cells.values()){
+    const ox=1+n.c*G.cw,oy=1+n.r*G.ch,st=n===s0,k=st?2:randInt(3,5);
+    const bx=ox+G.cw/2+rand(-G.cw*0.12,G.cw*0.12),by=oy+G.ch/2+rand(-G.ch*0.12,G.ch*0.12);
+    let x1=1e9,y1=1e9,x2=-1,y2=-1;
+    for(let i=0;i<k;i++){
+      const rx=st?randInt(6,7):randInt(6,10),ry=st?randInt(5,6):randInt(5,8);
+      const cx=clamp(bx+(i?rand(-6,6):0),ox+rx+1,ox+G.cw-rx-2),cy=clamp(by+(i?rand(-4,4):0),oy+ry+1,oy+G.ch-ry-2);
+      if(!i){n.x=Math.round(cx);n.y=Math.round(cy);}
+      ell(cx,cy,rx,ry);x1=Math.min(x1,Math.floor(cx-rx));y1=Math.min(y1,Math.floor(cy-ry));x2=Math.max(x2,Math.ceil(cx+rx));y2=Math.max(y2,Math.ceil(cy+ry));
+    }
+    n.rect=[Math.max(2,x1),Math.max(2,y1),Math.min(W-3,x2),Math.min(H-3,y2)];
+  }
+  // 3) エリアどうしをつなぐ広い道（幅8〜10マス。大きなボスも通れる）。少し曲げて、まっすぐな通路に見えないようにする
+  for(const [a,b] of links){
+    const len=Math.hypot(b.x-a.x,b.y-a.y)||1,nx=-(b.y-a.y)/len,ny=(b.x-a.x)/len,bend=rand(-4,4),wid=rand(4.2,5.2);
+    for(let t=0;t<=1;t+=0.5/len){const o=Math.sin(t*Math.PI)*bend;disc(a.x+(b.x-a.x)*t+nx*o,a.y+(b.y-a.y)*t+ny*o,wid);}
+    map.corridors.push({x:Math.round((a.x+b.x)/2+nx*bend),y:Math.round((a.y+b.y)/2+ny*bend)});
+  }
+  // 4) エリア番号：スタートから近い順に 1,2,3…。いちばん遠いエリアがボスの巣（行き止まりを優先）
+  const adj=new Map([...cells.values()].map(n=>[n,[]]));for(const [a,b] of links){adj.get(a).push(b);adj.get(b).push(a);}
+  s0.d=0;const order=[s0];
+  for(let i=0;i<order.length;i++)for(const b of shuffle(adj.get(order[i]).slice()))if(b.d==null){b.d=order[i].d+1;order.push(b);}
+  const leaf=n=>adj.get(n).length===1;
+  const lair=order.filter(n=>n!==s0).sort((a,b)=>(b.d-a.d)||((leaf(a)?0:1)-(leaf(b)?0:1)))[0];
+  for(const n of order)n.kind=n===s0?'start':n===lair?'boss':'main';
+  const sideDefs=shuffle(L.side.slice());
+  const sideCand=[...shuffle(order.filter(n=>n.kind==='main'&&leaf(n))),...shuffle(order.filter(n=>n.kind==='main'&&!leaf(n)))];
+  for(let i=0;i<sideDefs.length&&i<sideCand.length-1;i++){sideCand[i].kind='side';sideCand[i].def=sideDefs[i];}
+  const mains=shuffle(L.main.slice());let mi=0;
+  order.forEach((n,i)=>{
+    n.n=i+1;
+    const def=n.def||(n.kind==='start'?L.start:n.kind==='boss'?L.boss:mains[mi++%mains.length]);
+    map.roomList.push({kind:n.kind,def,rect:n.rect,area:n.n});
+    map.rooms[n.kind==='start'?'start':n.kind==='boss'?'boss':'a'+n.n]=n.rect;
+    map.areas.push({n:n.n,x:(n.x+0.5)*TILE,y:(n.y+0.5)*TILE,rect:n.rect,name:def.name,kind:n.kind});
+  });
+  map.start={x:(s0.x+0.5)*TILE,y:(s0.y+0.5)*TILE};
+  map.bossRect=lair.rect;map.bossX1=lair.rect[0];map.bossSpot={x:(lair.x+0.5)*TILE,y:(lair.y+0.5)*TILE};
+  return decorateStageMap(map,L,s0.rect);
+}
+/** その場所がどのエリアか：枠に入っているエリアのうち、中心がいちばん近いもの */
+function areaAt(map,x,y){
+  const A=map&&map.areas;if(!A||!A.length)return null;
+  const tx=x/TILE,ty=y/TILE;let best=null,bd=1e18,inB=false;
+  for(const a of A){const R=a.rect,inside=tx>=R[0]&&tx<=R[2]+1&&ty>=R[1]&&ty<=R[3]+1,dd=(a.x-x)**2+(a.y-y)**2;
+    if((inside&&!inB)||(inside===inB&&dd<bd)){best=a;bd=dd;inB=inside;}}
+  return best;
+}
+/* 広いマップのボス：エリアを歩き回り、見つかると戦う。弱ると別のエリアへ逃げ、最後は巣（ボスのエリア）で眠る
+   flee：逃げる体力の割合／napAt：巣へ帰って眠る体力の割合／napRegen：眠っている間に毎秒回復する割合（最大 napHealMax まで）
+   眠っているボスへの最初の一撃は2倍（寝込みを襲う） */
+const FIELD_BOSS={sight:380,near:170,flee:[0.7,0.45],napAt:0.22,napTime:40,napRegen:0.004,napHealMax:0.1,roamStay:[18,30]};
+/** 目的地（マス）までの歩数の表。壁・障害物・スタートのエリア、体が壁にぶつかるマスは通れない */
+function fieldDist(w,tx,ty,r){
+  const m=w.map,W=m.W,H=m.H,d=new Int32Array(W*H).fill(-1),S=m.rooms.start,q=new Int32Array(W*H);
+  const rr=Math.max(8,(r||16)*0.85),ok=(x,y)=>!isWall(m,x,y)&&!(S&&x>=S[0]-1&&x<=S[2]+1&&y>=S[1]-1&&y<=S[3]+1)&&!circleHitsWall(m,(x+0.5)*TILE,(y+0.5)*TILE,rr);
+  let h=0,t=0;d[ty*W+tx]=0;q[t++]=ty*W+tx;
+  for(let y=ty-5;y<=ty+5;y++)for(let x=tx-5;x<=tx+5;x++){const j=y*W+x;if(x>0&&y>0&&x<W&&y<H&&d[j]<0&&ok(x,y)){d[j]=0;q[t++]=j;}} // 目的地のまわりも出発点にする（中心が岩でも届く）
+  while(h<t){const i=q[h++],x=i%W,y=(i/W)|0;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,j=ny*W+nx;if(nx<0||ny<0||nx>=W||ny>=H||d[j]>=0||!ok(nx,ny))continue;d[j]=d[i]+1;q[t++]=j;}}
+  return d;
+}
+/** 歩数の表に沿って進む。着いたら true。
+    道のマスを1つずつたどって体の中心を動かす（大きな体が岩や角にひっかかって迷子にならないように、移動中は体の当たり判定を使わない） */
+function fieldStep(w,e,dt,sp){
+  const f=e.fld,m=w.map,W=m.W,d=f.dist,tx=Math.floor(e.x/TILE),ty=Math.floor(e.y/TILE),cur=d[ty*W+tx];
+  if(cur>=0&&cur<=3)return true;
+  const R=cur<0?4:1;let bx=-1,by=-1,bv=cur<0?1e9:cur,bd=1e9;
+  for(let yy=ty-R;yy<=ty+R;yy++)for(let xx=tx-R;xx<=tx+R;xx++){
+    if(xx<0||yy<0||xx>=W||yy>=m.H)continue;const v=d[yy*W+xx];if(v<0)continue;
+    const dd=Math.abs(xx-tx)+Math.abs(yy-ty);
+    if(v<bv||(v===bv&&dd<bd)){bv=v;bx=xx;by=yy;bd=dd;}}
+  if(bx<0){const gx=f.to.x-e.x,gy=f.to.y-e.y,gl=Math.hypot(gx,gy)||1;e.facing=Math.atan2(gy,gx);moveEntity(m,e,gx/gl*sp*dt,gy/gl*sp*dt);return false;}
+  const gx=(bx+0.5)*TILE-e.x,gy=(by+0.5)*TILE-e.y,gl=Math.hypot(gx,gy)||1,st=Math.min(gl,sp*dt);
+  e.facing=Math.atan2(gy,gx);e.x+=gx/gl*st;e.y+=gy/gl*st;
+  return false;
+}
+function fieldGo(w,e,area){const f=e.fld;f.to=area;f.dist=fieldDist(w,Math.floor(area.x/TILE),Math.floor(area.y/TILE),14);}
+/** 逃げ先：スタートと今いるエリア以外で、プレイヤーから遠いエリア（上位2つからランダム） */
+function pickFleeArea(w,e){
+  const ps=Object.values(w.players).filter(p=>!p.dead),cur=areaAt(w.map,e.x,e.y);
+  const c=w.map.areas.filter(a=>a.kind!=='start'&&a!==cur);if(!c.length)return cur;
+  const sc=a=>ps.reduce((s,p)=>s+Math.hypot(a.x-p.x,a.y-p.y),0)+rand(0,200);
+  return pick(c.sort((a,b)=>sc(b)-sc(a)).slice(0,2));
+}
+function startFlee(w,e,area,nap){
+  const f=e.fld;cancelEnemyAction(w,e);
+  e.z=0;e.leapTo=null;e.hidden=false;e.sp=null;e.shell=false;e.curl=false;e.state='field';
+  f.mode='flee';f.nap=nap;fieldGo(w,e,area);
+  emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:nap?'弱って巣へ逃げていく！':'エリア'+area.n+'へ移動していく！',color:'#ffd27a'});
+}
+/** 歩き回っている（眠っている）ボスが、プレイヤーに気づいて戦い始める */
+function wakeFieldBoss(w,e){
+  const f=e.fld;f.mode=null;f.dist=null;e.aggro=true;e.state='roar';
+  if(!f.met){f.met=true;e.timer=1.5;w.quest.boss='fighting';emit(w,{type:'bossStart',x:e.x,y:e.y,name:DATA.enemies[e.type].name,cry:e.type});}
+  else{e.timer=1.0;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'こちらに気づいた！',color:'#ff9a6a'});}
+}
+/** 毎フレームのボスの動き（広いマップ）。戦闘中でなければ true を返して、いつもの動きを止める */
+function fieldBoss(w,e,dt){
+  const f=e.fld,def=DATA.enemies[e.type];
+  if(!f.mode){ // 戦闘中：体力が決まった割合を切ったら逃げる／巣で眠る
+    if(e.state!=='chase')return false;
+    const r=e.hp/e.maxHp;
+    if(!f.napped&&r<=FIELD_BOSS.napAt){f.napped=true;f.fi=FIELD_BOSS.flee.length;startFlee(w,e,w.map.areas.find(a=>a.kind==='boss'),true);return true;}
+    if((f.fi|0)<FIELD_BOSS.flee.length&&r<=FIELD_BOSS.flee[f.fi|0]){f.fi=(f.fi|0)+1;startFlee(w,e,pickFleeArea(w,e),false);return true;}
+    return false;
+  }
+  const sp=def.speed*(f.mode==='flee'?1.25:0.55);
+  if(f.mode==='nap'){ // 巣で眠る：少しずつ回復。時間がたつと起きて歩き出す
+    f.t-=dt;
+    if(f.healed<FIELD_BOSS.napHealMax*e.maxHp){const h=e.maxHp*FIELD_BOSS.napRegen*dt;e.hp=Math.min(e.maxHp,e.hp+h);f.healed+=h;}
+    if(f.t<=0){e.state='field';f.mode='roam';f.area=areaAt(w.map,e.x,e.y);f.t=rand(FIELD_BOSS.roamStay[0],FIELD_BOSS.roamStay[1]);f.wp=null;}
+    return true;
+  }
+  if(f.mode==='flee'){
+    if(fieldStep(w,e,dt,sp)){
+      f.dist=null;f.area=f.to;
+      if(f.nap){f.mode='nap';e.state='sleep';f.t=FIELD_BOSS.napTime;f.healed=0;emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'眠ってしまった…',color:'#c8c0ff'});}
+      else{f.mode='roam';f.t=rand(FIELD_BOSS.roamStay[0],FIELD_BOSS.roamStay[1]);f.wp=null;f.calm=1.5;}
+    }
+    return true;
+  }
+  // roam：歩き回る。プレイヤーが近い・見える所にいたら気づく
+  f.calm=(f.calm||0)-dt;
+  if(f.calm<=0)for(const p of Object.values(w.players)){
+    if(p.dead)continue;const d=Math.hypot(p.x-e.x,p.y-e.y);
+    if(d<FIELD_BOSS.near||(d<FIELD_BOSS.sight&&!playerUnseen(w,p)&&lineOfSight(w.map,e.x,e.y,p.x,p.y))){wakeFieldBoss(w,e);return true;}
+  }
+  if(f.dist){if(fieldStep(w,e,dt,sp)){f.dist=null;f.area=f.to;f.t=rand(FIELD_BOSS.roamStay[0],FIELD_BOSS.roamStay[1]);f.wp=null;}return true;}
+  f.t-=dt;
+  if(f.t<=0){const c=w.map.areas.filter(a=>a.kind!=='start'&&a!==f.area);if(c.length){fieldGo(w,e,pick(c));return true;}f.t=10;}
+  if(f.rest>0){f.rest-=dt;return true;}
+  if(!f.wp){f.wp=f.area&&randomFloor(w.map,f.area.rect,2);f.wt=rand(3,6);if(!f.wp){f.rest=1;return true;}}
+  f.wt-=dt;
+  const dx=f.wp.x-e.x,dy=f.wp.y-e.y,dl=Math.hypot(dx,dy);
+  if(dl<24||f.wt<=0){f.wp=null;f.rest=rand(1,3);return true;}
+  e.facing=Math.atan2(dy,dx);
+  if(moveEntity(w.map,e,dx/dl*sp*0.7*dt,dy/dl*sp*0.7*dt))f.wp=null;
+  return true;
 }
 function emit(w,ev){w.events.push(ev);}
 
@@ -4799,6 +4967,7 @@ function flipStageMap(map,fx,fy){
   for(const g of map.gatherSpots||[]){g.x=px(g.x);g.y=py(g.y);}
   for(const q of map.puddles||[]){q.x=px(q.x);q.y=py(q.y);q.bl=q.bl.map(b=>[fx?-b[0]:b[0],fy?-b[1]:b[1],b[2]]);}
   for(const k of ['start','bossSpot'])if(map[k]){map[k]={x:px(map[k].x),y:py(map[k].y)};}
+  for(const a of map.areas||[]){a.x=px(a.x);a.y=py(a.y);}
   if(map.bossRect)map.bossX1=map.bossRect[0];
   if(map.bossSide){if(fx&&map.bossSide==='right')map.bossSide='left';if(fy)map.bossSide={top:'bottom',bottom:'top'}[map.bossSide]||map.bossSide;}
 }
@@ -4824,7 +4993,7 @@ function createWorld(opts){
   const L=stage.layout&&DATA.layouts[stage.layout];
   // 訓練場は、ボスの部屋だけの広場（ほかの部屋・雑魚・宝箱はなし）
   const TR=!!quest.training;
-  const map=TR?buildArenaMap():L?buildStageMap(L,{bossOnly:goal.type==='boss'}):buildDungeon();
+  const map=TR?buildArenaMap():L?(L.open?buildOpenMap:buildStageMap)(L,{bossOnly:goal.type==='boss'}):buildDungeon();
   if(!L&&!TR)Object.assign(map,{theme:'cave',start:{x:6.5*TILE,y:18.5*TILE},bossX1:61,bossSpot:{x:74*TILE,y:19.5*TILE}});
   const w={time:0,map,nextId:1,hazards:[],gathers:[],corpses:[],players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],
     playerCount:np,leash:opts.leash||0,stageId:stage.id,questId:quest.id,placed:[],
@@ -4917,7 +5086,13 @@ function populateLayout(w,stage,quest,L){
     const p=randomFloor(m,rm.rect,1);if(p)w.chests.push({id:w.nextId++,x:p.x,y:p.y,opened:false,table:stage.chest});
   }
   for(const g of m.gatherSpots)w.gathers.push({id:w.nextId++,x:g.x,y:g.y,kind:g.kind,used:false,table:'gather_'+g.kind});
-  if(goal.type==='boss'||goal.type==='explore'){const boss=spawnEnemy(w,w.quest.bossType,m.bossSpot.x,m.bossSpot.y,quest.urgent?{urgentStage:quest.stage}:{});w.bossId=boss.id;} // 自由探索にも主がいる（倒しても探索は続く）
+  if(goal.type==='boss'||goal.type==='explore'){
+    // 広いマップ：ボスはスタートから離れたエリアのどこかにいて、歩き回っている
+    let bp=m.bossSpot,area=null;
+    if(m.open){const c=m.areas.filter(a=>a.kind!=='start'&&a.n>2);area=pick(c.length?c:m.areas.filter(a=>a.kind!=='start'));bp=randomFloor(m,area.rect,3)||{x:area.x,y:area.y};}
+    const boss=spawnEnemy(w,w.quest.bossType,bp.x,bp.y,quest.urgent?{urgentStage:quest.stage}:{});w.bossId=boss.id;
+    if(area){boss.state='field';boss.fld={mode:'roam',area,t:rand(FIELD_BOSS.roamStay[0],FIELD_BOSS.roamStay[1]),fi:0};}
+  } // 自由探索にも主がいる（倒しても探索は続く）
   w.quest.total=w.enemies.filter(e=>!e.boss).length;
   w.quest.chestsTotal=w.chests.length;
 }
@@ -5304,6 +5479,7 @@ function damageEnemy(w,p,e,mult,src){
     if(guarded)ed*=DATA.enemies[e.type].guard.mult;
     dmg+=Math.max(0,Math.round(ed));elHit={k:ael.k,m:em};
   }
+  if(e.fld&&e.fld.mode==='nap'){dmg=Math.round(dmg*2);emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'寝込みを襲った！',color:'#ffd23a'});} // 眠っているボスへの最初の一撃は2倍
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
   // ザコ敵は体力が半分以下になると怯んで、少しの間動きが止まる（ボス・中ボスは対象外）
   if(!e.boss&&!e.mid&&!e.halfFlinched&&e.hp>0&&e.hp<=e.maxHp*0.5){e.halfFlinched=true;e.flinchT=0.45;e.action=null;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'怯み',color:'#ffd27a'});}
@@ -5346,7 +5522,7 @@ function damageEnemy(w,p,e,mult,src){
     const h=Math.max(2,Math.round(s.maxHp*0.03));p.hp=Math.min(s.maxHp,p.hp+h);
     emit(w,{type:'heal',x:p.x,y:p.y-20,amount:h,drain:true});
   }
-  if(e.boss&&e.state==='sleep')triggerBoss(w);
+  if(e.boss&&(e.state==='sleep'||e.state==='field'))triggerBoss(w);
   if(e.hp<=0)killEnemy(w,e);
 }
 /** 矢の状態異常を付ける（ボスは効きにくい） */
@@ -5837,7 +6013,7 @@ function updatePlaced(w,dt){
           const dmg=Math.round(ef.dmg*(0.9+0.6*(w.diff.level-1))*rand(0.95,1.05));
           e.hp-=dmg;e.hurt=0.2;e.aggro=true;
           emit(w,{type:'damage',target:'enemy',pid:o.owner,x:e.x,y:e.y-e.r,amount:dmg,crit:false});
-          if(e.boss&&e.state==='sleep')triggerBoss(w);
+          if(e.boss&&(e.state==='sleep'||e.state==='field'))triggerBoss(w);
           if(e.hp<=0)killEnemy(w,e);
         }
         for(const id in w.players){const q=w.players[id];const d=Math.hypot(q.x-o.x,q.y-o.y);
@@ -6021,6 +6197,7 @@ function updateEnemy(w,e,dt){
     return;
   }
   if(e.boss){decayHate(e,dt);if(e.avoid){e.avoid.t-=dt;if(e.avoid.t<=0)e.avoid=null;}}
+  if(e.fld&&fieldBoss(w,e,dt))return; // 広いマップのボス：歩き回る・逃げる・巣で眠る
   const p=e.boss?bossTarget(w,e):nearestPlayer(w,e);if(!p)return;
   if(e.boss){ENEMY_AI[DATA.enemies[e.type].ai](w,e,p,dt);return;}
   const d=Math.hypot(p.x-e.x,p.y-e.y);
@@ -7702,12 +7879,14 @@ function applyRenderLerp(w,a){
 }
 function bossOf(w){for(const e of w.enemies)if(e.id===w.bossId)return e;return null;}
 function triggerBoss(w){
-  const b=bossOf(w);if(!b||b.state!=='sleep')return;
+  const b=bossOf(w);if(!b)return;
+  if(b.fld){if(b.fld.mode==='roam'||b.fld.mode==='nap')wakeFieldBoss(w,b);return;} // 広いマップ（逃げている間は気にしない）
+  if(b.state!=='sleep')return;
   b.state='roar';b.timer=1.5;b.aggro=true;w.quest.boss='fighting';
   emit(w,{type:'bossStart',x:b.x,y:b.y,name:DATA.enemies[b.type].name,cry:b.type});
 }
 function updateBossRoom(w){
-  const b=bossOf(w);if(!b)return;
+  const b=bossOf(w);if(!b||w.map.open)return; // 広いマップは fieldBoss で気づく
   const ps=Object.values(w.players).filter(p=>!p.dead);
   const bx=w.map.bossX1||61,BR=w.map.bossRect;
   // ボス部屋に入ったら目を覚ます（部屋の位置は右・上・下のどれか）
@@ -10238,6 +10417,15 @@ const Renderer={
     ctx.imageSmoothingEnabled=false;
     ctx.drawImage(mc,x,y,mw,mh);
     const dot=(px,py,col,r)=>{const sx=x+px/TILE*sc,sy=y+py/TILE*sc;ctx.fillStyle=col;ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.beginPath();ctx.arc(sx,sy,r,0,TAU);ctx.fill();ctx.stroke();};
+    // 広いマップ：行ったことのあるエリアの番号と、今いるエリアの名前
+    if(map.areas){
+      ctx.font=`bold ${Math.round(10*hk+2)}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';
+      for(const a of map.areas){if(!this.isExplored(w,a.x,a.y))continue;const sx=x+a.x/TILE*sc,sy=y+a.y/TILE*sc;
+        ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.strokeText(String(a.n),sx,sy);ctx.fillStyle=a.kind==='start'?'#9fe0ff':'#fff6d8';ctx.fillText(String(a.n),sx,sy);}
+      const all0=Object.values(w.players),me=this.focusId?w.players[this.focusId]:all0[0],ca=me&&areaAt(map,me.x,me.y);
+      if(ca){ctx.font=`bold ${Math.round(11*hk+2)}px ${FONT}`;ctx.textAlign='left';const t='エリア'+ca.n+'  '+ca.name;
+        ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,0.85)';ctx.strokeText(t,x,y-12);ctx.fillStyle='#ffe9a8';ctx.fillText(t,x,y-12);}
+    }
     const b=bossOf(w);
     if(b&&b.hp>0&&this.isExplored(w,b.x,b.y))dot(b.x,b.y,'#ff5a5a',3);
     const all=Object.values(w.players);
@@ -12628,7 +12816,7 @@ const Renderer={
     // ボスHPバー
     const b=bossOf(w);
     // ボス：体力は見せず、名前と様子だけを出す
-    if(b&&b.state!=='sleep'){
+    if(b&&b.state!=='sleep'&&b.state!=='field'){
       const conds=[];
       if(b.phase===2)conds.push(['怒り','#ff6060']);
       if(b.weakNoticed)conds.push(['弱っている','#ffb070']);
@@ -14545,7 +14733,7 @@ const Net={
     return s;
   },
   startMessage(w,pid){
-    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),puddles:w.map.puddles,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
+    return {t:'start',pid,map:{W:w.map.W,H:w.map.H,tiles:Array.from(w.map.tiles),puddles:w.map.puddles,open:!!w.map.open,areas:w.map.areas||null,doorTiles:w.map.doorTiles,doorClosed:w.map.doorClosed,theme:w.map.theme||'cave'},
       quest:w.quest,questId:w.questId,diff:w.diff,bossId:w.bossId,pc:w.playerCount};
   },
   broadcastStart(w){
@@ -14609,7 +14797,7 @@ const Net={
   },
   buildMirror(d){
     const m=d.map;
-    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),puddles:m.puddles||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
+    const map={W:m.W,H:m.H,tiles:Uint8Array.from(m.tiles),puddles:m.puddles||null,open:!!m.open,areas:m.areas||null,version:1,doorTiles:m.doorTiles,doorClosed:false,rooms:{},theme:m.theme||'cave'};
     const w={mirror:true,time:0,map,players:{},enemies:[],projectiles:[],attacks:[],telegraphs:[],drops:[],chests:[],events:[],hazards:[],gathers:[],
       quest:d.quest,questId:d.questId,diff:d.diff,bossId:d.bossId,playerCount:d.pc,status:'playing'};
     if(m.doorClosed)this.closeDoor(w);
