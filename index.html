@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.0',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.1',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -17299,6 +17299,8 @@ const App={
         if(pk)this.doOp('deco',{uid:pk.uid,idx:pk.idx,deco:ds.deco||null});else this.renderInventory();
         break;
       }
+      case 'decoCat':this.inv.decoCat=ds.c;this.renderInventory();break;
+      case 'decoSort':this.inv.decoSort=ds.s;this.renderInventory();break;
       case 'cancelPick':this.inv.decoPick=null;this.renderInventory();break;
       case 'craft':this.doOp('craft',{id:ds.id,deco:ds.deco||null});break;
       case 'buy':this.doOp('buy',{id:ds.id,n:Number(ds.n)||1});break;
@@ -18045,8 +18047,18 @@ const App={
     const p=this.profile,pk=this.inv.decoPick,it=Profile.getItem(p,pk.uid);
     if(!it){this.inv.decoPick=null;return '';}
     const cur=it.slots[pk.idx];
-    const decos=[...p.decos].sort((a,b)=>a.decoId.localeCompare(b.decoId)||b.rarity-a.rarity);
+    // 絞込（効果の種類）と並べ方。どちらも選んだまま残る
+    const catOf=d=>{const dd=DATA.decorations[d.decoId],sk=dd&&DATA.armorSkills[dd.skill];return sk?sk.cat:'その他';};
+    const fc=this.inv.decoCat||'all',sortK=this.inv.decoSort||'rarity';
+    const cats=[...new Set(p.decos.map(catOf))];
+    if(fc!=='all'&&!cats.includes(fc))this.inv.decoCat=fc='all';
+    const valOf=d=>Items.decoValue(d);
+    const byName=(a,b)=>DATA.decorations[a.decoId].name.localeCompare(DATA.decorations[b.decoId].name,'ja');
+    const cmp={rarity:(a,b)=>b.rarity-a.rarity||byName(a,b),value:(a,b)=>valOf(b)-valOf(a)||b.rarity-a.rarity||byName(a,b),name:(a,b)=>byName(a,b)||b.rarity-a.rarity,kind:(a,b)=>catOf(a).localeCompare(catOf(b),'ja')||byName(a,b)||b.rarity-a.rarity}[sortK]||((a,b)=>b.rarity-a.rarity);
+    const decos=p.decos.filter(d=>fc==='all'||catOf(d)===fc).sort(cmp);
     let h=`<div class="col-t">${itemName(it)} のスロット${pk.idx+1}に装着する装飾品</div>`;
+    h+=`<div class="filters">${[['all','すべて'],...cats.map(c=>[c,c])].map(([k,n])=>`<button class="${fc===k?'on':''}" data-act="decoCat" data-c="${k}">${n}</button>`).join('')}</div>`;
+    h+=`<div class="filters">${[['rarity','レア度順'],['value','効果順'],['name','名前順'],['kind','種類順']].map(([k,n])=>`<button class="${sortK===k?'on':''}" data-act="decoSort" data-s="${k}">${n}</button>`).join('')}</div>`;
     if(cur)h+=`<button class="decorow danger" data-act="pickDeco" data-deco="">このスロットの装飾品を外す</button>`;
     // 同じ装飾品（種類とレア度が同じ）は1行にまとめて「×何個」と表示する。押すと未装着のものから優先して付ける
     const groups=[];{const gi={};for(const d of decos){const k=d.decoId+'|'+d.rarity;if(!(k in gi)){gi[k]=groups.length;groups.push([]);}groups[gi[k]].push(d);}}
