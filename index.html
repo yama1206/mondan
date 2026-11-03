@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.4',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.5',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1518,7 +1518,9 @@ const DATA={
   ],
   /* 秘密コード：設定画面の入力欄に打つと報酬をもらえる。1つのコードは1人（1つのセーブ）につき1回。大文字・小文字は区別しない
      code：打つ文字　reason：受け取ったときの表示　items：プレゼントと同じ形（coin・gold・item・mat・equip・deco） */
-  secretCodes:[],
+  secretCodes:[
+    {code:'121',reason:'蒼海の鱗手裏剣',items:[{type:'equip',id:'mola_shuriken',n:1}]},
+  ],
   elemShare:0.5,
   seriesRes:{
     beast:{ice:2,fire:-1},goblin:{fire:1,mei:-1},beetle:{water:2,fire:-2},bone:{mei:2,thunder:-1},
