@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.8.0',date:'2026/11/03'};
+const GAME_VERSION={no:'2.9.0',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -14114,8 +14114,129 @@ const BGM_DATA={
       mel:'A5:.5 C6:.5 E6:1 D6:.5 C6:.5 A5:1|F5:1 A5:1 C6:1 A5:1|G5:.5 E5:.5 G5:.5 C6:.5 E6:2|D6:1 B5:1 G5:1 B5:1|A5:1 C6:1 E6:1 C6:1|F6:.5 E6:.5 D6:1 C6:1 A5:1|G5:.5 B5:.5 D6:.5 G6:.5 D6:2|C6:4'},
   }},
 };
+/* 緊急ボス専用の曲（キーはボスの種類）。怒りのときは bossBgmId が半音上げて速くした版を作る */
+const URGENT_BGM={
+  meadow_bull:{name:'暴角の咆哮',bpm:144,vol:1,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Dm Dm',stab:'x..x..x...x.x...',ost:true,bass:'8',drums:'bossIntro'},
+    A:{chords:'Dm Bb C A Dm Bb Gm A',inst:'horn',mel2:['horn',-1],pad:'pad',ost:true,bass:'8',drums:'boss',fill:true,
+      mel:'D5:1 A4:.5 D5:.5 F5:1 E5:.5 D5:.5|D5:1.5 F5:.5 Bb5:1 A5:1|G5:1 E5:.5 G5:.5 C6:1 Bb5:.5 A5:.5|A5:2 C#5:2|D5:.5 E5:.5 F5:1 A5:1 D6:1|D6:1.5 C6:.5 Bb5:1 F5:1|G5:1 Bb5:.5 A5:.5 G5:1 E5:1|C#5:2 E5:1 A5:1'},
+    B:{chords:'Bb C Am Dm Gm C A A',inst:'strings',mel2:['horn',-1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'F5:2 D5:1 Bb4:1|C5:1.5 E5:.5 G5:2|E5:1 A5:1 C6:1 A5:1|D6:3 r:1|Bb5:1.5 A5:.5 G5:1 D5:1|E5:1 G5:.5 F5:.5 E5:1 C5:1|C#5:1 E5:1 A5:1 C#6:1|E6:2 C#6:2'},
+  }},
+  wolf:{name:'古狼の遠吠え',bpm:152,vol:1,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Em Em',pad:'choir',ost:true,bass:'8',drums:'bossIntro'},
+    A:{chords:'Em C D B Em C Am B',inst:'strings',mel2:['horn',-1],pad:'pad',arp:'pizz8',ost:true,bass:'8',drums:'boss',fill:true,
+      mel:'E5:1.5 B4:.5 E5:1 G5:1|G5:1 E5:.5 C5:.5 E5:2|F#5:1 D5:.5 F#5:.5 A5:1 G5:.5 F#5:.5|D#5:2 B4:2|B5:2 G5:1 E5:1|E6:1.5 D6:.5 C6:1 G5:1|A5:1 C6:.5 B5:.5 A5:1 E5:1|F#5:2 D#5:1 B4:1'},
+    B:{chords:'C D Bm Em C D B B',inst:'horn',mel2:['strings',1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'E6:2 C6:1 G5:1|F#5:1 A5:1 D6:2|D6:1 B5:.5 A5:.5 F#5:1 D5:1|E5:3 r:1|G5:1 C6:1 E6:1 C6:1|A5:1 D6:1 F#6:2|F#6:1 D#6:.5 B5:.5 F#5:1 D#5:1|B4:2 r:2'},
+  }},
+  hydra:{name:'沼底の多頭竜',bpm:138,vol:1.05,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Am Am',pad:'choir',bass:'4',drums:'heart',bell:true},
+    A:{chords:'Am F E Am Dm F E E',inst:'horn',mel2:['choir',0],pad:'choir',arp:'pizz8',bass:'8',drums:'crypt2',fill:true,
+      mel:'A4:1 C5:1 E5:1.5 D5:.5|C5:1 A4:1 F4:2|G#4:1 B4:.5 D5:.5 E5:1 G#4:1|A4:3 r:1|D5:1 F5:1 A5:1.5 G5:.5|F5:1 E5:.5 D5:.5 C5:2|B4:1 D5:1 E5:1 G#5:1|B5:2 G#5:2'},
+    B:{chords:'F G Em Am Dm E Am E',inst:'strings',mel2:['horn',-1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'A5:1.5 G5:.5 F5:1 C5:1|D5:1 G5:1 B5:2|B5:1 G5:.5 E5:.5 B4:2|C5:1 E5:1 A5:2|F5:1.5 E5:.5 D5:1 A4:1|G#4:1 B4:1 E5:1 G#5:1|A5:1 E5:.5 C5:.5 A4:2|B4:1 E5:1 G#5:2'},
+  }},
+  aquarios:{name:'蒼き海竜の渦',bpm:146,vol:1,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Cm Cm',pad:'pad',arp:'pizz8',bass:'8',drums:'bossIntro',bell:true},
+    A:{chords:'Cm Ab Eb Bb Cm Ab Fm G',inst:'strings',mel2:['bell',1],pad:'pad',arp:'pizz8',ost:true,bass:'8',drums:'boss',fill:true,
+      mel:'G5:1.5 Eb5:.5 C5:1 G5:1|Ab5:1 Eb5:.5 C5:.5 Ab4:2|G5:1 Bb5:.5 G5:.5 Eb5:1 G5:1|F5:2 D5:2|C6:1 G5:1 Eb5:1 C5:1|Ab5:1.5 G5:.5 F5:1 Eb5:1|F5:1 Ab5:.5 G5:.5 F5:1 C5:1|D5:2 B4:1 G4:1'},
+    B:{chords:'Ab Bb Eb Cm Ab Fm G G',inst:'horn',mel2:['strings',1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'C6:2 Ab5:1 Eb5:1|D5:1 F5:1 Bb5:2|G5:1.5 F5:.5 Eb5:1 Bb4:1|C5:3 r:1|Eb6:1 C6:1 Ab5:1 Eb5:1|F5:1 Ab5:1 C6:2|B5:1 D6:.5 B5:.5 G5:1 D5:1|G5:2 B5:2'},
+  }},
+  grados:{name:'地底王の進軍',bpm:120,vol:1.05,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Dm Dm',stab:'x.......x.......',bass:'4',drums:'bossIntro'},
+    A:{chords:'Dm Dm Bb A Dm Dm Gm A',inst:'horn',mel2:['horn',-1],pad:'pad',stab:'x.......x..x....',bass:'8',drums:'boss',fill:true,
+      mel:'D4:2 F4:1 A4:1|D5:1.5 C5:.5 A4:2|Bb4:1 D5:1 F5:1 D5:1|C#5:2 E4:2|D4:1 F4:1 A4:1 D5:1|F5:1.5 E5:.5 D5:1 A4:1|Bb4:1 D5:1 G5:1 F5:1|E5:2 C#5:2'},
+    B:{chords:'Gm Gm Dm Dm Bb C A A',inst:'strings',mel2:['horn',-1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'G4:2 Bb4:1 D5:1|G5:2 F5:1 D5:1|F5:1.5 E5:.5 D5:1 A4:1|D5:3 r:1|Bb4:1 D5:1 F5:1 Bb5:1|C6:1.5 Bb5:.5 G5:1 E5:1|C#5:1 E5:1 A5:1 G5:1|E5:2 C#5:2'},
+  }},
+  volcano_dragon:{name:'炎獄竜の業火',bpm:160,vol:1,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Em Em',stab:'x.x.x.x.x..x.x..',ost:true,bass:'8',drums:'bossIntro'},
+    A:{chords:'Em D C B Em D C B',inst:'horn',mel2:['horn',-1],pad:'pad',ost:true,bass:'8',drums:'boss2',fill:true,
+      mel:'E5:.5 E5:.5 B5:1 A5:.5 G5:.5 E5:1|F#5:.5 F#5:.5 A5:1 G5:.5 F#5:.5 D5:1|E5:1 G5:.5 C6:.5 B5:1 G5:1|F#5:2 D#5:2|E6:.5 D6:.5 B5:1 G5:1 E5:1|D6:.5 C6:.5 A5:1 F#5:1 D5:1|C6:1 B5:.5 A5:.5 G5:1 E5:1|D#5:2 F#5:1 B5:1'},
+    B:{chords:'C D Em Em Am B Em B',inst:'strings',mel2:['horn',-1],pad:'choir',ost:true,bass:'8',drums:'rage',crash:2,fill:true,
+      mel:'G5:2 E5:1 C5:1|A5:2 F#5:1 D5:1|B5:1.5 A5:.5 G5:1 E5:1|E6:3 r:1|C6:1.5 B5:.5 A5:1 E5:1|D#5:1 F#5:1 B5:1 D#6:1|E6:1 B5:.5 G5:.5 E5:2|F#5:2 B4:2'},
+  }},
+  ice_ape:{name:'剛猿の氷撃',bpm:148,vol:1,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Gm Gm',stab:'x..x..x.........',pad:'choir',bass:'8',drums:'bossIntro',bell:true},
+    A:{chords:'Gm Eb F D Gm Eb Cm D',inst:'horn',mel2:['bell',1],pad:'choir',ost:true,bass:'8',drums:'boss',fill:true,
+      mel:'G4:1 Bb4:.5 D5:.5 G5:1 D5:1|Eb5:1.5 G5:.5 Bb5:2|A5:1 F5:.5 C5:.5 F5:1 A5:1|F#5:2 D5:2|G5:1 Bb5:1 D6:1 Bb5:1|G5:1.5 Eb5:.5 Bb4:1 G5:1|C6:1 Bb5:.5 G5:.5 Eb5:1 C5:1|D5:2 F#5:1 A5:1'},
+    B:{chords:'Eb F Dm Gm Cm D Gm D',inst:'strings',mel2:['horn',-1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'Bb5:2 G5:1 Eb5:1|C6:2 A5:1 F5:1|F5:1 A5:1 D6:2|D6:1.5 Bb5:.5 G5:2|G5:1 C6:1 Eb6:2|D6:1 A5:.5 F#5:.5 D5:2|G5:1 D5:.5 Bb4:.5 G4:2|A4:1 D5:1 F#5:2'},
+  }},
+  yomi_samurai:{name:'黄泉の剣鬼',bpm:140,vol:1.05,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{chords:'Bm Bm',pad:'choir',drums:'crypt',bell:true},
+    A:{chords:'Bm G Bm F# Bm G Em F#',inst:'flute',mel2:['strings',-1],pad:'choir',arp:'pizz8',bass:'8',drums:'boss',fill:true,
+      mel:'B4:1 D5:1 F#5:1.5 G5:.5|F#5:1 D5:.5 B4:.5 G4:2|B4:.5 C#5:.5 D5:1 F#5:1 B5:1|A#5:2 F#5:2|B5:1.5 A5:.5 F#5:1 D5:1|G5:1 F#5:.5 D5:.5 B4:2|E5:1 G5:1 B5:1 A5:.5 G5:.5|F#5:2 C#5:2'},
+    B:{chords:'G A F#m Bm G A F# F#',inst:'strings',mel2:['choir',-1],pad:'choir',ost:true,bass:'8',drums:'boss2',crash:2,fill:true,
+      mel:'D6:2 B5:1 G5:1|C#6:2 A5:1 E5:1|F#5:1 A5:1 C#6:1 A5:1|B5:3 r:1|G5:1 B5:1 D6:1 B5:1|E6:1.5 C#6:.5 A5:1 E5:1|F#5:1 A#5:1 C#6:1 F#6:1|C#6:2 A#5:2'},
+  }},
+};
+for(const k in URGENT_BGM)BGM_DATA['u_'+k]=URGENT_BGM[k];
 // 解析済みのデータ（メロディ・コード）
 for(const id in BGM_DATA){const T=BGM_DATA[id];for(const k in T.parts){const P=T.parts[k];P._ch=P.chords.split(/\s+/).map(chordOf);P._mel=parseMelody(P.mel);}}
+
+/* ボスごとの専用曲：緊急ボスは URGENT_BGM、それ以外はボスの名前から決まった乱数で作曲する（毎回同じ曲になる）。
+   調・テンポ・楽器・リズム・コード進行・旋律がボスごとに変わる。怒りのときは半音上げて速くした版 */
+const BOSS_PROG_A=[[0,8,10,7,0,8,5,7],[0,5,10,3,8,5,7,7],[0,10,8,10,0,10,8,7],[0,0,8,10,5,5,7,7],[0,3,10,5,8,10,7,7],[0,8,3,10,5,8,7,7]];
+const BOSS_PROG_B=[[8,10,0,0,5,10,3,7],[5,7,0,8,5,8,7,7],[8,5,0,7,8,10,7,7],[3,10,8,7,5,0,8,7],[8,10,3,0,5,3,7,7]];
+const BOSS_RHYTHM=[[1,.5,.5,1,1],[1.5,.5,1,1],[.5,.5,1,.5,.5,1],[2,1,1],[1,1,2],[.5,.5,.5,.5,1,1],[1,.5,.5,2],[1.5,.5,2],[.5,.5,1,1,1]];
+function bossSeedRng(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return ()=>{h^=h<<13;h^=h>>>17;h^=h<<5;return ((h>>>0)%100000)/100000;};}
+function bossChord(tonic,deg){const q={0:1,3:0,5:1,7:0,8:0,10:0}[deg];return {root:(tonic+deg)%12,iv:[0,q?3:4,7]};} // 短調の i・III・iv・V（長三和音にする）・VI・VII
+function composeBossBgm(type){
+  const d=DATA.enemies[type]||{},rnd=bossSeedRng(type),pk=a=>a[Math.floor(rnd()*a.length)];
+  const kind=bossVoiceKind(type),tonic=Math.floor(rnd()*12);
+  const bpm=Math.round(clamp(128+((d.speed||100)-100)*0.5+rnd()*16,118,168));
+  const lead={growl:['horn','strings'],screech:['strings','flute'],chitter:['strings','horn'],bloop:['flute','strings'],roar:['horn','strings']}[kind]||['horn','strings'];
+  const mel2={growl:['horn',-1],screech:['flute',1],chitter:['horn',-1],bloop:['bell',1],roar:['horn',-1]}[kind]||['horn',-1];
+  const arp=(kind==='chitter'||kind==='bloop'||rnd()<0.3)?'pizz8':null,ost=kind!=='bloop'||rnd()<0.5;
+  const dA=pk(['boss','boss','march2','crypt2']),dB=pk(['boss2','boss2','rage','march2']);
+  const stab=pk(['x..x..x...x.x...','x.......x..x....','x.x...x.x.x.....','x..x....x..x..x.']);
+  const scaleAt=(i,useLead)=>{const sc=[0,2,3,5,7,8,useLead?11:10],o=Math.floor(i/7);return sc[((i%7)+7)%7]+o*12;};
+  const base=72-(tonic>6?12:0); // 旋律の中心（あとで主音の分だけ上げる）
+  let pos=7; // 音階の何番目にいるか（7=主音）
+  const rA=[pk(BOSS_RHYTHM),pk(BOSS_RHYTHM)],rB=[pk(BOSS_RHYTHM),pk(BOSS_RHYTHM)];
+  const makeMel=(prog,rh)=>prog.map((deg,bi)=>{
+    const lastBar=bi===7,rhythm=lastBar?(rnd()<0.5?[2,2]:[3,1]):(bi===3?[2,2]:rh[bi%2]),V=deg===7;
+    const tones=bossChord(0,deg).iv.map(iv=>(deg+iv)%12),bar=[];
+    rhythm.forEach((dur,ni)=>{
+      if(lastBar&&ni===rhythm.length-1&&dur===1){bar.push({m:null,d:1});return;}
+      let best=pos;
+      if(ni===0||dur>=1.5){ // 強い拍は和音の音へ（近い方）
+        let bd=99;for(let k=pos-4;k<=pos+4;k++){const pc=((scaleAt(k,V)%12)+12)%12;if(tones.includes(pc)&&Math.abs(k-pos)<bd){bd=Math.abs(k-pos);best=k;}}
+      }else best=pos+pk([-2,-1,-1,1,1,2,3,-3]);
+      best=clamp(best,3,14);pos=best;
+      bar.push({m:base-12+scaleAt(best,V),d:dur});
+    });
+    return bar;
+  });
+  const pA=pk(BOSS_PROG_A),pB=pk(BOSS_PROG_B),ch=pr=>pr.map(g=>bossChord(tonic,g));
+  const T={name:(d.name||type)+'のテーマ',bpm,vol:1,seq:['I','A','B'],loopFrom:1,parts:{
+    I:{_ch:ch([0,0]),stab,ost,bass:'8',drums:'bossIntro',pad:kind==='bloop'?'choir':null},
+    A:{_ch:ch(pA),_mel:makeMel(pA,rA).map(b=>b.map(n=>({m:n.m==null?null:n.m+tonic,d:n.d}))),inst:lead[0],mel2,pad:'pad',arp,ost,bass:'8',drums:dA,fill:true},
+    B:{_ch:ch(pB),_mel:makeMel(pB,rB).map(b=>b.map(n=>({m:n.m==null?null:n.m+tonic,d:n.d}))),inst:lead[1],mel2:[mel2[0]==='bell'?'bell':'horn',mel2[1]],pad:'choir',arp,ost:true,bass:'8',drums:dB,crash:2,fill:true},
+  }};
+  if(d.boss&&(d.def||0)>=9)T.parts.B.pad='choir';
+  return T;
+}
+/** 怒りの版：半音上げて1割ちょっと速く、太鼓を激しく */
+function rageBgmOf(T){
+  const R={name:T.name+'（怒り）',bpm:Math.round(T.bpm*1.12),vol:T.vol,seq:T.seq,loopFrom:T.loopFrom,parts:{}};
+  for(const k in T.parts){const P=T.parts[k];R.parts[k]=Object.assign({},P,{_ch:P._ch.map(c=>({root:(c.root+1)%12,iv:c.iv})),_mel:P._mel?P._mel.map(b=>b.map(n=>({m:n.m==null?null:n.m+1,d:n.d}))):P._mel,melFrom:null,
+    drums:k==='I'?'rageIntro':k==='A'?'rage':'rage2',crash:4,ost:true});}
+  return R;
+}
+/** ボスの曲のID（無ければその場で作って BGM_DATA に入れる） */
+function bossBgmId(type,rage){
+  if(!type||!DATA.enemies[type])return rage?'rage':'boss';
+  const id='b_'+type+(rage?'_r':'');
+  if(!BGM_DATA[id]){
+    const base=BGM_DATA['u_'+type]||(BGM_DATA['b_'+type]=BGM_DATA['b_'+type]||composeBossBgm(type));
+    BGM_DATA[id]=rage?rageBgmOf(base):base;
+  }
+  return id;
+}
 
 /** ボスの鳴き声の種類：見た目（look）→ 動き方（ai）の順で決める。gen のボスは体の形で決める */
 function bossVoiceKind(type){
@@ -16317,11 +16438,11 @@ const App={
     let id=null;
     if(w&&w.status==='playing'&&!['clear','gameover','camp','lobby','board','online'].includes(this.state)){
       const q=w.quest,b=bossOf(w);
-      if(q.boss==='fighting'&&b&&!b.dead)id=b.phase===2?'rage':'boss';
+      if(q.boss==='fighting'&&b&&!b.dead)id=bossBgmId(b.type,b.phase===2);
       else if(q.boss!=='defeated')id=stageById(w.diff.level).bgm||'forest';
     }else if((!w||w.status!=='playing'||['camp','lobby','board','online'].includes(this.state))&&!['clear','gameover'].includes(this.state))id='camp';
     if(this.state==='shop'&&this.shopCat==='gacha')id='gacha';
-    if(id||Sound.cur)Sound.playMusic(id,id==='rage'?0.6:1.0);
+    if(id||Sound.cur)Sound.playMusic(id,/_r$|^rage$/.test(id||'')?0.6:1.0);
     // 大剣・槌のチャージ：段階が上がるたびに音（自分のキャラだけ）
     if(w){
       const mine=Net.role==='guest'?[Net.myPid]:Net.role==='host'?['p1']:Object.keys(w.players);
