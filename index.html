@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.10.2',date:'2026/11/03'};
+const GAME_VERSION={no:'2.10.3',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -15241,6 +15241,12 @@ const UI={
   /** コントローラーの右スティックで、開いている画面（装備・図鑑・依頼など）をスクロールする */
   scrollPad(dy){
     const root=this.overlay;if(!root)return;
+    // カーソル（フォーカス）がある列を優先してスクロールする（装備画面の左・中・右の列など）
+    const canScroll=el=>{const cs=getComputedStyle(el);return /(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+2;};
+    for(let el=this.current();el&&el!==document.body;el=el.parentElement){
+      if(!root.contains(el))break;
+      if(canScroll(el)){el.scrollTop+=dy;return;}
+    }
     let best=null;
     for(const el of [root,...root.querySelectorAll('*')]){
       const cs=getComputedStyle(el);
