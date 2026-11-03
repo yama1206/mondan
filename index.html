@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.5',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.6',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4470,10 +4470,11 @@ const Cloud={
 
 /* ===================== 5. ワールド（ゲームロジック） ===================== */
 function isWall(map,tx,ty){if(tx<0||ty<0||tx>=map.W||ty>=map.H)return true;const v=map.tiles[ty*map.W+tx];return v!==0&&v!==TILE_PUDDLE;}
-function circleHitsWall(map,x,y,r){
+function circleHitsWall(map,x,y,r,skipObs){
   const x0=Math.floor((x-r)/TILE),x1=Math.floor((x+r)/TILE),y0=Math.floor((y-r)/TILE),y1=Math.floor((y+r)/TILE);
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
     if(!isWall(map,tx,ty))continue;
+    if(skipObs&&tx>=0&&ty>=0&&tx<map.W&&ty<map.H&&Object.values(TILE_OBS).includes(map.tiles[ty*map.W+tx]))continue; // 障害物（木・岩・柱など）は無視
     const cx=clamp(x,tx*TILE,tx*TILE+TILE),cy=clamp(y,ty*TILE,ty*TILE+TILE);
     const dx=x-cx,dy=y-cy;
     if(dx*dx+dy*dy<r*r-0.01)return true;
@@ -4489,8 +4490,9 @@ function inStartRoom(map,x,y,r){
 }
 /** そのエンティティがここへは進めないか（壁、または敵にとってのスタート部屋） */
 function cannotEnter(map,e,x,y){
-  if(e.boss){ // ボスは壁や障害物に引っかからない（マップの外へは出ない。スタート部屋にも入らない）
+  if(e.boss){ // ボスは壁を通れない。木・岩・柱などの障害物は通り抜ける（マップの外へは出ない。スタート部屋にも入らない）
     if(x-e.r<0||y-e.r<0||x+e.r>map.W*TILE||y+e.r>map.H*TILE)return true;
+    if(circleHitsWall(map,x,y,e.r,true))return true;
     return inStartRoom(map,x,y,e.r);
   }
   if(circleHitsWall(map,x,y,e.r))return true;
