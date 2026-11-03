@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.1',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.2',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -17966,7 +17966,10 @@ const App={
     // 防具・手紙はスキルで絞り込めるように、持ち物にあるスキルだけ並べる
     const skillKeys=(f==='pet'||f==='look'||f==='weapon')?[]:[...new Set(p.items.filter(i=>inF(i)).flatMap(i=>Object.keys(skOf(i)).filter(k=>DATA.armorSkills[k])))];
     const skillBar=skillKeys.length?`<div class="filters skillfilters"><button class="${sk?'':'on'}" data-act="skillFilter" data-k="">スキル：すべて</button>${skillKeys.map(k=>`<button class="${sk===k?'on':''}" data-act="skillFilter" data-k="${k}">${DATA.armorSkills[k].name}</button>`).join('')}</div>`:'';
-    const mid=`<div class="col col-mid" data-scroll="mid"><div class="filters"><button data-act="worn" style="background:#2d4a6a;border-color:#6a9ad0">装備中（防具・ステータス・スキル）</button></div><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>${skillBar}
+    // 装飾品を選んでいる間は、真ん中に防具スキルの状態（装飾品を付ける装備の持ち主の分）を出す
+    const dp=this.inv.decoPick,dpItem=dp?Profile.getItem(p,dp.uid):null,dpOwner=dpItem?Profile.equippedBy(p,dp.uid):-1;
+    const midPick=dp&&dpItem?`<div class="col col-mid" data-scroll="mid">${this.skillBlockHTML(dpOwner>=0?computeStats(p,null,dpOwner):st)}</div>`:'';
+    const mid=midPick||`<div class="col col-mid" data-scroll="mid"><div class="filters"><button data-act="worn" style="background:#2d4a6a;border-color:#6a9ad0">装備中（防具・ステータス・スキル）</button></div><div class="filters">${filters.map(([k,n])=>`<button class="${f===k?'on':''}" data-act="filter" data-f="${k}">${n}</button>`).join('')}</div>${skillBar}
       <div class="small muted" style="margin-bottom:6px">所持装備 ${p.items.length}件　◇=空きスロット ◆=装飾品</div>
       ${this.bulkBarHTML(bulk)}${items.map(it=>`<div class="itemrow ${bulk?(bsel.includes(it.uid)?'sel':''):(it.uid===this.inv.sel?'sel':'')}" data-act="${bulk?'bulkTog':'selItem'}" data-uid="${it.uid}">${bulk?`<span class="bx">${bsel.includes(it.uid)?'☑':'☐'}</span>`:''}
         <span class="sl">${SLOT_NAMES[it.slot]}</span><span class="nm" style="color:${eqColor(it)}">${itemName(it)}</span>
