@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.9.0',date:'2026/11/03'};
+const GAME_VERSION={no:'2.9.1',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -16590,7 +16590,6 @@ const App={
       pl.slot=slotOfPid(m.pid);
       pl.petLook=pr.equipped.look||null;pl.petLookV=pr.equipped.lookV||0;pl.petCollar=pr.equipped.pet||null; // 相棒（見た目）と首輪は他の人にも見せる
     });
-    if(n>=2&&(q.stage|0)>=4&&!q.explore&&RNG.next()<0.5)scatterStart(this.world); // ステージ4以降：半分くらいの確率で、四隅からバラバラに出発（オンラインで2人以上のとき）
     ms.forEach(m=>{if(!m.host)m.ready=false;}); // 次の出発までは、もう一度準備OKを押してもらう
     // 先に参加者へ出発を知らせる（ホスト側の画面処理で例外が出ても、参加者は出発できるように）
     Net.broadcastStart(this.world);
