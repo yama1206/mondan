@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.11.0',date:'2026/11/03'};
+const GAME_VERSION={no:'2.11.1',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -18045,10 +18045,14 @@ const App={
     const decos=[...p.decos].sort((a,b)=>a.decoId.localeCompare(b.decoId)||b.rarity-a.rarity);
     let h=`<div class="col-t">${itemName(it)} のスロット${pk.idx+1}に装着する装飾品</div>`;
     if(cur)h+=`<button class="decorow danger" data-act="pickDeco" data-deco="">このスロットの装飾品を外す</button>`;
-    h+=decos.map(d=>{
-      const dd=DATA.decorations[d.decoId],owner=Profile.decoOwner(p,d.uid);
-      const where=d.uid===cur?'このスロットに装着中':(owner?'装着中：'+itemName(owner)+this.ownerSuffix(owner):'未装着');
-      return `<button class="decorow" data-act="pickDeco" data-deco="${d.uid}" ${d.uid===cur?'disabled':''}><span style="color:${decoRarColor(d.rarity)}">◆ ${dd.name}</span>（${DATA.rarities[d.rarity].name}）<br><small>${Items.decoText(d)}　<span class="muted">${where}</span></small></button>`;
+    // 同じ装飾品（種類とレア度が同じ）は1行にまとめて「×何個」と表示する。押すと未装着のものから優先して付ける
+    const groups=[];{const gi={};for(const d of decos){const k=d.decoId+'|'+d.rarity;if(!(k in gi)){gi[k]=groups.length;groups.push([]);}groups[gi[k]].push(d);}}
+    h+=groups.map(g=>{
+      const d=g[0],dd=DATA.decorations[d.decoId];
+      const free=g.filter(x=>!Profile.decoOwner(p,x.uid)),used=g.filter(x=>x.uid!==cur&&Profile.decoOwner(p,x.uid)),here=g.some(x=>x.uid===cur);
+      const pick=free[0]||used[0]||null;
+      const info=[`未装着 ${free.length}`];if(used.length)info.push(`装着中 ${used.length}`);if(here)info.push('このスロットに1個');
+      return `<button class="decorow" data-act="pickDeco" data-deco="${pick?pick.uid:''}" ${pick?'':'disabled'}><span style="color:${decoRarColor(d.rarity)}">◆ ${dd.name}</span>（${DATA.rarities[d.rarity].name}）<b>×${g.length}</b><br><small>${Items.decoText(d)}　<span class="muted">${info.join('／')}${!free.length&&used.length?'（ほかの装備から付け替え）':''}</span></small></button>`;
     }).join('')||'<div class="muted">装飾品を持っていません。敵や宝箱から入手できます。</div>';
     h+=`<div class="btnrow"><button data-act="cancelPick">キャンセル</button></div>`;
     return h;
