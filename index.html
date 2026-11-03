@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.11.1',date:'2026/11/03'};
+const GAME_VERSION={no:'2.11.2',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -15452,6 +15452,9 @@ for(const q of DATA.quests)if(q.stage>=5&&q.reward&&q.reward.mats)q.reward.mats.
   for(const k in DATA.dropTables)for(const r of (DATA.dropTables[k].rolls||[]))if(r.type==='mat')(bt.has(k)?boss:other).add(r.id);
   for(const r of DATA.recipes){const eq=r.out&&r.out.type==='equip'&&DATA.equipment[r.out.id];if(!eq||eq.slot==='weapon'||eq.slot==='charm')continue;
     for(const m in (r.cost||{}))if(boss.has(m)&&!other.has(m)&&!/_orb\d*$/.test(m)&&r.cost[m]>1)r.cost[m]--;}}
+// 防具の製作素材：防具ひとつにつき必要素材数を +2（いちばん多く使う素材に足す）。武器・手紙・装飾品は対象外
+for(const r of DATA.recipes){const eq=r.out&&r.out.type==='equip'&&DATA.equipment[r.out.id];if(!eq||eq.slot==='weapon'||eq.slot==='charm'||!r.cost)continue;
+  const ks=Object.keys(r.cost);if(!ks.length)continue;let top=ks[0];for(const k of ks)if(r.cost[k]>r.cost[top])top=k;r.cost[top]+=2;}
 // 上質・最上の玉：ステージ7以降・8以降のボス・宝箱・依頼から
 for(const e of Object.values(DATA.enemies))if(e.boss&&e.drops&&DATA.dropTables[e.drops]){DATA.dropTables[e.drops].rolls.push({type:'mat',id:'enchant_orb2',chance:0.15,min:1,max:1,stage:7});DATA.dropTables[e.drops].rolls.push({type:'mat',id:'enchant_orb3',chance:0.08,min:1,max:1,stage:8});}
 DATA.dropTables.chest2.rolls.push({type:'mat',id:'enchant_orb2',chance:0.25,min:1,max:1,stage:7});
