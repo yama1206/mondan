@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.7.0',date:'2026/11/03'};
+const GAME_VERSION={no:'2.8.0',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -5457,10 +5457,24 @@ const QuestRules={
     if(pre&&pre.urgent)return this.minionsOpen(p,q.stage)||this.done(p,q.after)>0;
     return this.done(p,q.after)>0;
   },
+  /** ボス依頼の報酬素材：玉（強化玉など）はそのまま、それ以外はそのボスの落とす素材から1個ずつ抽選（出やすさは落とす確率に比例） */
+  bossRewardSplit(q){
+    const fixed={},mats=(q.reward&&q.reward.mats)||{};let n=0;
+    const st=stageById(q.stage),b=q.goal.type==='boss'?(q.boss||(st&&st.enemySet&&st.enemySet.boss)):null,e=b&&DATA.enemies[b],t=e&&DATA.dropTables[e.drops];
+    const pool=t?(t.rolls||[]).filter(r=>r.type==='mat'&&!r.stage&&DATA.materials[r.id]):[];
+    for(const k in mats){if(pool.length&&!/_orb\d*$/.test(k))n+=mats[k];else fixed[k]=mats[k];}
+    return {fixed,n,pool};
+  },
+  rollBossReward(q){
+    const {fixed,n,pool}=this.bossRewardSplit(q),out=Object.assign({},fixed);
+    for(let i=0;i<n;i++){const r=weightedPick(pool.map(m=>({w:m.chance,v:m})));out[r.id]=(out[r.id]||0)+1;}
+    return out;
+  },
   rewardText(q){
-    const r=q.reward,parts=[];
+    const r=q.reward,parts=[],sp=this.bossRewardSplit(q);
     if(r.gold)parts.push(`<span style="color:#ffd23a">${r.gold}G</span>`);
-    for(const k in (r.mats||{}))parts.push(`${DATA.materials[k].name}×${r.mats[k]}`);
+    if(sp.n)parts.push(`このボスの素材（ランダム）×${sp.n}`);
+    for(const k in sp.fixed)parts.push(`${DATA.materials[k].name}×${sp.fixed[k]}`);
     if(r.decos)parts.push(`<span style="color:#c06bff">装飾品×${r.decos}</span>`);
     if(q.goal.type==='boss')parts.push('ボスの素材（個別抽選）');
     if(q.goal.type==='boss')parts.push('手紙×'+(r.letters??1));else if((r.letters??1)>0)parts.push('手紙×'+(r.letters??1));
@@ -16515,7 +16529,7 @@ const App={
       if(testRun){res[pid].notes.push('テスト中なので、報酬・図鑑・クリアの記録は残りません');continue;}
       const R=q.reward,list=[];
       if(R.gold)list.push({type:'gold',n:R.gold});
-      for(const k in (R.mats||{}))list.push({type:'mat',id:k,n:R.mats[k]});
+      {const rm=QuestRules.rollBossReward(q);for(const k in rm)list.push({type:'mat',id:k,n:rm[k]});}
       for(let i=0;i<(R.decos||0);i++)list.push({type:'deco',item:Items.createDeco(pick(Object.keys(DATA.decorations)),Items.rollRarity(1.2+0.4*stage.id))});
       // 手紙：依頼の報酬にも付く（reward.letters で個別に決められる。無ければ1枚）
       {const nl=R.letters??1,bst=(q.urgent||q.boss)?1.5:1.25;
