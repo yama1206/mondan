@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.10.1',date:'2026/11/03'};
+const GAME_VERSION={no:'2.10.2',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -3907,7 +3907,7 @@ const PETS=[
   {id:'r_wind',name:'疾風',rar:2,pet:[['petCd',12]],me:[['dodgeDistPct',5]]},
   {id:'r_hawk',name:'鷹目',rar:2,pet:[['petRange',22]],me:[['crit',3]]},
   {id:'r_herb',name:'薬草',rar:2,pet:[['petSup',20]],me:[['potionHealPct',8]]},
-  {id:'e_flame',name:'紅蓮',rar:3,pet:[['petAtk',26],['petCd',8]],me:[['atkPct',5]]},
+  {id:'e_flame',name:'紅蓮',rar:3,pet:[['petAtk',30]],me:[['atkPct',5]]},
   {id:'e_guard',name:'守護',rar:3,pet:[['petSup',30]],me:[['maxHpPct',6]]},
   {id:'e_shadow',name:'影縫い',rar:3,pet:[['petCd',16]],me:[['dodgeIframe',0.05]]},
   {id:'e_star',name:'星屑',rar:3,pet:[['petAtk',22]],me:[['critDmg',10]]},
