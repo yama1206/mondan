@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.10.3',date:'2026/11/03'};
+const GAME_VERSION={no:'2.11.0',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -1580,34 +1580,68 @@ const DATA={
   /* ボスの当たり判定（部位）。x・y・r はボスの半径に対する割合で、x＋が向いている方向（前）、y＋が右。
      mult：その部位へのダメージ倍率／weak：弱点（弓の矢は weakMult 倍の大ダメージ、防具スキル「弱点特効」が効く）
      head：頭（槌のスタン値がたまる）／guard：正面の硬い部位（guard を持つボスで、この部位に当たると弾かれる）
+     brk：部位破壊。hp＝ボスの最大体力に対する割合。その部位へのダメージがたまると壊れて素材がもらえる。cut:1 は切れて無くなる（当たり判定も消える）
      1回の攻撃で当たるのは1か所だけ：近接は振った側から一番近い部位、矢は最初に触れた部位 */
   bossParts:{
-    wolf:[{id:'head',name:'頭',x:1.05,y:0,r:0.43,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.72,mult:1},{id:'tail',name:'尻尾',x:-1.2,y:0,r:0.36,mult:0.9}],
+    wolf:[{id:'head',name:'頭',x:1.05,y:0,r:0.43,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.72,mult:1},{id:'tail',name:'尻尾',x:-1.2,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
     rabbit:[{id:'head',name:'頭',x:1.0,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.15,y:0,r:0.72,mult:1},{id:'tail',name:'丸い尾',x:-1.0,y:0,r:0.3,mult:0.9}],
-    mole:[{id:'head',name:'頭',x:1.1,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'claw',name:'爪',x:0.6,y:-1.0,r:0.38,mult:1.1}],
-    centipede:[{id:'head',name:'頭',x:1.2,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.1,y:0,r:0.32,mult:0.9}],
-    grados:[{id:'head',name:'頭',x:0.7,y:0,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},{id:'armL',name:'腕',x:0.3,y:-1.0,r:0.42,mult:0.9},{id:'armR',name:'腕',x:0.3,y:1.0,r:0.42,mult:0.9}],
+    mole:[{id:'head',name:'頭',x:1.1,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'claw',name:'爪',x:0.6,y:-1.0,r:0.38,mult:1.1,brk:{hp:0.08}}],
+    centipede:[{id:'head',name:'頭',x:1.2,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.1,y:0,r:0.32,mult:0.9,brk:{hp:0.1,cut:1}}],
+    grados:[{id:'head',name:'頭',x:0.7,y:0,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},{id:'armL',name:'左腕',x:0.3,y:-1.0,r:0.42,mult:0.9,brk:{hp:0.08}},{id:'armR',name:'右腕',x:0.3,y:1.0,r:0.42,mult:0.9,brk:{hp:0.08}}],
     black_wolf:'wolf',
-    meadow_bull:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9}],
-    salamander:[{id:'head',name:'頭',x:1.25,y:0,r:0.5,mult:1.25,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.3,y:0,r:0.5,mult:0.9}],
-    rhino:[{id:'head',name:'頭',x:1.0,y:0,r:0.45,mult:1.25,weak:true,head:true,guard:'dir'},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1,guard:'dir'},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9,guard:'dir'}],
-    boar:[{id:'head',name:'頭',x:0.95,y:0,r:0.45,mult:1.25,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.42,mult:0.9}],
+    meadow_bull:[{id:'head',name:'角',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9}],
+    salamander:[{id:'head',name:'頭',x:1.25,y:0,r:0.5,mult:1.25,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.7,mult:1},{id:'tail',name:'尾',x:-1.3,y:0,r:0.5,mult:0.9,brk:{hp:0.1,cut:1}}],
+    rhino:[{id:'head',name:'角',x:1.0,y:0,r:0.45,mult:1.25,weak:true,head:true,guard:'dir',brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1,guard:'dir'},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.45,mult:0.9,guard:'dir'}],
+    boar:[{id:'head',name:'牙',x:0.95,y:0,r:0.45,mult:1.25,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.42,mult:0.9}],
     gale_bird:[{id:'head',name:'頭',x:0.8,y:0,r:0.36,mult:1.4,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.6,mult:1},
-      {id:'wingL',name:'翼',x:0.05,y:-1.25,r:0.55,mult:0.8},{id:'wingR',name:'翼',x:0.05,y:1.25,r:0.55,mult:0.8},{id:'tail',name:'尾羽',x:-1.0,y:0,r:0.35,mult:0.9}],
-    rock_lizard:[{id:'head',name:'頭',x:1.3,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.8,mult:0.9},{id:'tail',name:'尻尾',x:-1.4,y:0,r:0.38,mult:1},{id:'tail2',name:'尻尾',x:-1.95,y:0,r:0.3,mult:1}],
-    stag_beetle:[{id:'jaw',name:'大顎',x:1.45,y:0,r:0.55,mult:1,guard:true},{id:'head',name:'頭',x:0.6,y:0,r:0.38,mult:1,head:true},
+      {id:'wingL',name:'左翼',x:0.05,y:-1.25,r:0.55,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼',x:0.05,y:1.25,r:0.55,mult:0.8,brk:{hp:0.08}},{id:'tail',name:'尾羽',x:-1.0,y:0,r:0.35,mult:0.9,brk:{hp:0.1,cut:1}}],
+    rock_lizard:[{id:'head',name:'頭',x:1.3,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.8,mult:0.9},{id:'tail',name:'尻尾',x:-1.4,y:0,r:0.38,mult:1},{id:'tail2',name:'尻尾の先',x:-1.95,y:0,r:0.3,mult:1,brk:{hp:0.1,cut:1}}],
+    stag_beetle:[{id:'jaw',name:'大顎',x:1.45,y:0,r:0.55,mult:1,guard:true,brk:{hp:0.08}},{id:'head',name:'頭',x:0.6,y:0,r:0.38,mult:1,head:true},
       {id:'body',name:'背中',x:-0.2,y:0,r:0.72,mult:1},{id:'belly',name:'腹',x:-0.95,y:0,r:0.42,mult:1.35,weak:true}],
     hydra:[{id:'headL',name:'頭',x:1.25,y:-0.78,r:0.4,mult:1.3,weak:true,head:true},{id:'headC',name:'頭',x:1.45,y:0,r:0.4,mult:1.3,weak:true,head:true},
-      {id:'headR',name:'頭',x:1.25,y:0.78,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.2,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.1,y:0,r:0.32,mult:0.9}],
+      {id:'headR',name:'頭',x:1.25,y:0.78,r:0.4,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.2,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.1,y:0,r:0.32,mult:0.9,brk:{hp:0.1,cut:1}}],
     venomKing:[{id:'head',name:'頭',x:1.1,y:0,r:0.45,mult:1.35,weak:true,head:true},{id:'body',name:'甲殻',x:-0.05,y:0,r:0.85,mult:0.85}],
     mireGiant:[{id:'head',name:'頭',x:0.8,y:0,r:0.36,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},
-      {id:'armL',name:'腕',x:0.35,y:-1.0,r:0.42,mult:0.85},{id:'armR',name:'腕',x:0.35,y:1.0,r:0.42,mult:0.85}],
-    aquarios:[{id:'head',name:'頭',x:1.05,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.75,mult:1},{id:'tail',name:'尾びれ',x:-1.1,y:0,r:0.4,mult:0.9}],
-    turtle:[{id:'head',name:'頭',x:1.15,y:0,r:0.36,mult:1.5,weak:true,head:true},{id:'shell',name:'甲羅',x:-0.05,y:0,r:0.95,mult:0.65}],
-    thunderEel:[{id:'head',name:'頭',x:1.0,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.6,mult:1},{id:'tail',name:'尻尾',x:-1.25,y:0,r:0.45,mult:0.9}],
-    giantWorm:[{id:'head',name:'頭',x:1.15,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.8,mult:1},{id:'tail',name:'尻尾',x:-1.1,y:0,r:0.4,mult:0.9}],
-    bone_dragon:[{id:'head',name:'頭',x:1.4,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.5,y:0,r:0.42,mult:0.9},
-      {id:'wingL',name:'翼',x:0,y:-1.4,r:0.5,mult:0.8},{id:'wingR',name:'翼',x:0,y:1.4,r:0.5,mult:0.8}],
+      {id:'armL',name:'左腕',x:0.35,y:-1.0,r:0.42,mult:0.85,brk:{hp:0.08}},{id:'armR',name:'右腕',x:0.35,y:1.0,r:0.42,mult:0.85,brk:{hp:0.08}}],
+    aquarios:[{id:'head',name:'頭',x:1.05,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.75,mult:1},{id:'tail',name:'尾びれ',x:-1.1,y:0,r:0.4,mult:0.9,brk:{hp:0.1,cut:1}}],
+    turtle:[{id:'head',name:'頭',x:1.15,y:0,r:0.36,mult:1.5,weak:true,head:true},{id:'shell',name:'甲羅',x:-0.05,y:0,r:0.95,mult:0.65,brk:{hp:0.15}}],
+    thunderEel:[{id:'head',name:'頭',x:1.0,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.6,mult:1},{id:'tail',name:'尻尾',x:-1.25,y:0,r:0.45,mult:0.9,brk:{hp:0.1,cut:1}}],
+    giantWorm:[{id:'head',name:'頭',x:1.15,y:0,r:0.42,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.8,mult:1},{id:'tail',name:'尻尾',x:-1.1,y:0,r:0.4,mult:0.9,brk:{hp:0.1,cut:1}}],
+    bone_dragon:[{id:'head',name:'頭',x:1.4,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:0,y:0,r:0.85,mult:1},{id:'tail',name:'尻尾',x:-1.5,y:0,r:0.42,mult:0.9,brk:{hp:0.1,cut:1}},
+      {id:'wingL',name:'左翼',x:0,y:-1.4,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼',x:0,y:1.4,r:0.5,mult:0.8,brk:{hp:0.08}}],
+    kama_mantis:[{id:'head',name:'頭',x:0.75,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.75,mult:1},{id:'armL',name:'左大鎌',x:1.2,y:-0.75,r:0.38,mult:0.9,brk:{hp:0.08}},{id:'armR',name:'右大鎌',x:1.2,y:0.75,r:0.38,mult:0.9,brk:{hp:0.08}}],
+    armadillo:[{id:'head',name:'頭',x:0.75,y:0,r:0.45,mult:1.4,weak:true,head:true},{id:'body',name:'甲羅',x:-0.05,y:0,r:0.85,mult:0.75},{id:'tail',name:'尻尾',x:-1.45,y:0,r:0.3,mult:0.9,brk:{hp:0.1,cut:1}}],
+    flower_dragon:[{id:'head',name:'花の口',x:0.7,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.8,mult:1},{id:'petalL',name:'左花びら',x:0.6,y:-0.8,r:0.26,mult:1.1,brk:{hp:0.1,cut:1}},{id:'petalR',name:'右花びら',x:0.6,y:0.8,r:0.26,mult:1.1,brk:{hp:0.1,cut:1}}],
+    hermit_crab:[{id:'head',name:'頭',x:0.75,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'殻',x:-0.1,y:0,r:0.85,mult:0.7},{id:'armL',name:'左大バサミ',x:1.2,y:-0.9,r:0.32,mult:1,brk:{hp:0.08}},{id:'armR',name:'右大バサミ',x:1.2,y:0.9,r:0.32,mult:1,brk:{hp:0.08}}],
+    mud_whale:[{id:'head',name:'頭',x:0.75,y:0,r:0.48,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.15,y:0,r:0.85,mult:1},{id:'tail',name:'尾びれ',x:-1.5,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    queen_bee:[{id:'head',name:'頭',x:0.7,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'wingL',name:'左羽',x:-0.75,y:-1.2,r:0.42,mult:0.8,brk:{hp:0.1,cut:1}},{id:'wingR',name:'右羽',x:-0.75,y:1.2,r:0.42,mult:0.8,brk:{hp:0.1,cut:1}},{id:'tail',name:'毒針',x:-1.45,y:0,r:0.28,mult:1.1,brk:{hp:0.1,cut:1}}],
+    twin_shark:[{id:'head',name:'頭',x:0.75,y:0,r:0.48,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.15,y:0,r:0.85,mult:1},{id:'tail',name:'尾びれ',x:-1.5,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    mola_fish:[{id:'head',name:'頭',x:0.7,y:0,r:0.48,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.85,mult:1},{id:'finL',name:'左ひれ',x:-0.2,y:-0.95,r:0.3,mult:0.9,brk:{hp:0.08}},{id:'finR',name:'右ひれ',x:-0.2,y:0.95,r:0.3,mult:0.9,brk:{hp:0.08}}],
+    quake_dragon:[{id:'head',name:'角',x:0.75,y:0,r:0.5,mult:1.3,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.15,y:0,r:0.9,mult:1},{id:'tail',name:'尻尾',x:-1.55,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    scarab:[{id:'head',name:'角',x:0.75,y:0,r:0.5,mult:1.3,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'甲殻',x:-0.05,y:0,r:0.85,mult:0.8},{id:'armL',name:'左大顎',x:1.2,y:-0.9,r:0.3,mult:1,brk:{hp:0.08}},{id:'armR',name:'右大顎',x:1.2,y:0.9,r:0.3,mult:1,brk:{hp:0.08}}],
+    fire_phoenix:[{id:'head',name:'頭',x:0.7,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'wingL',name:'左翼',x:-0.8,y:-1.3,r:0.45,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼',x:-0.8,y:1.3,r:0.45,mult:0.8,brk:{hp:0.08}},{id:'tail',name:'尾羽',x:-1.55,y:0,r:0.32,mult:0.9,brk:{hp:0.1,cut:1}}],
+    ice_bear:[{id:'head',name:'頭',x:0.75,y:0,r:0.48,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.85,mult:1},{id:'armL',name:'左爪',x:1.1,y:-0.8,r:0.34,mult:1,brk:{hp:0.08}},{id:'armR',name:'右爪',x:1.1,y:0.8,r:0.34,mult:1,brk:{hp:0.08}}],
+    ice_unicorn:[{id:'head',name:'角',x:0.75,y:0,r:0.48,mult:1.3,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1},{id:'hind',name:'後ろ脚',x:-0.85,y:0,r:0.42,mult:0.9}],
+    headless_knight:[{id:'head',name:'頭骨',x:0.7,y:0,r:0.45,mult:1.35,weak:true,head:true},{id:'body',name:'鎧',x:-0.1,y:0,r:0.8,mult:1},{id:'armL',name:'左大鎌',x:1.3,y:-0.75,r:0.36,mult:0.9,brk:{hp:0.08}},{id:'armR',name:'右大鎌',x:1.3,y:0.75,r:0.36,mult:0.9,brk:{hp:0.08}}],
+    yomi_samurai:[{id:'head',name:'頭',x:0.7,y:0,r:0.45,mult:1.35,weak:true,head:true},{id:'body',name:'鎧',x:-0.1,y:0,r:0.8,mult:1},{id:'armL',name:'左刀',x:1.6,y:-0.6,r:0.32,mult:0.9,brk:{hp:0.08}},{id:'armR',name:'右刀',x:1.6,y:0.6,r:0.32,mult:0.9,brk:{hp:0.08}}],
+    giant_frog:[{id:'head',name:'頭',x:0.85,y:0,r:0.48,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.8,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.42,mult:0.9}],
+    bog_leech:[{id:'head',name:'口',x:1.0,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.78,mult:1},{id:'tail',name:'尾',x:-1.15,y:0,r:0.35,mult:0.9,brk:{hp:0.1,cut:1}}],
+    deep_octopus:[{id:'head',name:'頭',x:0.35,y:0,r:0.5,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.3,y:0,r:0.7,mult:1},{id:'tentL',name:'左触手',x:-1.1,y:-0.55,r:0.32,mult:0.9,brk:{hp:0.1,cut:1}},{id:'tentR',name:'右触手',x:-1.1,y:0.55,r:0.32,mult:0.9,brk:{hp:0.1,cut:1}}],
+    giant_bat:[{id:'head',name:'頭',x:0.7,y:0,r:0.42,mult:1.4,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.6,mult:1},{id:'wingL',name:'左翼膜',x:0,y:-1.3,r:0.55,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼膜',x:0,y:1.3,r:0.55,mult:0.8,brk:{hp:0.08}}],
+    crystal_scorpion:[{id:'head',name:'頭',x:1.0,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'甲殻',x:-0.05,y:0,r:0.75,mult:0.9},{id:'armL',name:'左ハサミ',x:1.25,y:-0.75,r:0.3,mult:1,brk:{hp:0.08}},{id:'armR',name:'右ハサミ',x:1.25,y:0.75,r:0.3,mult:1,brk:{hp:0.08}},{id:'tail',name:'尾針',x:-1.5,y:0,r:0.34,mult:1.1,brk:{hp:0.1,cut:1}}],
+    crimson_serpent:[{id:'head',name:'頭',x:1.2,y:0,r:0.4,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.72,mult:1},{id:'tail',name:'尾',x:-1.15,y:0,r:0.32,mult:0.9,brk:{hp:0.1,cut:1}}],
+    fire_griffon:[{id:'head',name:'頭',x:1.05,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'wingL',name:'左翼',x:-0.1,y:-1.3,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼',x:-0.1,y:1.3,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'tail',name:'尻尾',x:-1.5,y:0,r:0.34,mult:0.9,brk:{hp:0.1,cut:1}}],
+    eternal_beast:[{id:'head',name:'牙',x:0.95,y:0,r:0.45,mult:1.25,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.42,mult:0.9}],
+    frost_cat:[{id:'head',name:'頭',x:0.95,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.72,mult:1},{id:'tail',name:'尻尾',x:-1.3,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    abyss_spider:[{id:'head',name:'頭',x:0.75,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'腹',x:-0.4,y:0,r:0.75,mult:1},{id:'legL',name:'左前脚',x:0.9,y:-0.85,r:0.3,mult:0.9,brk:{hp:0.08}},{id:'legR',name:'右前脚',x:0.9,y:0.85,r:0.3,mult:0.9,brk:{hp:0.08}}],
+    ghost_moth:[{id:'head',name:'頭',x:0.7,y:0,r:0.4,mult:1.4,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.6,mult:1},{id:'wingL',name:'左翅',x:-0.1,y:-1.2,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翅',x:-0.1,y:1.2,r:0.5,mult:0.8,brk:{hp:0.08}}],
+    grave_rat:[{id:'head',name:'頭',x:1.1,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'tail',name:'尻尾',x:-1.3,y:0,r:0.3,mult:0.9,brk:{hp:0.1,cut:1}}],
+    volcano_dragon:[{id:'head',name:'角',x:1.1,y:0,r:0.45,mult:1.3,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1},{id:'wingL',name:'左翼',x:-0.1,y:-1.35,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼',x:-0.1,y:1.35,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'tail',name:'尻尾',x:-1.55,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    felgnas:[{id:'head',name:'頭',x:1.0,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.75,mult:1},{id:'tail',name:'尻尾',x:-1.45,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    ice_deer:[{id:'head',name:'角',x:0.95,y:0,r:0.45,mult:1.3,weak:true,head:true,brk:{hp:0.08}},{id:'body',name:'胴',x:-0.05,y:0,r:0.78,mult:1},{id:'hind',name:'後ろ脚',x:-0.9,y:0,r:0.42,mult:0.9}],
+    frost_wyvern:[{id:'head',name:'頭',x:1.1,y:0,r:0.45,mult:1.3,weak:true,head:true},{id:'body',name:'胴',x:-0.05,y:0,r:0.8,mult:1},{id:'wingL',name:'左翼',x:-0.1,y:-1.35,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'wingR',name:'右翼',x:-0.1,y:1.35,r:0.5,mult:0.8,brk:{hp:0.08}},{id:'tail',name:'尻尾',x:-1.55,y:0,r:0.36,mult:0.9,brk:{hp:0.1,cut:1}}],
+    ice_ape:[{id:'head',name:'頭',x:0.8,y:0,r:0.42,mult:1.35,weak:true,head:true},{id:'body',name:'胴',x:-0.1,y:0,r:0.85,mult:1},{id:'armL',name:'左拳',x:0.55,y:-1.0,r:0.4,mult:0.9,brk:{hp:0.08}},{id:'armR',name:'右拳',x:0.55,y:1.0,r:0.4,mult:0.9,brk:{hp:0.08}}],
+    forest_rabbit:'rabbit',
   },
   enemies:{
     kama_mantis:{name:'草原の大鎌蟷螂',ai:'pattern',look:'gen',hp:2400,atk:23,def:6,r:36,speed:112,color:'#6a8a3a',drops:'kama_mantis',boss:true,moveStyle:'ambush',specials:[{k:'ambushStrike',cd:3.5,wind:0.3,dmg:1.3,r:100,range:[0,170],still:true},{k:'grabHold',cd:10,wind:0.45,dmg:0.8,r:90,range:[0,160]},{k:'threat',cd:12,wind:0.6,r:220,range:[0,220]}],stunMax:120,stunTime:4,gen:{body:'oval',legs:6,head:'horn',arm:'scythe'},pal:{body:'#6a8a3a',dark:'#34481a',spot:'#c8e070',eye:'#ffe060'},
@@ -5947,7 +5981,15 @@ function bossPartsOf(e){
   if(typeof def==='string')def=DATA.bossParts[def];
   if(!def)return [{part:null,x:e.x,y:e.y,r:e.r}];
   const c=Math.cos(e.facing||0),s=Math.sin(e.facing||0);
-  return def.map(pt=>({part:pt,x:e.x+(pt.x*c-pt.y*s)*e.r,y:e.y+(pt.x*s+pt.y*c)*e.r,r:pt.r*e.r}));
+  return def.filter(pt=>!(pt.brk&&pt.brk.cut&&e.brk&&e.brk[pt.id])).map(pt=>({part:pt,x:e.x+(pt.x*c-pt.y*s)*e.r,y:e.y+(pt.x*s+pt.y*c)*e.r,r:pt.r*e.r}));
+}
+/** 切れて無くなった部位（ボスの中心からの位置。絵を消すのに使う） */
+function bossCutParts(e){
+  let def=e.boss&&!e.mid?DATA.bossParts[e.type]:null;
+  if(typeof def==='string')def=DATA.bossParts[def];
+  if(!def||!e.brk)return [];
+  const c=Math.cos(e.facing||0),s=Math.sin(e.facing||0);
+  return def.filter(pt=>pt.brk&&pt.brk.cut&&e.brk[pt.id]).map(pt=>({x:(pt.x*c-pt.y*s)*e.r,y:(pt.x*s+pt.y*c)*e.r,r:pt.r*e.r*1.25}));
 }
 /** 近接攻撃が当たる部位：扇形に入っている部位のうち、振った人から一番近いもの（無ければ null） */
 function meleePart(e,p,a){
@@ -6020,6 +6062,12 @@ function damageEnemy(w,p,e,mult,src){
   }
   if(e.fld&&e.fld.mode==='nap'){dmg=Math.round(dmg*2);emit(w,{type:'bossTxt',x:e.x,y:e.y-e.r-30,text:'寝込みを襲った！',color:'#ffd23a'});} // 眠っているボスへの最初の一撃は2倍
   e.hp-=dmg;e.hurt=0.12;e.aggro=true;
+  if(part&&part.brk&&e.boss&&!(e.brk&&e.brk[part.id])){ // 部位破壊：その部位へのダメージがたまると壊れる・切れる
+    e.brk=e.brk||{};e.brkHp=e.brkHp||{};
+    if(e.brkHp[part.id]==null)e.brkHp[part.id]=e.maxHp*part.brk.hp;
+    e.brkHp[part.id]-=dmg;
+    if(e.brkHp[part.id]<=0){e.brk[part.id]=1;emit(w,{type:'partBreak',x:hp_.x,y:hp_.y,enemy:e.type,name:part.name,cut:!!part.brk.cut,table:DATA.enemies[e.type].drops,n:part.brk.n||(part.brk.cut?2:1)});}
+  }
   // ザコ敵は体力が半分以下になると怯んで、少しの間動きが止まる（ボス・中ボスは対象外）
   if(!e.boss&&!e.mid&&!e.halfFlinched&&e.hp>0&&e.hp<=e.maxHp*0.5){e.halfFlinched=true;e.flinchT=0.45;e.action=null;emit(w,{type:'status',x:e.x,y:e.y-e.r,text:'怯み',color:'#ffd27a'});}
   if(e.boss){addHate(e,p,dmg*(wsActive(p,'taunt')?3:1));w.bossDmg=w.bossDmg||{};w.bossDmg[p.id]=(w.bossDmg[p.id]||0)+Math.round(dmg);} // 結果表示用の累計与ダメージ
@@ -11365,6 +11413,7 @@ const Renderer={
       case 'warp':this.ring(ev.x,ev.y,4,34,'#9fe0ff',0.45,3);break; // 仲間のワープ
       case 'mudSplash':this.burst(ev.x,ev.y,'#6a5a3a',6,180);break; // 沼巨人の泥が飛び散る
       case 'ink':this.burst(ev.x,ev.y,'#101018',14,160);if(this.focusId?ev.pid===this.focusId:!/^c\d+$/.test(ev.pid||''))this.inkT=3.5;break; // タコの墨：画面が暗くなる
+      case 'partBreak':this.burst(ev.x,ev.y,'#ffd23a',24,220,4);this.ring(ev.x,ev.y,6,90,'#ffd23a',0.5,4);this.addShake(6);this.floater(ev.x,ev.y-20,ev.name+(ev.cut?'を切断！':'を破壊！'),'#ffd23a',20,1.6);break;
       case 'bossTxt':this.floater(ev.x,ev.y,ev.text,ev.color||'#fff',18,1.2);break; // ボスの技名
       case 'slashLine':{ // 分身の斬撃：線に沿って光の粒
         const n=14;for(let i=0;i<=n;i++){const q=i/n;this.burst(ev.x0+(ev.x1-ev.x0)*q,ev.y0+(ev.y1-ev.y0)*q,'#d0a0ff',2,60);}this.addShake(3);break;}
@@ -12138,6 +12187,8 @@ const Renderer={
       ctx.save();ctx.globalAlpha=0.35+0.2*Math.sin(this.time*9+e.id);ctx.strokeStyle='#c070ff';ctx.lineWidth=3;ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.arc(0,0,e.r+4,this.time*2,this.time*2+TAU);ctx.stroke();ctx.restore();
     }
+    const cutPs=e.boss&&e.brk?bossCutParts(e):[];
+    if(cutPs.length){ctx.save();const R=e.r*8;ctx.beginPath();ctx.rect(-R,-R,2*R,2*R);for(const q of cutPs){ctx.moveTo(q.x+q.r,q.y);ctx.arc(q.x,q.y,q.r,0,TAU);}ctx.clip('evenodd');} // 切れた部位は描かない
     if(!(ed.boss&&BossArt.draw(ctx,e,hurt))&&!this.drawMobArt(ctx,e,hurt,ed))switch(ed.look||ed.ai){
       case 'goblin':this.drawGoblin(ctx,e,hurt,ed.pal);break;
       case 'archer':case 'garcher':this.drawArcher(ctx,e,hurt,ed.pal,ed.aimTime||0.8);break;
@@ -12203,6 +12254,8 @@ const Renderer={
       case 'gen':this.drawGenBoss(ctx,e,hurt,ed);break;
       case 'rabbit':this.drawRabbit(ctx,e,hurt,ed.pal);break;
     }
+    if(cutPs.length){ctx.restore(); // 切り口
+      for(const q of cutPs){const d=Math.hypot(q.x,q.y)||1,k=Math.max(0,d-q.r)/d;ctx.fillStyle='#a8323a';ctx.strokeStyle='#4a0e14';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(q.x*k,q.y*k,q.r*0.3,0,TAU);ctx.fill();ctx.stroke();}}
     ctx.restore();
     // 敵の体力は表示しない（モンハン式）
   },
@@ -16088,7 +16141,7 @@ const Net={
       enemies:w.enemies.map(e=>({id:e.id,type:e.type,x:r1(e.x),y:r1(e.y),r:e.r,hp:Math.ceil(e.hp),maxHp:e.maxHp,state:e.state,facing:r3(e.facing),
         atkAngle:r3(e.atkAngle),timer:r3(e.timer),phase:e.phase,hurt:r3(e.hurt),anim:r1(e.anim),boss:e.boss,
         trapT:r3(e.trapT||0),trapKind:e.trapKind||null,blindT:r3(e.blindT||0),weakNoticed:!!e.weakNoticed,
-        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,ult:!!e.ult,camo:!!e.camo,mimic:e.mimic||0,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,slime:e.slimeT>0,frenzy:!!e.frenzy})),
+        elite:e.elite,mid:e.mid,emp:e.empowerT>0,z:r1(e.z||0),action:e.action||null,summoned:e.summoned,hidden:!!e.hidden,ult:!!e.ult,camo:!!e.camo,mimic:e.mimic||0,fin:!!e.fin,mound:!!e.mound,basking:!!e.basking,headsCut:e.headsCut||0,curl:!!e.curl,shell:!!e.shell,tailLost:!!e.tailLost,brk:e.brk||null,slime:e.slimeT>0,frenzy:!!e.frenzy})),
       projectiles:w.projectiles.map(p=>({id:p.id,kind:p.kind,owner:p.owner,x:r1(p.x),y:r1(p.y),angle:r3(p.angle),r:p.r,life:r3(p.life)})),
       telegraphs:w.telegraphs.map(t=>({id:t.id,shape:t.shape,x:r1(t.x),y:r1(t.y),r:t.r,r0:t.r0,el:t.el||null,angle:t.angle,arc:t.arc,len:t.len,width:t.width,t:r3(t.t),total:t.total,dmg:t.dmg>0?1:0,small:!!t.small,kind:t.kind||null})),
       hazards:(w.hazards||[]).filter(z=>!z.fixed).map(z=>({id:z.id,kind:z.kind,x:r1(z.x),y:r1(z.y),r:z.r,bl:z.bl,t:r3(z.t),life:z.life,delay:r3(z.delay||0)})),
@@ -16773,6 +16826,11 @@ const App={
             if(ev.mid){for(let i=0;i<CONFIG.midBoss.bonusRolls;i++)this.giveRewards(ev.table,'中ボス：');this.giveRewards('midboss','中ボス：');}
           }
           break;
+        case 'partBreak':{ // 部位破壊：そのボスの素材（玉は除く）を落とす確率の重みで抽選
+          const t=ev.table&&DATA.dropTables[ev.table],pool=t?(t.rolls||[]).filter(r=>r.type==='mat'&&!r.stage&&DATA.materials[r.id]&&!/_orb\d*$/.test(r.id)):[];
+          if(pool.length){const loot=[];for(let i=0;i<(ev.n||1);i++){const r=weightedPick(pool.map(m=>({w:m.chance,v:m})));loot.push({type:'mat',id:r.id,n:1});}this.giveRewards(null,(ev.cut?'切断':'部位破壊')+'：',null,loot);}
+          break;
+        }
         case 'gather':this.giveRewards(ev.table,'採取：','gather');break;
         case 'chest':this.giveRewards(ev.table,'宝箱：',null,[{type:'coin',n:30}]);break; // 宝箱からコイン30枚
         case 'ghostGuard':{ // 身代わりの護符を使った：持ち主のデータからも1つ減らす
