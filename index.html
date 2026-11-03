@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.6',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.7',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4492,7 +4492,8 @@ function inStartRoom(map,x,y,r){
 function cannotEnter(map,e,x,y){
   if(e.boss){ // ボスは壁を通れない。木・岩・柱などの障害物は通り抜ける（マップの外へは出ない。スタート部屋にも入らない）
     if(x-e.r<0||y-e.r<0||x+e.r>map.W*TILE||y+e.r>map.H*TILE)return true;
-    if(circleHitsWall(map,x,y,e.r,true))return true;
+    const rolling=e.state==='special'&&!!e.sp&&e.sp.k==='bounceRoll'; // 丸まって転がる技は障害物にもぶつかって跳ね返る
+    if(circleHitsWall(map,x,y,e.r,!rolling))return true;
     return inStartRoom(map,x,y,e.r);
   }
   if(circleHitsWall(map,x,y,e.r))return true;
