@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.9.2',date:'2026/11/03'};
+const GAME_VERSION={no:'2.10.0',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -285,7 +285,7 @@ const CONFIG={
   // 強化された魔物（強敵の巣・隠し納骨堂）：体力・攻撃力・大きさの倍率と、倒したときの追加報酬の抽選回数
   elite:{hp:2.2,atk:1.35,size:1.2,bonusRolls:1},
   minionHp:3.6, // ボス以外の魔物の体力倍率（人数に関係なく一定）：従来の3倍 × 1.5 × 0.8（この値を新しい基準にする）
-  bossHpByParty:{1:1,2:3.2,3:4.4,4:5.6,5:6.8}, // ボスの体力倍率（オンラインの人数ごと。2.9.2で2人1.6→3.2など、約2倍に）
+  bossHpByParty:{1:1,2:1.9,3:2.7,4:3.5,5:4.2}, // ボスの体力倍率（1人プレイを1としたときの倍率。人数ごと）
   bossBoost:{hp:1.08,atk:1.15}, // ボスの体力・攻撃力の追加倍率（体力は1.2→1.08＝約1割減）
   bossScale:{size:1.25,reach:1.15}, // ボスの大きさの倍率（size：体と当たり判定、reach：攻撃範囲の予告の広さ）
   minionBoost:{atk:1.2}, // ザコ敵（ボス以外。中ボス・強化個体も含む）の攻撃力の追加倍率
@@ -1514,6 +1514,7 @@ const DATA={
   // items の type：coin（コイン）／gold（G）／item（消耗品・id）／mat（素材・id）／equip（装備・id、n本）／deco（装飾品・id、rarity）
   gifts:[
     {id:'v2_coin_100',reason:'ver 2.0 リリース記念',items:[{type:'coin',n:100}]},
+    {id:'v2_10_coin_150',reason:'アップデートによる補填です',items:[{type:'coin',n:150}]},
   ],
   elemShare:0.5,
   seriesRes:{
@@ -3725,6 +3726,7 @@ function lootLabel(l){
   if(l.type==='deco')return {text:`${DATA.decorations[l.item.decoId].name}（${DATA.rarities[l.item.rarity].name}）`,color:rarColor(l.item.rarity)};
   if(l.type==='item'){const c=DATA.consumables[l.id];return {text:`${c.name} ×${l.n}`,color:c.color};}
   if(l.type==='gold')return {text:`${l.n}G`,color:'#ffd23a'};
+  if(l.type==='coin')return {text:`コイン ×${l.n}`,color:'#ffd23a'};
   return {text:'?',color:'#fff'};
 }
 
@@ -5473,6 +5475,7 @@ const QuestRules={
   rewardText(q){
     const r=q.reward,parts=[],sp=this.bossRewardSplit(q);
     if(r.gold)parts.push(`<span style="color:#ffd23a">${r.gold}G</span>`);
+    parts.push('<span style="color:#ffd23a">コイン×3</span>');
     if(sp.n)parts.push(`このボスの素材（ランダム）×${sp.n}`);
     for(const k in sp.fixed)parts.push(`${DATA.materials[k].name}×${sp.fixed[k]}`);
     if(r.decos)parts.push(`<span style="color:#c06bff">装飾品×${r.decos}</span>`);
@@ -5669,8 +5672,8 @@ function spawnEnemy(w,type,x,y,opt){
   if(!opt.summoned&&!opt.revived&&!opt.bossMinion&&isStatusMinion(type)&&w.enemies.some(o=>!o.dead&&isStatusMinion(o.type)&&Math.hypot(o.x-x,o.y-y)<STATUS_NEAR))return null;
   const d=DATA.enemies[type],E=CONFIG.elite,M=CONFIG.midBoss,mid=!!opt.mid&&!d.boss,el=!!opt.elite&&!d.boss&&!mid;
   const ub=d.boss&&opt.urgentStage?urgentBossBoost(type,opt.urgentStage):{hp:1,atk:1,def:1};
-  // 1人プレイのボスは体力1.5倍（仲間がいても1人プレイ扱い。訓練場のカカシは除く）
-  const soloMul=(w.playerCount||1)===1&&!(w.quest&&w.quest.training)?1.5:1;
+  // ボスの体力の基本は1.5倍（1人プレイの体力）。人数の倍率はこれに掛ける（訓練場のカカシは除く）
+  const soloMul=!(w.quest&&w.quest.training)?1.5:1;
   const partyMul=d.boss?(CONFIG.bossHpByParty[Math.max(1,Math.min(5,w.playerCount||1))]||1)*CONFIG.bossBoost.hp*soloMul:1;
   const mult=d.boss?partyMul:CONFIG.minionHp*(el?E.hp:mid?M.hp:1);
   const hp=Math.round(d.hp*ub.hp*w.diff.hp*mult),atk=d.atk*ub.atk*w.diff.atk*(el?E.atk:mid?M.atk:1)*(d.boss?CONFIG.bossBoost.atk:CONFIG.minionBoost.atk)*CONFIG.enemyAtkMult;
@@ -15385,6 +15388,11 @@ function craftGold(r){
 for(const e of Object.values(DATA.enemies))if(e.boss&&e.drops&&DATA.dropTables[e.drops])DATA.dropTables[e.drops].rolls.push({type:'mat',id:'enchant_orb',chance:0.35,min:1,max:1,stage:5});
 for(const k of ['chest','chest2'])DATA.dropTables[k].rolls.push({type:'mat',id:'enchant_orb',chance:0.3,min:1,max:1,stage:5});
 for(const q of DATA.quests)if(q.stage>=5&&q.reward&&q.reward.mats)q.reward.mats.enchant_orb=1;
+// ボスの防具：必要なボス素材（ボスだけが落とす素材）を1個ずつ減らす（1個のものは1個のまま）
+{const bt=new Set(),boss=new Set(),other=new Set();for(const k in DATA.enemies){const e=DATA.enemies[k];if(e.boss&&e.drops)bt.add(e.drops);}
+  for(const k in DATA.dropTables)for(const r of (DATA.dropTables[k].rolls||[]))if(r.type==='mat')(bt.has(k)?boss:other).add(r.id);
+  for(const r of DATA.recipes){const eq=r.out&&r.out.type==='equip'&&DATA.equipment[r.out.id];if(!eq||eq.slot==='weapon'||eq.slot==='charm')continue;
+    for(const m in (r.cost||{}))if(boss.has(m)&&!other.has(m)&&!/_orb\d*$/.test(m)&&r.cost[m]>1)r.cost[m]--;}}
 // 上質・最上の玉：ステージ7以降・8以降のボス・宝箱・依頼から
 for(const e of Object.values(DATA.enemies))if(e.boss&&e.drops&&DATA.dropTables[e.drops]){DATA.dropTables[e.drops].rolls.push({type:'mat',id:'enchant_orb2',chance:0.15,min:1,max:1,stage:7});DATA.dropTables[e.drops].rolls.push({type:'mat',id:'enchant_orb3',chance:0.08,min:1,max:1,stage:8});}
 DATA.dropTables.chest2.rolls.push({type:'mat',id:'enchant_orb2',chance:0.25,min:1,max:1,stage:7});
@@ -16649,6 +16657,7 @@ const App={
       if(testRun){res[pid].notes.push('テスト中なので、報酬・図鑑・クリアの記録は残りません');continue;}
       const R=q.reward,list=[];
       if(R.gold)list.push({type:'gold',n:R.gold});
+      list.push({type:'coin',n:3}); // 依頼クリアでコイン3枚
       {const rm=QuestRules.rollBossReward(q);for(const k in rm)list.push({type:'mat',id:k,n:rm[k]});}
       for(let i=0;i<(R.decos||0);i++)list.push({type:'deco',item:Items.createDeco(pick(Object.keys(DATA.decorations)),Items.rollRarity(1.2+0.4*stage.id))});
       // 手紙：依頼の報酬にも付く（reward.letters で個別に決められる。無ければ1枚）
@@ -16758,7 +16767,7 @@ const App={
           }
           break;
         case 'gather':this.giveRewards(ev.table,'採取：','gather');break;
-        case 'chest':this.giveRewards(ev.table,'宝箱：');break;
+        case 'chest':this.giveRewards(ev.table,'宝箱：',null,[{type:'coin',n:30}]);break; // 宝箱からコイン30枚
         case 'ghostGuard':{ // 身代わりの護符を使った：持ち主のデータからも1つ減らす
           const pr=(Companion.isId(ev.pid)||this.training)?null:this.profileFor(ev.pid);
           if(pr&&pr.bag){pr.bag.ghost_guard=Math.max(0,(pr.bag.ghost_guard||0)-1);Net.markProfile(ev.pid);}
@@ -16825,9 +16834,6 @@ const App={
   rollBossRewards(table){
     for(const pid of this.rewardReceivers()){
       this.bossRewards[pid]=Items.rollLoot(table,this.skillStatsFor(pid).rareBonus);
-      const pr=this.profileFor(pid);
-      if(pr){pr.coins=(pr.coins||0)+1;(this.runCoins=this.runCoins||{})[pid]=((this.runCoins||{})[pid]||0)+1;Net.markProfile(pid);}
-      if(this.localInputPid(pid)||!Net.role)UI.notify('ボスを倒した！ コインを1つ獲得','#ffd23a',2.5);
     }
   },
   /** 報酬に関わる防具スキル（採取強化・レア素材率アップ）の値。
@@ -16848,6 +16854,7 @@ const App={
     else if(loot.type==='equip'){Profile.addItem(p,loot.item);if(g)g.items.push(loot.item.uid);}
     else if(loot.type==='deco'){Profile.addDeco(p,loot.item);if(g)g.decos.push(loot.item.uid);}
     else if(loot.type==='gold'){p.gold=(p.gold||0)+loot.n;if(g)g.gold+=loot.n;}
+    else if(loot.type==='coin'){p.coins=(p.coins||0)+loot.n;if(this.inGame)(this.runCoins=this.runCoins||{})[pid]=((this.runCoins||{})[pid]||0)+loot.n;}
     else if(loot.type==='item'){
       const c=DATA.consumables[loot.id],before=p.bag[loot.id]||0;p.bag[loot.id]=Math.min(c.max,before+loot.n);
       this.syncPotions(pid);
