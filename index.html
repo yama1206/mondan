@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.5.6',date:'2026/11/03'};
+const GAME_VERSION={no:'2.5.7',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -6405,12 +6405,12 @@ function updatePlayer(w,p,inp,dt){
   if(p.sheathing){
     p.sheathing.t+=dt;
     if(p.sheathing.t>=p.sheathing.total){p.sheathing=null;p.drawn=false;emit(w,{type:'sheathe',pid:p.id,x:p.x,y:p.y});}
-  }else if((inp.sheathe||p.walkIdle>=2)&&p.drawn&&!p.charging&&p.swing<=0){
+  }else if((inp.sheathe||p.walkIdle>=1.5&&!p.guarding)&&p.drawn&&!p.charging&&p.swing<=0){
     p.sheathing={t:0,total:s.sheatheTime};p.walkIdle=0;
   }
   // 自動納刀：攻撃せずに2秒歩くと、勝手に納刀し始める（止まっている間は数えない）
-  if(!p.drawn||p.sheathing||inp.attack||inp.skill||p.charging||p.guarding||p.swing>0)p.walkIdle=0;
-  else if(p.moving)p.walkIdle=(p.walkIdle||0)+dt;
+  if(!p.drawn||p.sheathing||inp.attack||inp.skill||p.charging||p.swing>0)p.walkIdle=0;
+  else p.walkIdle=(p.walkIdle||0)+dt;
   // 納刀中に攻撃ボタン：抜刀してそのまま攻撃（チャージ武器はチャージ開始）
   if(!p.drawn&&!p.sheathing&&inp.attack&&p.atkTimer<=0){p.drawn=true;emit(w,{type:'draw',pid:p.id,x:p.x,y:p.y});}
   // 攻撃：チャージできる武器は「押している間ためて、離したら振る」
