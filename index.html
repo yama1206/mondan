@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.5.4',date:'2026/11/03'};
+const GAME_VERSION={no:'2.5.5',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -6222,12 +6222,12 @@ const Companion={
       ?all.some(q=>!q.dead&&q.hp<q.stats.maxHp*0.5)
       :role==='tank'&&all.some(q=>!q.dead&&q.hp<q.stats.maxHp*(q===p?0.5:0.35));
     if(needHeal&&!p.using&&p.potionCd<=0){
-      const pickId=['heal_all','good_potion','potion'].find(id=>(p.bag[id]||0)>0);
+      const incenseOn=w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done);const pickId=['heal_all','good_potion','potion'].find(id=>(p.bag[id]||0)>0&&!(id==='heal_all'&&incenseOn));
       if(pickId){I.pick=ITEM_ORDER.indexOf(pickId);I.heal=true;return I;}
     }
     // 自分のHPが減ったら、役割に関係なく自分で回復する。回復できないときは敵から離れてプレイヤーのそばへ下がる
     if(p.hp<p.stats.maxHp*0.45&&!p.using){
-      const pickId=p.potionCd<=0&&['good_potion','potion','heal_all'].find(id=>(p.bag[id]||0)>0);
+      const pickId=p.potionCd<=0&&['good_potion','potion','heal_all'].find(id=>(p.bag[id]||0)>0&&!(id==='heal_all'&&w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done)));
       const close=foes.find(e=>Math.hypot(e.x-p.x,e.y-p.y)<e.r+110);
       if(pickId&&!close){I.pick=ITEM_ORDER.indexOf(pickId);I.heal=true;return I;}
       if(close){const a=Math.atan2(p.y-close.y,p.x-close.x),tx=leader!==p?leader.x+Math.cos(a)*70:p.x+Math.cos(a)*160,ty=leader!==p?leader.y+Math.sin(a)*70:p.y+Math.sin(a)*160;
@@ -6433,7 +6433,8 @@ function updatePlayer(w,p,inp,dt){
   if(inp.skill&&p.skillCd<=0&&!p.charging){if(s.ws)activateWeaponSkill(w,p);else if(s.skill)playerSkill(w,p);}
   if(inp.heal&&!p.charging){
     const id=ITEM_ORDER[p.sel],c=DATA.consumables[id];
-    if((p.bag[id]||0)<=0)emit(w,{type:'info',pid:p.id,text:c.name+'を持っていません'});
+    if(p.ai&&((p.bag[id]||0)<=0||(c.effect.type==='place'&&c.effect.kind==='heal'&&(w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done)||(p.using&&p.using.item===id))))){}
+    else if((p.bag[id]||0)<=0)emit(w,{type:'info',pid:p.id,text:c.name+'を持っていません'});
     else if(c.effect.type==='heal'&&!c.effect.radius&&p.hp>=s.maxHp&&!(p.poisonT>0)&&!(p.curseT>0))emit(w,{type:'info',pid:p.id,text:'体力は満タンです'});
     else if(c.effect.type==='place'&&c.effect.kind==='heal'&&(w.placed.some(o=>o.kind==='heal'&&o.owner===p.id&&!o.done)||(p.using&&p.using.item===id)))emit(w,{type:'info',pid:p.id,text:'癒しお香は効果が切れるまで置けません'});
     else if(p.potionCd<=0){
