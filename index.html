@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.8',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.9',date:'2026/11/03'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -17047,6 +17047,8 @@ const App={
     else if(this.state==='gifts')UI.show(this.giftsHTML());
   },
   enterGuest(profile){
+    // 参加前のデータを控えておく（参加したあとに武器などが消えたとき、設定の「参加前のデータに戻す」で戻せる）
+    try{localStorage.setItem('kourou_backup_before_join',JSON.stringify({savedAt:Date.now(),data:this.profile}));}catch(e){}
     this.applyHostProfile(profile);
     this.inv={tab:'equip',filter:'weapon',sel:null,decoPick:null};
   },
@@ -17268,6 +17270,16 @@ const App={
         break;
       case 'back':this.goto(this.returnState||'camp');break; // 戻り先が無いときはキャンプへ
       case 'backSettings':this.goto(this.settingsReturn);break;
+      case 'restoreJoinBackup':{ // 参加前に控えたデータに戻す（参加中・探索中は使えない）
+        if(this.inGame||Net.role){UI.notify('ロビーを抜けてから戻してください','#ff8060',3);break;}
+        UI.confirm('参加前に控えたデータに戻します。参加中に手に入れたものは消えます。よろしいですか？',()=>{
+          try{const raw=JSON.parse(localStorage.getItem('kourou_backup_before_join')||'null');
+            if(!raw||!raw.data)throw new Error('none');
+            this.profile=Save.sanitize(Save.migrate(raw.data,Save.VERSION));Net.clampProfile(this.profile);
+            this.save();this.refreshPanel();UI.notify('参加前のデータに戻しました','#7fe09a',3);
+            if(this.state==='settings')UI.show(this.settingsHTML());
+          }catch(e){UI.notify('戻せるデータがありません','#ff8060',3);}
+        });break;}
       case 'secretCode':{const el=document.getElementById('secretCodeIn');const v=el?el.value:'';if(el)el.value='';this.doOp('redeemCode',{code:v});break;}
       case 'cloudStart':{const el=document.getElementById('cloudPass');Cloud.start(el&&el.value).then(err=>{if(err)UI.notify(err,'#ff8060',6);else UI.notify('クラウド保存を始めました','#7fe09a');if(this.state==='settings')UI.show(this.settingsHTML());});break;}
       case 'cloudLoad':{const c=document.getElementById('cloudCode'),pw=document.getElementById('cloudPass2');Cloud.loadFrom(c&&c.value,pw&&pw.value).then(err=>{if(err)UI.notify(err,'#ff8060',6);});break;}
@@ -17627,6 +17639,8 @@ const App={
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2><div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div>
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
+      ${(()=>{try{return localStorage.getItem('kourou_backup_before_join')?`<div class="setting" style="display:block">参加前のデータ（参加するたびに控えます）
+        <div class="row" style="margin-top:6px"><button data-act="restoreJoinBackup">参加前のデータに戻す</button></div></div>`:'';}catch(e){return '';}})()}
       <div class="setting" style="display:block">秘密コード
         <div class="row" style="margin-top:6px"><input id="secretCodeIn" maxlength="40" autocomplete="off" placeholder="コードを入力" style="flex:1;min-width:0"><button data-act="secretCode">入力する</button></div></div>
       <div class="setting" style="display:block">バージョン ver ${GAME_VERSION.no}（${GAME_VERSION.date}）　修正が反映されないときに使ってください
