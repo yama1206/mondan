@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.9',date:'2026/11/03'};
+const GAME_VERSION={no:'2.12.10',date:'2026/11/07'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4341,69 +4341,107 @@ const Save={
 /* ===== クラウド保存：フレンドコード＋合言葉で、どの端末でも同じセーブで遊べるようにする =====
    しくみ：Firebase の Firestore に、フレンドコードと合言葉から作った64文字の名前でセーブを置く（合言葉を知らない人は読めない）。
    セーブするたび少し待ってからクラウドにも保存し、起動時にクラウドの方が新しければそれを読み込んで再起動する。
-   端末ごとのセーブ（localStorage）も今まで通り残すので、通信できないときもそのまま遊べる */
+   端末ごとのセーブ（localStorage）も今まで通り残すので、通信できないときもそのまま遊べる
+   2.12.10：古い端末のデータでクラウドを上書きしないように、保存は「最後に見たクラウドのセーブのまま」のときだけ行う
+   （Firestore の currentDocument.updateTime で確かめる）。別の端末が先に保存していたら、どちらを使うか聞く */
 const Cloud={
   CFG:{project:'mondan-5e231',key:'AIzaSyAsbA5pIwu1r9YXMJZRkNZPWRlkGiv7oE8'},
   LKEY:'kourou_cloud',
-  link:null,ready:false,busy:false,timer:null,lastSync:0,status:'',
+  link:null,ready:false,busy:false,timer:null,lastSync:0,status:'',ut:undefined,conflict:false, // ut：最後に見たクラウドのセーブの更新時刻（null＝まだ無い、undefined＝未確認）
   init(){
     try{const o=JSON.parse(localStorage.getItem(this.LKEY)||'null');if(o&&/^\d{8}$/.test(o.code)&&o.pass&&/^[0-9a-f]{64}$/.test(o.id))this.link=o;}catch(e){}
     if(!this.link){this.ready=true;return;}
     this.pullOnStart();
     const flush=()=>this.flush();
     window.addEventListener('pagehide',flush);
-    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush();});
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush();else this.check();}); // 戻ってきたら、別の端末で保存されていないか確かめる
   },
   saveLink(){try{if(this.link)localStorage.setItem(this.LKEY,JSON.stringify(this.link));else localStorage.removeItem(this.LKEY);}catch(e){}},
   async docId(code,pass){
     const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('mondan:'+code+':'+pass));
     return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
   },
-  url(id){return 'https://firestore.googleapis.com/v1/projects/'+this.CFG.project+'/databases/(default)/documents/saves/'+id+'?key='+this.CFG.key;},
+  url(id,cond){
+    let u='https://firestore.googleapis.com/v1/projects/'+this.CFG.project+'/databases/(default)/documents/saves/'+id+'?key='+this.CFG.key;
+    if(cond&&this.ut)u+='&currentDocument.updateTime='+encodeURIComponent(this.ut);else if(cond&&this.ut===null)u+='&currentDocument.exists=false';
+    return u;
+  },
   async fetchDoc(id){
     const r=await fetch(this.url(id));
     if(r.status===404)return null;
     if(!r.ok)throw new Error('通信エラー '+r.status);
-    const f=(await r.json()).fields||{};
+    const j=await r.json(),f=j.fields||{};
     const raw=f.data&&f.data.stringValue;
-    if(!raw)return null;
-    return {raw,savedAt:Number(f.savedAt&&f.savedAt.integerValue)||0};
+    if(!raw)return {raw:null,savedAt:0,ut:j.updateTime};
+    return {raw,savedAt:Number(f.savedAt&&f.savedAt.integerValue)||0,ut:j.updateTime};
   },
   body(raw){return JSON.stringify({fields:{data:{stringValue:raw},savedAt:{integerValue:String(this.savedAtOf(raw))},gameVersion:{stringValue:GAME_VERSION.no}}});},
-  async putDoc(id,raw){
-    const r=await fetch(this.url(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:this.body(raw)});
+  async putDoc(id,raw,cond){
+    const r=await fetch(this.url(id,cond),{method:'PATCH',headers:{'Content-Type':'application/json'},body:this.body(raw)});
+    if(cond&&(r.status===400||r.status===404||r.status===409||r.status===412)){const e=new Error('conflict');e.conflict=true;throw e;}
     if(!r.ok)throw new Error('通信エラー '+r.status);
+    try{this.ut=(await r.json()).updateTime;}catch(e){}
   },
   localRaw(){try{return localStorage.getItem(Save.KEY);}catch(e){return null;}},
   savedAtOf(raw){try{return Number(JSON.parse(raw).savedAt)||0;}catch(e){return 0;}},
   /** セーブのたびに呼ばれる。続けてセーブされても通信は1回にまとめる */
-  schedule(){if(!this.link||!this.ready)return;clearTimeout(this.timer);this.timer=setTimeout(()=>this.push(true),4000);},
-  async push(quiet){
-    if(!this.link||!this.ready)return false;
+  schedule(){if(!this.link||!this.ready||this.conflict)return;clearTimeout(this.timer);this.timer=setTimeout(()=>this.push(true),4000);},
+  async push(quiet,force){
+    if(!this.link||!this.ready||(this.conflict&&!force))return false;
     if(this.busy){this.schedule();return false;}
     const raw=this.localRaw();if(!raw)return false;
-    this.busy=true;clearTimeout(this.timer);
-    try{await this.putDoc(this.link.id,raw);this.lastSync=Date.now();this.status='';return true;}
-    catch(e){this.status='クラウドに保存できませんでした（'+e.message+'）';if(!quiet)UI.notify(this.status,'#ff8060',5);return false;}
+    this.busy=true;clearTimeout(this.timer);this.timer=null;
+    try{
+      if(this.ut===undefined&&!force){ // 起動時に確かめられなかった：先にクラウドを見る
+        const d=await this.fetchDoc(this.link.id);
+        if(d&&d.raw&&d.savedAt>this.savedAtOf(raw)+2000){this.busy=false;this.onConflict(d);return false;}
+        this.ut=d?d.ut:null;
+      }
+      await this.putDoc(this.link.id,raw,!force);this.lastSync=Date.now();this.status='';return true;
+    }catch(e){
+      if(e.conflict){this.busy=false;this.check(true);return false;}
+      this.status='クラウドに保存できませんでした（'+e.message+'）';if(!quiet)UI.notify(this.status,'#ff8060',5);return false;
+    }
     finally{this.busy=false;}
+  },
+  /** クラウドが、最後に見たときから別の端末で書き換えられていないか確かめる（書き換えられていたらどちらを使うか聞く） */
+  async check(afterFail){
+    if(!this.link||!this.ready||this.conflict)return;
+    let d;try{d=await this.fetchDoc(this.link.id);}catch(e){return;}
+    if(!d||!d.raw){if(afterFail){this.ut=d?d.ut:null;this.schedule();}return;}
+    if(d.ut===this.ut)return;
+    if(d.savedAt===this.savedAtOf(this.localRaw())){this.ut=d.ut;return;} // 自分が送ったもの（返事を受け取れなかっただけ）
+    this.onConflict(d);
+  },
+  onConflict(d){
+    if(this.conflict)return;
+    this.conflict=true;clearTimeout(this.timer);this.timer=null;
+    const t=new Date(d.savedAt),ts=`${t.getMonth()+1}/${t.getDate()} ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`;
+    UI.confirm(`<b>別の端末でクラウドのセーブが更新されています</b>（${ts} 保存）。<br>どちらのデータを使いますか？<br><span class="small muted">クラウドを読み込むと、この端末の今のデータは端末内に控えとして残します。</span>`,
+      ()=>{this.conflict=false;this.applyRaw(d.raw,'クラウドのセーブを読み込みます');},
+      {yes:'クラウドのセーブを読み込む',no:'この端末のデータで上書き',yesClass:'primary',focusYes:true,
+       onNo:()=>UI.confirm('この端末のデータでクラウドを上書きします。<br><b>別の端末で進めた分は消えます。</b>よろしいですか？',
+         ()=>{this.conflict=false;this.ut=d.ut;App.save();this.push(false,true);},
+         {onNo:()=>{this.conflict=false;this.check();}})});
   },
   /** ページを閉じる・アプリを切り替えるとき：待たずにすぐ送る（大きすぎると送れないので、そのときは直前の自動保存に任せる） */
   flush(){
-    if(!this.link||!this.ready)return;
+    if(!this.link||!this.ready||this.conflict)return;
     if(App.dirty&&!App.noSave)App.save();
-    if(!this.timer)return;
+    if(!this.timer||this.ut===undefined)return;
     clearTimeout(this.timer);this.timer=null;
     const raw=this.localRaw();if(!raw)return;
     const body=this.body(raw);if(body.length>60000){this.push(true);return;}
-    try{fetch(this.url(this.link.id),{method:'PATCH',headers:{'Content-Type':'application/json'},body,keepalive:true});}catch(e){}
+    try{fetch(this.url(this.link.id,true),{method:'PATCH',headers:{'Content-Type':'application/json'},body,keepalive:true}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.updateTime)this.ut=j.updateTime;}).catch(()=>{});}catch(e){}
   },
   async pullOnStart(){
     try{
       const d=await this.fetchDoc(this.link.id);
       const localAt=this.savedAtOf(this.localRaw());
-      if(d&&d.savedAt>localAt+2000){this.applyRaw(d.raw,'クラウドの新しいセーブを読み込みます');return;}
+      if(d&&d.raw&&d.savedAt>localAt+2000){this.applyRaw(d.raw,'クラウドの新しいセーブを読み込みます');return;}
+      this.ut=d?d.ut:null;
       this.ready=true;this.lastSync=Date.now();
-      if(!d||d.savedAt<localAt)this.push(true);
+      if(!d||!d.raw||d.savedAt<localAt)this.push(true);
     }catch(e){
       this.ready=true;this.status='クラウドに接続できませんでした（この端末のデータで遊べます）';
       UI.notify(this.status,'#ffb060',5);
@@ -4432,9 +4470,9 @@ const Cloud={
     if(pass.length<4)return '合言葉は4文字以上にしてください';
     const code=Friends.myId();
     let id;try{id=await this.docId(code,pass);}catch(e){return 'この端末では暗号化が使えないため、クラウド保存できません';}
-    this.link={code,pass,id};this.ready=true;this.saveLink();
+    this.link={code,pass,id};this.ready=true;this.conflict=false;this.saveLink();
     App.save();
-    return (await this.push(false))?null:'クラウドに保存できませんでした。通信やFirebaseの設定を確認してください';
+    return (await this.push(false,true))?null:'クラウドに保存できませんでした。通信やFirebaseの設定を確認してください';
   },
   /** 別の端末のセーブを読み込む（フレンドコード＋合言葉）。見つかったら確認してから上書き */
   async loadFrom(code,pass){
@@ -4443,13 +4481,13 @@ const Cloud={
     if(pass.length<4)return '合言葉は4文字以上です';
     let id,d;
     try{id=await this.docId(code,pass);d=await this.fetchDoc(id);}catch(e){return 'クラウドに接続できませんでした（'+e.message+'）';}
-    if(!d)return 'セーブが見つかりません。フレンドコードと合言葉を確認してください';
+    if(!d||!d.raw)return 'セーブが見つかりません。フレンドコードと合言葉を確認してください';
     UI.confirm('クラウドのセーブを読み込みます。<br><b>この端末の今のデータは上書きされます。</b>（念のため端末内に控えを残します）よろしいですか？',()=>{
       this.link={code,pass,id};this.saveLink();this.applyRaw(d.raw,'クラウドのセーブを読み込みました。再起動します');
     });
     return null;
   },
-  unlink(){clearTimeout(this.timer);this.timer=null;this.link=null;this.ready=true;this.status='';this.saveLink();},
+  unlink(){clearTimeout(this.timer);this.timer=null;this.link=null;this.ready=true;this.status='';this.ut=undefined;this.conflict=false;this.saveLink();},
   html(){
     const L=this.link;
     if(L){
@@ -15250,8 +15288,8 @@ const UI={
     });
     this.modal.addEventListener('click',e=>{
       const el=e.target.closest('[data-m]');if(!el)return;
-      const cb=this.modalCb;this.closeModal();
-      if(el.dataset.m==='yes'&&cb)cb();
+      const cb=this.modalCb,no=this.modalNo;this.closeModal();
+      if(el.dataset.m==='yes'&&cb)cb();else if(el.dataset.m==='no'&&no)no();
     });
   },
   show(html){
@@ -15363,14 +15401,14 @@ const UI={
   confirm(msg,onYes,opt){
     opt=opt||{};
     this.modal.innerHTML=`<div class="panel modalbox"><div>${msg}</div><div class="row"><button class="${opt.yesClass||'danger'}" data-m="yes">${opt.yes||'はい'}</button><button data-m="no">${opt.no||'いいえ'}</button></div></div>`;
-    this.modal.classList.remove('hidden');this.modalCb=onYes;
+    this.modal.classList.remove('hidden');this.modalCb=onYes;this.modalNo=opt.onNo||null;
     this.overlayKey=this.focusKey;
     // コントローラー操作時の初期選択。危険な操作は誤操作防止で「いいえ」側
     if(Input.uiPad){const b=this.modal.querySelector(opt.focusYes?'[data-m="yes"]':'[data-m="no"]');if(b)this.setFocus(b);}
   },
   modalOpen(){return !this.modal.classList.contains('hidden');},
   closeModal(){
-    this.modal.classList.add('hidden');this.modal.innerHTML='';this.modalCb=null;
+    this.modal.classList.add('hidden');this.modal.innerHTML='';this.modalCb=null;this.modalNo=null;
     if(Input.uiPad)this.restoreFocus(this.overlayKey);
   },
 };
@@ -17270,6 +17308,17 @@ const App={
         break;
       case 'back':this.goto(this.returnState||'camp');break; // 戻り先が無いときはキャンプへ
       case 'backSettings':this.goto(this.settingsReturn);break;
+      case 'restoreCloudBackup':{ // クラウドのセーブを読み込む前の、この端末のデータに戻す
+        if(this.inGame||Net.role){UI.notify('ロビーを抜けてから戻してください','#ff8060',3);break;}
+        let info='';try{const o=JSON.parse(localStorage.getItem(Save.KEY+'_backup')||'null'),t=new Date(o.savedAt);info=`（${t.getMonth()+1}/${t.getDate()} ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} のデータ）`;}catch(e){}
+        UI.confirm(`クラウドのセーブを読み込む前の、この端末のデータ${info}に戻します。<br>今のデータは、かわりに控えに入れます。よろしいですか？`,()=>{
+          try{const bk=localStorage.getItem(Save.KEY+'_backup'),o=JSON.parse(bk||'null');if(!o||!o.data)throw new Error('none');
+            const cur=localStorage.getItem(Save.KEY);
+            o.savedAt=Date.now();localStorage.setItem(Save.KEY,JSON.stringify(o));if(cur)localStorage.setItem(Save.KEY+'_backup',cur);
+            App.noSave=true;if(Cloud.link){Cloud.ready=true;Cloud.conflict=false;Cloud.ut=undefined;Cloud.push(true,true).finally(()=>location.reload());}else location.reload();
+            UI.notify('戻しました。再起動します','#7fe09a',3);
+          }catch(e){UI.notify('戻せるデータがありません','#ff8060',3);}
+        });break;}
       case 'restoreJoinBackup':{ // 参加前に控えたデータに戻す（参加中・探索中は使えない）
         if(this.inGame||Net.role){UI.notify('ロビーを抜けてから戻してください','#ff8060',3);break;}
         UI.confirm('参加前に控えたデータに戻します。参加中に手に入れたものは消えます。よろしいですか？',()=>{
@@ -17639,6 +17688,8 @@ const App={
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2><div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div>
       ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
+      ${(()=>{try{return localStorage.getItem(Save.KEY+'_backup')?`<div class="setting" style="display:block">クラウドのセーブを読み込む前の、この端末のデータ
+        <div class="row" style="margin-top:6px"><button data-act="restoreCloudBackup">読み込む前のデータに戻す</button></div></div>`:'';}catch(e){return '';}})()}
       ${(()=>{try{return localStorage.getItem('kourou_backup_before_join')?`<div class="setting" style="display:block">参加前のデータ（参加するたびに控えます）
         <div class="row" style="margin-top:6px"><button data-act="restoreJoinBackup">参加前のデータに戻す</button></div></div>`:'';}catch(e){return '';}})()}
       <div class="setting" style="display:block">秘密コード
