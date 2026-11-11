@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.18.0',date:'2026/11/12'};
+const GAME_VERSION={no:'2.19.0',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -14069,20 +14069,56 @@ const Renderer={
 const HD_LEVELS={ // エリア名→高さ（段数）。隣どうしは1段差までにする（それより大きい所は崖だけになる）
   meadow:{start:1,'丈の長い草原':1,'浅瀬の川辺':0,'小高い丘':2,'獣の縄張り':1,'草むらの窪地':0,'はぐれ者の野営地':2,'風の通り道':1,'猪の寝床':1,'暴角の広場':2},
 };
-const HD_WALL=2.2; // 外周の壁（通れない所）の高さ：そのエリアの高さ＋この段数
+/** HD-2D のステージごとの見た目（空・かすみ・光・地面の模様・木や岩の種類） */
+const HD_THEMES={
+  meadow:{sky:0x9cc8e8,fog:0xb8d6ea,near:26,far:70,amb:0.62,sun:0.75,sunC:0xfff2d8,tree:'broad',rock:'grey',tuft:['#9cd068','#5a9036','#2e5a1e'],tuftN:1,
+    tex:{grass:{cols:['#3e6a28','#5a8a3a','#78a84c','#8cbc5c'],d:'grass'},grass2:{cols:['#2a5218','#3e6a26','#52803a'],d:'grass2'},flowers:{cols:['#4a7a30','#5e9040','#78a84c'],d:'flowers'},
+      dirt:{cols:['#5a4430','#7a5e40','#9a7c58'],d:'dirt'},cliff:{cols:['#3e3428','#5e5040','#7e6e58','#968670'],d:'cliff'},wallTop:{cols:['#1e3a14','#2c5020','#3e6a2c','#4a7a34'],d:'grass2',blade:['#5a8a38','#24461a','#6e9e46']},
+      stairs:{cols:['#5e5a50','#807a6e','#a09a8c'],d:'stairs'},water:{cols:['#1e4e78','#2f6f9e','#4a94bc'],d:'water'},bridge:{cols:['#4a2e16','#6a4626','#8a603a'],d:'planks'}}},
+  forest:{sky:0x8ab8c0,fog:0x9ab8a8,near:18,far:55,amb:0.55,sun:0.65,sunC:0xf0f0c8,tree:'dark',rock:'mossy',tuft:['#7ab048','#3e6a26','#1e3a12'],tuftN:1.4,
+    tex:{grass:{cols:['#1e3614','#2e4c1e','#3e6228','#4e7432'],d:'grass',blade:['#5e8a38','#2a4a18','#7aa048']},grass2:{cols:['#18301a','#264420','#36582a'],d:'grass2'},flowers:{cols:['#2a4a1e','#3a5e28','#4e7432'],d:'flowers'},
+      dirt:{cols:['#3a2a1c','#4e3a26','#644c32'],d:'dirt',peb:['#6a5038','#4a3420','#8a6a48']},cliff:{cols:['#2a2a1a','#3e3e28','#56563a','#6a6a48'],d:'cliff'},wallTop:{cols:['#122a10','#1e3a16','#2a4e1e','#365e26'],d:'grass2',blade:['#4a7a30','#16300e','#5e8a3a']},
+      stairs:{cols:['#4e4a40','#6a665a','#868272'],d:'stairs'},water:{cols:['#14363c','#24525c','#3a7a80'],d:'water'},bridge:{cols:['#3e2614','#5a3a20','#7a5232'],d:'planks'}}},
+  swamp:{sky:0x6e7e70,fog:0x7a8a74,near:12,far:44,amb:0.55,sun:0.5,sunC:0xe0e8c0,tree:'dead',rock:'mossy',stone:'#6a7060',tuft:['#a8b060','#6a7a38','#3a4420'],tuftN:1.2,
+    tex:{grass:{cols:['#2a2814','#3a3820','#4a482a','#5a5632'],d:'mud'},grass2:{cols:['#2a3a1a','#3e5226','#56703a'],d:'moss'},flowers:{cols:['#2e3e1e','#45582a','#5f7a3a'],d:'moss'},
+      dirt:{cols:['#2e2a18','#423c24','#56502e'],d:'mud'},cliff:{cols:['#1e1e12','#2e2e1c','#423e2a','#545036'],d:'cliff'},wallTop:{cols:['#1a2412','#28361a','#384a24','#46582c'],d:'moss'},
+      stairs:{cols:['#4a4a3a','#5e5e4a','#72725c'],d:'stairs'},water:{cols:['#14221a','#22362a','#304a3a'],d:'water',wave:'rgba(160,190,120,.3)'},bridge:{cols:['#3a2814','#4e3820','#664a2c'],d:'planks'}}},
+  river:{sky:0x9ccaf0,fog:0xbad8ee,near:24,far:68,amb:0.62,sun:0.75,sunC:0xfff4e0,tree:'broad',rock:'grey',tuft:['#9cd068','#5a9036','#2e5a1e'],tuftN:0.8,
+    tex:{grass:{cols:['#3a6a2c','#528240','#6a9a50','#7eae5c'],d:'grass'},grass2:{cols:['#2a5218','#3e6a26','#52803a'],d:'grass2'},flowers:{cols:['#4a7a30','#5e9040','#78a84c'],d:'flowers'},
+      dirt:{cols:['#4e5e66','#6f8f9a','#8aa4ac'],d:'pebble'},cliff:{cols:['#26323e','#3a4e62','#526c84','#6a86a0'],d:'cliff'},wallTop:{cols:['#1e3a14','#2c5020','#3e6a2c','#4a7a34'],d:'grass2',blade:['#5a8a38','#24461a','#6e9e46']},
+      stairs:{cols:['#5e646a','#7a8288','#98a0a6'],d:'stairs'},water:{cols:['#164a74','#2a6a9a','#3f86b4'],d:'water'},bridge:{cols:['#4a2e16','#6a4626','#8a603a'],d:'planks'}}},
+  crystal:{sky:0x0a0814,fog:0x120e22,near:12,far:38,amb:0.42,sun:0.25,sunC:0x9a8aff,cave:true,lightC:0x9ae8ff,rock:'crystal',
+    tex:{grass:{cols:['#16122a','#201a38','#2a2248','#3a2e5e'],d:'stone',peb:['#3a3060','#241c40']},grass2:{cols:['#14102a','#1c1636','#262046'],d:'stone'},flowers:{cols:['#1c1838','#2a2450','#3a3270'],d:'stone'},
+      dirt:{cols:['#1e1830','#2a2240','#3a3054'],d:'stone'},cliff:{cols:['#120e24','#221c42','#322a5e','#443a7a'],d:'cliff'},wallTop:{cols:['#0e0a1c','#18122c','#221a3a'],d:'stone'},
+      stairs:{cols:['#2e2a48','#423e62','#5a5480'],d:'stairs'},water:{cols:['#0a1430','#1a2e60','#2a4a8a'],d:'water',wave:'rgba(138,230,255,.45)'},bridge:{cols:['#2a1e14','#3e2c1e','#54402c'],d:'planks'}}},
+  volcano:{sky:0x2a1410,fog:0x4a2418,near:18,far:52,amb:0.55,sun:0.6,sunC:0xffa070,rock:'basalt',lavaLight:true,
+    tex:{grass:{cols:['#1a1210','#2a201c','#3a2c26','#4a3830'],d:'basalt'},grass2:{cols:['#16100e','#241a16','#32241e'],d:'basalt'},flowers:{cols:['#1e1612','#2e221c','#3e2e26'],d:'basalt'},
+      dirt:{cols:['#3a2a22','#4a3428','#5e4430'],d:'dirt',peb:['#4a3a34','#2a1c18','#6a5048']},cliff:{cols:['#0e0806','#1e1612','#2e221c','#3e302a'],d:'cliff'},wallTop:{cols:['#0e0806','#1a120e','#261a14'],d:'basalt'},
+      stairs:{cols:['#2e2622','#423630','#56483e'],d:'stairs'},water:{cols:['#8a1e06','#d0400e','#ff7a1a','#ffd060'],d:'lava'},bridge:{cols:['#2a1a10','#3e281a','#543824'],d:'planks'}}},
+  snow:{sky:0xc8dcea,fog:0xdeeaf4,near:16,far:48,amb:0.72,sun:0.6,sunC:0xf0f8ff,tree:'pine',rock:'snow',
+    tex:{grass:{cols:['#a8bed4','#c8d8e8','#e0ecf6','#f6faff'],d:'snow',k:1.1},grass2:{cols:['#9ab4cc','#b8cce0','#d4e2f0'],d:'snow',k:1.1},flowers:{cols:['#b0c6dc','#d0e0ee','#eef6fc'],d:'snow',k:1.1},
+      dirt:{cols:['#7a8694','#9aa6b4','#bcc6d2'],d:'pebble',peb:['#8a94a0','#a8b4c0','#6a7480']},cliff:{cols:['#3e6280','#5a84a4','#7fa6bd','#a8c8dc'],d:'cliff'},wallTop:{cols:['#c0d4e6','#dce8f2','#f4f8fc'],d:'snow',k:1.0},
+      stairs:{cols:['#8a96a4','#a8b4c2','#c6d0dc'],d:'stairs'},water:{cols:['#1a3a5a','#2a5274','#3d6e94'],d:'water',wave:'rgba(230,245,255,.4)'},bridge:{cols:['#4a3020','#64442e','#7e5a3e'],d:'planks'}}},
+  crypt:{wallDeco:false,sky:0x08070c,fog:0x0e0c14,near:11,far:34,amb:0.48,sun:0.22,sunC:0xc0b0ff,cave:true,lightC:0xffc890,rock:'grey',stone:'#8a8478',
+    tex:{grass:{cols:['#24222a','#302e38','#3c3a44','#4a4852'],d:'tile'},grass2:{cols:['#26302a','#323e34','#3e4c40'],d:'tile'},flowers:{cols:['#2a2830','#36343e','#42404a'],d:'tile'},
+      dirt:{cols:['#2a2620','#3a342c','#4a4238'],d:'dirt',peb:['#5a5248','#3a342c','#6a6258']},cliff:{cols:['#16141a','#24222a','#32303a','#42404c'],d:'cliff'},wallTop:{cols:['#121016','#1c1a22','#26242c'],d:'stone',peb:['#2a2830','#1c1a22']},
+      stairs:{cols:['#3a3842','#4e4c56','#62606c'],d:'stairs'},water:{cols:['#010102','#050408','#0c0a12'],d:'water',wave:'rgba(80,70,120,.25)'},bridge:{cols:['#2a1e14','#3e2c1e','#54402c'],d:'planks'}}},
+};
+const HD_WALL=1.35; // 外周の壁（通れない所）の高さ：そのエリアの高さ＋この段数
 function hdSettingOn(){try{return !(typeof App!=='undefined'&&App.settings&&App.settings().hdOff);}catch(e){return true;}}
 /** マップの高さ（lv：段数、st：階段、sd：階段の上り方向）。決まった計算なので、ホストとゲストで同じものができる */
 function hdHeights(map){
   if(map._hdh!==undefined)return map._hdh;
-  const T=HD_LEVELS[map.theme];
-  if(!map.open||!T||!map.areas||!map.areas.length||!map.tiles){map._hdh=null;return null;}
-  const W=map.W,H=map.H,N=W*H,tl=map.tiles,lv=new Uint8Array(N),st=new Uint8Array(N),sd=new Int8Array(N*2);
-  const A=map.areas.map(a=>({cx:a.x/TILE-0.5,cy:a.y/TILE-0.5,rx:Math.max(3,(a.rect[2]-a.rect[0])/2+1),ry:Math.max(3,(a.rect[3]-a.rect[1])/2+1),l:a.kind==='start'?T.start:(T[a.name]!=null?T[a.name]:1)}));
+  const T=HD_LEVELS[map.theme]||{};
+  if(!map.open||!HD_THEMES[map.theme]||!map.areas||!map.areas.length||!map.tiles){map._hdh=null;return null;}
+  const W=map.W,H=map.H,N=W*H,tl=map.tiles,lv=new Uint8Array(N),st=new Uint8Array(N),sd=new Int8Array(N*2),su=new Uint8Array(N);
+  const nLv=HD_THEMES[map.theme].cave?2:3,lvOf=a=>{if(a.kind==='start')return T.start!=null?T.start:1;if(T[a.name]!=null)return T[a.name];if(a.kind==='boss')return 1;let h=0;for(const ch of (a.name||String(a.n)))h=(h*31+ch.charCodeAt(0))>>>0;return h%nLv;};
+  const A=map.areas.map(a=>({cx:a.x/TILE-0.5,cy:a.y/TILE-0.5,rx:Math.max(3,(a.rect[2]-a.rect[0])/2+1),ry:Math.max(3,(a.rect[3]-a.rect[1])/2+1),l:lvOf(a)}));
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){let best=1e9,l=1;for(const a of A){const u=(x-a.cx)/a.rx,v=(y-a.cy)/a.ry,d=Math.sqrt(u*u+v*v);if(d<best){best=d;l=a.l;}}lv[y*W+x]=l;}
   const walk=i=>tl[i]===0||tl[i]===TILE_PUDDLE;
   const D4=[[1,0],[-1,0],[0,1],[0,-1]];
-  const upNb=i=>{const x=i%W,y=(i/W)|0;for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(walk(j)&&lv[j]===lv[i]+1)return [dx,dy];}return null;};
-  const mark=(i)=>{const d=upNb(i);if(!d||!walk(i))return false;st[i]=1;sd[i*2]=d[0];sd[i*2+1]=d[1];return true;};
+  const upNb=i=>{const x=i%W,y=(i/W)|0;for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(walk(j)&&lv[j]>lv[i])return [dx,dy,lv[j]];}return null;};
+  const mark=(i)=>{const d=upNb(i);if(!d||!walk(i))return false;st[i]=1;sd[i*2]=d[0];sd[i*2+1]=d[1];su[i]=d[2];return true;};
   const stairAt=(c)=>{ // c を中心に、同じ段差の縁を3マス幅で階段にする
     const x=c%W,y=(c/W)|0;mark(c);
     for(let k=-1;k<=1;k++)for(let m=-1;m<=1;m++){const nx=x+k,ny=y+m;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(j!==c&&!st[j]&&lv[j]===lv[c])mark(j);}
@@ -14101,7 +14137,7 @@ function hdHeights(map){
   }
   // 2) スタートから全部の床へ行けて、全部の床からスタートへ戻れるか確かめ、だめな所に階段を足す
   const sp=map.start||map.areas.find(a=>a.kind==='start')||map.areas[0],s0=Math.floor(sp.y/TILE)*W+Math.floor(sp.x/TILE);
-  const can=(c,n)=>lv[n]<=lv[c]||(st[c]&&lv[n]===lv[c]+1);
+  const can=(c,n)=>lv[n]<=lv[c]||(st[c]&&lv[n]<=su[c]);
   const reach=(rev)=>{const r=new Uint8Array(N),q=[s0];r[s0]=1;for(let k=0;k<q.length;k++){const c=q[k],x=c%W,y=(c/W)|0;for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const n=ny*W+nx;if(r[n]||!walk(n))continue;if(rev?can(n,c):can(c,n)){r[n]=1;q.push(n);}}}return r;};
   for(let it=0;it<40;it++){
     let fixed=false;
@@ -14111,14 +14147,14 @@ function hdHeights(map){
         if(!walk(c))continue;const x=c%W,y=(c/W)|0;
         for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const n=ny*W+nx;if(!walk(n))continue;
           // 前向き：行ける c から行けない n（1段上）へ。逆向き：戻れない c から戻れる n（1段上）へ
-          if(!rev&&r[c]&&!r[n]&&lv[n]===lv[c]+1){stairAt(c);fixed=true;break;}
-          if(rev&&!r[c]&&r[n]&&lv[n]===lv[c]+1){stairAt(c);fixed=true;break;}}
+          if(!rev&&r[c]&&!r[n]&&lv[n]>lv[c]){stairAt(c);fixed=true;break;}
+          if(rev&&!r[c]&&r[n]&&lv[n]>lv[c]){stairAt(c);fixed=true;break;}}
       }
       if(fixed)break;
     }
     if(!fixed)break;
   }
-  map._hdh={lv,st,sd};
+  map._hdh={lv,st,sd,su};
   return map._hdh;
 }
 /** その位置の地面の高さ（段数。階段は坂として途中の高さになる） */
@@ -14128,11 +14164,11 @@ function hdGround(map,x,y){
   const i=ty*map.W+tx,l=Hh.lv[i];
   if(!Hh.st[i])return l;
   const fx=x/TILE-tx,fy=y/TILE-ty,dx=Hh.sd[i*2],dy=Hh.sd[i*2+1];
-  return l+(dx>0?fx:dx<0?1-fx:dy>0?fy:1-fy);
+  return l+((Hh.su[i]||l+1)-l)*(dx>0?fx:dx<0?1-fx:dy>0?fy:1-fy);
 }
 /** 崖：今いる段より高い所へは、階段からしか上がれない（降りるのは自由＝飛び降り） */
 function hdBlocked(map,e,x,y){
-  if(!map.open||!HD_LEVELS[map.theme]||!hdSettingOn())return false;
+  if(!map.open||!HD_THEMES[map.theme]||!hdSettingOn())return false;
   const Hh=hdHeights(map);if(!Hh)return false;
   const W=map.W,lv=Hh.lv,st=Hh.st,r=e.r*0.7;
   const at=(px,py)=>{const tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);return (tx<0||ty<0||tx>=W||ty>=map.H)?-1:ty*W+tx;};
@@ -14142,7 +14178,6 @@ function hdBlocked(map,e,x,y){
   for(const [dx,dy] of P){
     const i=at(x+dx,y+dy);if(i<0)continue;
     const t=map.tiles[i];if(t!==0&&t!==TILE_PUDDLE)continue;
-    if(lv[i]>from+1)return true;
     if(lv[i]>from&&!onSt&&!st[i])return true;
   }
   return false;
@@ -15027,7 +15062,7 @@ const HD={
     document.head.appendChild(s);
   },
   active(w){
-    if(!w||!w.map||!w.map.open||!HD_LEVELS[w.map.theme]||!hdSettingOn())return false;
+    if(!w||!w.map||!w.map.open||!HD_THEMES[w.map.theme]||!hdSettingOn())return false;
     if(typeof THREE==='undefined'){this.load();return false;}
     return !!hdHeights(w.map);
   },
@@ -15039,59 +15074,136 @@ const HD={
     return o.ok?o.im:null;
   },
   whenImg(path,f){const im=this.img(path);if(im)f(im);else this.imgs[path].cb.push(f);},
-  /* ---------- 仮の絵（画像が無いとき）：つなぎ目の無い模様を自動で描く ---------- */
-  noise(base,spots,size,extra){
-    const c=document.createElement('canvas');c.width=c.height=size||128;const g=c.getContext('2d'),S=c.width;
-    g.fillStyle=base;g.fillRect(0,0,S,S);
-    let sd=7;const rn=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
-    for(const [col,n,r0,r1,al] of spots)for(let i=0;i<n;i++){const x=rn()*S,y=rn()*S,r=r0+rn()*(r1-r0);g.globalAlpha=al;g.fillStyle=col;
-      for(const ox of [-S,0,S])for(const oy of [-S,0,S]){g.beginPath();g.ellipse(x+ox,y+oy,r,r*(0.6+rn()*0.5),rn()*3,0,TAU);g.fill();}}
-    g.globalAlpha=1;if(extra)extra(g,S,rn);return c;
+  /* ---------- 仮の絵（画像が無いとき）：つなぎ目の無い模様をプログラムで描く ---------- */
+  /** 決まった乱数 */
+  rng(seed){let sd=seed|0||7;return ()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};},
+  /** つなぎ目の無いなめらかなノイズ（何段か重ねる）。0〜1 の配列 */
+  fbm(S,seed,oct){
+    const out=new Float32Array(S*S),rn=this.rng(seed);let amp=1,tot=0;
+    for(let o=0,cells=4;o<(oct||5);o++,cells*=2,amp*=0.5){
+      const G=new Float32Array(cells*cells);for(let i=0;i<G.length;i++)G[i]=rn();
+      const sm=v=>v*v*(3-2*v);
+      for(let y=0;y<S;y++){const fy=y/S*cells,y0=Math.floor(fy),ty=sm(fy-y0),y1=(y0+1)%cells;
+        for(let x=0;x<S;x++){const fx=x/S*cells,x0=Math.floor(fx),tx=sm(fx-x0),x1=(x0+1)%cells;
+          const a=G[y0*cells+x0],b=G[y0*cells+x1],c=G[y1*cells+x0],d=G[y1*cells+x1];
+          out[y*S+x]+=amp*((a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+d*tx)*ty);}}
+      tot+=amp;}
+    for(let i=0;i<out.length;i++)out[i]/=tot;
+    return out;
   },
-  fallbackTex(name){
-    const blades=(cols)=>(g,S,rn)=>{for(let i=0;i<S*1.2;i++){const x=rn()*S,y=rn()*S,h=3+rn()*6;g.strokeStyle=cols[i%cols.length];g.globalAlpha=0.55;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+rn()*2-1,y-h);g.stroke();}g.globalAlpha=1;};
-    switch(name){
-      case 'grass':return this.noise('#5d8a3c',[['#6f9e48',40,4,12,0.5],['#4c7631',40,3,10,0.45],['#86ad55',20,2,5,0.4]],128,blades(['#7fb04e','#4a7a2c','#94c060']));
-      case 'grass2':return this.noise('#4a7530',[['#3c6226',50,4,12,0.55],['#5f8c3c',30,3,8,0.5]],128,blades(['#6a9a40','#355a22','#7caa4a']));
-      case 'flowers':return this.noise('#5d8a3c',[['#6f9e48',40,4,12,0.5],['#4c7631',30,3,10,0.45]],128,(g,S,rn)=>{blades(['#7fb04e','#4a7a2c'])(g,S,rn);for(let i=0;i<70;i++){g.fillStyle=['#fff6e0','#ffd84a','#ff9ac0','#c8a8ff'][i%4];g.beginPath();g.arc(rn()*S,rn()*S,1.6+rn()*1.4,0,TAU);g.fill();}});
-      case 'dirt':return this.noise('#8b6d48',[['#7a5e3c',40,4,12,0.5],['#9c7e56',40,3,9,0.45],['#6a5034',30,1,3,0.6]]);
-      case 'cliff':return this.noise('#7d6c58',[['#6a5a48',40,5,16,0.5],['#8e7c66',30,4,10,0.45]],128,(g,S,rn)=>{g.strokeStyle='rgba(40,30,20,.45)';g.lineWidth=2;for(let k=0;k<6;k++){const y=k*S/6+rn()*6;g.beginPath();g.moveTo(0,y);for(let x=0;x<=S;x+=16)g.lineTo(x,y+Math.sin(x*0.09+k)*3);g.stroke();}for(let i=0;i<12;i++){const x=rn()*S,y=rn()*S;g.beginPath();g.moveTo(x,y);g.lineTo(x+rn()*8-4,y+8+rn()*10);g.stroke();}});
-      case 'wallTop':return this.noise('#3e6528',[['#34571f',60,5,14,0.6],['#4f7a32',40,4,10,0.5],['#2a4618',30,3,7,0.5]]);
-      case 'stairs':{const c=this.noise('#9a8f7e',[['#8a7f6e',30,4,10,0.5],['#aaa08c',20,3,8,0.4]]),g=c.getContext('2d'),S=c.width;for(let k=0;k<4;k++){const y=k*S/4;g.fillStyle='rgba(50,40,30,.55)';g.fillRect(0,y,S,4);g.fillStyle='rgba(255,255,240,.25)';g.fillRect(0,y+4,S,3);}return c;}
-      case 'water':return this.noise('#2f6f9e',[['#3a82b4',40,6,16,0.45],['#26608a',30,5,12,0.45]],128,(g,S,rn)=>{g.strokeStyle='rgba(220,240,255,.35)';g.lineWidth=1.5;for(let i=0;i<14;i++){const x=rn()*S,y=rn()*S;g.beginPath();g.arc(x,y,6+rn()*8,0.3,2.6);g.stroke();}});
+  hex2rgb(h){const n=parseInt(h.slice(1),16);return [n>>16&255,n>>8&255,n&255];},
+  /** ノイズで色を塗った下地。cols：暗い→明るい */
+  paintNoise(S,cols,seed,contrast){
+    const c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d'),img=g.createImageData(S,S),d=img.data;
+    const n1=this.fbm(S,seed,6),n2=this.fbm(S,seed+99,3),C=cols.map(x=>this.hex2rgb(x)),K=contrast||1.6;
+    for(let i=0;i<S*S;i++){let v=clamp((n1[i]-0.5)*K+0.5+(n2[i]-0.5)*0.35,0,0.999)*(C.length-1);const j=Math.floor(v),f=v-j,a=C[j],b=C[j+1];
+      d[i*4]=a[0]+(b[0]-a[0])*f;d[i*4+1]=a[1]+(b[1]-a[1])*f;d[i*4+2]=a[2]+(b[2]-a[2])*f;d[i*4+3]=255;}
+    g.putImageData(img,0,0);return c;
+  },
+  /** つなぎ目をまたいで描く（上下左右に複製して描く） */
+  wrapDraw(g,S,f){for(const ox of [-S,0,S])for(const oy of [-S,0,S]){g.save();g.translate(ox,oy);f(g);g.restore();}},
+  /** テーマ（ステージ）ごとの地面などの模様 */
+  fallbackTex(name,theme){
+    const P=HD_THEMES[theme]||HD_THEMES.meadow,S=256,seed=(name.length*131+theme.length*17)|0,rn=this.rng(seed+5);
+    const blades=(g,cols,n,h)=>{g.lineCap='round';for(let i=0;i<n;i++){const x=rn()*S,y=rn()*S,hh=(h||6)*(0.5+rn()),lean=(rn()-0.5)*3;g.strokeStyle=cols[i%cols.length];g.globalAlpha=0.35+rn()*0.4;g.lineWidth=0.8+rn()*0.8;
+      this.wrapDraw(g,S,gg=>{gg.beginPath();gg.moveTo(x,y);gg.quadraticCurveTo(x+lean*0.4,y-hh*0.6,x+lean,y-hh);gg.stroke();});}g.globalAlpha=1;};
+    const pebbles=(g,cols,n,r0,r1)=>{for(let i=0;i<n;i++){const x=rn()*S,y=rn()*S,r=r0+rn()*(r1-r0),c=cols[i%cols.length];
+      this.wrapDraw(g,S,gg=>{gg.fillStyle='rgba(0,0,0,.25)';gg.beginPath();gg.ellipse(x+r*0.3,y+r*0.35,r,r*0.75,0,0,TAU);gg.fill();const gr=gg.createRadialGradient(x-r*0.3,y-r*0.3,r*0.1,x,y,r);gr.addColorStop(0,mixC(c,0.35));gr.addColorStop(1,mixC(c,-0.3));gg.fillStyle=gr;gg.beginPath();gg.ellipse(x,y,r,r*0.75,rn()*3,0,TAU);gg.fill();});}};
+    const cracks=(g,col,n,w)=>{g.strokeStyle=col;g.lineWidth=w||1.2;for(let i=0;i<n;i++){let x=rn()*S,y=rn()*S;const pts=[[x,y]];for(let k=0;k<5;k++){x+=(rn()-0.5)*30;y+=(rn()-0.5)*30;pts.push([x,y]);}
+      this.wrapDraw(g,S,gg=>{gg.beginPath();gg.moveTo(pts[0][0],pts[0][1]);for(const p of pts)gg.lineTo(p[0],p[1]);gg.stroke();});}};
+    const flowers=(g,cols,n)=>{for(let i=0;i<n;i++){const x=rn()*S,y=rn()*S,c=cols[i%cols.length],r=1.4+rn()*1.6;this.wrapDraw(g,S,gg=>{gg.fillStyle=c;for(let k=0;k<5;k++){const a=k/5*TAU;gg.beginPath();gg.arc(x+Math.cos(a)*r,y+Math.sin(a)*r,r*0.7,0,TAU);gg.fill();}gg.fillStyle='#ffe070';gg.beginPath();gg.arc(x,y,r*0.5,0,TAU);gg.fill();});}};
+    const tiles=(g,col,n)=>{g.strokeStyle=col;g.lineWidth=2;const s=S/n;for(let j=0;j<n;j++){g.beginPath();g.moveTo(0,j*s);g.lineTo(S,j*s);g.stroke();for(let i=0;i<n;i++){const off=(j%2)*s/2;g.beginPath();g.moveTo((i*s+off)%S,j*s);g.lineTo((i*s+off)%S,j*s+s);g.stroke();}}};
+    const strata=(g,n)=>{for(let k=0;k<n;k++){const y=k*S/n+rn()*8;g.strokeStyle='rgba(20,14,8,.35)';g.lineWidth=1.5+rn()*2;g.beginPath();g.moveTo(0,y);for(let x=0;x<=S;x+=16)g.lineTo(x,y+Math.sin(x*0.05+k*1.7)*4+(rn()-0.5)*2);g.stroke();g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=1;g.beginPath();g.moveTo(0,y+3);for(let x=0;x<=S;x+=16)g.lineTo(x,y+3+Math.sin(x*0.05+k*1.7)*4);g.stroke();}};
+    const T=P.tex[name]||P.tex.grass;
+    const c=this.paintNoise(S,T.cols,seed,T.k);const g=c.getContext('2d');
+    switch(T.d){
+      case 'grass':blades(g,T.blade||['#86b856','#4f8030','#a6cc6a'],700,7);break;
+      case 'grass2':blades(g,T.blade||['#6a9a40','#355a22','#86b04e'],1100,11);break;
+      case 'flowers':blades(g,T.blade||['#86b856','#4f8030'],500,6);flowers(g,T.fl||['#fff6e0','#ffd84a','#ff9ac0','#c8a8ff'],70);break;
+      case 'dirt':pebbles(g,T.peb||['#9a8a70','#7a6a54','#b0a088'],40,1.5,3.5);cracks(g,'rgba(50,35,20,.25)',6);break;
+      case 'pebble':pebbles(g,T.peb||['#a0a8b0','#7a8088','#c0c4c8'],90,2,6);break;
+      case 'mud':pebbles(g,['#5a5030','#3a3a20'],30,2,5);for(let i=0;i<14;i++){const x=rn()*S,y=rn()*S,r=6+rn()*14;this.wrapDraw(g,S,gg=>{gg.fillStyle='rgba(40,50,30,.35)';gg.beginPath();gg.ellipse(x,y,r,r*0.6,0,0,TAU);gg.fill();gg.strokeStyle='rgba(200,210,160,.12)';gg.stroke();});}break;
+      case 'moss':blades(g,['#7aa048','#4a6a28'],500,4);break;
+      case 'stone':pebbles(g,T.peb||['#5a5070','#3a3450'],40,2,6);cracks(g,'rgba(0,0,0,.3)',10);break;
+      case 'basalt':cracks(g,'rgba(0,0,0,.45)',16,1.6);cracks(g,'rgba(255,110,40,.35)',5,1.2);pebbles(g,['#3a2a26','#2a1c18'],30,1.5,4);break;
+      case 'snow':for(let i=0;i<300;i++){const x=rn()*S,y=rn()*S;g.fillStyle=`rgba(255,255,255,${0.3+rn()*0.6})`;g.fillRect(x,y,1.2,1.2);}for(let i=0;i<20;i++){const x=rn()*S,y=rn()*S;this.wrapDraw(g,S,gg=>{gg.fillStyle='rgba(150,180,210,.18)';gg.beginPath();gg.ellipse(x,y,12+rn()*16,4+rn()*5,0,0,TAU);gg.fill();});}break;
+      case 'tile':tiles(g,'rgba(10,8,14,.55)',4);cracks(g,'rgba(0,0,0,.35)',8);g.fillStyle='rgba(90,110,60,.25)';for(let i=0;i<25;i++){const x=rn()*S,y=rn()*S;g.fillRect(x,y,4+rn()*8,2+rn()*3);}break;
+      case 'cliff':{ // 岩の塊が積み重なった崖
+        for(let i=0;i<70;i++){const x=rn()*S,y=rn()*S,w=14+rn()*30,h=10+rn()*18,C=T.cols,base=C[1+Math.floor(rn()*(C.length-1))];
+          this.wrapDraw(g,S,gg=>{gg.beginPath();const n=6;for(let k=0;k<n;k++){const a=k/n*TAU,rr=0.75+rn()*0.3;gg.lineTo(x+Math.cos(a)*w*0.5*rr,y+Math.sin(a)*h*0.5*rr);}gg.closePath();
+            const gr=gg.createLinearGradient(x,y-h/2,x,y+h/2);gr.addColorStop(0,mixC(base,0.28));gr.addColorStop(0.5,base);gr.addColorStop(1,mixC(base,-0.35));gg.fillStyle=gr;gg.fill();gg.strokeStyle='rgba(10,8,6,.55)';gg.lineWidth=2;gg.stroke();});}
+        cracks(g,'rgba(10,8,6,.35)',8);break;}
+      case 'bush':for(let i=0;i<120;i++){const x=rn()*S,y=rn()*S,r=5+rn()*10;const cl=T.leaf||['#4a7a30','#2e5420','#6a9a40'];this.wrapDraw(g,S,gg=>{const gr=gg.createRadialGradient(x-r*0.3,y-r*0.3,1,x,y,r);gr.addColorStop(0,cl[2]);gr.addColorStop(0.6,cl[0]);gr.addColorStop(1,cl[1]);gg.fillStyle=gr;gg.beginPath();gg.arc(x,y,r,0,TAU);gg.fill();});}break;
+      case 'stairs':for(let k=0;k<4;k++){const y=k*S/4;g.fillStyle='rgba(30,22,14,.6)';g.fillRect(0,y,S,7);g.fillStyle='rgba(255,255,240,.28)';g.fillRect(0,y+7,S,5);}cracks(g,'rgba(0,0,0,.25)',5);break;
+      case 'water':for(let i=0;i<30;i++){const x=rn()*S,y=rn()*S,r=8+rn()*16;this.wrapDraw(g,S,gg=>{gg.strokeStyle=T.wave||'rgba(220,240,255,.35)';gg.lineWidth=1.5;gg.beginPath();gg.ellipse(x,y,r,r*0.35,0,0.2,Math.PI-0.2);gg.stroke();});}break;
+      case 'lava':cracks(g,'rgba(255,240,140,.6)',14,2);for(let i=0;i<14;i++){const x=rn()*S,y=rn()*S,r=8+rn()*14;this.wrapDraw(g,S,gg=>{gg.fillStyle='rgba(60,20,8,.5)';gg.beginPath();gg.ellipse(x,y,r,r*0.6,rn()*3,0,TAU);gg.fill();});}break;
+      case 'planks':g.fillStyle='rgba(0,0,0,0)';for(let k=0;k<8;k++){const y=k*S/8;g.fillStyle='rgba(30,18,8,.6)';g.fillRect(0,y,S,3);g.fillStyle='rgba(255,230,180,.12)';g.fillRect(0,y+3,S,2);for(let i=0;i<3;i++){g.fillStyle='rgba(20,12,4,.7)';g.beginPath();g.arc((i*90+k*37)%S,y+S/16,2,0,TAU);g.fill();}}break;
     }
-    return this.noise('#777',[]);
+    return c;
   },
   /** 地面などの模様：img/tex/<テーマ>_<名前>.png があればそれ、無ければ仮の模様 */
   tex(theme,name){
     const key=theme+'_'+name;if(this.texs[key])return this.texs[key];
-    const T=this.three,t=new T.CanvasTexture(this.fallbackTex(name));t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=4;
+    const T=this.three,t=new T.CanvasTexture(this.fallbackTex(name,theme));t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=8;t.encoding=T.sRGBEncoding;
     this.whenImg('tex/'+key+'.png',im=>{t.image=im;t.needsUpdate=true;});
     return this.texs[key]=t;
   },
-  /** 木・岩の仮の絵 */
-  fallbackObj(kind){
-    const c=document.createElement('canvas'),g=c.getContext('2d');
+  /** 木・岩・柱などの仮の絵（テーマごと） */
+  fallbackObj(kind,theme){
+    const c=document.createElement('canvas'),g=c.getContext('2d'),rn=this.rng(kind.length*97+theme.length*13);
+    const blob=(x,y,r,c0,c1,c2)=>{const gr=g.createRadialGradient(x-r*0.4,y-r*0.45,r*0.05,x,y,r);gr.addColorStop(0,c0);gr.addColorStop(0.55,c1);gr.addColorStop(1,c2);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();};
+    const leafy=(cx,cy,R,n,cols)=>{for(let i=0;i<n;i++){const a=rn()*TAU,d=Math.sqrt(rn())*R,x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*0.85,r=R*(0.22+rn()*0.18);const lit=(cx-x)+(cy-y)>0;blob(x,y,r,lit?cols[0]:cols[1],cols[1],cols[2]);}
+      g.globalAlpha=0.5;for(let i=0;i<n*4;i++){const a=rn()*TAU,d=Math.sqrt(rn())*R*1.05,x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*0.85;g.fillStyle=rn()<0.5?cols[0]:cols[2];g.beginPath();g.ellipse(x,y,2+rn()*3,1.5+rn()*2,rn()*3,0,TAU);g.fill();}g.globalAlpha=1;};
+    const trunk=(x,yTop,yBot,w,col)=>{const gr=g.createLinearGradient(x-w,0,x+w,0);gr.addColorStop(0,mixC(col,-0.4));gr.addColorStop(0.35,mixC(col,0.25));gr.addColorStop(1,mixC(col,-0.55));g.fillStyle=gr;g.beginPath();g.moveTo(x-w*0.6,yTop);g.lineTo(x+w*0.6,yTop);g.quadraticCurveTo(x+w*0.7,yBot-20,x+w*1.4,yBot);g.lineTo(x-w*1.4,yBot);g.quadraticCurveTo(x-w*0.7,yBot-20,x-w*0.6,yTop);g.fill();
+      g.strokeStyle='rgba(0,0,0,.3)';g.lineWidth=1.5;for(let i=0;i<6;i++){const xx=x-w*0.5+rn()*w;g.beginPath();g.moveTo(xx,yTop+rn()*20);g.lineTo(xx+(rn()-0.5)*4,yBot-rn()*10);g.stroke();}};
     if(kind==='tree'){
-      c.width=256;c.height=320;
-      g.fillStyle='#5a3e26';g.beginPath();g.moveTo(112,320);g.lineTo(118,190);g.lineTo(138,190);g.lineTo(146,320);g.closePath();g.fill();
-      g.fillStyle='rgba(0,0,0,.25)';g.fillRect(132,200,12,120);
-      const blob=(x,y,r,c0,c1)=>{const gr=g.createRadialGradient(x-r*0.35,y-r*0.4,r*0.1,x,y,r);gr.addColorStop(0,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();};
-      for(const [x,y,r] of [[80,190,52],[176,190,52],[128,200,50],[96,130,58],[160,130,58],[128,80,60],[128,150,62]])blob(x,y,r,'#7fae4c','#2f5a22');
-      g.globalAlpha=0.35;for(let i=0;i<60;i++){g.fillStyle=i%2?'#a6d06a':'#1f4016';g.beginPath();g.arc(50+Math.random()*156,40+Math.random()*190,3+Math.random()*5,0,TAU);g.fill();}g.globalAlpha=1;
-    }else{
-      c.width=192;c.height=144;
-      const gr=g.createRadialGradient(70,50,10,96,90,100);gr.addColorStop(0,'#c4c0b4');gr.addColorStop(0.6,'#8a867c');gr.addColorStop(1,'#55524a');
-      g.fillStyle=gr;g.beginPath();g.moveTo(10,144);g.quadraticCurveTo(0,70,50,40);g.quadraticCurveTo(100,0,150,36);g.quadraticCurveTo(196,70,184,144);g.closePath();g.fill();
-      g.strokeStyle='rgba(40,38,34,.4)';g.lineWidth=3;g.beginPath();g.moveTo(80,50);g.lineTo(96,96);g.lineTo(86,130);g.moveTo(130,60);g.lineTo(140,100);g.stroke();
-      g.fillStyle='rgba(110,150,70,.55)';g.beginPath();g.ellipse(70,44,26,10,-0.3,0,TAU);g.fill();
+      c.width=256;c.height=320;const tp=HD_THEMES[theme]&&HD_THEMES[theme].tree||'broad';
+      if(tp==='pine'){trunk(128,200,320,10,'#5a3e26');for(let i=0;i<5;i++){const y=60+i*48,w=40+i*20;g.fillStyle=HDART.lin(g,128-w,0,128+w,0,['#2a5a3a','#3e7a50','#1a3a24']);g.beginPath();g.moveTo(128,y-60);g.lineTo(128+w,y+20);g.quadraticCurveTo(128,y+5,128-w,y+20);g.closePath();g.fill();
+          g.fillStyle='rgba(245,250,255,.92)';g.beginPath();g.moveTo(128,y-58);g.lineTo(128+w*0.75,y+5);g.quadraticCurveTo(128,y-10,128-w*0.6,y+2);g.closePath();g.fill();}}
+      else if(tp==='dead'){trunk(128,120,320,16,'#4a4030');g.strokeStyle='#3a3224';g.lineCap='round';for(const [x0,y0,x1,y1,w] of [[128,160,60,90,7],[128,140,200,70,7],[90,115,70,60,4],[180,95,215,55,4],[128,125,135,40,6]]){g.lineWidth=w;g.beginPath();g.moveTo(x0,y0);g.quadraticCurveTo((x0+x1)/2+10,(y0+y1)/2,x1,y1);g.stroke();}
+        g.fillStyle='rgba(110,140,70,.75)';for(let i=0;i<10;i++){const x=70+rn()*120,y=80+rn()*90;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+3,y+20,x-2,y+35+rn()*20);g.lineTo(x+4,y);g.fill();}}
+      else{trunk(128,170,320,13,tp==='dark'?'#3e2c1c':'#5a3e26');const cols=tp==='dark'?['#4a7a3a','#264a1e','#12260e']:['#8ec05a','#4a8030','#244a18'];
+        leafy(128,tp==='dark'?120:130,tp==='dark'?105:95,26,cols);if(tp==='dark')leafy(128,70,70,14,cols);}
+    }else if(kind==='pillar'){
+      c.width=160;c.height=320;const st=HD_THEMES[theme]&&HD_THEMES[theme].stone||'#8a8478';g.fillStyle=HDART.lin(g,30,0,130,0,[mixC(st,-0.4),mixC(st,0.3),st,mixC(st,-0.5)]);g.fillRect(40,40,80,260);
+      g.fillStyle=HDART.lin(g,20,0,140,0,[mixC(st,-0.3),mixC(st,0.35),mixC(st,-0.4)]);g.fillRect(25,20,110,26);g.fillRect(25,290,110,30);
+      g.strokeStyle='rgba(0,0,0,.25)';g.lineWidth=2;for(let i=0;i<5;i++){g.beginPath();g.moveTo(52+i*14,50);g.lineTo(52+i*14,288);g.stroke();}
+      g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.moveTo(60,120);g.lineTo(75,160);g.lineTo(68,200);g.stroke();g.fillStyle='rgba(80,120,60,.45)';g.beginPath();g.ellipse(80,292,50,12,0,0,TAU);g.fill();
+    }else if(kind==='tomb'){
+      c.width=160;c.height=200;const st='#8a8a90';g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(80,192,70,10,0,0,TAU);g.fill();
+      g.fillStyle=HDART.lin(g,30,0,130,0,[mixC(st,-0.3),mixC(st,0.3),mixC(st,-0.45)]);g.beginPath();g.moveTo(35,190);g.lineTo(35,70);g.quadraticCurveTo(80,10,125,70);g.lineTo(125,190);g.closePath();g.fill();g.strokeStyle='#3a3a40';g.lineWidth=2;g.stroke();
+      g.strokeStyle='rgba(30,30,36,.7)';g.lineWidth=5;g.beginPath();g.moveTo(80,70);g.lineTo(80,140);g.moveTo(58,95);g.lineTo(102,95);g.stroke();g.fillStyle='rgba(90,120,70,.5)';g.fillRect(35,170,90,20);
+    }else{ // 岩（テーマで形と色が変わる）
+      c.width=192;c.height=144;const rk=HD_THEMES[theme]&&HD_THEMES[theme].rock||'grey';
+      if(rk==='crystal'){g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(96,138,80,8,0,0,TAU);g.fill();for(const [x,h,w,a] of [[70,100,18,-0.25],[96,135,22,0],[125,90,17,0.3],[50,60,12,-0.5],[145,55,12,0.55]]){g.save();g.translate(x,140);g.rotate(a);
+          g.fillStyle=HDART.lin(g,-w,0,w,0,['#4a7ab0','#c8f4ff','#7ac8f0','#2a4a80']);g.beginPath();g.moveTo(-w,0);g.lineTo(-w,-h*0.75);g.lineTo(0,-h);g.lineTo(w,-h*0.75);g.lineTo(w,0);g.closePath();g.fill();g.strokeStyle='rgba(220,250,255,.8)';g.lineWidth=1.5;g.stroke();g.beginPath();g.moveTo(0,-h);g.lineTo(0,0);g.stroke();g.restore();}}
+      else{const base=rk==='basalt'?['#4a3a34','#2a1e1a','#140c0a']:rk==='snow'?['#c8ccd0','#8a9098','#4a5058']:rk==='mossy'?['#8a9a7a','#5a6a50','#2a3424']:['#c4c0b4','#8a867c','#45423c'];
+        const gr=g.createRadialGradient(70,45,10,96,90,110);gr.addColorStop(0,base[0]);gr.addColorStop(0.55,base[1]);gr.addColorStop(1,base[2]);
+        g.fillStyle='rgba(0,0,0,.28)';g.beginPath();g.ellipse(96,138,88,9,0,0,TAU);g.fill();
+        g.fillStyle=gr;g.beginPath();g.moveTo(8,142);g.quadraticCurveTo(-2,80,40,52);g.lineTo(70,24);g.quadraticCurveTo(110,4,140,30);g.lineTo(170,58);g.quadraticCurveTo(196,90,186,142);g.closePath();g.fill();
+        g.strokeStyle='rgba(20,18,14,.45)';g.lineWidth=2.5;g.beginPath();g.moveTo(70,26);g.lineTo(88,80);g.lineTo(78,138);g.moveTo(140,32);g.lineTo(132,90);g.lineTo(150,140);g.moveTo(40,54);g.lineTo(60,100);g.stroke();
+        g.fillStyle='rgba(255,255,255,.12)';g.beginPath();g.moveTo(72,26);g.lineTo(88,80);g.lineTo(60,100);g.lineTo(40,54);g.closePath();g.fill();
+        if(rk==='snow'){g.fillStyle='rgba(250,252,255,.95)';g.beginPath();g.moveTo(30,62);g.quadraticCurveTo(70,10,140,28);g.quadraticCurveTo(175,50,172,62);g.quadraticCurveTo(110,40,30,62);g.fill();}
+        if(rk==='mossy'||rk==='grey'){g.fillStyle='rgba(100,140,60,.55)';g.beginPath();g.ellipse(80,36,32,10,-0.3,0,TAU);g.fill();}
+        if(rk==='basalt'){g.strokeStyle='rgba(255,120,40,.7)';g.lineWidth=2;g.beginPath();g.moveTo(100,60);g.lineTo(112,100);g.lineTo(104,138);g.stroke();}}
     }
     return c;
   },
-  objTex(kind){
-    const key='obj_'+kind;if(this.texs[key])return this.texs[key];
-    const T=this.three,t=new T.CanvasTexture(this.fallbackObj(kind));
-    this.whenImg('obj/'+kind+'.png',im=>{t.image=im;t.needsUpdate=true;});
+  objTex(kind,theme){
+    const key='obj_'+theme+'_'+kind;if(this.texs[key])return this.texs[key];
+    const T=this.three,t=new T.CanvasTexture(this.fallbackObj(kind,theme));t.anisotropy=4;t.encoding=T.sRGBEncoding;
+    this.whenImg('obj/'+theme+'_'+kind+'.png',im=>{t.image=im;t.needsUpdate=true;});
+    return this.texs[key]=t;
+  },
+  /** 草むら・花（地面から生えた小さな立体。2枚の板を十字に組む）の模様 */
+  tuftTex(theme,kind){
+    const key='tuft_'+theme+'_'+kind;if(this.texs[key])return this.texs[key];
+    const c=document.createElement('canvas');c.width=128;c.height=96;const g=c.getContext('2d'),rn=this.rng(kind.length*31+theme.length);
+    const P=HD_THEMES[theme]||HD_THEMES.meadow,cols=P.tuft||['#8cc060','#4a8030','#2e5a1e'];
+    g.lineCap='round';
+    for(let i=0;i<46;i++){const x=10+rn()*108,h=30+rn()*60,lean=(rn()-0.5)*26;const gr=g.createLinearGradient(0,96,0,96-h);gr.addColorStop(0,cols[2]);gr.addColorStop(0.5,cols[1]);gr.addColorStop(1,cols[0]);g.strokeStyle=gr;g.lineWidth=2+rn()*2.5;g.beginPath();g.moveTo(x,96);g.quadraticCurveTo(x+lean*0.3,96-h*0.6,x+lean,96-h);g.stroke();}
+    if(kind==='flower')for(let i=0;i<8;i++){const x=15+rn()*98,y=20+rn()*40,cc=['#fff6e0','#ffd84a','#ff9ac0','#c8a8ff'][i%4];g.fillStyle=cc;for(let k=0;k<5;k++){const a=k/5*TAU;g.beginPath();g.arc(x+Math.cos(a)*3,y+Math.sin(a)*3,2.4,0,TAU);g.fill();}g.fillStyle='#ffe070';g.beginPath();g.arc(x,y,1.8,0,TAU);g.fill();}
+    const t=new this.three.CanvasTexture(c);t.encoding=this.three.sRGBEncoding;this.whenImg('obj/'+theme+'_'+kind+'.png',im=>{t.image=im;t.needsUpdate=true;});
     return this.texs[key]=t;
   },
   /* ---------- 準備 ---------- */
@@ -15102,11 +15214,13 @@ const HD={
     const cv=document.createElement('canvas');cv.id='game3d';cv.style.cssText='display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:0;pointer-events:none';
     const g2=document.getElementById('game');g2.parentNode.insertBefore(cv,g2);
     this.cv=cv;
-    this.gl=new T.WebGLRenderer({canvas:cv,antialias:true});
+    this.gl=new T.WebGLRenderer({canvas:cv,antialias:true});this.gl.outputEncoding=T.sRGBEncoding;
     this.scene=new T.Scene();
     this.cam=new T.PerspectiveCamera(32,1,0.5,400);
-    this.scene.add(new T.AmbientLight(0xffffff,0.62));
-    const sun=new T.DirectionalLight(0xfff2d8,0.7);sun.position.set(-0.6,1.6,-0.9);this.scene.add(sun);
+    this.amb=new T.AmbientLight(0xffffff,0.62);this.scene.add(this.amb);
+    this.hemi=new T.HemisphereLight(0xbfe0ff,0x4a3a28,0.25);this.scene.add(this.hemi);
+    this.sun=new T.DirectionalLight(0xfff2d8,0.7);this.sun.position.set(-0.6,1.6,-0.9);this.scene.add(this.sun);
+    this.lamp=new T.PointLight(0xffc890,0,16,1.6);this.scene.add(this.lamp); // 洞窟・地下墓地：プレイヤーのまわりを照らす明かり
     // スマホ用：視点を回すボタン（押している間まわる）
     const rb=document.createElement('div');rb.id='hdRot';rb.style.cssText='display:none;position:fixed;right:10px;top:38%;z-index:5;flex-direction:column;gap:10px';
     for(const [d,t] of [[-1,'⟲'],[1,'⟳']]){const b=document.createElement('div');b.textContent=t;b.style.cssText='width:52px;height:52px;border-radius:50%;background:rgba(20,16,30,.6);border:2px solid rgba(255,230,160,.5);color:#f3e6c0;font:bold 26px/48px sans-serif;text-align:center;user-select:none;-webkit-user-select:none;touch-action:none';
@@ -15114,46 +15228,63 @@ const HD={
       b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);rb.appendChild(b);}
     document.body.appendChild(rb);this.rotBtns=rb;
     this.overlayCv=document.createElement('canvas');this.overlayCv.width=this.overlayCv.height=1024;
-    this.overlayTex=new T.CanvasTexture(this.overlayCv);
+    this.overlayTex=new T.CanvasTexture(this.overlayCv);this.overlayTex.encoding=T.sRGBEncoding;
     this.overlayTex.wrapS=this.overlayTex.wrapT=T.ClampToEdgeWrapping;
     return true;
   },
   /* ---------- 地形を組み立てる（マップが変わったときだけ） ---------- */
   buildTerrain(map){
-    const T=this.three,Hh=hdHeights(map),W=map.W,H=map.H,lv=Hh.lv,st=Hh.st,sd=Hh.sd,tl=map.tiles,theme=map.theme;
-    if(this.terrain){this.scene.remove(this.terrain);this.terrain.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
+    const T=this.three,Hh=hdHeights(map),W=map.W,H=map.H,lv=Hh.lv,st=Hh.st,sd=Hh.sd,su=Hh.su,tl=map.tiles,theme=HD_THEMES[map.theme]?map.theme:'meadow',P=HD_THEMES[theme];
+    if(this.terrain){this.scene.remove(this.terrain);this.terrain.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.dispose)o.material.dispose();});}
     const root=new T.Group();this.terrain=root;
-    const G={};const grp=k=>G[k]||(G[k]={p:[],n:[],u:[]});
-    const isWall=i=>tl[i]===1||tl[i]===3,isWet=i=>tl[i]===TILE_DEEP||tl[i]===TILE_FALL;
+    const G={};const grp=k=>G[k]||(G[k]={p:[],n:[],u:[],c:[]});
+    const isWall=i=>tl[i]===1||tl[i]===3,isWet=i=>tl[i]===TILE_DEEP||tl[i]===TILE_FALL,isObs=i=>tl[i]>=4&&tl[i]<=9&&tl[i]!==TILE_PUDDLE;
+    const rise=i=>(su[i]||lv[i]+1)-lv[i];
     // タイルの角の高さ（cx,cy は 0か1）
     const cornerH=(i,cx,cy)=>{
-      if(isWall(i))return lv[i]+HD_WALL;
-      if(isWet(i))return lv[i]-0.4;
+      if(isWall(i)){const x=i%W+cx,y=((i/W)|0)+cy,n=((x*2654435761)^(y*40503))>>>0;return lv[i]+HD_WALL+((n%1000)/1000)*0.45;}
+      if(isWet(i))return lv[i]-0.42;
       if(!st[i])return lv[i];
-      const dx=sd[i*2],dy=sd[i*2+1];return lv[i]+(dx>0?cx:dx<0?1-cx:dy>0?cy:1-cy);
+      const dx=sd[i*2],dy=sd[i*2+1];return lv[i]+rise(i)*(dx>0?cx:dx<0?1-cx:dy>0?cy:1-cy);
     };
-    const quad=(k,a,b,c,d,n,ua,ub,uc,ud)=>{const o=grp(k);for(const [v,u] of [[a,ua],[b,ub],[c,uc],[a,ua],[c,uc],[d,ud]]){o.p.push(v[0],v[1],v[2]);o.n.push(n[0],n[1],n[2]);o.u.push(u[0],u[1]);}};
+    // 角の明るさ（崖のふもと・木の根元は暗く、少しだけむらをつける）
+    const top=i=>cornerH(i,0.5,0.5);
+    const AO=new Float32Array((W+1)*(H+1));
+    for(let y=0;y<=H;y++)for(let x=0;x<=W;x++){let dark=0;
+      for(const [ox,oy] of [[-1,-1],[0,-1],[-1,0],[0,0]]){const tx=x+ox,ty=y+oy;if(tx<0||ty<0||tx>=W||ty>=H)continue;const i=ty*W+tx;if(isObs(i))dark+=0.06;}
+      AO[y*(W+1)+x]=dark;}
+    const shadeAt=(i,x,y,h)=>{let v=1-AO[y*(W+1)+x];
+      // 周りの高いタイル（崖・壁）の数だけ暗く
+      for(const [ox,oy] of [[-1,-1],[0,-1],[-1,0],[0,0]]){const tx=x+ox,ty=y+oy;if(tx<0||ty<0||tx>=W||ty>=H)continue;const j=ty*W+tx;if(top(j)>h+0.3)v-=0.09;}
+      const n=((x*73856093)^(y*19349663))>>>0;v+=((n%100)/100-0.5)*0.08;return clamp(v,0.45,1.08);};
+    const J=(x,z)=>{const n=((Math.round(x)*73856093)^(Math.round(z)*19349663))>>>0;return [((n%1000)/1000-0.5)*0.42,(((n>>10)%1000)/1000-0.5)*0.42];};
+    const jit=v=>{const j=J(v[0],v[2]);return [v[0]+j[0],v[1],v[2]+j[1]];};
+    const quad=(k,a,b,c,d,n,ua,ub,uc,ud,ca,cb,cc,cd)=>{const o=grp(k);a=jit(a);b=jit(b);c=jit(c);d=jit(d);for(const [v,u,cl] of [[a,ua,ca],[b,ub,cb],[c,uc,cc],[a,ua,ca],[c,uc,cc],[d,ud,cd]]){o.p.push(v[0],v[1],v[2]);o.n.push(n[0],n[1],n[2]);o.u.push(u[0],u[1]);o.c.push(cl,cl,cl);}};
     const OV=[]; // 上に重ねる絵（予兆など）用の床の面
     const S=0.5; // 模様1枚＝2マス
+    const tufts=[];
     for(let y=0;y<H;y++)for(let x=0;x<W;x++){
       const i=y*W+x;
-      // 上の面
-      let k='grass';
+      let k='grass',d=map.deco?map.deco[i]:0;
       if(isWall(i))k='wallTop';else if(isWet(i))k='water';else if(st[i])k='stairs';
-      else{const d=map.deco?map.deco[i]:0;k=d===1||d===4?'dirt':d===2?'grass2':d===3?'flowers':'grass';}
+      else k=d===4?'bridge':d===1?'dirt':d===2?'grass2':d===3?'flowers':'grass';
       const h00=cornerH(i,0,0),h10=cornerH(i,1,0),h11=cornerH(i,1,1),h01=cornerH(i,0,1);
       const A=[x,h00,y],B=[x,h01,y+1],C=[x+1,h11,y+1],D=[x+1,h10,y];
       let nrm=[0,1,0];
-      if(st[i]){const dx=sd[i*2],dy=sd[i*2+1],l=Math.SQRT2;nrm=[-dx/l,1/l,-dy/l];}
+      if(st[i]){const dx=sd[i*2],dy=sd[i*2+1],r0=rise(i),l=Math.hypot(r0,1);nrm=[-dx*r0/l,1/l,-dy*r0/l];}
+      const ca=shadeAt(i,x,y,h00),cb=shadeAt(i,x,y+1,h01),cc=shadeAt(i,x+1,y+1,h11),cd=shadeAt(i,x+1,y,h10);
       if(k==='stairs'){ // 段の線が上り方向と直角になるように
-        const dx=sd[i*2],dy=sd[i*2+1],uv=(cx,cy)=>{const t=dx>0?cx:dx<0?1-cx:dy>0?cy:1-cy,s=dx?cy:cx;return [s,1-t];};
-        quad(k,A,B,C,D,nrm,uv(0,0),uv(0,1),uv(1,1),uv(1,0));
-      }else quad(k,A,B,C,D,nrm,[x*S,y*S],[x*S,(y+1)*S],[(x+1)*S,(y+1)*S],[(x+1)*S,y*S]);
+        const dx=sd[i*2],dy=sd[i*2+1],R=rise(i),uv=(cx,cy)=>{const t=dx>0?cx:dx<0?1-cx:dy>0?cy:1-cy,s=dx?cy:cx;return [s,(1-t)*R];};
+        quad(k,A,B,C,D,nrm,uv(0,0),uv(0,1),uv(1,1),uv(1,0),ca,cb,cc,cd);
+      }else if(k==='bridge'){const hor=x>0&&x<W-1&&map.deco[i-1]===4&&map.deco[i+1]===4;const uv=(cx,cy)=>hor?[(y+cy)*0.5,(x+cx)*0.5]:[(x+cx)*0.5,(y+cy)*0.5];quad(k,A,B,C,D,nrm,uv(0,0),uv(0,1),uv(1,1),uv(1,0),ca,cb,cc,cd);}
+      else quad(k,A,B,C,D,nrm,[x*S,y*S],[x*S,(y+1)*S],[(x+1)*S,(y+1)*S],[(x+1)*S,y*S],ca,cb,cc,cd);
       if(!isWall(i)&&!isWet(i))OV.push(A,B,C,D);
+      // 草むら・花（決まった並びで、ところどころに生やす）
+      if(P.tuft&&(k==='grass2'||k==='flowers'||(k==='grass'&&tl[i]===0))){const n=((x*92837111)^(y*689287499))>>>0;const ch=k==='grass2'?0.9:k==='flowers'?0.6:0.08;
+        if((n%1000)/1000<ch*(P.tuftN||1))tufts.push([x+0.2+((n>>10)%60)/100,lv[i],y+0.2+((n>>16)%60)/100,k==='flowers'?'flower':'grass',0.55+((n>>20)%50)/100]);}
       // 横の面（崖）：となりより高い辺に、となりの高さまでの壁を立てる
       for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
         const nx=x+dx,ny=y+dy;
-        // この辺の2つの角（自分側）と、となり側の同じ角
         const c1=dx===1?[1,0]:dx===-1?[0,1]:dy===1?[1,1]:[0,0],c2=dx===1?[1,1]:dx===-1?[0,0]:dy===1?[0,1]:[1,0];
         const t1=cornerH(i,c1[0],c1[1]),t2=cornerH(i,c2[0],c2[1]);
         let b1=-1.5,b2=-1.5;
@@ -15161,52 +15292,78 @@ const HD={
         if(t1<=b1+0.01&&t2<=b2+0.01)continue;
         const p1x=x+c1[0],p1z=y+c1[1],p2x=x+c2[0],p2z=y+c2[1];
         const bb1=Math.min(b1,t1),bb2=Math.min(b2,t2),u1=(p1x+p1z)*0.5,u2=(p2x+p2z)*0.5;
-        quad('cliff',[p1x,t1,p1z],[p1x,bb1,p1z],[p2x,bb2,p2z],[p2x,t2,p2z],[dx,0,dy],[u1,t1*0.5],[u1,bb1*0.5],[u2,bb2*0.5],[u2,t2*0.5]);
+        const ck='cliff';
+        // 崖の下ほど暗く（すき間の陰）
+        quad(ck,[p1x,t1,p1z],[p1x,bb1,p1z],[p2x,bb2,p2z],[p2x,t2,p2z],[dx,0,dy],[u1,t1*0.5],[u1,bb1*0.5],[u2,bb2*0.5],[u2,t2*0.5],0.98,0.55,0.55,0.98);
       }
     }
+    this.waterTex=null;
     for(const k in G){
       const g=new T.BufferGeometry();
-      g.setAttribute('position',new T.Float32BufferAttribute(G[k].p,3));g.setAttribute('normal',new T.Float32BufferAttribute(G[k].n,3));g.setAttribute('uv',new T.Float32BufferAttribute(G[k].u,2));
-      const m=new T.MeshLambertMaterial({map:this.tex(theme,k),side:T.DoubleSide});
-      if(k==='water'){m.transparent=true;m.opacity=0.88;}
+      g.setAttribute('position',new T.Float32BufferAttribute(G[k].p,3));g.setAttribute('normal',new T.Float32BufferAttribute(G[k].n,3));g.setAttribute('uv',new T.Float32BufferAttribute(G[k].u,2));g.setAttribute('color',new T.Float32BufferAttribute(G[k].c,3));
+      const tx=this.tex(theme,k==='wallTop'&&P.tex.wallTop?'wallTop':k);
+      let m;
+      if(k==='water'&&P.tex.water.d==='lava'){m=new T.MeshBasicMaterial({map:tx,side:T.DoubleSide});this.waterTex=tx;}
+      else{m=new T.MeshLambertMaterial({map:tx,side:T.DoubleSide,vertexColors:true});if(k==='water'){m.transparent=true;m.opacity=0.9;this.waterTex=tx;}}
       root.add(new T.Mesh(g,m));
     }
     // 予兆・水溜まりなどを描く重ね面（床の形に沿わせる）
     {
       const p=[],u=[];
-      for(let q=0;q<OV.length;q+=4){const v=[OV[q],OV[q+1],OV[q+2],OV[q+3]];for(const t of [v[0],v[1],v[2],v[0],v[2],v[3]]){p.push(t[0],t[1]+0.02,t[2]);u.push(t[0]/W,1-t[2]/H);}}
+      for(let q=0;q<OV.length;q+=4){const v=[OV[q],OV[q+1],OV[q+2],OV[q+3]];for(const t0 of [v[0],v[1],v[2],v[0],v[2],v[3]]){const t=jit(t0);p.push(t[0],t[1]+0.02,t[2]);u.push(t0[0]/W,1-t0[2]/H);}}
       const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(u,2));
       const m=new T.MeshBasicMaterial({map:this.overlayTex,transparent:true,depthWrite:false,side:T.DoubleSide});
       const ov=new T.Mesh(g,m);ov.renderOrder=1;root.add(ov);
     }
-    // 木・岩（2Dの絵を立てる）
+    // 草むら（十字に組んだ板をまとめて1つの形にする）
+    for(const kind of ['grass','flower']){
+      const L=tufts.filter(q=>q[3]===kind);if(!L.length)continue;
+      const p=[],u=[],n=[];
+      for(const [x,y,z,,s] of L){const w=0.5*s,h=0.5*s;for(const a of [0.3,0.3+Math.PI/3,0.3+Math.PI*2/3]){const cx=Math.cos(a)*w,cz=Math.sin(a)*w,tx=-Math.sin(a)*h*0.45,tz=Math.cos(a)*h*0.45;
+        for(const sg of [1,-1]){const v=[[x-cx,y,z-cz,0,0],[x+cx,y,z+cz,1,0],[x+cx+tx*sg,y+h,z+cz+tz*sg,1,1],[x-cx+tx*sg,y+h,z-cz+tz*sg,0,1]];for(const j of [0,1,2,0,2,3]){p.push(v[j][0],v[j][1],v[j][2]);u.push(v[j][3],v[j][4]);n.push(0,1,0);}}}}
+      const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(u,2));g.setAttribute('normal',new T.Float32BufferAttribute(n,3));
+      root.add(new T.Mesh(g,new T.MeshLambertMaterial({map:this.tuftTex(theme,kind),transparent:true,alphaTest:0.35,side:T.DoubleSide})));
+    }
+    // 木・岩・柱・墓石（2Dの絵を立てる）
     this.statics=[];
     const done=new Uint8Array(W*H);
     for(let y=0;y<H;y++)for(let x=0;x<W;x++){
       const i=y*W+x,v=tl[i];if(done[i])continue;
       let kind=null,k=1;
-      if(v===TILE_OBS.tree)kind='tree';
+      if(v===TILE_OBS.tree)kind=P.tree?'tree':'rock';
       else if(v===TILE_OBS.rock)kind='rock';
-      else if(v===TILE_OBS.bigrock){kind='rock';while(x+k<W&&tl[i+k]===v)k++;for(let yy=0;yy<k;yy++)for(let xx=0;xx<k;xx++)if(y+yy<H&&x+xx<W)done[(y+yy)*W+x+xx]=1;}
+      else if(v===TILE_OBS.tomb)kind='tomb';
+      else if(v===TILE_OBS.bigrock||v===TILE_OBS.pillar){kind=v===TILE_OBS.pillar?'pillar':'rock';while(x+k<W&&tl[i+k]===v&&k<4)k++;for(let yy=0;yy<k;yy++)for(let xx=0;xx<k;xx++)if(y+yy<H&&x+xx<W&&tl[(y+yy)*W+x+xx]===v)done[(y+yy)*W+x+xx]=1;}
+      // 壁（高台）の上の縁にも、木や岩を並べて自然な境目にする
+      let onWall=false;
+      if(!kind&&(v===1)){let near=false;for(let dy=-2;dy<=2&&!near;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<W&&yy<H&&!isWall(yy*W+xx)){near=true;break;}}
+        const n0=((x*2246822519)^(y*3266489917))>>>0;if(near&&P.wallDeco!==false&&(n0%1000)/1000<(P.tree?0.32:0.16)){kind=P.tree?'tree':'rock';onWall=true;if(kind==='rock')k=1+((n0>>12)%2);}}
       if(!kind)continue;
-      const w0=kind==='tree'?3.0:1.3*k,h0=kind==='tree'?3.75:0.98*k;
-      const m=new T.MeshLambertMaterial({map:this.objTex(kind),transparent:true,alphaTest:0.3,side:T.DoubleSide});
-      const pl=new T.Mesh(new T.PlaneGeometry(w0,h0),m);pl.position.y=h0/2-0.15;
-      const gp=new T.Group();gp.rotation.order='YXZ';gp.position.set(x+k/2,lv[i],y+k/2);gp.add(pl);root.add(gp);this.statics.push(gp);
+      const n=((x*92837111)^(y*689287499))>>>0,vary=0.85+(n%30)/100;
+      const sz={tree:[3.0,3.75],rock:[1.3*k,0.98*k],pillar:[1.0*k,2.0*k],tomb:[1.0,1.25]}[kind];
+      const w0=sz[0]*vary,h0=sz[1]*vary;
+      const mat=P.rock==='crystal'&&kind==='rock'?new T.MeshBasicMaterial({map:this.objTex(kind,theme),transparent:true,alphaTest:0.08,side:T.DoubleSide}):new T.MeshLambertMaterial({map:this.objTex(kind,theme),transparent:true,alphaTest:0.08,side:T.DoubleSide});
+      const pl=new T.Mesh(new T.PlaneGeometry(w0,h0),mat);pl.position.y=h0/2-0.15;if(n%2)pl.scale.x=-1;
+      const gp=new T.Group();gp.rotation.order='YXZ';gp.position.set(x+k/2,onWall?top(i)-0.1:lv[i],y+k/2);gp.add(pl);root.add(gp);this.statics.push(gp);
     }
     this.scene.add(root);
-    // 空と遠くのかすみ
-    this.scene.background=new T.Color(0x9cc8e8);this.scene.fog=new T.Fog(0xb8d6ea,26,70);
+    // 空・かすみ・光（ステージごと）
+    this.scene.background=new T.Color(P.sky);this.scene.fog=new T.Fog(P.fog,P.near,P.far);
+    this.amb.intensity=P.amb*0.8;this.sun.intensity=P.sun;this.sun.color.setHex(P.sunC||0xffffff);
+    this.hemi.intensity=P.cave?0.05:0.25;this.hemi.color.setHex(P.sky);
+    this.lamp.intensity=P.cave?1.9:(P.lavaLight?0.5:0);this.lamp.color.setHex(P.lightC||0xff8040);this.lamp.distance=P.cave?20:12;
   },
   /* ---------- キャラ・モンスターの立て札（毎フレーム描き直す2Dの絵） ---------- */
   sprite(key,px){
     let s=this.sprites[key];
-    if(s&&s.px!==px){this.scene.remove(s.grp);s.tex.dispose();s.mat.dispose();s=null;}
+    if(s&&s.px!==px){this.scene.remove(s.grp);s.tex.dispose();s.mat.dispose();if(s.xm)s.xm.dispose();s=null;}
     if(!s){
       const T=this.three,cv=document.createElement('canvas');cv.width=cv.height=px;
-      const tex=new T.CanvasTexture(cv),mat=new T.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.08,side:T.DoubleSide});
+      const tex=new T.CanvasTexture(cv);tex.encoding=T.sRGBEncoding;const mat=new T.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.08,side:T.DoubleSide});
       const pl=new T.Mesh(this.planeGeo||(this.planeGeo=new T.PlaneGeometry(1,1)),mat),grp=new T.Group();grp.rotation.order='YXZ';grp.add(pl);this.scene.add(grp);
       s=this.sprites[key]={cv,g:cv.getContext('2d'),tex,mat,pl,grp,px,used:0};
+      if(key[0]==='p'&&key.slice(0,3)!=='pet'){const xm=new T.MeshBasicMaterial({map:tex,transparent:true,opacity:0.45,color:0x88aaff,depthFunc:T.GreaterDepth,depthWrite:false,side:T.DoubleSide});
+        const xr=new T.Mesh(pl.geometry,xm);xr.renderOrder=5;pl.add(xr);s.xm=xm;}
     }
     s.used=this.frame;s.grp.visible=true;
     return s;
@@ -15276,7 +15433,12 @@ const HD={
     const dist=17/(R.zoomMul||1),fx=Math.sin(this.yaw),fz=-Math.cos(this.yaw),cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
     this.cam.position.set(tg.x-fx*dist*cp+rand(-sh,sh),tg.y+0.8+dist*sp,tg.z-fz*dist*cp+rand(-sh,sh));
     this.cam.lookAt(tg.x,tg.y+0.8,tg.z);
-    for(const o of this.statics)o.rotation.set(-this.pitch*0.3,-this.yaw,0);
+    for(const o of this.statics){o.rotation.set(-this.pitch*0.3,-this.yaw,0);
+      // カメラとプレイヤーの間にある木などは透かす（遮られて見えなくならないように）
+      const dx=o.position.x-tg.x,dz=o.position.z-tg.z,along=dx*fx+dz*fz,lat=Math.abs(-dx*fz+dz*fx),m=o.children[0].material;
+      const want=(along<0.6&&along>-10&&lat<2.6+(-along)*0.12)?0.3:1;if(m.opacity!==want){m.opacity+=(want-m.opacity)*Math.min(1,dt*8);if(Math.abs(m.opacity-want)<0.02)m.opacity=want;}}
+    this.lamp.position.set(tg.x,tg.y+2.4,tg.z);
+    if(this.waterTex){this.waterTex.offset.x=(this.waterTex.offset.x+dt*0.015)%1;this.waterTex.offset.y=(this.waterTex.offset.y+dt*0.008)%1;}
     // 2Dの処理（視野・ミニマップ・マウスの向き）向けに、2Dのカメラも合わせておく
     R.viewScale=R.scale;R.cam.x=me.x-R.w/2/R.scale;R.cam.y=me.y-R.h/2/R.scale;R.camInit=true;
     R.updateVision(w);R.vis=null; // 探索の記録（ミニマップ）だけ取る。HD-2Dでは暗がりは出さない
