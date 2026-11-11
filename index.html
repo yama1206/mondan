@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.17.0',date:'2026/11/12'};
+const GAME_VERSION={no:'2.18.0',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -14853,6 +14853,167 @@ const HDART={
   },
 };
 
+/* ---------- HD-2D 用のプレイヤーの絵（装備の見た目を部位ごとに重ねる） ---------- */
+Object.assign(HDART,{
+  /** 頭の飾りの種類（装備の見た目から） */
+  headKind(id,L){
+    if(!L)return null;const b=L.orn||L.beast||'',key=(id||'').split('_')[0];
+    const M={wolf:'wolf',fang:'wolf',bwolf:'wolf',bull:'horns',rabbit:'rabbit',fox:'ears',owl:'ears',ears:'ears',deer:'antler',tsuno:'uni',gale:'crest',phoenix:'crest',griffon:'crest',
+      dragon:'horns2',felg:'horns2',ondo:'horns2',wyv:'horns2',lizard:'horns2',syaku:'horns2',stag:'mandible',kama:'mandible',bat:'batears',gbat:'batears',bone:'skull',bdragon:'skull',
+      rhino:'unihorn',boar:'tusk',mammoth:'tusk',shiro:'ears',ape:'ears',hachi:'antenna',mole:'ears',grat:'ears',fcat:'ears',shark:'fin',aqua:'fin',mola:'fin',eel:'fin',turtle:'shell',
+      frog:'frogeyes',toad:'frogeyes',hydra:'horns2',serpent:'horns2',kubi:'helmspike',onry:'kabuto',iron:'helm',hunter:'helm',hard:'helm',leather:'cap',goblin:'ears'};
+    return M[b]||M[key]||(L===GEAR_LOOKS.iron||L===GEAR_LOOKS.hard?'helm':'cap');
+  },
+  /** 武器（手の位置から上向きに伸びる形で描く） */
+  weaponHD(g,wtype,wl,rc,k,opt){
+    const bl=wl.blade||'#e6ecf8',BL=(w)=>this.lin(g,-w,0,w,0,[mixC(bl,0.55),bl,mixC(bl,-0.25),mixC(bl,-0.5)]);
+    const grip=(y0,y1,w)=>{g.fillStyle='#4a2e16';g.fillRect(-w,y1,w*2,y0-y1);g.strokeStyle='rgba(210,175,120,.55)';g.lineWidth=0.8*k;for(let y=y1;y<y0;y+=2.2*k){g.beginPath();g.moveTo(-w,y);g.lineTo(w,y+1.4*k);g.stroke();}};
+    const guard=(y,w,h)=>{g.fillStyle=this.lin(g,0,y-h,0,y+h,[mixC(wl.accent||'#c8ccd6',0.3),wl.accent||'#c8ccd6',mixC(wl.dark||'#4a4f5a',0)]);g.fillRect(-w,y-h,w*2,h*2);g.fillStyle=rc;g.beginPath();g.arc(0,y,h*1.1,0,TAU);g.fill();};
+    const edge=(x0,y0,x1,y1)=>{g.strokeStyle='rgba(255,255,255,.65)';g.lineWidth=0.7*k;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();};
+    g.lineCap='round';
+    if(wtype==='greatsword'){grip(4*k,-6*k,1.6*k);guard(-6*k,6*k,1.6*k);const W=4.2*k,L=-38*k;g.fillStyle=BL(W);g.beginPath();g.moveTo(-W,-7*k);g.lineTo(-W*0.9,L+5*k);g.lineTo(0,L);g.lineTo(W*0.9,L+5*k);g.lineTo(W,-7*k);g.closePath();g.fill();g.strokeStyle=mixC(bl,-0.6);g.lineWidth=0.8*k;g.stroke();g.strokeStyle='rgba(0,0,0,.25)';g.beginPath();g.moveTo(0,-8*k);g.lineTo(0,L+8*k);g.stroke();edge(-W*0.8,-8*k,-W*0.7,L+6*k);}
+    else if(wtype==='tachi'){grip(4*k,-8*k,1.2*k);g.fillStyle=rc;this.ell(g,0,-8.5*k,3*k,1.2*k,'#c8a040');g.fillStyle=BL(1.6*k);g.beginPath();g.moveTo(-1.5*k,-9*k);g.quadraticCurveTo(-1*k,-30*k,4*k,-42*k);g.lineTo(5*k,-41*k);g.quadraticCurveTo(1.8*k,-28*k,1.5*k,-9*k);g.closePath();g.fill();edge(1.4*k,-10*k,4.6*k,-40*k);}
+    else if(wtype==='dual'){for(const s of [-1,1]){g.save();g.translate(s*3*k,0);g.rotate(s*0.25);grip(3*k,-3*k,1*k);guard(-3*k,2.6*k,0.8*k);g.fillStyle=BL(1.6*k);g.beginPath();g.moveTo(-1.6*k,-4*k);g.lineTo(-1.2*k,-15*k);g.lineTo(0,-19*k);g.lineTo(1.6*k,-14*k);g.lineTo(1.6*k,-4*k);g.closePath();g.fill();g.restore();}}
+    else if(wtype==='hammer'){g.strokeStyle='#3a2414';g.lineWidth=2.6*k;g.beginPath();g.moveTo(0,5*k);g.lineTo(0,-26*k);g.stroke();g.strokeStyle='#6a4520';g.lineWidth=1.8*k;g.stroke();
+      const m=wl.main||'#8a8f9a';g.fillStyle=this.lin(g,-9*k,0,9*k,0,[mixC(m,0.45),m,mixC(m,-0.45)]);g.fillRect(-9*k,-34*k,18*k,11*k);g.strokeStyle=wl.dark||'#4a4f5a';g.lineWidth=1.2*k;g.strokeRect(-9*k,-34*k,18*k,11*k);g.fillStyle=rc;g.fillRect(-9*k,-30*k,18*k,2.4*k);}
+    else if(wtype==='lance'){g.strokeStyle='#3a2414';g.lineWidth=2.2*k;g.beginPath();g.moveTo(0,8*k);g.lineTo(0,-38*k);g.stroke();g.strokeStyle='#7a5228';g.lineWidth=1.4*k;g.stroke();g.fillStyle=rc;g.fillRect(-2*k,-39*k,4*k,2.4*k);g.fillStyle=BL(2.6*k);g.beginPath();g.moveTo(-2.6*k,-40*k);g.lineTo(0,-52*k);g.lineTo(2.6*k,-40*k);g.closePath();g.fill();edge(-1.2*k,-41*k,0,-50*k);}
+    else if(wtype==='bow'){const pull=opt&&opt.pull||0,c=wl===GEAR_LOOKS.iron?'#7a5530':(wl.main||'#7a5530');g.strokeStyle=mixC(c,-0.5);g.lineWidth=3.2*k;g.beginPath();g.moveTo(0,-20*k);g.quadraticCurveTo(-9*k,0,0,20*k);g.stroke();g.strokeStyle=c;g.lineWidth=2.2*k;g.stroke();
+      g.strokeStyle='rgba(240,230,200,.9)';g.lineWidth=0.7*k;g.beginPath();g.moveTo(0,-20*k);g.lineTo(pull*12*k,0);g.lineTo(0,20*k);g.stroke();
+      if(pull>0){g.strokeStyle='#c8b080';g.lineWidth=1.2*k;g.beginPath();g.moveTo(pull*12*k,0);g.lineTo(-16*k,0);g.stroke();g.fillStyle='#d8d0c0';g.beginPath();g.moveTo(-19*k,0);g.lineTo(-15*k,-2*k);g.lineTo(-15*k,2*k);g.fill();}}
+    else if(wtype==='shuriken'){g.fillStyle=BL(5*k);g.beginPath();for(let i=0;i<4;i++){const a=i*Math.PI/2+(opt&&opt.t||0)*3;g.moveTo(Math.cos(a)*6*k,-4*k+Math.sin(a)*6*k);g.lineTo(Math.cos(a+0.8)*1.8*k,-4*k+Math.sin(a+0.8)*1.8*k);g.lineTo(Math.cos(a+Math.PI/2)*0.5*k,-4*k+Math.sin(a+Math.PI/2)*0.5*k);}g.fill();this.ell(g,0,-4*k,1.4*k,1.4*k,rc);}
+    else{grip(3*k,-4*k,1.2*k);guard(-4*k,4.5*k,1.1*k);const W=2.4*k;g.fillStyle=BL(W);g.beginPath();g.moveTo(-W,-5*k);g.lineTo(-W*0.85,-22*k);g.lineTo(0,-27*k);g.lineTo(W*0.85,-22*k);g.lineTo(W,-5*k);g.closePath();g.fill();edge(-W*0.6,-6*k,-W*0.5,-23*k);}
+    for(const a of (wl.w||[]))if(a==='flame'){g.globalAlpha*=0.55;this.ell(g,0,-22*k,3*k,6*k,'#ff9040');g.globalAlpha/=0.55;}else if(a==='ice'||a==='crystal'){g.fillStyle='rgba(200,240,255,.8)';g.beginPath();g.moveTo(-3*k,-10*k);g.lineTo(-5*k,-16*k);g.lineTo(-1*k,-12*k);g.fill();}
+  },
+  player(g,p,v,r){
+    const k=r/12,t=Renderer.time||0,s=p.stats||{},lk=s.look||{},L=sl=>gearLook(lk[sl]),body=L('body'),head=L('head'),arms=L('arms'),waist=L('waist'),legs=L('legs');
+    const wtype=s.weaponType||'sword',wl=gearLook(lk.weapon)||GEAR_LOOKS.iron,rc=rarColor(s.weaponRarity),pc=PLAYER_COLORS[(p.slot||0)%PLAYER_COLORS.length];
+    const mv=!!p.moving&&!p.dead,ph=(p.walk||t*8),sw=mv?Math.sin(ph):0,side=v==='side',back=v==='back';
+    const skin='#f0c8a0',skinD='#c8946a',hair=['#4a3020','#2a2228','#8a5a30','#c8a060','#5a3a50'][(p.slot||0)%5],ln='#2a1e18';
+    const wt=DATA.weaponTypes[wtype]||{},drawn=p.drawn!==false&&!p.dead;
+    // 体勢
+    g.save();
+    if(p.dead){g.translate(0,-r*0.3);g.rotate(Math.PI/2*(side?1:0.9));g.globalAlpha*=0.7;}
+    else if(p.dodgeTime>0){g.translate(0,-r*0.6);g.rotate((side?1:0.4)*Math.min(1,p.dodgeTime*5)*1.2);g.scale(1,0.85);}
+    const bob=mv?-Math.abs(Math.sin(ph))*1.3*k:Math.sin(t*2.2)*0.4*k;g.translate(0,bob);
+    const hipY=-1.15*r,chestY=-1.9*r,neckY=-2.45*r,headY=-2.9*r,hr=0.55*r;
+    const col=(x,d)=>x?x.main:d,dk=(x,d)=>x?x.dark:d,ac=(x,d)=>x?x.accent:d;
+    const metal=(x)=>x&&(x===GEAR_LOOKS.iron||x===GEAR_LOOKS.hard||x===GEAR_LOOKS.hunter);
+    // 武器の振り（0→1）
+    const swk=p.swing>0&&p.swingTotal?1-p.swing/p.swingTotal:-1;
+    let armA; // 武器を持つ腕の角度（0＝下、マイナス＝後ろへ振り上げ、プラス＝前へ）
+    if(!drawn)armA=0.15;
+    else if(swk>=0)armA=-2.3+swk*3.3;
+    else if(p.charging)armA=wtype==='bow'?1.5:-2.1;
+    else if(p.guarding)armA=1.2;
+    else if(p.using)armA=0.3;
+    else armA=mv?0.4+sw*0.25:0.35;
+    const pull=wtype==='bow'&&p.charging&&wt.charge?clamp(p.charge/wt.charge.levels[wt.charge.levels.length-1],0,1):0;
+    // 尻尾（腰か胴の見た目が獣のとき）
+    const tailOf=[waist,body].find(x=>x&&(x.fur||x.beast==='bull'||x.beast==='rabbit'||x.beast==='lizard'||x.orn==='wolf'));
+    const drawTail=()=>{if(!tailOf)return;const tc=tailOf.main,td=tailOf.dark,swy=Math.sin(t*(mv?8:3))*0.25;g.save();g.translate(side?-r*0.45:0,hipY+r*0.1);
+      if(tailOf.beast==='rabbit'){this.ell(g,0,0,r*0.25,r*0.25,'#ffffff',td,k);g.restore();return;}
+      if(tailOf.beast==='bull'){g.strokeStyle=td;g.lineWidth=1.6*k;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(-r*0.5,r*0.3,-r*0.4+swy*r,r*0.9);g.stroke();this.ell(g,-r*0.4+swy*r,r*1.0,r*0.12,r*0.2,td);g.restore();return;}
+      if(tailOf.beast==='lizard'){g.fillStyle=this.shade(g,-r*0.5,r*0.4,r*0.6,mixC(tc,0.3),td);g.beginPath();g.moveTo(r*0.15,0);g.quadraticCurveTo(-r*0.6,r*0.3,-r*1.0+swy*r*0.3,r*1.0);g.quadraticCurveTo(-r*0.4,r*0.4,-r*0.15,0);g.fill();g.restore();return;}
+      g.fillStyle=this.shade(g,-r*0.4,r*0.3,r*0.6,mixC(tc,0.3),td);g.beginPath();g.moveTo(r*0.15,0);g.quadraticCurveTo(-r*0.7,-r*0.1+swy*r,-r*0.9+swy*r*0.3,r*0.7);g.quadraticCurveTo(-r*0.3,r*0.5,-r*0.15,r*0.1);g.closePath();g.fill();g.strokeStyle=td;g.lineWidth=k;g.stroke();
+      this.ell(g,-r*0.85+swy*r*0.3,r*0.62,r*0.13,r*0.12,tailOf.accent||'#f4f0dc');g.restore();};
+    // 背中の武器（納刀中）
+    const backWeapon=()=>{g.save();g.translate(side?-r*0.3:0,chestY);g.rotate(side?0.5:0.6);g.translate(0,r*0.6);this.weaponHD(g,wtype,wl,rc,k,{t});g.restore();};
+    // 脚
+    const legDraw=(x,lift,front)=>{const lc=col(legs,'#5a4632'),ld=dk(legs,'#3a2a1c');
+      this.limb(g,x,hipY,x+(side?Math.sin(lift)*r*0.45:0),-r*0.5,4.2*k,lc,ln);this.limb(g,x+(side?Math.sin(lift)*r*0.45:0),-r*0.5,x+(side?Math.sin(lift)*r*0.8:0),-r*0.08-(side?0:Math.max(0,lift)*2*k),3.8*k,lc,ln);
+      const fx=x+(side?Math.sin(lift)*r*0.8:0),fy=-(side?0:Math.max(0,lift)*2*k);
+      this.ell(g,fx+(side?r*0.12:0),fy-r*0.08,side?r*0.28:r*0.2,r*0.14,this.shade(g,fx,fy-r*0.1,r*0.25,mixC(ld,0.3),ld),ln,0.8*k);
+      if(legs&&metal(legs))this.ell(g,x+(side?Math.sin(lift)*r*0.45:0),-r*0.55,r*0.15,r*0.12,ac(legs,'#ccc'));};
+    const armDraw=(sx,sy,a,isW,frontSide)=>{const c=col(arms,skin),cd=dk(arms,skinD),hx=sx+Math.sin(a)*r*0.95,hy=sy+Math.cos(a)*r*0.95;
+      this.limb(g,sx,sy,(sx+hx)/2,(sy+hy)/2,4*k,arms?c:col(body,pc.body),ln);this.limb(g,(sx+hx)/2,(sy+hy)/2,hx,hy,3.6*k,c,ln);
+      this.ell(g,hx,hy,r*0.17,r*0.17,arms?this.shade(g,hx,hy,r*0.17,mixC(c,0.3),cd):skin,ln,0.8*k);
+      // 肩当て
+      if(arms)this.ell(g,sx,sy,r*0.32,r*0.24,this.shade(g,sx,sy-r*0.1,r*0.32,mixC(c,0.45),cd),ln,k);
+      return [hx,hy];};
+    const torso=()=>{const bc=col(body,pc.body),bd=dk(body,mixC(pc.body,-0.45));
+      g.fillStyle=this.shade(g,0,chestY,r*0.8,mixC(bc,0.4),bd);g.beginPath();g.moveTo(-r*0.55,neckY+r*0.1);g.quadraticCurveTo(-r*0.65,chestY,-r*0.45,hipY);g.lineTo(r*0.45,hipY);g.quadraticCurveTo(r*0.65,chestY,r*0.55,neckY+r*0.1);g.closePath();g.fill();g.strokeStyle=ln;g.lineWidth=1.2*k;g.stroke();
+      if(body&&!back){g.strokeStyle=mixC(bd,-0.3);g.lineWidth=k;g.beginPath();g.moveTo(0,neckY+r*0.2);g.lineTo(0,hipY-r*0.1);g.stroke();if(metal(body)){g.strokeStyle='rgba(255,255,255,.35)';g.beginPath();g.arc(-r*0.15,chestY-r*0.1,r*0.3,Math.PI*1.1,Math.PI*1.6);g.stroke();}}
+      if(body&&body.fur){g.fillStyle=body.accent||'#f4f0dc';for(let i=-3;i<=3;i++)this.ell(g,i*r*0.15,neckY+r*0.15,r*0.14,r*0.12,body.accent||'#f4f0dc');}
+      // 腰
+      const wc=col(waist,'#4a3220'),wd=dk(waist,'#2a1a10');g.fillStyle=this.shade(g,0,hipY,r*0.6,mixC(wc,0.3),wd);g.beginPath();g.moveTo(-r*0.5,hipY-r*0.2);g.lineTo(r*0.5,hipY-r*0.2);g.lineTo(r*0.55,hipY+(waist?r*0.35:r*0.05));g.lineTo(-r*0.55,hipY+(waist?r*0.35:r*0.05));g.closePath();g.fill();g.strokeStyle=ln;g.lineWidth=k;g.stroke();
+      g.fillStyle='#3a2414';g.fillRect(-r*0.52,hipY-r*0.22,r*1.04,r*0.1);g.fillStyle='#c8a040';g.fillRect(-r*0.07,hipY-r*0.24,r*0.14,r*0.14);
+      // スカーフ（プレイヤーの色。誰か分かるように）
+      g.fillStyle=pc.body;g.beginPath();g.ellipse(0,neckY+r*0.08,r*0.42,r*0.15,0,0,TAU);g.fill();
+      if(back||side){g.beginPath();g.moveTo(side?-r*0.2:-r*0.1,neckY+r*0.1);g.quadraticCurveTo(side?-r*0.7:-r*0.15+Math.sin(t*5)*r*0.1,chestY,side?-r*0.8-sw*r*0.1:r*0.1,chestY+r*0.25);g.lineTo(side?-r*0.55:r*0.2,chestY+r*0.2);g.closePath();g.fill();}};
+    const headDraw=(view)=>{
+      const hk=this.headKind(lk.head,head),hc=col(head,'#888'),hd=dk(head,'#444'),ha=ac(head,'#ddd');
+      g.save();g.translate(view==='side'?r*0.05:0,headY);
+      // 首
+      g.fillStyle=skinD;g.fillRect(-r*0.13,hr*0.5,r*0.26,r*0.3);
+      // 顔と髪
+      this.ell(g,0,0,hr,hr*1.02,this.shade(g,0,0,hr,'#ffe0c0',skinD),ln,1.1*k);
+      if(!head||hk==='cap'||hk==='ears'||hk==='rabbit'||hk==='antenna'||hk==='frogeyes'){g.fillStyle=hair;g.beginPath();
+        if(view==='back'){g.ellipse(0,-hr*0.05,hr*1.05,hr*1.05,0,0,TAU);}else if(view==='side'){g.moveTo(-hr*1.02,hr*0.4);g.quadraticCurveTo(-hr*1.2,-hr*1.1,hr*0.2,-hr*1.05);g.quadraticCurveTo(hr*0.95,-hr*0.8,hr*0.7,-hr*0.3);g.quadraticCurveTo(hr*0.1,-hr*0.55,-hr*0.25,hr*0.1);g.closePath();}
+        else{g.moveTo(-hr*1.02,hr*0.2);g.quadraticCurveTo(-hr*1.1,-hr*1.15,0,-hr*1.08);g.quadraticCurveTo(hr*1.1,-hr*1.15,hr*1.02,hr*0.2);g.quadraticCurveTo(hr*0.7,-hr*0.45,hr*0.1,-hr*0.5);g.quadraticCurveTo(-hr*0.4,-hr*0.35,-hr*1.02,hr*0.2);}
+        g.fill();}
+      if(view!=='back'){const ex=view==='side'?[hr*0.5]:[-hr*0.35,hr*0.35];for(const x of ex){this.ell(g,x,hr*0.05,hr*0.11,hr*0.15,'#2a2030');g.fillStyle='#fff';g.beginPath();g.arc(x-hr*0.03,hr*0.0,hr*0.04,0,TAU);g.fill();}
+        g.strokeStyle='#a06050';g.lineWidth=0.9*k;g.beginPath();g.moveTo(view==='side'?hr*0.55:-hr*0.12,hr*0.5);g.lineTo(view==='side'?hr*0.75:hr*0.12,hr*0.5);g.stroke();}
+      if(head){
+        const H=(path)=>{g.fillStyle=this.shade(g,-hr*0.2,-hr*0.5,hr*1.3,mixC(hc,0.45),hd);g.beginPath();path();g.fill();g.strokeStyle=mixC(hd,-0.4);g.lineWidth=1.1*k;g.stroke();};
+        // かぶと本体
+        if(hk==='cap'){H(()=>{g.ellipse(0,-hr*0.35,hr*1.08,hr*0.75,0,Math.PI,TAU);g.lineTo(hr*1.15,-hr*0.3);g.lineTo(-hr*1.15,-hr*0.3);});}
+        else if(hk!=='ears'&&hk!=='rabbit'&&hk!=='antenna'&&hk!=='frogeyes'){H(()=>{g.arc(0,-hr*0.05,hr*1.12,Math.PI*0.92,Math.PI*2.08);if(view==='back'){g.lineTo(hr*1.1,hr*0.7);g.lineTo(-hr*1.1,hr*0.7);}else{g.lineTo(hr*1.05,hr*0.45);g.lineTo(hr*0.7,hr*0.2);g.lineTo(view==='side'?hr*0.2:-hr*0.7,hr*0.2);g.lineTo(-hr*1.05,hr*0.45);}});
+          if(hk==='helm'&&view!=='back'){g.fillStyle='rgba(20,20,30,.85)';g.fillRect(view==='side'?hr*0.15:-hr*0.75,-hr*0.05,view==='side'?hr*0.9:hr*1.5,hr*0.15);}}
+        g.fillStyle=ha;g.strokeStyle=mixC(hd,-0.4);g.lineWidth=k;
+        const pair=(f)=>{if(view==='side')f(-1,true);else{f(-1,false);f(1,false);}};
+        if(hk==='wolf'){pair((s,sd)=>{g.fillStyle=hc;g.beginPath();g.moveTo(s*hr*0.6+(sd?-hr*0.6:0),-hr*0.8);g.lineTo(s*hr*0.9+(sd?-hr*0.5:0),-hr*1.7);g.lineTo(s*hr*0.25+(sd?-hr*0.3:0),-hr*1.05);g.closePath();g.fill();g.stroke();});
+          if(view!=='back'){g.fillStyle=hc;g.beginPath();g.moveTo(view==='side'?hr*0.4:-hr*0.45,-hr*0.6);g.lineTo(view==='side'?hr*1.5:0,-hr*0.25);g.lineTo(view==='side'?hr*0.5:hr*0.45,-hr*0.6);g.closePath();g.fill();g.stroke();if(head.eye){this.ell(g,view==='side'?hr*0.7:-hr*0.3,-hr*0.65,hr*0.08,hr*0.06,head.eye);if(view!=='side')this.ell(g,hr*0.3,-hr*0.65,hr*0.08,hr*0.06,head.eye);}}}
+        else if(hk==='horns'||hk==='horns2'){const hcol=hk==='horns'?(head.accent||'#f0e6c8'):mixC(hd,-0.2);g.fillStyle=this.shade(g,0,-hr*1.4,hr,mixC(hcol,0.3),mixC(hcol,-0.4));pair((s,sd)=>{const bx=sd?-hr*0.3:s*hr*0.6;g.beginPath();g.moveTo(bx,-hr*0.7);g.quadraticCurveTo(bx+(sd?-hr*0.5:s*hr*1.0),-hr*0.9,bx+(sd?-hr*0.4:s*hr*0.9),-hr*(hk==='horns'?1.9:2.1));g.quadraticCurveTo(bx+(sd?-hr*0.1:s*hr*0.5),-hr*1.1,bx+(sd?hr*0.2:-s*hr*0.05),-hr*0.75);g.closePath();g.fill();g.stroke();});}
+        else if(hk==='rabbit'){pair((s,sd)=>{this.ell(g,sd?-hr*0.2:s*hr*0.4,-hr*1.6,hr*0.25,hr*0.75,hc,hd,k,sd?-0.3:s*0.15);this.ell(g,sd?-hr*0.2:s*hr*0.4,-hr*1.6,hr*0.12,hr*0.55,ha,null,0,sd?-0.3:s*0.15);});}
+        else if(hk==='ears'||hk==='batears'){pair((s,sd)=>{g.fillStyle=hc;g.beginPath();g.moveTo(sd?-hr*0.6:s*hr*0.35,-hr*0.75);g.lineTo(sd?-hr*0.4:s*hr*0.85,-hr*(hk==='batears'?1.8:1.55));g.lineTo(sd?-hr*0.0:s*hr*0.9,-hr*0.55);g.closePath();g.fill();g.stroke();});}
+        else if(hk==='antler'){g.strokeStyle=ha;g.lineWidth=1.8*k;pair((s,sd)=>{const bx=sd?-hr*0.2:s*hr*0.45;g.beginPath();g.moveTo(bx,-hr*0.9);g.lineTo(bx+(sd?-hr*0.4:s*hr*0.6),-hr*2.0);g.moveTo(bx+(sd?-hr*0.2:s*hr*0.3),-hr*1.45);g.lineTo(bx+(sd?hr*0.2:s*hr*0.05),-hr*1.9);g.moveTo(bx+(sd?-hr*0.3:s*hr*0.45),-hr*1.7);g.lineTo(bx+(sd?-hr*0.8:s*hr*1.0),-hr*1.8);g.stroke();});}
+        else if(hk==='uni'||hk==='unihorn'){g.fillStyle=this.lin(g,0,-hr,0,-hr*2.4,[ha,'#ffffff']);g.beginPath();g.moveTo(view==='side'?hr*0.1:-hr*0.15,-hr*0.95);g.lineTo(view==='side'?hr*0.7:0,-hr*2.3);g.lineTo(view==='side'?hr*0.4:hr*0.15,-hr*0.95);g.closePath();g.fill();g.stroke();}
+        else if(hk==='crest'||hk==='fin'){g.fillStyle=hk==='fin'?hc:ha;g.beginPath();g.moveTo(-hr*0.3,-hr*1.0);g.quadraticCurveTo(-hr*0.6,-hr*2.0,view==='side'?-hr*1.4:-hr*0.1,-hr*2.1);g.quadraticCurveTo(hr*0.1,-hr*1.5,hr*0.4,-hr*1.0);g.closePath();g.fill();g.stroke();}
+        else if(hk==='mandible'){pair((s,sd)=>{g.fillStyle=ha;g.beginPath();g.moveTo(sd?hr*0.0:s*hr*0.3,-hr*0.9);g.quadraticCurveTo(sd?hr*0.9:s*hr*1.2,-hr*1.6,sd?hr*0.5:s*hr*0.4,-hr*2.0);g.quadraticCurveTo(sd?hr*0.5:s*hr*0.7,-hr*1.4,sd?-hr*0.2:s*hr*0.05,-hr*0.95);g.fill();g.stroke();});}
+        else if(hk==='skull'){if(view!=='back'){this.ell(g,view==='side'?hr*0.5:-hr*0.35,-hr*0.25,hr*0.18,hr*0.16,'#1a1410');if(view!=='side')this.ell(g,hr*0.35,-hr*0.25,hr*0.18,hr*0.16,'#1a1410');}}
+        else if(hk==='tusk'){if(view!=='back')pair((s,sd)=>{g.fillStyle='#f4ecd8';g.beginPath();g.moveTo(sd?hr*0.6:s*hr*0.6,hr*0.25);g.quadraticCurveTo(sd?hr*1.3:s*hr*1.0,hr*0.3,sd?hr*1.2:s*hr*1.0,-hr*0.4);g.quadraticCurveTo(sd?hr*1.1:s*hr*0.85,hr*0.1,sd?hr*0.5:s*hr*0.5,hr*0.05);g.fill();g.stroke();});}
+        else if(hk==='kabuto'){g.fillStyle='#c8a040';g.beginPath();g.moveTo(0,-hr*0.9);g.lineTo(-hr*1.1,-hr*2.0);g.lineTo(-hr*0.3,-hr*0.85);g.lineTo(hr*0.3,-hr*0.85);g.lineTo(hr*1.1,-hr*2.0);g.closePath();g.fill();}
+        else if(hk==='helmspike'){g.fillStyle=ha;g.beginPath();g.moveTo(-hr*0.15,-hr*1.05);g.lineTo(0,-hr*1.9);g.lineTo(hr*0.15,-hr*1.05);g.fill();}
+        else if(hk==='antenna'){g.strokeStyle=hd;g.lineWidth=k;pair((s,sd)=>{g.beginPath();g.moveTo(sd?0:s*hr*0.3,-hr*0.9);g.quadraticCurveTo(sd?hr*0.4:s*hr*0.6,-hr*1.8,sd?hr*0.9:s*hr*1.0,-hr*1.9);g.stroke();this.ell(g,sd?hr*0.9:s*hr*1.0,-hr*1.9,hr*0.12,hr*0.12,ha);});}
+        else if(hk==='frogeyes'){pair((s,sd)=>{this.ell(g,sd?hr*0.3:s*hr*0.5,-hr*0.95,hr*0.32,hr*0.3,hc,hd,k);if(view!=='back')this.ell(g,sd?hr*0.42:s*hr*0.5,-hr*0.98,hr*0.15,hr*0.15,head.eye||'#ffe060');});}
+        else if(hk==='shell'){H(()=>{g.ellipse(0,-hr*0.5,hr*1.15,hr*0.8,0,Math.PI,TAU);});}
+      }
+      g.restore();};
+    if(side){
+      if(!drawn&&!p.dead)backWeapon();
+      drawTail();
+      // 奥の腕
+      armDraw(-r*0.05,neckY+r*0.25,mv?-sw*0.5:-0.15,false,false);
+      legDraw(-r*0.05,-sw*0.6,false);legDraw(r*0.05,sw*0.6,true);
+      torso();headDraw('side');
+      // 手前の腕と武器
+      const [hx,hy]=armDraw(r*0.1,neckY+r*0.25,wtype==='bow'&&drawn?1.5:armA,true,true);
+      if(drawn){g.save();g.translate(hx,hy);g.rotate(wtype==='bow'?0:(armA+Math.PI*0.5+(swk>=0?0:0.35)));if(wtype==='bow')g.scale(-1,1);this.weaponHD(g,wtype,wl,rc,k,{pull,t});g.restore();
+        if(wtype==='lance'||(wtype==='sword'&&!p.charging)){g.save();g.translate(r*0.45,chestY+r*0.1);this.ell(g,0,0,r*0.35,r*0.5,this.shade(g,0,0,r*0.5,'#c8a868','#6a4a28'),'#3a2410',1.2*k);this.ell(g,0,0,r*0.12,r*0.12,rc);g.restore();}}
+      if(swk>=0&&drawn){g.save();g.globalAlpha*=0.35*(1-swk);g.strokeStyle='#ffffff';g.lineWidth=3*k;g.beginPath();g.arc(r*0.1,neckY+r*0.25,r*1.9,-Math.PI/2-2.3+Math.PI/2*0,-Math.PI/2-2.3+swk*3.3);g.stroke();g.restore();}
+    }else{
+      const wSide=back?-1:1;
+      if(back){legDraw(-r*0.25,mv?sw:0,true);legDraw(r*0.25,mv?-sw:0,true);drawTail();}
+      else{if(!drawn&&!p.dead)backWeapon();legDraw(-r*0.25,mv?sw:0,true);legDraw(r*0.25,mv?-sw:0,true);}
+      if(drawn&&back){const sx=wSide*r*0.62,sy=neckY+r*0.25,a=armA*0.6,hx=sx+Math.sin(a)*r*0.3*wSide,hy=sy+r*0.9-(armA<-1?r*1.5:0);g.save();g.translate(hx,hy);g.rotate((armA<-1?-0.4:0.3)*wSide);this.weaponHD(g,wtype,wl,rc,k,{pull,t});g.restore();}
+      torso();
+      for(const s of [-1,1]){const isW=s===wSide&&drawn,a=isW?(armA<-1?-0.2:Math.min(0.5,armA*0.3)):(mv?-sw*0.3*s:0.08);
+        const sx=s*r*0.62,sy=neckY+r*0.25;
+        const hx=sx+s*Math.abs(Math.sin(a))*r*0.25,hy=sy+r*0.9-(isW&&armA<-1?r*1.5:0)-(isW&&(p.guarding||p.charging&&wtype==='bow')?r*0.3:0);
+        this.limb(g,sx,sy,(sx+hx)/2,(sy+hy)/2,4*k,arms?col(arms,skin):col(body,pc.body),ln);this.limb(g,(sx+hx)/2,(sy+hy)/2,hx,hy,3.6*k,col(arms,skin),ln);this.ell(g,hx,hy,r*0.17,r*0.17,arms?col(arms,skin):skin,ln,0.8*k);
+        if(arms)this.ell(g,sx,sy,r*0.32,r*0.24,this.shade(g,sx,sy-r*0.1,r*0.32,mixC(col(arms,skin),0.45),dk(arms,skinD)),ln,k);
+        if(!isW&&!back&&(wtype==='lance'||wtype==='sword')&&drawn){g.save();g.translate(hx,hy-r*0.2);this.ell(g,0,0,r*0.38,r*0.5,this.shade(g,0,0,r*0.5,'#c8a868','#6a4a28'),'#3a2410',1.2*k);this.ell(g,0,0,r*0.12,r*0.12,rc);g.restore();}
+        if(isW&&!back){g.save();g.translate(hx,hy);g.rotate(wtype==='bow'?Math.PI/2:(armA<-1?-0.5:0.35+(swk>=0?swk*0.8:0)));if(wtype==='bow')g.rotate(-Math.PI/2);this.weaponHD(g,wtype,wl,rc,k,{pull,t});g.restore();}}
+      if(back&&!drawn&&!p.dead)backWeapon();
+      headDraw(back?'back':'front');
+      if(!back)drawTail;
+    }
+    // アイテム使用中：手元が光る
+    if(p.using&&!p.dead){const c=(DATA.consumables[p.using.item]||{}).color||'#fff';g.globalAlpha*=0.4+0.3*Math.sin(t*10);this.ell(g,0,chestY,r*0.9,r*0.9,c);}
+    g.restore();
+  },
+});
+
 const HD={
   yaw:Math.PI/6,yawT:Math.PI/6,pitch:0.86,live:false,loading:false,failed:false,
   three:null,scene:null,cam:null,cv:null,mapRef:null,mapVer:-1,terrain:null,sprites:{},imgs:{},texs:{},
@@ -15160,14 +15321,19 @@ const HD={
     R.multi=false;R.drawPet=function(){};Input.showAimFor=()=>false;
     try{
       for(const p of ps){
-        const r=p.r,S=Math.ceil(r*7),fo=R.fadeOther(p);
+        const r=p.r,S=Math.ceil(r*9.5),fo=R.fadeOther(p);
         this.stand('p'+p.id,S,p.x,p.y,r*0.8,g=>{
           if(fo)g.globalAlpha=0.35;
           const lk=(p.stats&&p.stats.look)||{},parts=['player/base'];
           for(const sl of ['legs','waist','body','arms','head'])if(lk[sl])parts.push('armor/'+lk[sl]);
           if(lk.weapon&&p.drawn!==false)parts.push('weapon/'+lk.weapon);
           if(this.img('player/base_front.png')&&!p.dead&&this.drawImgs(g,p,r,parts,!!p.moving)){R.drawStatus(g,p);return;}
-          this.withRel(p,()=>{R.drawPlayer(g,p);R.drawStatus(g,p);});
+          this.withRel(p,()=>{ // プログラムで描いたHD-2D用の姿（装備の見た目を反映）
+            const v=HDART.view(p.facing||0);g.save();g.translate(p.x,p.y+r*0.8);if(v==='side'&&Math.cos(p.facing||0)<0)g.scale(-1,1);
+            if(p.hitInv>0&&Math.floor((Renderer.time||0)*20)%2===0)g.globalAlpha*=0.4;
+            if(p.guarding&&!p.dead){g.strokeStyle='rgba(150,220,255,.8)';g.lineWidth=3;g.beginPath();g.ellipse(0,-r*1.6,r*1.5,r*2.0,0,0,TAU);g.stroke();}
+            try{HDART.player(g,p,v,r);}catch(err){if(!HDART._perr){HDART._perr=1;console.warn('HD player',err);}}
+            g.restore();R.drawStatus(g,p);});
         },map);
         if(p.petLook&&!p.dead){ // 相棒：別の立て札にする（前のフレームの位置を使う）
           const pp=(R.petPos&&R.petPos[p.id])||{x:p.x,y:p.y};
