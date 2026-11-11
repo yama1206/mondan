@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.13.0',date:'2026/11/12'};
+const GAME_VERSION={no:'2.13.1',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -14158,7 +14158,7 @@ const HD={
     if(typeof THREE==='undefined'){this.load();return false;}
     return !!hdHeights(w.map);
   },
-  hide(){if(this.live){this.live=false;if(this.cv)this.cv.style.display='none';}},
+  hide(){if(this.live){this.live=false;if(this.cv)this.cv.style.display='none';if(this.rotBtns)this.rotBtns.style.display='none';this.rotHold=0;}},
   /* ---------- 画像（img/ フォルダ）：読み込めたら使い、無ければ null ---------- */
   img(path){
     let o=this.imgs[path];
@@ -14226,7 +14226,7 @@ const HD={
     if(this.three)return true;
     const T=window.THREE;if(!T)return false;
     this.three=T;
-    const cv=document.createElement('canvas');cv.id='game3d';cv.style.cssText='display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none';
+    const cv=document.createElement('canvas');cv.id='game3d';cv.style.cssText='display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:0;pointer-events:none';
     const g2=document.getElementById('game');g2.parentNode.insertBefore(cv,g2);
     this.cv=cv;
     this.gl=new T.WebGLRenderer({canvas:cv,antialias:true});
@@ -14234,6 +14234,12 @@ const HD={
     this.cam=new T.PerspectiveCamera(32,1,0.5,400);
     this.scene.add(new T.AmbientLight(0xffffff,0.62));
     const sun=new T.DirectionalLight(0xfff2d8,0.7);sun.position.set(-0.6,1.6,-0.9);this.scene.add(sun);
+    // スマホ用：視点を回すボタン（押している間まわる）
+    const rb=document.createElement('div');rb.id='hdRot';rb.style.cssText='display:none;position:fixed;right:10px;top:38%;z-index:5;flex-direction:column;gap:10px';
+    for(const [d,t] of [[-1,'⟲'],[1,'⟳']]){const b=document.createElement('div');b.textContent=t;b.style.cssText='width:52px;height:52px;border-radius:50%;background:rgba(20,16,30,.6);border:2px solid rgba(255,230,160,.5);color:#f3e6c0;font:bold 26px/48px sans-serif;text-align:center;user-select:none;-webkit-user-select:none;touch-action:none';
+      const on=e=>{e.preventDefault();e.stopPropagation();this.rotHold=d;},off=e=>{e.preventDefault();e.stopPropagation();this.rotHold=0;};
+      b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);rb.appendChild(b);}
+    document.body.appendChild(rb);this.rotBtns=rb;
     this.overlayCv=document.createElement('canvas');this.overlayCv.width=this.overlayCv.height=1024;
     this.overlayTex=new T.CanvasTexture(this.overlayCv);
     this.overlayTex.wrapS=this.overlayTex.wrapT=T.ClampToEdgeWrapping;
@@ -14382,7 +14388,8 @@ const HD={
     if(this.sw!==W||this.sh!==H||this.sdpr!==dpr){this.gl.setPixelRatio(dpr);this.gl.setSize(W,H,false);this.cam.aspect=W/H;this.cam.updateProjectionMatrix();this.sw=W;this.sh=H;this.sdpr=dpr;}
     // 視点の回転：Z・C キー（押している間）、コントローラーは左右のスティック押し込みで45度ずつ
     const K=Input.keys,dt=this.dt;
-    if(K.KeyZ)this.yawT-=1.8*dt;if(K.KeyC)this.yawT+=1.8*dt;
+    if(K.KeyZ)this.yawT-=1.8*dt;if(K.KeyC)this.yawT+=1.8*dt;if(this.rotHold)this.yawT+=this.rotHold*1.8*dt;
+    if(this.rotBtns){const want=Input.isTouch&&App.state==='playing'?'flex':'none';if(this.rotBtns.style.display!==want)this.rotBtns.style.display=want;}
     try{for(const gp of (navigator.getGamepads?Array.from(navigator.getGamepads()):[])){if(!gp)continue;const pv=this.padPrev[gp.index]||[];const b=i=>!!gp.buttons[i]&&gp.buttons[i].pressed;
       if(b(10)&&!pv[10])this.yawT-=Math.PI/4;if(b(11)&&!pv[11])this.yawT+=Math.PI/4;this.padPrev[gp.index]=[...Array(12)].map((_,i)=>b(i));}}catch(e){}
     this.yaw+=(this.yawT-this.yaw)*Math.min(1,dt*10);
@@ -14471,7 +14478,7 @@ const HD={
     ctx.globalAlpha=1;
     ctx.setTransform(dpr,0,0,dpr,0,0);
     R.drawHUD(w,app);
-    ctx.save();ctx.font=`11px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.55)';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('HD-2D試作　視点の回転：Z / C（コントローラーはスティック押し込み）',R.w-10,R.h-6);ctx.restore();
+    if(!Input.isTouch){ctx.save();ctx.font=`11px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.55)';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('HD-2D試作　視点の回転：Z / C（コントローラーはスティック押し込み）',R.w-10,R.h-6);ctx.restore();}
     return true;
   },
   project(x,y,h){
