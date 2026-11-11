@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.19.0',date:'2026/11/12'};
+const GAME_VERSION={no:'2.19.1',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -14473,13 +14473,13 @@ const HDART={
     },
     /* ---------- 鳥・コウモリ・蛾・蜂・飛竜（羽ばたく） ---------- */
     bird(g,e,v,r,o,C){
-      const k=r/12,t=e.anim||0,flap=Math.sin(t*(o.flapSpd||14)),hover=o.perch?0:r*(1.1+0.15*Math.sin(t*4));
+      const k=r/12,t=e.anim||0,flap=Math.sin(t*(o.flapSpd||14)),hover=o.perch?0:r*(0.75+0.12*Math.sin(t*4));
       g.translate(0,-hover);
       const col=C.c,colL=C.l,colD=C.d,dark=C.ln,B=o.bodyS||1;
       const back=v==='back',side=v==='side';
-      const wingAll=(front)=>{for(const s of [-1,1]){g.save();if(!side)g.scale(s,1);this.wing(g,side?0:r*0.3*B,-r*1.0*B,r*2.2*(o.wingS||1),o,t,front,C,k);g.restore();if(side)break;}};
+      const wingAll=(front)=>{for(const s of [-1,1]){g.save();if(!side)g.scale(s,1);this.wing(g,side?0:r*0.3*B,-r*1.0*B,r*1.7*(o.wingS||1),o,t,front,C,k);g.restore();if(side)break;}};
       if(side){
-        this.wing(g,-r*0.1,-r*1.05*B,r*2.2*(o.wingS||1),o,t+0.2,true,C,k); // 奥の翼
+        this.wing(g,-r*0.1,-r*1.05*B,r*1.7*(o.wingS||1),o,t+0.2,true,C,k); // 奥の翼
         // 尾
         if(o.kind==='bee'){g.fillStyle=this.shade(g,-r*0.9,-r*0.75,r*0.8,mixC(o.stripe2||'#e8c040',0.3),o.stripe2||'#c8a030');g.beginPath();g.ellipse(-r*0.85,-r*0.7,r*0.8*B,r*0.55*B,0.4,0,TAU);g.fill();g.strokeStyle='#1a1408';g.lineWidth=2.2*k;for(let i=0;i<3;i++){g.beginPath();g.ellipse(-r*0.85,-r*0.7,r*(0.25+i*0.22)*B,r*0.55*B,0.4,-0.5,0.5);g.stroke();}
           g.fillStyle='#1a1408';g.beginPath();g.moveTo(-r*1.55*B,-r*0.35);g.lineTo(-r*1.95*B,-r*0.15);g.lineTo(-r*1.5*B,-r*0.55);g.fill();}
@@ -14510,7 +14510,7 @@ const HDART={
         g.fillStyle=o.beak||'#e8b030';g.beginPath();g.moveTo(hx+hs*0.75,hy-hs*0.25);g.quadraticCurveTo(hx+hs*1.8,hy-hs*0.1,hx+hs*1.6,hy+hs*0.45);g.lineTo(hx+hs*0.7,hy+hs*0.25);g.closePath();g.fill();g.strokeStyle=dark;g.lineWidth=k;g.stroke();
         this.eye(g,hx+hs*0.35,hy-hs*0.2,hs*0.2,o.eye||'#ffe040',this.sleeping(e));
         if(o.crest){g.fillStyle=o.crest;for(let i=0;i<3;i++){g.beginPath();g.moveTo(hx-hs*0.3,hy-hs*0.6);g.quadraticCurveTo(hx-hs*(1.0+i*0.3),hy-hs*(1.3-i*0.2),hx-hs*(1.6+i*0.25),hy-hs*(0.9-i*0.3));g.lineTo(hx-hs*0.6,hy-hs*0.4);g.fill();}}
-        this.wing(g,r*0.1,-r*1.05*B,r*2.2*(o.wingS||1),o,t,false,C,k);
+        this.wing(g,r*0.1,-r*1.05*B,r*1.7*(o.wingS||1),o,t,false,C,k);
         return;
       }
       // 正面・背中：左右に大きく翼を広げる
@@ -15222,7 +15222,7 @@ const HD={
     this.sun=new T.DirectionalLight(0xfff2d8,0.7);this.sun.position.set(-0.6,1.6,-0.9);this.scene.add(this.sun);
     this.lamp=new T.PointLight(0xffc890,0,16,1.6);this.scene.add(this.lamp); // 洞窟・地下墓地：プレイヤーのまわりを照らす明かり
     // スマホ用：視点を回すボタン（押している間まわる）
-    const rb=document.createElement('div');rb.id='hdRot';rb.style.cssText='display:none;position:fixed;right:10px;top:38%;z-index:5;flex-direction:column;gap:10px';
+    const rb=document.createElement('div');rb.id='hdRot';rb.style.cssText='display:none;position:fixed;left:12px;top:30%;z-index:5;flex-direction:row;gap:10px';
     for(const [d,t] of [[-1,'⟲'],[1,'⟳']]){const b=document.createElement('div');b.textContent=t;b.style.cssText='width:52px;height:52px;border-radius:50%;background:rgba(20,16,30,.6);border:2px solid rgba(255,230,160,.5);color:#f3e6c0;font:bold 26px/48px sans-serif;text-align:center;user-select:none;-webkit-user-select:none;touch-action:none';
       const on=e=>{e.preventDefault();e.stopPropagation();this.rotHold=d;},off=e=>{e.preventDefault();e.stopPropagation();this.rotHold=0;};
       b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);rb.appendChild(b);}
@@ -15370,13 +15370,14 @@ const HD={
   },
   /** 絵を1枚描いて立てる。S：絵の範囲（ゲーム内のピクセル）、(ox,oy)：中心、footY：足元（中心からの下向きの距離） */
   stand(key,S,ox,oy,footY,draw,map){
-    const px=S*2>384?512:S*2>192?256:S*2>96?128:64,K=px/S,s=this.sprite(key,px),g=s.g;
-    g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,px,px);
+    const px=S*2>384?512:S*2>192?256:S*2>96?128:64,K=px/S,fresh=!this.sprites[key]||this.sprites[key].px!==px,s=this.sprite(key,px),g=s.g;
     const ay=px*0.62;
-    g.setTransform(K,0,0,K,px/2-ox*K,ay-oy*K);
-    try{draw(g);}catch(e){}
-    g.setTransform(1,0,0,1,0,0);
-    s.tex.needsUpdate=true;
+    if(draw||fresh){ // 遠くのものは毎フレームは描き直さない（スマホの負担を減らす）
+      g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,px,px);
+      g.setTransform(K,0,0,K,px/2-ox*K,ay-oy*K);
+      try{if(draw)draw(g);else if(s.last)s.last(g);}catch(e){}
+      g.setTransform(1,0,0,1,0,0);
+      s.tex.needsUpdate=true;if(draw)s.last=draw;}
     const u=S/TILE,fy=(ay+footY*K)/px; // 足元の位置（絵の上から何割か）
     s.pl.scale.set(u,u,1);s.pl.position.set(0,(fy-0.5)*u,0);
     // 高さ：飛び降りたときは少しずつ下がる
@@ -15468,13 +15469,14 @@ const HD={
     oc.globalAlpha=1;oc.restore();
     const ot=this.overlayTex;ot.repeat.set(map.W/ON,map.H/ON);ot.offset.set(-ox/ON,1-(map.H-oy)/ON);ot.needsUpdate=true;
     // ---- 立てる絵（キャラ・モンスター・宝箱・採取ポイント） ----
-    const near=(x,y)=>Math.abs(x/TILE-tx)<34&&Math.abs(y/TILE-tz)<34;
+    const near=(x,y)=>Math.abs(x/TILE-tx)<28&&Math.abs(y/TILE-tz)<28;
+    const lazy=(x,y,id)=>Math.hypot(x/TILE-tx,y/TILE-tz)>13&&((this.frame+(id|0))%3)!==0; // 遠い敵は3フレームに1回だけ描き直す
     for(const c of w.chests)if(near(c.x,c.y))this.stand('c'+(c.id||c.x+'_'+c.y),80,c.x,c.y,14,g=>R.drawChest(g,c),map);
     for(const gt of (w.gathers||[]))if(near(gt.x,gt.y))this.stand('g'+(gt.id||gt.x+'_'+gt.y),80,gt.x,gt.y,12,g=>R.drawGather(g,gt),map);
     for(const e of w.enemies){
       if(!near(e.x,e.y))continue;
       const r=e.r||14,S=Math.ceil(r*6.4);
-      this.stand('e'+e.id,S,e.x,e.y,r*0.8,g=>{
+      this.stand('e'+e.id,S,e.x,e.y,r*0.8,lazy(e.x,e.y,e.id)?null:g=>{
         if(this.drawImgs(g,e,r,['mob/'+e.type],!!(e.vx||e.vy||e.moving)))return;
         R.hdArt=true;try{this.withRel(e,()=>R.drawEnemy(g,e));}finally{R.hdArt=false;}
       },map);
@@ -15519,7 +15521,7 @@ const HD={
     ctx.globalAlpha=1;
     ctx.setTransform(dpr,0,0,dpr,0,0);
     R.drawHUD(w,app);
-    if(!Input.isTouch){ctx.save();ctx.font=`11px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.55)';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('HD-2D試作　視点の回転：Z / C（コントローラーはスティック押し込み）',R.w-10,R.h-6);ctx.restore();}
+    if(!Input.isTouch){ctx.save();ctx.font=`11px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.55)';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('視点の回転：Z / C（コントローラーは右スティック）',R.w-10,R.h-6);ctx.restore();}
     return true;
   },
   project(x,y,h){
@@ -19182,7 +19184,7 @@ const App={
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2><div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div>
-      ${item('hdOff','HD-2D表示（試作中：ステージ1「風渡る草原」）をオフにして、従来の見下ろし表示で遊ぶ')}${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${item('hdOff','HD-2D表示をオフにして、従来の見下ろし表示で遊ぶ（動きが重いときに）')}${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       ${(()=>{try{return localStorage.getItem(Save.KEY+'_backup')?`<div class="setting" style="display:block">クラウドのセーブを読み込む前の、この端末のデータ
         <div class="row" style="margin-top:6px"><button data-act="restoreCloudBackup">読み込む前のデータに戻す</button></div></div>`:'';}catch(e){return '';}})()}
