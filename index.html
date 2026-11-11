@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.12.10',date:'2026/11/07'};
+const GAME_VERSION={no:'2.13.0',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -4536,6 +4536,7 @@ function cannotEnter(map,e,x,y){
     return inStartRoom(map,x,y,e.r);
   }
   if(circleHitsWall(map,x,y,e.r))return true;
+  if(hdBlocked(map,e,x,y))return true; // HD-2D：崖は登れない（階段だけ上がれる）
   if(e.type!=='player')return inStartRoom(map,x,y,e.r); // 敵はスタート部屋に入れない
   // 最初の部屋から出たあとは、プレイヤーも外から部屋へは戻れない（中で動くのは自由）
   return !!map.startLocked&&inStartRoom(map,x,y,e.r)&&!inStartRoom(map,e.x,e.y,e.r);
@@ -11424,7 +11425,7 @@ const Renderer={
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fc,0,0);ctx.restore();
   },
   viewScale:1,zoomMul:1,focusId:null, // focusId：オンライン時にカメラが追う自分のプレイヤーID
-  screenToWorld(sx,sy){const s=this.viewScale||this.scale;return {x:this.cam.x+sx/s,y:this.cam.y+sy/s};},
+  screenToWorld(sx,sy){if(HD.live&&HD.cam)return HD.screenToWorld(sx,sy);const s=this.viewScale||this.scale;return {x:this.cam.x+sx/s,y:this.cam.y+sy/s};},
   addShake(v){this.shake=Math.max(this.shake,v);},
   showBanner(text,color){this.banner={text,color:color||'#f3d48a',t:0,life:2.6};},
   floater(x,y,text,color,size,life){this.floaters.push({x,y,text,color,size:size||16,t:0,life:life||0.9});},
@@ -11945,6 +11946,8 @@ const Renderer={
     if(h%3===0){g.fillStyle='rgba(120,150,100,.35)';g.fillRect(x-10,y+5,8,5);}
   },
   draw(w,localId,app){
+    if(w&&Object.keys(w.players).length&&HD.active(w)&&HD.draw(w,localId,app))return; // HD-2D（試作のステージだけ）
+    HD.hide();
     const ctx=this.ctx,dpr=this.dpr;
     ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.fillStyle='#0b0a10';ctx.fillRect(0,0,this.w,this.h);
@@ -14050,6 +14053,442 @@ const Renderer={
   },
 };
 
+/* ===================== HD-2D 表示（試作：ステージ1「風渡る草原」だけ） =====================
+   地形は3D（Three.js）、キャラ・木・岩・モンスターは2Dの絵をカメラに向けて立てる。
+   ・高さ（段差・崖・階段）はマップのエリアごとの高さ HD_LEVELS から自動で作る（hdHeights）
+   ・崖は登れない（階段だけ上がれる）、飛び降りはできる（hdBlocked：cannotEnter から呼ぶ）
+   ・絵は img/ フォルダからファイル名で読み込み、無いときは仮の絵（今までのゲームの絵や、自動で描いた絵）を出す
+   ・設定「HD-2D表示をオフ」で従来の見下ろし表示に戻せる */
+const HD_LEVELS={ // エリア名→高さ（段数）。隣どうしは1段差までにする（それより大きい所は崖だけになる）
+  meadow:{start:1,'丈の長い草原':1,'浅瀬の川辺':0,'小高い丘':2,'獣の縄張り':1,'草むらの窪地':0,'はぐれ者の野営地':2,'風の通り道':1,'猪の寝床':1,'暴角の広場':2},
+};
+const HD_WALL=2.2; // 外周の壁（通れない所）の高さ：そのエリアの高さ＋この段数
+function hdSettingOn(){try{return !(typeof App!=='undefined'&&App.settings&&App.settings().hdOff);}catch(e){return true;}}
+/** マップの高さ（lv：段数、st：階段、sd：階段の上り方向）。決まった計算なので、ホストとゲストで同じものができる */
+function hdHeights(map){
+  if(map._hdh!==undefined)return map._hdh;
+  const T=HD_LEVELS[map.theme];
+  if(!map.open||!T||!map.areas||!map.areas.length||!map.tiles){map._hdh=null;return null;}
+  const W=map.W,H=map.H,N=W*H,tl=map.tiles,lv=new Uint8Array(N),st=new Uint8Array(N),sd=new Int8Array(N*2);
+  const A=map.areas.map(a=>({cx:a.x/TILE-0.5,cy:a.y/TILE-0.5,rx:Math.max(3,(a.rect[2]-a.rect[0])/2+1),ry:Math.max(3,(a.rect[3]-a.rect[1])/2+1),l:a.kind==='start'?T.start:(T[a.name]!=null?T[a.name]:1)}));
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){let best=1e9,l=1;for(const a of A){const u=(x-a.cx)/a.rx,v=(y-a.cy)/a.ry,d=Math.sqrt(u*u+v*v);if(d<best){best=d;l=a.l;}}lv[y*W+x]=l;}
+  const walk=i=>tl[i]===0||tl[i]===TILE_PUDDLE;
+  const D4=[[1,0],[-1,0],[0,1],[0,-1]];
+  const upNb=i=>{const x=i%W,y=(i/W)|0;for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(walk(j)&&lv[j]===lv[i]+1)return [dx,dy];}return null;};
+  const mark=(i)=>{const d=upNb(i);if(!d||!walk(i))return false;st[i]=1;sd[i*2]=d[0];sd[i*2+1]=d[1];return true;};
+  const stairAt=(c)=>{ // c を中心に、同じ段差の縁を3マス幅で階段にする
+    const x=c%W,y=(c/W)|0;mark(c);
+    for(let k=-1;k<=1;k++)for(let m=-1;m<=1;m++){const nx=x+k,ny=y+m;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(j!==c&&!st[j]&&lv[j]===lv[c])mark(j);}
+  };
+  // 1) 段差の縁（上の段に接する床）をまとまりごとに分けて、まとまりごとに1か所階段を置く
+  const B=new Uint8Array(N);for(let i=0;i<N;i++)if(walk(i)&&upNb(i))B[i]=1;
+  const seen=new Uint8Array(N);
+  for(let i=0;i<N;i++){
+    if(!B[i]||seen[i])continue;
+    const comp=[i];seen[i]=1;
+    for(let k=0;k<comp.length;k++){const c=comp[k],x=c%W,y=(c/W)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(B[j]&&!seen[j]&&lv[j]===lv[i]){seen[j]=1;comp.push(j);}}}
+    if(comp.length<3)continue; // 小さな角は崖のまま（つながりは後で確かめる）
+    let sx=0,sy=0;for(const c of comp){sx+=c%W;sy+=(c/W)|0;}sx/=comp.length;sy/=comp.length;
+    let bc=comp[0],bd=1e9;for(const c of comp){const d=(c%W-sx)**2+(((c/W)|0)-sy)**2;if(d<bd){bd=d;bc=c;}}
+    stairAt(bc);
+  }
+  // 2) スタートから全部の床へ行けて、全部の床からスタートへ戻れるか確かめ、だめな所に階段を足す
+  const sp=map.start||map.areas.find(a=>a.kind==='start')||map.areas[0],s0=Math.floor(sp.y/TILE)*W+Math.floor(sp.x/TILE);
+  const can=(c,n)=>lv[n]<=lv[c]||(st[c]&&lv[n]===lv[c]+1);
+  const reach=(rev)=>{const r=new Uint8Array(N),q=[s0];r[s0]=1;for(let k=0;k<q.length;k++){const c=q[k],x=c%W,y=(c/W)|0;for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const n=ny*W+nx;if(r[n]||!walk(n))continue;if(rev?can(n,c):can(c,n)){r[n]=1;q.push(n);}}}return r;};
+  for(let it=0;it<40;it++){
+    let fixed=false;
+    for(const rev of [false,true]){
+      const r=reach(rev);
+      for(let c=0;c<N&&!fixed;c++){
+        if(!walk(c))continue;const x=c%W,y=(c/W)|0;
+        for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const n=ny*W+nx;if(!walk(n))continue;
+          // 前向き：行ける c から行けない n（1段上）へ。逆向き：戻れない c から戻れる n（1段上）へ
+          if(!rev&&r[c]&&!r[n]&&lv[n]===lv[c]+1){stairAt(c);fixed=true;break;}
+          if(rev&&!r[c]&&r[n]&&lv[n]===lv[c]+1){stairAt(c);fixed=true;break;}}
+      }
+      if(fixed)break;
+    }
+    if(!fixed)break;
+  }
+  map._hdh={lv,st,sd};
+  return map._hdh;
+}
+/** その位置の地面の高さ（段数。階段は坂として途中の高さになる） */
+function hdGround(map,x,y){
+  const Hh=hdHeights(map);if(!Hh)return 0;
+  const tx=Math.floor(x/TILE),ty=Math.floor(y/TILE);if(tx<0||ty<0||tx>=map.W||ty>=map.H)return 0;
+  const i=ty*map.W+tx,l=Hh.lv[i];
+  if(!Hh.st[i])return l;
+  const fx=x/TILE-tx,fy=y/TILE-ty,dx=Hh.sd[i*2],dy=Hh.sd[i*2+1];
+  return l+(dx>0?fx:dx<0?1-fx:dy>0?fy:1-fy);
+}
+/** 崖：今いる段より高い所へは、階段からしか上がれない（降りるのは自由＝飛び降り） */
+function hdBlocked(map,e,x,y){
+  if(!map.open||!HD_LEVELS[map.theme]||!hdSettingOn())return false;
+  const Hh=hdHeights(map);if(!Hh)return false;
+  const W=map.W,lv=Hh.lv,st=Hh.st,r=e.r*0.7;
+  const at=(px,py)=>{const tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);return (tx<0||ty<0||tx>=W||ty>=map.H)?-1:ty*W+tx;};
+  const P=[[0,0],[r,0],[-r,0],[0,r],[0,-r]];
+  let from=0,onSt=false;
+  for(const [dx,dy] of P){const i=at(e.x+dx,e.y+dy);if(i<0)continue;const t=map.tiles[i];if(t!==0&&t!==TILE_PUDDLE)continue;if(lv[i]>from)from=lv[i];if(st[i])onSt=true;}
+  for(const [dx,dy] of P){
+    const i=at(x+dx,y+dy);if(i<0)continue;
+    const t=map.tiles[i];if(t!==0&&t!==TILE_PUDDLE)continue;
+    if(lv[i]>from+1)return true;
+    if(lv[i]>from&&!onSt&&!st[i])return true;
+  }
+  return false;
+}
+
+const HD={
+  yaw:Math.PI/6,yawT:Math.PI/6,pitch:0.86,live:false,loading:false,failed:false,
+  three:null,scene:null,cam:null,cv:null,mapRef:null,mapVer:-1,terrain:null,sprites:{},imgs:{},texs:{},
+  target:null,padPrev:{},
+  /** Three.js を読み込む（最初にHD-2Dのステージへ入ったとき） */
+  load(){
+    if(this.loading||this.failed||typeof THREE!=='undefined')return;
+    this.loading=true;
+    const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload=()=>{this.loading=false;};s.onerror=()=>{this.loading=false;this.failed=true;};
+    document.head.appendChild(s);
+  },
+  active(w){
+    if(!w||!w.map||!w.map.open||!HD_LEVELS[w.map.theme]||!hdSettingOn())return false;
+    if(typeof THREE==='undefined'){this.load();return false;}
+    return !!hdHeights(w.map);
+  },
+  hide(){if(this.live){this.live=false;if(this.cv)this.cv.style.display='none';}},
+  /* ---------- 画像（img/ フォルダ）：読み込めたら使い、無ければ null ---------- */
+  img(path){
+    let o=this.imgs[path];
+    if(!o){o=this.imgs[path]={ok:false,im:new Image(),cb:[]};o.im.onload=()=>{o.ok=true;for(const f of o.cb)f(o.im);o.cb=[];};o.im.onerror=()=>{o.cb=[];};o.im.src='img/'+path;}
+    return o.ok?o.im:null;
+  },
+  whenImg(path,f){const im=this.img(path);if(im)f(im);else this.imgs[path].cb.push(f);},
+  /* ---------- 仮の絵（画像が無いとき）：つなぎ目の無い模様を自動で描く ---------- */
+  noise(base,spots,size,extra){
+    const c=document.createElement('canvas');c.width=c.height=size||128;const g=c.getContext('2d'),S=c.width;
+    g.fillStyle=base;g.fillRect(0,0,S,S);
+    let sd=7;const rn=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+    for(const [col,n,r0,r1,al] of spots)for(let i=0;i<n;i++){const x=rn()*S,y=rn()*S,r=r0+rn()*(r1-r0);g.globalAlpha=al;g.fillStyle=col;
+      for(const ox of [-S,0,S])for(const oy of [-S,0,S]){g.beginPath();g.ellipse(x+ox,y+oy,r,r*(0.6+rn()*0.5),rn()*3,0,TAU);g.fill();}}
+    g.globalAlpha=1;if(extra)extra(g,S,rn);return c;
+  },
+  fallbackTex(name){
+    const blades=(cols)=>(g,S,rn)=>{for(let i=0;i<S*1.2;i++){const x=rn()*S,y=rn()*S,h=3+rn()*6;g.strokeStyle=cols[i%cols.length];g.globalAlpha=0.55;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+rn()*2-1,y-h);g.stroke();}g.globalAlpha=1;};
+    switch(name){
+      case 'grass':return this.noise('#5d8a3c',[['#6f9e48',40,4,12,0.5],['#4c7631',40,3,10,0.45],['#86ad55',20,2,5,0.4]],128,blades(['#7fb04e','#4a7a2c','#94c060']));
+      case 'grass2':return this.noise('#4a7530',[['#3c6226',50,4,12,0.55],['#5f8c3c',30,3,8,0.5]],128,blades(['#6a9a40','#355a22','#7caa4a']));
+      case 'flowers':return this.noise('#5d8a3c',[['#6f9e48',40,4,12,0.5],['#4c7631',30,3,10,0.45]],128,(g,S,rn)=>{blades(['#7fb04e','#4a7a2c'])(g,S,rn);for(let i=0;i<70;i++){g.fillStyle=['#fff6e0','#ffd84a','#ff9ac0','#c8a8ff'][i%4];g.beginPath();g.arc(rn()*S,rn()*S,1.6+rn()*1.4,0,TAU);g.fill();}});
+      case 'dirt':return this.noise('#8b6d48',[['#7a5e3c',40,4,12,0.5],['#9c7e56',40,3,9,0.45],['#6a5034',30,1,3,0.6]]);
+      case 'cliff':return this.noise('#7d6c58',[['#6a5a48',40,5,16,0.5],['#8e7c66',30,4,10,0.45]],128,(g,S,rn)=>{g.strokeStyle='rgba(40,30,20,.45)';g.lineWidth=2;for(let k=0;k<6;k++){const y=k*S/6+rn()*6;g.beginPath();g.moveTo(0,y);for(let x=0;x<=S;x+=16)g.lineTo(x,y+Math.sin(x*0.09+k)*3);g.stroke();}for(let i=0;i<12;i++){const x=rn()*S,y=rn()*S;g.beginPath();g.moveTo(x,y);g.lineTo(x+rn()*8-4,y+8+rn()*10);g.stroke();}});
+      case 'wallTop':return this.noise('#3e6528',[['#34571f',60,5,14,0.6],['#4f7a32',40,4,10,0.5],['#2a4618',30,3,7,0.5]]);
+      case 'stairs':{const c=this.noise('#9a8f7e',[['#8a7f6e',30,4,10,0.5],['#aaa08c',20,3,8,0.4]]),g=c.getContext('2d'),S=c.width;for(let k=0;k<4;k++){const y=k*S/4;g.fillStyle='rgba(50,40,30,.55)';g.fillRect(0,y,S,4);g.fillStyle='rgba(255,255,240,.25)';g.fillRect(0,y+4,S,3);}return c;}
+      case 'water':return this.noise('#2f6f9e',[['#3a82b4',40,6,16,0.45],['#26608a',30,5,12,0.45]],128,(g,S,rn)=>{g.strokeStyle='rgba(220,240,255,.35)';g.lineWidth=1.5;for(let i=0;i<14;i++){const x=rn()*S,y=rn()*S;g.beginPath();g.arc(x,y,6+rn()*8,0.3,2.6);g.stroke();}});
+    }
+    return this.noise('#777',[]);
+  },
+  /** 地面などの模様：img/tex/<テーマ>_<名前>.png があればそれ、無ければ仮の模様 */
+  tex(theme,name){
+    const key=theme+'_'+name;if(this.texs[key])return this.texs[key];
+    const T=this.three,t=new T.CanvasTexture(this.fallbackTex(name));t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=4;
+    this.whenImg('tex/'+key+'.png',im=>{t.image=im;t.needsUpdate=true;});
+    return this.texs[key]=t;
+  },
+  /** 木・岩の仮の絵 */
+  fallbackObj(kind){
+    const c=document.createElement('canvas'),g=c.getContext('2d');
+    if(kind==='tree'){
+      c.width=256;c.height=320;
+      g.fillStyle='#5a3e26';g.beginPath();g.moveTo(112,320);g.lineTo(118,190);g.lineTo(138,190);g.lineTo(146,320);g.closePath();g.fill();
+      g.fillStyle='rgba(0,0,0,.25)';g.fillRect(132,200,12,120);
+      const blob=(x,y,r,c0,c1)=>{const gr=g.createRadialGradient(x-r*0.35,y-r*0.4,r*0.1,x,y,r);gr.addColorStop(0,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();};
+      for(const [x,y,r] of [[80,190,52],[176,190,52],[128,200,50],[96,130,58],[160,130,58],[128,80,60],[128,150,62]])blob(x,y,r,'#7fae4c','#2f5a22');
+      g.globalAlpha=0.35;for(let i=0;i<60;i++){g.fillStyle=i%2?'#a6d06a':'#1f4016';g.beginPath();g.arc(50+Math.random()*156,40+Math.random()*190,3+Math.random()*5,0,TAU);g.fill();}g.globalAlpha=1;
+    }else{
+      c.width=192;c.height=144;
+      const gr=g.createRadialGradient(70,50,10,96,90,100);gr.addColorStop(0,'#c4c0b4');gr.addColorStop(0.6,'#8a867c');gr.addColorStop(1,'#55524a');
+      g.fillStyle=gr;g.beginPath();g.moveTo(10,144);g.quadraticCurveTo(0,70,50,40);g.quadraticCurveTo(100,0,150,36);g.quadraticCurveTo(196,70,184,144);g.closePath();g.fill();
+      g.strokeStyle='rgba(40,38,34,.4)';g.lineWidth=3;g.beginPath();g.moveTo(80,50);g.lineTo(96,96);g.lineTo(86,130);g.moveTo(130,60);g.lineTo(140,100);g.stroke();
+      g.fillStyle='rgba(110,150,70,.55)';g.beginPath();g.ellipse(70,44,26,10,-0.3,0,TAU);g.fill();
+    }
+    return c;
+  },
+  objTex(kind){
+    const key='obj_'+kind;if(this.texs[key])return this.texs[key];
+    const T=this.three,t=new T.CanvasTexture(this.fallbackObj(kind));
+    this.whenImg('obj/'+kind+'.png',im=>{t.image=im;t.needsUpdate=true;});
+    return this.texs[key]=t;
+  },
+  /* ---------- 準備 ---------- */
+  init(){
+    if(this.three)return true;
+    const T=window.THREE;if(!T)return false;
+    this.three=T;
+    const cv=document.createElement('canvas');cv.id='game3d';cv.style.cssText='display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none';
+    const g2=document.getElementById('game');g2.parentNode.insertBefore(cv,g2);
+    this.cv=cv;
+    this.gl=new T.WebGLRenderer({canvas:cv,antialias:true});
+    this.scene=new T.Scene();
+    this.cam=new T.PerspectiveCamera(32,1,0.5,400);
+    this.scene.add(new T.AmbientLight(0xffffff,0.62));
+    const sun=new T.DirectionalLight(0xfff2d8,0.7);sun.position.set(-0.6,1.6,-0.9);this.scene.add(sun);
+    this.overlayCv=document.createElement('canvas');this.overlayCv.width=this.overlayCv.height=1024;
+    this.overlayTex=new T.CanvasTexture(this.overlayCv);
+    this.overlayTex.wrapS=this.overlayTex.wrapT=T.ClampToEdgeWrapping;
+    return true;
+  },
+  /* ---------- 地形を組み立てる（マップが変わったときだけ） ---------- */
+  buildTerrain(map){
+    const T=this.three,Hh=hdHeights(map),W=map.W,H=map.H,lv=Hh.lv,st=Hh.st,sd=Hh.sd,tl=map.tiles,theme=map.theme;
+    if(this.terrain){this.scene.remove(this.terrain);this.terrain.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
+    const root=new T.Group();this.terrain=root;
+    const G={};const grp=k=>G[k]||(G[k]={p:[],n:[],u:[]});
+    const isWall=i=>tl[i]===1||tl[i]===3,isWet=i=>tl[i]===TILE_DEEP||tl[i]===TILE_FALL;
+    // タイルの角の高さ（cx,cy は 0か1）
+    const cornerH=(i,cx,cy)=>{
+      if(isWall(i))return lv[i]+HD_WALL;
+      if(isWet(i))return lv[i]-0.4;
+      if(!st[i])return lv[i];
+      const dx=sd[i*2],dy=sd[i*2+1];return lv[i]+(dx>0?cx:dx<0?1-cx:dy>0?cy:1-cy);
+    };
+    const quad=(k,a,b,c,d,n,ua,ub,uc,ud)=>{const o=grp(k);for(const [v,u] of [[a,ua],[b,ub],[c,uc],[a,ua],[c,uc],[d,ud]]){o.p.push(v[0],v[1],v[2]);o.n.push(n[0],n[1],n[2]);o.u.push(u[0],u[1]);}};
+    const OV=[]; // 上に重ねる絵（予兆など）用の床の面
+    const S=0.5; // 模様1枚＝2マス
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      const i=y*W+x;
+      // 上の面
+      let k='grass';
+      if(isWall(i))k='wallTop';else if(isWet(i))k='water';else if(st[i])k='stairs';
+      else{const d=map.deco?map.deco[i]:0;k=d===1||d===4?'dirt':d===2?'grass2':d===3?'flowers':'grass';}
+      const h00=cornerH(i,0,0),h10=cornerH(i,1,0),h11=cornerH(i,1,1),h01=cornerH(i,0,1);
+      const A=[x,h00,y],B=[x,h01,y+1],C=[x+1,h11,y+1],D=[x+1,h10,y];
+      let nrm=[0,1,0];
+      if(st[i]){const dx=sd[i*2],dy=sd[i*2+1],l=Math.SQRT2;nrm=[-dx/l,1/l,-dy/l];}
+      if(k==='stairs'){ // 段の線が上り方向と直角になるように
+        const dx=sd[i*2],dy=sd[i*2+1],uv=(cx,cy)=>{const t=dx>0?cx:dx<0?1-cx:dy>0?cy:1-cy,s=dx?cy:cx;return [s,1-t];};
+        quad(k,A,B,C,D,nrm,uv(0,0),uv(0,1),uv(1,1),uv(1,0));
+      }else quad(k,A,B,C,D,nrm,[x*S,y*S],[x*S,(y+1)*S],[(x+1)*S,(y+1)*S],[(x+1)*S,y*S]);
+      if(!isWall(i)&&!isWet(i))OV.push(A,B,C,D);
+      // 横の面（崖）：となりより高い辺に、となりの高さまでの壁を立てる
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const nx=x+dx,ny=y+dy;
+        // この辺の2つの角（自分側）と、となり側の同じ角
+        const c1=dx===1?[1,0]:dx===-1?[0,1]:dy===1?[1,1]:[0,0],c2=dx===1?[1,1]:dx===-1?[0,0]:dy===1?[0,1]:[1,0];
+        const t1=cornerH(i,c1[0],c1[1]),t2=cornerH(i,c2[0],c2[1]);
+        let b1=-1.5,b2=-1.5;
+        if(nx>=0&&ny>=0&&nx<W&&ny<H){const j=ny*W+nx;b1=cornerH(j,c1[0]-dx,c1[1]-dy);b2=cornerH(j,c2[0]-dx,c2[1]-dy);}
+        if(t1<=b1+0.01&&t2<=b2+0.01)continue;
+        const p1x=x+c1[0],p1z=y+c1[1],p2x=x+c2[0],p2z=y+c2[1];
+        const bb1=Math.min(b1,t1),bb2=Math.min(b2,t2),u1=(p1x+p1z)*0.5,u2=(p2x+p2z)*0.5;
+        quad('cliff',[p1x,t1,p1z],[p1x,bb1,p1z],[p2x,bb2,p2z],[p2x,t2,p2z],[dx,0,dy],[u1,t1*0.5],[u1,bb1*0.5],[u2,bb2*0.5],[u2,t2*0.5]);
+      }
+    }
+    for(const k in G){
+      const g=new T.BufferGeometry();
+      g.setAttribute('position',new T.Float32BufferAttribute(G[k].p,3));g.setAttribute('normal',new T.Float32BufferAttribute(G[k].n,3));g.setAttribute('uv',new T.Float32BufferAttribute(G[k].u,2));
+      const m=new T.MeshLambertMaterial({map:this.tex(theme,k),side:T.DoubleSide});
+      if(k==='water'){m.transparent=true;m.opacity=0.88;}
+      root.add(new T.Mesh(g,m));
+    }
+    // 予兆・水溜まりなどを描く重ね面（床の形に沿わせる）
+    {
+      const p=[],u=[];
+      for(let q=0;q<OV.length;q+=4){const v=[OV[q],OV[q+1],OV[q+2],OV[q+3]];for(const t of [v[0],v[1],v[2],v[0],v[2],v[3]]){p.push(t[0],t[1]+0.02,t[2]);u.push(t[0]/W,1-t[2]/H);}}
+      const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(u,2));
+      const m=new T.MeshBasicMaterial({map:this.overlayTex,transparent:true,depthWrite:false,side:T.DoubleSide});
+      const ov=new T.Mesh(g,m);ov.renderOrder=1;root.add(ov);
+    }
+    // 木・岩（2Dの絵を立てる）
+    this.statics=[];
+    const done=new Uint8Array(W*H);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      const i=y*W+x,v=tl[i];if(done[i])continue;
+      let kind=null,k=1;
+      if(v===TILE_OBS.tree)kind='tree';
+      else if(v===TILE_OBS.rock)kind='rock';
+      else if(v===TILE_OBS.bigrock){kind='rock';while(x+k<W&&tl[i+k]===v)k++;for(let yy=0;yy<k;yy++)for(let xx=0;xx<k;xx++)if(y+yy<H&&x+xx<W)done[(y+yy)*W+x+xx]=1;}
+      if(!kind)continue;
+      const w0=kind==='tree'?3.0:1.3*k,h0=kind==='tree'?3.75:0.98*k;
+      const m=new T.MeshLambertMaterial({map:this.objTex(kind),transparent:true,alphaTest:0.3,side:T.DoubleSide});
+      const pl=new T.Mesh(new T.PlaneGeometry(w0,h0),m);pl.position.y=h0/2-0.15;
+      const gp=new T.Group();gp.rotation.order='YXZ';gp.position.set(x+k/2,lv[i],y+k/2);gp.add(pl);root.add(gp);this.statics.push(gp);
+    }
+    this.scene.add(root);
+    // 空と遠くのかすみ
+    this.scene.background=new T.Color(0x9cc8e8);this.scene.fog=new T.Fog(0xb8d6ea,26,70);
+  },
+  /* ---------- キャラ・モンスターの立て札（毎フレーム描き直す2Dの絵） ---------- */
+  sprite(key,px){
+    let s=this.sprites[key];
+    if(s&&s.px!==px){this.scene.remove(s.grp);s.tex.dispose();s.mat.dispose();s=null;}
+    if(!s){
+      const T=this.three,cv=document.createElement('canvas');cv.width=cv.height=px;
+      const tex=new T.CanvasTexture(cv),mat=new T.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.08,side:T.DoubleSide});
+      const pl=new T.Mesh(this.planeGeo||(this.planeGeo=new T.PlaneGeometry(1,1)),mat),grp=new T.Group();grp.rotation.order='YXZ';grp.add(pl);this.scene.add(grp);
+      s=this.sprites[key]={cv,g:cv.getContext('2d'),tex,mat,pl,grp,px,used:0};
+    }
+    s.used=this.frame;s.grp.visible=true;
+    return s;
+  },
+  /** 絵を1枚描いて立てる。S：絵の範囲（ゲーム内のピクセル）、(ox,oy)：中心、footY：足元（中心からの下向きの距離） */
+  stand(key,S,ox,oy,footY,draw,map){
+    const px=S*2>384?512:S*2>192?256:S*2>96?128:64,K=px/S,s=this.sprite(key,px),g=s.g;
+    g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,px,px);
+    const ay=px*0.62;
+    g.setTransform(K,0,0,K,px/2-ox*K,ay-oy*K);
+    try{draw(g);}catch(e){}
+    g.setTransform(1,0,0,1,0,0);
+    s.tex.needsUpdate=true;
+    const u=S/TILE,fy=(ay+footY*K)/px; // 足元の位置（絵の上から何割か）
+    s.pl.scale.set(u,u,1);s.pl.position.set(0,(fy-0.5)*u,0);
+    // 高さ：飛び降りたときは少しずつ下がる
+    const gh=hdGround(map,ox,oy+footY*0.3),ent=this.hgt[key];
+    const h=ent==null||gh>=ent?gh:Math.max(gh,ent-this.dt*7);this.hgt[key]=h;
+    s.grp.position.set(ox/TILE,h,oy/TILE);
+    s.grp.rotation.set(-this.pitch*0.42,-this.yaw,0);
+    s.h=h;
+    return s;
+  },
+  /** 向き（カメラから見た向き）を一時的に変えて、今までの絵を描く */
+  withRel(o,f){
+    const sv=o.facing,sw=o.swingAngle,y=this.yaw;
+    if(typeof sv==='number')o.facing=sv-y;if(typeof sw==='number')o.swingAngle=sw-y;
+    try{f();}finally{o.facing=sv;o.swingAngle=sw;}
+  },
+  /** カメラから見て、正面・背中・横のどれが見えるか */
+  view(f){const a=f-this.yaw,s=Math.sin(a),c=Math.cos(a);return s>0.6?'front':s<-0.6?'back':(c>=0?'side':'sideL');},
+  /** img/ の絵で描く（あれば true）。歩きは画像を揺らし・傾けて動かす */
+  drawImgs(g,o,r,parts,moving){
+    const v=this.view(o.facing||0),file=v==='sideL'?'side':v,flip=v==='sideL';
+    const ims=parts.map(p=>this.img(p+'_'+file+'.png')).filter(Boolean);if(!ims.length)return false;
+    const t=Renderer.time||0,ph=(o.id?String(o.id).length:0)*0.7,bob=moving?Math.abs(Math.sin(t*12+ph))*r*0.12:0,tilt=moving?Math.sin(t*12+ph)*0.06:0,sz=r*4.4;
+    g.save();g.translate(o.x,o.y+r*0.8);g.rotate(tilt);if(flip)g.scale(-1,1);
+    if(o.hurt>0||o.hitInv>0)g.globalAlpha*=0.8;
+    for(const im of ims)g.drawImage(im,-sz/2,-sz-bob,sz,sz);
+    g.restore();return true;
+  },
+  /* ---------- 毎フレームの描画 ---------- */
+  draw(w,localId,app){
+    if(!this.init())return false;
+    const T=this.three,R=Renderer,map=w.map,dpr=R.dpr;
+    this.frame=(this.frame||0)+1;this.hgt=this.hgt||{};
+    const now=performance.now();this.dt=Math.min(0.05,this.last?(now-this.last)/1000:0.016);this.last=now;
+    if(!this.live){this.live=true;this.cv.style.display='block';}
+    if(this.mapRef!==map||this.mapVer!==map.version){this.buildTerrain(map);this.mapRef=map;this.mapVer=map.version;this.target=null;this.hgt={};}
+    // 大きさ
+    const W=window.innerWidth,H=window.innerHeight;
+    if(this.sw!==W||this.sh!==H||this.sdpr!==dpr){this.gl.setPixelRatio(dpr);this.gl.setSize(W,H,false);this.cam.aspect=W/H;this.cam.updateProjectionMatrix();this.sw=W;this.sh=H;this.sdpr=dpr;}
+    // 視点の回転：Z・C キー（押している間）、コントローラーは左右のスティック押し込みで45度ずつ
+    const K=Input.keys,dt=this.dt;
+    if(K.KeyZ)this.yawT-=1.8*dt;if(K.KeyC)this.yawT+=1.8*dt;
+    try{for(const gp of (navigator.getGamepads?Array.from(navigator.getGamepads()):[])){if(!gp)continue;const pv=this.padPrev[gp.index]||[];const b=i=>!!gp.buttons[i]&&gp.buttons[i].pressed;
+      if(b(10)&&!pv[10])this.yawT-=Math.PI/4;if(b(11)&&!pv[11])this.yawT+=Math.PI/4;this.padPrev[gp.index]=[...Array(12)].map((_,i)=>b(i));}}catch(e){}
+    this.yaw+=(this.yawT-this.yaw)*Math.min(1,dt*10);
+    // カメラが追う人（オンラインでは自分、ひとりではプレイヤー）
+    const ps=Object.values(w.players),humans=ps.filter(q=>!q.ai),hLive=humans.filter(q=>!q.dead);
+    const me=(R.focusId&&w.players[R.focusId])||(hLive[0]||humans[0]||ps[0]);
+    const tx=me.x/TILE,tz=me.y/TILE,th=hdGround(map,me.x,me.y);
+    if(!this.target)this.target={x:tx,y:th,z:tz};
+    const tg=this.target;tg.x+=(tx-tg.x)*0.2;tg.z+=(tz-tg.z)*0.2;tg.y+=(th-tg.y)*0.12;
+    const sh=app.settings().screenShake?R.shake/TILE:0;
+    const dist=17/(R.zoomMul||1),fx=Math.sin(this.yaw),fz=-Math.cos(this.yaw),cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
+    this.cam.position.set(tg.x-fx*dist*cp+rand(-sh,sh),tg.y+0.8+dist*sp,tg.z-fz*dist*cp+rand(-sh,sh));
+    this.cam.lookAt(tg.x,tg.y+0.8,tg.z);
+    for(const o of this.statics)o.rotation.set(-this.pitch*0.3,-this.yaw,0);
+    // 2Dの処理（視野・ミニマップ・マウスの向き）向けに、2Dのカメラも合わせておく
+    R.viewScale=R.scale;R.cam.x=me.x-R.w/2/R.scale;R.cam.y=me.y-R.h/2/R.scale;R.camInit=true;
+    R.updateVision(w);R.vis=null; // 探索の記録（ミニマップ）だけ取る。HD-2Dでは暗がりは出さない
+    // ---- 床に描くもの（予兆・水溜まり・落とし物など）を重ね面に描く ----
+    const ON=64,OPX=1024/ON,OS=OPX/TILE,ox=Math.floor(tx-ON/2),oy=Math.floor(tz-ON/2),oc=this.overlayCv.getContext('2d');
+    oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,1024,1024);
+    oc.save();oc.beginPath();oc.rect(2,2,1020,1020);oc.clip();
+    oc.setTransform(OS,0,0,OS,-ox*TILE*OS,-oy*TILE*OS);
+    for(const q of (map.puddles||[])){oc.save();oc.fillStyle='rgba(70,150,200,.5)';R.blobFill(oc,q);oc.strokeStyle='rgba(220,245,255,.35)';oc.lineWidth=3;R.blobStroke(oc,q);oc.restore();}
+    try{R.drawProps(oc,map,map.theme);}catch(e){}
+    for(const q of (map.pools||[]))R.drawPoolFx(oc,q);
+    for(const z of (w.hazards||[]))if(!(z.delay>0))R.drawHazard(oc,z);
+    for(const t of w.telegraphs)R.drawTelegraph(oc,t);
+    for(const o of (w.placed||[]))R.drawPlaced(oc,o);
+    for(const d of w.drops)R.drawDrop(oc,d);
+    for(const p of ps){ // 狙いの向き（マウス以外のとき）は地面に出す
+      if(p.dead||!Input.showAimFor(p.id))continue;
+      oc.save();oc.translate(p.x,p.y);oc.rotate(p.facing);oc.strokeStyle='rgba(255,210,58,.7)';oc.lineWidth=3;oc.setLineDash([6,8]);oc.beginPath();oc.moveTo(p.r+8,0);oc.lineTo(p.r+64,0);oc.stroke();oc.setLineDash([]);
+      oc.fillStyle='rgba(255,210,58,.9)';oc.beginPath();oc.moveTo(p.r+76,0);oc.lineTo(p.r+64,-7);oc.lineTo(p.r+64,7);oc.closePath();oc.fill();oc.restore();
+      oc.fillStyle='rgba(0,0,0,.25)';oc.beginPath();oc.ellipse(p.x,p.y+p.r*0.6,p.r*1.1,p.r*0.6,0,0,TAU);oc.fill();
+    }
+    for(const pr of w.projectiles)R.drawProjectile(oc,pr);
+    for(const r of R.rings){const k=r.t/r.life;oc.strokeStyle=r.color;oc.globalAlpha=1-k;oc.lineWidth=r.width;oc.beginPath();oc.arc(r.x,r.y,lerp(r.r0,r.r1,k),0,TAU);oc.stroke();}
+    oc.globalAlpha=1;
+    for(const q of R.particles){oc.globalAlpha=1-q.t/q.life;oc.fillStyle=q.color;oc.fillRect(q.x-q.size/2,q.y-q.size/2,q.size,q.size);}
+    oc.globalAlpha=1;oc.restore();
+    const ot=this.overlayTex;ot.repeat.set(map.W/ON,map.H/ON);ot.offset.set(-ox/ON,1-(map.H-oy)/ON);ot.needsUpdate=true;
+    // ---- 立てる絵（キャラ・モンスター・宝箱・採取ポイント） ----
+    const near=(x,y)=>Math.abs(x/TILE-tx)<34&&Math.abs(y/TILE-tz)<34;
+    for(const c of w.chests)if(near(c.x,c.y))this.stand('c'+(c.id||c.x+'_'+c.y),80,c.x,c.y,14,g=>R.drawChest(g,c),map);
+    for(const gt of (w.gathers||[]))if(near(gt.x,gt.y))this.stand('g'+(gt.id||gt.x+'_'+gt.y),80,gt.x,gt.y,12,g=>R.drawGather(g,gt),map);
+    for(const e of w.enemies){
+      if(!near(e.x,e.y))continue;
+      const r=e.r||14,S=Math.ceil(r*6.4);
+      this.stand('e'+e.id,S,e.x,e.y,r*0.8,g=>{
+        if(this.drawImgs(g,e,r,['mob/'+e.type],!!(e.vx||e.vy||e.moving)))return;
+        this.withRel(e,()=>R.drawEnemy(g,e));
+      },map);
+    }
+    const sMulti=R.multi,sPet=R.drawPet,sAim=Input.showAimFor;
+    R.multi=false;R.drawPet=function(){};Input.showAimFor=()=>false;
+    try{
+      for(const p of ps){
+        const r=p.r,S=Math.ceil(r*7),fo=R.fadeOther(p);
+        this.stand('p'+p.id,S,p.x,p.y,r*0.8,g=>{
+          if(fo)g.globalAlpha=0.35;
+          const lk=(p.stats&&p.stats.look)||{},parts=['player/base'];
+          for(const sl of ['legs','waist','body','arms','head'])if(lk[sl])parts.push('armor/'+lk[sl]);
+          if(lk.weapon&&p.drawn!==false)parts.push('weapon/'+lk.weapon);
+          if(this.img('player/base_front.png')&&!p.dead&&this.drawImgs(g,p,r,parts,!!p.moving)){R.drawStatus(g,p);return;}
+          this.withRel(p,()=>{R.drawPlayer(g,p);R.drawStatus(g,p);});
+        },map);
+        if(p.petLook&&!p.dead){ // 相棒：別の立て札にする（前のフレームの位置を使う）
+          const pp=(R.petPos&&R.petPos[p.id])||{x:p.x,y:p.y};
+          this.stand('pet'+p.id,Math.ceil(r*5),pp.x,pp.y,r*0.7,g=>{if(fo)g.globalAlpha=0.35;sPet.call(R,g,p);},map);
+        }
+      }
+    }finally{R.multi=sMulti;R.drawPet=sPet;Input.showAimFor=sAim;}
+    // 使っていない立て札は隠す・しばらく使わなければ捨てる
+    for(const k in this.sprites){const s=this.sprites[k];if(s.used!==this.frame){s.grp.visible=false;if(this.frame-s.used>600){this.scene.remove(s.grp);s.tex.dispose();s.mat.dispose();delete this.sprites[k];}}}
+    this.gl.render(this.scene,this.cam);
+    // ---- 画面に重ねる文字（ダメージの数字・名前）とHUD ----
+    const ctx=R.ctx;
+    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,R.cv.width,R.cv.height);
+    const sc=R.scale*0.95;
+    const at=(x,y,hUp,f)=>{const v=this.project(x,y,hdGround(map,x,y)+hUp);if(!v)return;ctx.setTransform(dpr*sc,0,0,dpr*sc,dpr*(v.x-x*sc),dpr*(v.y-y*sc));f();};
+    if(R.multi)for(const q of ps){const r=q.r||14;at(q.x,q.y,0.9,()=>R.drawPlayerLabel(ctx,q));}
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    for(const f of R.floaters){
+      at(f.x,f.y,1.3,()=>{ctx.globalAlpha=1-Math.max(0,(f.t/f.life-0.6)/0.4);ctx.font=`bold ${f.size}px ${FONT}`;ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(f.text,f.x,f.y);ctx.fillStyle=f.color;ctx.fillText(f.text,f.x,f.y);});
+    }
+    ctx.globalAlpha=1;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    R.drawHUD(w,app);
+    ctx.save();ctx.font=`11px ${FONT}`;ctx.fillStyle='rgba(255,255,255,.55)';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('HD-2D試作　視点の回転：Z / C（コントローラーはスティック押し込み）',R.w-10,R.h-6);ctx.restore();
+    return true;
+  },
+  project(x,y,h){
+    const v=new this.three.Vector3(x/TILE,h,y/TILE).project(this.cam);
+    if(v.z>1)return null;
+    return {x:(v.x+1)/2*Renderer.w,y:(1-v.y)/2*Renderer.h};
+  },
+  /** 画面の位置→ゲーム内の位置（マウスで狙うとき）：自分の足元の高さの面と交わる所 */
+  screenToWorld(sx,sy){
+    const T=this.three,tg=this.target||{y:0};
+    const v=new T.Vector3(sx/Renderer.w*2-1,-(sy/Renderer.h*2-1),0.5).unproject(this.cam),o=this.cam.position,d=v.sub(o).normalize();
+    if(Math.abs(d.y)<1e-4)return {x:o.x*TILE,y:o.z*TILE};
+    const t=(tg.y-o.y)/d.y;
+    return {x:(o.x+d.x*t)*TILE,y:(o.z+d.z*t)*TILE};
+  },
+};
+
 /** モンスター図鑑の絵。ゲームと同じ描画処理で描く（未登録は「？」） */
 const Portraits={
   cache:{},
@@ -15241,6 +15680,8 @@ const Input={
     }
     const holdAim=!!(p&&DATA.weaponTypes[p.stats.weaponType]&&DATA.weaponTypes[p.stats.weaponType].holdAim); // 弓・手裏剣：攻撃を押したまま狙いを変えられる
     if(this.isTouch&&pid===this.touchPid()){if(mx===0&&my===0){mx=this.touch.mx;my=this.touch.my;}attack=attack||this.touch.attack;guard=guard||!!this.touch.guard;if(this.touch.swipeAng!=null&&holdAim)aim=this.touch.swipeAng;}
+    if(HD.live){ // HD-2D：カメラの向きに合わせて、上＝画面の奥になるよう回す（スティックの向きも）
+      const c=Math.cos(HD.yaw),s=Math.sin(HD.yaw),x=mx,y=my;mx=x*c-y*s;my=x*s+y*c;if(aim!==null)aim+=HD.yaw;}
     const E=this.edges[pid]||newEdges();
     const inp={mx,my,attack,guard,dodge:E.dodge,skill:E.skill,heal:E.heal,cycle:E.cycle,pick:E.pick,sheathe:E.sheathe,cure:!!E.cure};
     if(p){
@@ -17686,7 +18127,7 @@ const App={
     const s=this.settings();
     const item=(k,label)=>`<label class="setting"><input type="checkbox" data-act="toggleSetting" data-key="${k}" ${s[k]?'checked':''}>${label}</label>`;
     return `<div class="panel camp" style="text-align:left"><h2>設定</h2><div class="row"><button class="primary" data-act="backSettings">戻る（Esc）</button></div>
-      ${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
+      ${item('hdOff','HD-2D表示（試作中：ステージ1「風渡る草原」）をオフにして、従来の見下ろし表示で遊ぶ')}${item('padSwitch','コントローラーの決定ボタンを Switch 式にする（右のボタン＝Switch の A で決定、下のボタンで戻る）')}${item('fadeOthers','マルチプレイのとき、ほかのプレイヤーとその相棒を薄く表示する')}${item('allyDamageNumbers','マルチプレイのとき、ほかのプレイヤー（と仲間）が敵に与えたダメージの数字も表示する')}${item('autoRestock','出撃前に、持っているゴールドで消耗品を自動で補充する（持っているゴールドを全部使う）')}${item('vision','視野あり（見えない場所を暗くし、視野の外の敵を隠す）')}${item('damageNumbers','ダメージ数値を表示する')}${item('screenShake','画面の揺れを有効にする')}${item('showControls','画面右下に操作方法を表示する')}
       ${this.bindHTML()}
       ${(()=>{try{return localStorage.getItem(Save.KEY+'_backup')?`<div class="setting" style="display:block">クラウドのセーブを読み込む前の、この端末のデータ
         <div class="row" style="margin-top:6px"><button data-act="restoreCloudBackup">読み込む前のデータに戻す</button></div></div>`:'';}catch(e){return '';}})()}
