@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.13.1',date:'2026/11/12'};
+const GAME_VERSION={no:'2.14.0',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -9750,7 +9750,7 @@ const KEY_LABELS={
 };
 const CONTROL_LINES={
   kbm:['WASD：移動　マウス：向き　F：納刀','左クリック：抜刀・攻撃（大剣・槌は長押しでチャージ）　Space：回避','E：持ち物を使う　R／ホイール：切替　1〜8：選択'],
-  pad:['左スティック：移動　右スティック：向き　Y：納刀　B：スキル','RT / X：抜刀・攻撃（長押しでチャージ）　A：回避　LT（L2）：ガード（押し続ける）','LB：持ち物を使う　RB：切替'],
+  pad:['左スティック：移動　右スティック：向き　Y：納刀　B：スキル','RT / X：抜刀・攻撃（長押しでチャージ）　A：回避　LT（L2）：ガード（押し続ける）','LB：短く押すと持ち物を使う・長押しで選ぶ（右スティック）　RB：切替　HD-2Dでは右スティックで視点'],
   kb2:['矢印キー：移動（移動方向を向く）　/：納刀','Enter：抜刀・攻撃（長押しでチャージ）　右Shift：回避','.：持ち物を使う　,：切替'],
 };
 // ===== BOSSART BEGIN =====
@@ -15595,10 +15595,12 @@ const Input={
         const owner=this.ownerOf(gp.index);
         if(owner)this.aimMode[owner]='pad';
       }
-      // RB：短く押すと持ち物を次へ、0.3秒以上押すとホイールを開く（右スティックで選び、離すと決定）
-      const owner=this.ownerOf(gp.index);
-      const rbHeld=!!cur[PB.cycle]&&App.state==='playing'&&!!owner;
-      if(rbHeld&&!(S.prev&&S.prev[PB.cycle])){S.rbT=0;S.rbOpen=false;}
+      // LB（持ち物を使うボタン）：短く押すと使う、0.3秒以上押すとホイールを開く（右スティックで選び、離すと決定）
+      // RB（切替ボタン）：押すと持ち物を次へ
+      const owner=this.ownerOf(gp.index),WB=PB.heal;
+      if(cur[PB.cycle]&&!(S.prev&&S.prev[PB.cycle])&&owner&&App.state==='playing'&&this.edges[owner])this.edges[owner].cycle=1;
+      const rbHeld=!!cur[WB]&&App.state==='playing'&&!!owner;
+      if(rbHeld&&!(S.prev&&S.prev[WB])){S.rbT=0;S.rbOpen=false;}
       if(rbHeld){
         S.rbT=(S.rbT||0)+dt;
         if(!S.rbOpen&&S.rbT>=0.3&&owner){const ids=this.wheelIds(owner);if(ids.length){S.rbOpen=true;this.wheel={pid:owner,open:true,sel:null,ids};}}
@@ -15608,17 +15610,20 @@ const Input={
           this.wheel.sel=Math.round(a/step)%N;
         }
       }
-      if(!cur[PB.cycle]&&S.prev&&S.prev[PB.cycle]){
+      if(!cur[WB]&&S.prev&&S.prev[WB]){
         if(S.rbOpen){
           if(this.wheel&&this.wheel.sel!=null&&this.wheel.ids[this.wheel.sel]&&owner&&this.edges[owner])this.edges[owner].pick=ITEM_ORDER.indexOf(this.wheel.ids[this.wheel.sel]);
           this.wheel=null;S.rbOpen=false;
-        }else if(owner&&App.state==='playing'&&this.edges[owner]&&(S.rbT||0)<0.3)this.edges[owner].cycle=1;
+        }else if(owner&&App.state==='playing'&&this.edges[owner]&&(S.rbT||0)<0.3)this.edges[owner].heal=true; // 短く押したら使う
         S.rbT=0;
       }
       if(S.rbOpen){S.move={x:lx,y:ly};S.attack=false;S.guard=false;} // ホイールを開いていても左スティックで移動できる
       else{S.move={x:lx,y:ly};S.attack=!!cur[PB.attack];S.guard=!!cur[PB.guard];} // 攻撃・ガードは割り当てたボタンを押し続ける
       // 右スティックで向きを指定。倒していないときは移動方向を向く（攻撃中は向きを維持）
       if(S.rbOpen){/* ホイールを開いている間は向きを変えない */}
+      else if(HD.live&&App.state==='playing'){ // HD-2D：右スティックで視点を動かす（向きは移動の方向に合わせる）
+        HD.yawT+=rx*2.6*dt;HD.pitch=clamp(HD.pitch+ry*1.2*dt,0.45,1.3);
+        if(Math.hypot(lx,ly)>0.3&&!S.attack){S.aim=Math.atan2(ly,lx);S.aimT=performance.now();}}
       else if(Math.hypot(rx,ry)>0.35){S.aim=Math.atan2(ry,rx);S.aimT=performance.now();}
       else if(Math.hypot(lx,ly)>0.3&&!S.attack){S.aim=Math.atan2(ly,lx);S.aimT=performance.now();}
       for(let i=0;i<cur.length;i++)if(cur[i]&&!S.prev[i])App.onPad(i,gp.index);
@@ -17627,7 +17632,7 @@ const App={
       if(act==='dodge')E.dodge=true;
       else if(act==='sheathe')E.sheathe=true;
       else if(act==='skill')E.skill=true;
-      else if(act==='heal')E.heal=true;
+      // 持ち物を使うボタンは Input.pollPads で判定（短く押すと使う・長押しで選ぶ）
       return;
     }
     if(i===okB)UI.padClick();
