@@ -268,7 +268,7 @@ const $=sel=>document.querySelector(sel);
 const TILE=32;
 // 更新したら番号と日付を変える（最初の画面の右上に出る）
 /* バージョンの付け方：1桁目＝大型アップデート、2桁目＝まあまあなアップデート、3桁目＝バグ修正 */
-const GAME_VERSION={no:'2.19.3',date:'2026/11/12'};
+const GAME_VERSION={no:'2.19.4',date:'2026/11/12'};
 /* テスト用の設定（ボスの動きや見た目の確認用）。終わったら両方 false に戻す */
 const TEST_MODE={allQuests:false,invincible:false};
 const CONFIG={
@@ -15356,7 +15356,7 @@ const HD={
     }
     this.scene.add(root);
     // 空・かすみ・光（ステージごと）
-    this.scene.background=new T.Color(P.sky);this.scene.fog=new T.Fog(P.fog,P.near,P.far);
+    this.scene.background=new T.Color(P.sky);this.scene.fog=new T.Fog(P.fog,P.near,P.far);this.fogBase={near:P.near,far:P.far};
     this.amb.intensity=P.amb*0.8;this.sun.intensity=P.sun;this.sun.color.setHex(P.sunC||0xffffff);
     this.hemi.intensity=P.cave?0.05:0.25;this.hemi.color.setHex(P.sky);
     this.lamp.intensity=P.cave?1.9:(P.lavaLight?0.5:0);this.lamp.color.setHex(P.lightC||0xff8040);this.lamp.distance=P.cave?20:12;
@@ -15438,9 +15438,12 @@ const HD={
     if(!this.target)this.target={x:tx,y:th,z:tz};
     const tg=this.target;tg.x+=(tx-tg.x)*0.2;tg.z+=(tz-tg.z)*0.2;tg.y+=(th-tg.y)*0.12;
     const sh=app.settings().screenShake?R.shake/TILE:0;
-    const dist=17/(R.zoomMul||1),fx=Math.sin(this.yaw),fz=-Math.cos(this.yaw),cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
+    // 縦画面では横が狭く見えるので、カメラを離す（離したぶんかすみも遠くへ）
+    const asp=W/H,port=asp<1?Math.min(1.7,Math.pow(1/asp,0.6)):1;
+    const dist=17*port/(R.zoomMul||1),fx=Math.sin(this.yaw),fz=-Math.cos(this.yaw),cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
     this.cam.position.set(tg.x-fx*dist*cp+rand(-sh,sh),tg.y+0.8+dist*sp,tg.z-fz*dist*cp+rand(-sh,sh));
     this.cam.lookAt(tg.x,tg.y+0.8,tg.z);
+    if(this.scene.fog&&this.fogBase){const ex=dist-17;this.scene.fog.near=this.fogBase.near+ex;this.scene.fog.far=this.fogBase.far+ex;}
     for(const o of this.statics){o.rotation.set(-this.pitch*0.3,-this.yaw,0);
       // カメラとプレイヤーの間にある木などは透かす（遮られて見えなくならないように）
       const dx=o.position.x-tg.x,dz=o.position.z-tg.z,along=dx*fx+dz*fz,lat=Math.abs(-dx*fz+dz*fx),m=o.children[0].material;
@@ -18924,7 +18927,7 @@ const App={
         this.settings().camSens=clamp(Number(ds.id)||1,0.25,3);this.save();
         this.goto('settings');UI.restoreFocus();break;
       case 'mapZoom':
-        this.settings().mapZoom=clamp(Number(ds.id)||1,0.7,1.6);this.save();Renderer.zoomMul=this.settings().mapZoom;
+        this.settings().mapZoom=clamp(Number(ds.id)||1,0.5,1.6);this.save();Renderer.zoomMul=this.settings().mapZoom;
         this.goto('settings');UI.restoreFocus();break;
       case 'hudScale':
         this.settings().hudScale=clamp(Number(ds.id)||CONFIG.hud.scale,CONFIG.hud.min,CONFIG.hud.max);this.save();
@@ -19214,7 +19217,7 @@ const App={
       <div class="setting" style="display:block">視点感度（いまは ${Math.round((s.camSens||1)*100)}%）　スマホのスワイプ・右スティック・Z/Cキーで視点を回す速さ
         <div class="filters" style="margin-top:6px">${[0.5,0.75,1,1.25,1.5,2].map(v=>`<button class="${Math.abs((s.camSens||1)-v)<0.001?'on':''}" data-act="camSens" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">戦闘画面の大きさ（いまは ${Math.round((s.mapZoom||1)*100)}%）
-        <div class="filters" style="margin-top:6px">${[0.8,0.9,1,1.15,1.3,1.5].map(v=>`<button class="${Math.abs((s.mapZoom||1)-v)<0.001?'on':''}" data-act="mapZoom" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
+        <div class="filters" style="margin-top:6px">${[0.5,0.6,0.7,0.8,0.9,1,1.15,1.3,1.5].map(v=>`<button class="${Math.abs((s.mapZoom||1)-v)<0.001?'on':''}" data-act="mapZoom" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       <div class="setting" style="display:block">HP・回避などの表示の大きさ（いまは ${Math.round((s.hudScale||CONFIG.hud.scale)*100)}%）
         <div class="filters" style="margin-top:6px">${CONFIG.hud.choices.map(v=>`<button class="${Math.abs((s.hudScale||CONFIG.hud.scale)-v)<0.001?'on':''}" data-act="hudScale" data-id="${v}">${Math.round(v*100)}%</button>`).join('')}</div></div>
       ${[['bgmVol','BGMの音量'],['sfxVol','効果音の音量'],['allyAtkVol','味方（ほかのプレイヤー・仲間）の攻撃の音量']].map(([key,label])=>`<div class="setting" style="display:block">${label}（いまは ${Math.round(s[key]*100)}%）
